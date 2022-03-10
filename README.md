@@ -69,9 +69,9 @@ development.  The data collected as part of this consist seven things:
  * which LSL scripts are used.
 These data are sent to the LWA using a HTTP POST request where they are aggregated.
 
-Users can opt out of telemetry collection using the provided lslTelemetry.py script via:
+Users can opt out of telemetry collection using the lsl.misc.telemetry module via:
 
-    python lslTelemetry.py --disable
+    python -m lsl.misc.telemetry --disable
 
 This command will set a disk-based flag that disables the reporting process.  This script can also be used to re-enable telemetry and check the unique installation identifier being used.
 
