@@ -21,11 +21,13 @@ import os
 import gc
 import numpy
 import warnings
+from astropy.time import Time as AstroTime
 from astropy.io import fits as astrofits
 from datetime import datetime
 from functools import cmp_to_key
 
 from lsl import astro
+from lsl.reader.base import FrameTimestamp
 from lsl.common.stations import lwa1
 from lsl.writer.fitsidi import WriterBase
 
@@ -141,7 +143,12 @@ class Sd(WriterBase):
             numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol
-        
+            
+        if isinstance(obsTime, FrameTimestamp):
+            obsTime = obsTime.tai_mjd
+        elif isinstance(obsTime, AstroTime):
+            obsTime = obsTime.tai.mjd
+            
         dataDict = {}
         for i,b in enumerate(beam):
             dataDict[b] = data[i,:]
