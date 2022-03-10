@@ -1,5 +1,5 @@
 """
-Module for writing correlator output to a FITS IDI file.  The classes and 
+Module for writing correlator output to a FITS IDI file.  The classes and
 functions defined in this module are based heavily off the lwda_fits library.
 
 .. note::
