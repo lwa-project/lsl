@@ -2,6 +2,7 @@
   * Added support for adding/subtracting timedelta instances from FrameTimestamp instances
   * Fixed an indexing problem in the coherent dedispersion padding
   * Added a `tai_mjd` field to lsl.reader.base.FrameTimestamp
+  * Fixed a problem downsampling baselines from a lsl.imaging.data.VisibilityDataSet instance
   * Added a new `lsl.writer.virtual` module to help convert correlator output into something that can be used with `lsl.imaging.utils`
 
 2.1.2
