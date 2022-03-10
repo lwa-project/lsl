@@ -68,19 +68,19 @@ def split_baseline(baseline, shift=None):
 class Uv(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array
-    geometry, frequency setup, etc., to a UVFITS file that can be read into 
+    geometry, frequency setup, etc., to a UVFITS file that can be read into
     AIPS via the UVLOD task.
     """
     
     def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
-        Initialize a new UVFITS object using a filename and a reference time 
-        given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+        Initialize a new UVFITS object using a filename and a reference time
+        given in seconds since the UNIX 1970 ephem, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
             Added the 'memmap' and 'overwrite' keywords to control if the file
-            is memory mapped and whether or not to overwrite an existing file, 
+            is memory mapped and whether or not to overwrite an existing file,
             respectively.
         """
         
@@ -180,7 +180,7 @@ class Uv(WriterBase):
             
     def write(self):
         """
-        Fill in the FITS-IDI file will all of the tables in the 
+        Fill in the UVFITS file will all of the tables in the
         correct order.
         """
         

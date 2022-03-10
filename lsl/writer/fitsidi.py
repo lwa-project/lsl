@@ -399,7 +399,7 @@ class WriterBase(object):
             numericPol = pol
             
         if isinstance(obsTime, FrameTimestamp):
-            obsTime = astro.unix_to_taimjd(obsTime.unix)
+            obsTime = obsTime.tai_mjd
         elif isinstance(obsTime, AstroTime):
             obsTime = obsTime.tai.mjd
             
