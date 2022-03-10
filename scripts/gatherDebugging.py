@@ -175,6 +175,7 @@ def main(args):
     from distutils import sysconfig
     from distutils import ccompiler
     compiler = ccompiler.new_compiler()
+    sysconfig.get_config_vars()
     sysconfig.customize_compiler(compiler)
     cc = compiler.compiler
     
@@ -187,24 +188,35 @@ def main(args):
     fh = open('test.c', 'w')
     fh.write(r"""#include <omp.h>
 #include <stdio.h>
-int main() {
+int main(void) {
 #pragma omp parallel
 printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_threads());
+return 0;
 }
 """)
     fh.close()
     
-    cmd = cc
-    cmd.extend(['-fopenmp', 'test.c', '-o', 'test', '-lgomp'])
-    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    o, e = p.communicate()
+    ccmd = []
+    ccmd.extend( cc )
+    ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
+    if os.path.basename(cc[0]).find('gcc') != -1:
+        ccmd.append( '-lgomp' )
+    elif os.path.basename(cc[0]).find('clang') != -1:
+        ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
+    openmp_support = "No"
     try:
-        o = o.decode()
-        e = e.decode()
-    except AttributeError:
+        p = subprocess.Popen(ccmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        o, e = p.communicate()
+        try:
+            o = o.decode()
+            e = e.decode()
+        except AttributeError:
+            pass
+        openmp_support =" Yes" if p.returncode == 0 else "No"
+    except subprocess.CalledProcessError:
         pass
-    print("Compiler OpenMP Support: %s" % ("Yes" if p.returncode == 0 else "No",))
-    if p.returncode != 0:
+    print("Compiler OpenMP Support: %s" % openmp_support)
+    if openmp_support == 'Yes':
         o = o.split('\n')[:-1]
         for i in range(len(o)):
             o[i] = '  %s' % o[i]
@@ -215,7 +227,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
         e = '\n'.join(e)
         
         print("Compiler OpenMP Test Command:")
-        print("  %s" % ' '.join(cmd))
+        print("  %s" % ' '.join(ccmd))
         print("Compiler OpenMP Test Output:")
         print(o)
         print("Compiler OpenMP Test Errors:")
@@ -301,4 +313,3 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
     main(args)
-
