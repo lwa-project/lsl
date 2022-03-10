@@ -88,7 +88,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
         # Loop over polarization products
         for pol in pols:
             print("->  %s" % pol)
-            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, Pol=pol, return_baselines=True, gain_correct=True)
+            blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, pol=pol, return_baselines=True, gain_correct=True)
             
             # Select the right range of channels to save
             toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )

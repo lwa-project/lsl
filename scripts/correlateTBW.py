@@ -91,7 +91,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
         
         # Loop over sub-integrations (set by nSec)
         for k in range(nSec):
-            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
+            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, pol=pol, return_baselines=True, gain_correct=True)
             
             toUse = numpy.where( (freq>=5.0e6) & (freq<=93.0e6) )
             toUse = toUse[0]
