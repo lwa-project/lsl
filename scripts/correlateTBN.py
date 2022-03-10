@@ -105,8 +105,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
                 fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
-            obsTime = setTime.tai_mjd
-            fits.add_data_set(obsTime, readT, blList, vis[:,toUse], pol=pol)
+            fits.add_data_set(setTime, readT, blList, vis[:,toUse], pol=pol)
         print("->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1)))
         
     # Cleanup after everything is done
