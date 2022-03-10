@@ -7,19 +7,6 @@ gatherDebugging.py
 
   :Options: None
 
-lslTelemetry.py
-  :Description: Script to change the LSL telemetry setting.
-
-  :Usage: lslTelemetry.py [options]
-
-  :Options: -h, --help          Display this help information
-  
-            -e, --enabled       Enable telemetry for LSL
-            
-            -d, --disable       Disable telemetry for LSL
-            
-            -k, --key           Show install identification key
-
 makeWisdom.py
   :Description: Build LSL-specific FFTW wisdom and save it to a file within the LSL distribution.
 
