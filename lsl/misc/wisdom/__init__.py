@@ -9,7 +9,6 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import numpy
-import argparse
 from datetime import datetime
 
 from lsl.common.paths import DATA as dataPath
@@ -62,18 +61,3 @@ def show():
     print(" Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8]))
     
     return True
-
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(
-        description='build LSL-specific FFTW wisdom files', 
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter
-        )
-    parser.add_argument('-s', '--show', action='store_true', 
-                        help='show information about the avaliable LSL wisdom')
-    args = parser.parse_args()
-    
-    if args.show:
-        show()
-    else:
-        make()
