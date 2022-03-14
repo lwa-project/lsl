@@ -17,7 +17,6 @@ import atexit
 import socket
 import inspect
 import warnings
-import argparse
 try:
     from urllib2 import urlopen
     from urllib import urlencode
