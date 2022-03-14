@@ -206,12 +206,9 @@ version = '%s'
 full_version = '%s'
 short_version = '%s'
 
-if __name__ == '__main__':
-    print("lsl %%s" %% version)
-
 """ % (lslVersion, lslVersion, shortVersion)
     
-    fh = open('lsl/version.py', 'w')
+    fh = open('lsl/version/__init__.py', 'w')
     fh.write(contents)
     fh.close()
     
