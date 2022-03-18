@@ -13,6 +13,7 @@ import time
 import math
 import ephem
 import numpy
+import warnings
 try:
     from urllib2 import urlopen
 except ImportError:
@@ -22,6 +23,7 @@ from datetime import datetime
 from functools import total_ordering    
 
 from lsl.common.progress import DownloadBar
+from lsl.misc.file_cache import FileCache, MemoryCache
 
 from lsl.config import LSL_CONFIG
 ASTRO_CONFIG = LSL_CONFIG.view('astro')
@@ -3120,11 +3122,11 @@ def jd_to_sec(jD):
 ######################################################################
 
 # Create the cache directory
-if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-    os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-_CACHE_DIR = os.path.join(os.path.expanduser('~'), '.lsl', 'astro_cache')
-if not os.path.exists(_CACHE_DIR):
-    os.mkdir(_CACHE_DIR)
+try:
+    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'astro_cache'))
+except OSError:
+    _CACHE_DIR = MemoryCache()
+    warnings.warn("Cannot create on-disk data cache, using in-memory data cache", RuntimeWarning)
 
 ######################################################################
 #
@@ -3147,16 +3149,15 @@ _LEAP_SEC_LIST = []
 def _parse_tai_file():
     # get path to almanac data file
     download = True
-    datName = os.path.join(_CACHE_DIR, 'Leap_Second.dat')
-    if not os.path.exists(datName):
+    if not 'Leap_Second.dat' in _CACHE_DIR:
         from lsl.common.paths import DATA
         oldName = os.path.join(DATA, 'astro', 'Leap_Second.dat')
         with open(oldName, 'rb') as oh:
-            with open(datName, 'wb') as dh:
+            with _CACHE_DIR.open('Leap_Second.dat', 'wb') as dh:
                 dh.write(oh.read())
                 
     # check for expiration
-    with open(datName, 'r') as datFile:
+    with _CACHE_DIR.open('Leap_Second.dat', 'r') as datFile:
         for l in datFile:
             if l.find('File expires on') != -1:
                 expDate = l.strip().rstrip().split('on ', 1)[1]
@@ -3191,11 +3192,11 @@ def _parse_tai_file():
         sys.stdout.write(pbar.show()+'\n')
         sys.stdout.flush()
         
-        with open(datName, 'wb') as fh:
+        with _CACHE_DIR.open('Leap_Second.dat', 'wb') as fh:
             fh.write(data)
             
     # read tai-utc.dat file to get conversion info
-    with open(datName, 'r') as datFile:
+    with _CACHE_DIR.open('Leap_Second.dat', 'r') as datFile:
         lineNum = 0
         for l in datFile:
             if l.startswith('#'):
