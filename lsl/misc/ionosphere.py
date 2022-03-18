@@ -735,7 +735,12 @@ def _parse_tec_map(filename_or_fh):
     inMap = False
     inBlock = False
     
-    with gzip.open(filename_or_fh, 'r') as fh:
+    try:
+        fh = gzip.GzipFile(filename_or_fh, 'rb')
+    except TypeError:
+        fh = gzip.GzipFile(fileobj=filename_or_fh, mode='rb')
+        
+    try:
         for line in fh:
             try:
                 line = line.decode('ascii', errors='ignore')
@@ -816,6 +821,9 @@ def _parse_tec_map(filename_or_fh):
                     cmap[-1].extend( fields )
                     continue
                     
+    finally:
+        fh.close()
+        
     # Combine everything together
     dates = numpy.array(dates, dtype=numpy.float64)
     tec = numpy.array(tecMaps, dtype=numpy.float32)
