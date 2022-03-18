@@ -1051,35 +1051,31 @@ def _parse_ustec_map(filename_or_fh):
         tf = tarfile.open(fileobj=filename_or_fh, mode='r:*')
         do_close = False
         
+    valid_filename = lambda x: ((x.find('_TEC.txt') != -1) \
+                                or (x.find('_ERR.txt') != -1) \
+                                or (x.find('_EOF.txt') != -1))
     try:
         tecFiles = {}
         errFiles = {}
         eofFiles = {}
         for entry in tf:
+            if not valid_filename(entry.name):
+                continue
+                
+            contents = tf.extractfile(entry.name).read()
+            try:
+                contents = contents.decode()
+            except AttributeError:
+                # Python2 catch
+                pass
+            contents = StringIO(contents)
+            
             if entry.name.find('_TEC.txt') != -1:
-                contents = tf.extractfile(entry.name).read()
-                try:
-                    contents = contents.decode()
-                except AttributeError:
-                    # Python2 catch
-                    pass
-                tecFiles[entry.name] = StringIO(contents)
+                tecFiles[entry.name] = contents
             elif entry.name.find('_ERR.txt') != -1:
-                contents = tf.extractfile(entry.name).read()
-                try:
-                    contents = contents.decode()
-                except AttributeError:
-                    # Python2 catch
-                    pass
-                errFiles[entry.name] = StringIO(contents)
+                errFiles[entry.name] = contents
             elif entry.name.find('_EOF.txt') != -1:
-                contents = tf.extractfile(entry.name).read()
-                try:
-                    contents = contents.decode()
-                except AttributeError:
-                    # Python2 catch
-                    pass
-                eofFiles[entry.name] = StringIO(contents)
+                eofFiles[entry.name] = contents
                 
         # Variables to hold the map sequences
         dates = []
