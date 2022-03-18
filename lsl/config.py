@@ -3,16 +3,24 @@ Module for managing configuration parameters for LSL
 """
 
 import os
+import warnings
 import contextlib
 from datetime import datetime
 from collections import OrderedDict
 from textwrap import fill as tw_fill
 
 from lsl.version import full_version as lsl_version
+from lsl.misc.file_lock import FileLock
 
 # Create the .lsl directory and set the config filename
-if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-    os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
+try:
+    if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
+        os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
+    _IS_READONLY = False
+except OSError:
+    _IS_READONLY = True
+    warnings.warn("Cannot create on-disk configuration cache")
+    
 _CONFIG_FILENAME = os.path.join(os.path.expanduser('~'), '.lsl', 'lsl.cfg')
 
 
@@ -239,10 +247,14 @@ class LSLConfigContainer(object):
         """
         
         if self._changed:
-            with open(self.filename, 'w') as fh:
-                fh.write(str(self))
-            self._changed = False
-            
+            if not _IS_READONLY:
+                with FileLock(self.filename) as lock:
+                    assert(lock.locked())
+                    
+                    with open(self.filename, 'w') as fh:
+                        fh.write(str(self))
+                    self._changed = False
+                    
     def view(self, section):
         """
         Return a configuration sub-container that defaults to looking up 
