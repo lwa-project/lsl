@@ -11,7 +11,7 @@ import time
 import contextlib
 from threading import Lock
 try:
-    import cStringIO as StringIO
+    from cStringIO import StringIO
 except ImportError:
     from io import StringIO, BytesIO
     

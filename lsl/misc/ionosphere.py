@@ -20,7 +20,7 @@ import tarfile
 import warnings
 import subprocess
 try:
-    import cStringIO as StringIO
+    from cStringIO import StringIO
 except ImportError:
     from io import StringIO
 try:
