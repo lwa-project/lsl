@@ -3126,7 +3126,7 @@ try:
     _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'astro_cache'))
 except OSError:
     _CACHE_DIR = MemoryCache()
-    warnings.warn("Cannot create on-disk data cache, using in-memory data cache", RuntimeWarning)
+    warnings.warn("Cannot create or write to on-disk data cache, using in-memory data cache", RuntimeWarning)
 
 ######################################################################
 #

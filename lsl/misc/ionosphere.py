@@ -63,7 +63,7 @@ try:
                            max_size=lambda: IONO_CONFIG.get('max_cache_size'))
 except OSError:
     _CACHE_DIR = MemoryCache(max_size=lambda: IONO_CONFIG.get('max_cache_size'))
-    warnings.warn("Cannot create on-disk data cache, using in-memory data cache", RuntimeWarning)
+    warnings.warn("Cannot create or write to on-disk data cache, using in-memory data cache", RuntimeWarning)
 
 
 # Create the on-line cache
