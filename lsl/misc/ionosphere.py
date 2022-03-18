@@ -419,7 +419,7 @@ def _convert_to_gzip(filename):
         
     # Write it back out
     with _CACHE_DIR.open(filename, 'wb') as fh:
-        with gzip.open(fh, 'wb') as gh:
+        with gzip.GzipFile(fileobj=fh, mode='wb') as gh:
             gh.write(uncompressed)
 
 
