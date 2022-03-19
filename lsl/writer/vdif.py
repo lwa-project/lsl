@@ -70,11 +70,11 @@ class Frame(object):
         """
         
         if self.dataReal:
-            interlaced = self.data
+            interlaced = self.data.astype(numpy.int32)
         else:
-            interlaced = numpy.zeros(2*len(self.data))
-            interlaced[0::2] = self.data.real
-            interlaced[1::2] = self.data.imag
+            interlaced = numpy.zeros(2*len(self.data), dtype=numpy.int32)
+            interlaced[0::2] = self.data.real.astype(numpy.int32)
+            interlaced[1::2] = self.data.imag.astype(numpy.int32)
         
         biased = interlaced + 2**(self.bits-1)
         biased = biased.astype(numpy.uint32) & (2**self.bits-1)
@@ -103,7 +103,7 @@ class Frame(object):
         self.seconds = int(epochSeconds)
         
         # Compute the frames since the beginning of the second
-        frame = (epochSeconds - self.seconds + seconds_f) * (self.sample_rate/len(self.data))
+        frame = (epochSeconds - self.seconds + seconds_f) * (self.sample_rate/(len(self.data)//(2-self.dataReal)))
         self.frame = int(round(frame))
 
     def create_raw_frame(self):
