@@ -234,7 +234,7 @@ def parse_time(s, station=lwa1):
                     tz = 'LST'
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
-                    warnings.warn("Entering pytz search mode for '%s'" % tzName, RuntimeWarning)
+                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
@@ -1020,7 +1020,7 @@ class Observation(object):
                 print("[%i] Error: Invalid number of ASP filter settings (%i < %i)" % (os.getpid(), len(self.asp_filter), nstand))
         for f,filt in enumerate(self.asp_filter):
             if is_dp and filt > 3:
-                warnings.warn("ASP filter %i is degenerate with %i for DP-based stations" % (filt, filt-4), RuntimeWarning)
+                warnings.warn(colorfy("{{%%yellow ASP filter %i is degenerate with %i for DP-based stations}}" % (filt, filt-4)), RuntimeWarning)
                 
             if filt not in (-1, 0, 1, 2, 3, 4, 5):
                 failures += 1
@@ -1589,7 +1589,7 @@ class Stepped(Observation):
     @duration.setter
     def duration(self, value):
         if value != 'please_dont_warn_me':
-            warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
+            warnings.warn(colorfy("{{%yellow The duration of a STEPPED observation can only be changed by adjusting the step durations}}"), RuntimeWarning)
             
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""

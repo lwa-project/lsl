@@ -65,6 +65,7 @@ from lsl.common import stations
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
+from lsl.common.color import colorfy
 
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -892,7 +893,7 @@ try:
                 src = table(os.path.join(self.filename, 'SOURCE'), ack=False)
             except:
                 src = None
-                warnings.warn("Cannot find table 'SOURCE' in '%s', assuming zenith is the only source" % self.filename, RuntimeWarning)
+                warnings.warn(colorfy("{{%%yellow Cannot find table 'SOURCE' in '%s', assuming zenith is the only source}}" % self.filename), RuntimeWarning)
             try:
                 fld = table(os.path.join(self.filename, 'FIELD'), ack=False)
             except:
@@ -1132,7 +1133,7 @@ try:
             return dataSets
             
 except ImportError:
-    warnings.warn('Cannot import casacore.tables, MS support disabled', ImportWarning)
+    warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}', ImportWarning)
     
     class CorrelatedDataMS(object):
         """

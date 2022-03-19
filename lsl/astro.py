@@ -24,6 +24,7 @@ from functools import total_ordering
 
 from lsl.common.progress import DownloadBar
 from lsl.misc.file_cache import FileCache, MemoryCache
+from lsl.common.color import colorfy
 
 from lsl.config import LSL_CONFIG
 ASTRO_CONFIG = LSL_CONFIG.view('astro')
@@ -3126,7 +3127,7 @@ try:
     _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'astro_cache'))
 except OSError:
     _CACHE_DIR = MemoryCache()
-    warnings.warn("Cannot create or write to on-disk data cache, using in-memory data cache", RuntimeWarning)
+    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
 
 ######################################################################
 #

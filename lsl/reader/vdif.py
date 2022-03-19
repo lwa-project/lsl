@@ -42,6 +42,7 @@ from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
 from lsl.reader.utils import FilePositionSaver
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -150,7 +151,7 @@ class FrameHeader(FrameHeaderBase):
                 frameMJD_s += 1.0*self.frame_in_second/frameRate
             
             except KeyError:
-                warnings.warn("Insufficient information to determine exact frame timestamp, time will be approximate", RuntimeWarning)
+                warnings.warn(colorfy("{{%yellow Insufficient information to determine exact frame timestamp, time will be approximate"), RuntimeWarning)
                 
         else:
             # Use what we already have been told
@@ -367,7 +368,7 @@ def read_guppi_header(filehandle):
     # Is there a GUPPI header?
     header = {}
     if not has_guppi_header(filehandle):
-        warnings.warn("GUPPI header not found, returning an empty dictionary", RuntimeWarning)
+        warnings.warn(colorfy("{{%yellow GUPPI header not found, returning an empty dictionary}}"), RuntimeWarning)
         return header
         
     # Read in the GUPPI header

@@ -23,6 +23,7 @@ from datetime import datetime
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
 from lsl.writer.fitsidi import WriterBase
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -1116,7 +1117,7 @@ try:
             
 except ImportError:
     import warnings
-    warnings.warn('Cannot import casacore.tables, MS support disabled', ImportWarning)
+    warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), ImportWarning)
     
     class Ms(WriterBase):
         """

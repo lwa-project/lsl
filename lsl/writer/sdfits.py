@@ -30,6 +30,7 @@ from lsl import astro
 from lsl.reader.base import FrameTimestamp
 from lsl.common.stations import lwa1
 from lsl.writer.fitsidi import WriterBase
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -280,7 +281,7 @@ class Sd(WriterBase):
                         try:
                             matrix[p,:] = tempMList[self.stokes[p]][b]
                         except KeyError:
-                            warnings.warn('Key mis-match %s %s' % (str(b), str(tempMList[self.stokes[p]].keys())), RuntimeWarning)
+                            warnings.warn(colorfy("{{%%yellow Key mis-match %s %s}}" % (str(b), str(tempMList[self.stokes[p]].keys()))), RuntimeWarning)
                             
                     mList.append(matrix.ravel())
                 scanCount += 1

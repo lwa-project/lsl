@@ -43,6 +43,7 @@ from lsl.common.paths import DATA as dataPath
 from lsl.common.progress import DownloadBar
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.misc.file_cache import FileCache, MemoryCache
+from lsl.common.color import colorfy
 
 from lsl.config import LSL_CONFIG
 IONO_CONFIG = LSL_CONFIG.view('ionosphere')
@@ -63,7 +64,7 @@ try:
                            max_size=lambda: IONO_CONFIG.get('max_cache_size'))
 except OSError:
     _CACHE_DIR = MemoryCache(max_size=lambda: IONO_CONFIG.get('max_cache_size'))
-    warnings.warn("Cannot create or write to on-disk data cache, using in-memory data cache", RuntimeWarning)
+    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
 
 
 # Create the on-line cache
@@ -508,7 +509,7 @@ def _download_worker_standard(url, filename):
         sys.stdout.write(pbar.show()+'\n')
         sys.stdout.flush()
     except IOError as e:
-        warnings.warn('Error downloading file from %s: %s' % (url, str(e)), RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
