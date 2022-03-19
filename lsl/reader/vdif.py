@@ -158,8 +158,8 @@ class FrameHeader(FrameHeaderBase):
             dataSize = self.frame_length*8 - 32 + 16*self.is_legacy		     # 8-byte chunks -> bytes - full header + legacy offset
             samplesPerWord = 32 // self.bits_per_sample				         # dimensionless
             nSamples = dataSize // 4 * samplesPerWord				         # bytes -> words -> samples
-            nSamples = nSamples / self.nchan / (2 if self.is_complex else 1) # data samples -> time samples
-        
+            nSamples = nSamples // self.nchan // (2 if self.is_complex else 1) # data samples -> time samples
+            
             ## What is the frame rate?
             frameRate = self.sample_rate // nSamples
             
