@@ -24,8 +24,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
-__all__ = ['MODULE', 'DATA', 'MODULE_BUILD', 'DATA_BUILD']
+__version__ = '0.2'
+__all__ = ['MODULE', 'DATA', 'WISDOM', 'MODULE_BUILD', 'DATA_BUILD', 'WISDOM_BUILD']
 
 
 modInfo = imp.find_module('lsl')
@@ -35,6 +35,9 @@ MODULE = os.path.abspath(modInfo[1])
 
 #: Absolute path to the data directory where data files for LSL are stored
 DATA = os.path.join(MODULE, 'data')
+
+#: Absolute path to where the LSL-specific FFTW wisdom file is stored
+WISDOM = os.path.join(os.path.expanduser('~'), '.lsl')
 
 
 # If we seem to be in the building directory, make the module and 
@@ -54,3 +57,4 @@ if os.path.exists(os.path.join(currentDir, 'setup.py')) and os.path.exists(os.pa
 else:
     MODULE_BUILD = MODULE
     DATA_BUILD = DATA
+WISDOM_BUILD = WISDOM

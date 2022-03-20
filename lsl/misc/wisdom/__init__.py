@@ -11,7 +11,7 @@ import os
 import numpy
 from datetime import datetime
 
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import WISDOM as wisdomPath
 from lsl.common.busy import BusyIndicator
 from lsl.misc import _wisdom
 
@@ -24,7 +24,7 @@ __all__ = ["make", "show"]
 
 
 # Path to the LSL-specific FFTW wisdom file
-_WISDOM_FFTW = os.path.join(dataPath, 'fftw_wisdom.txt')
+_WISDOM_FFTW = os.path.join(wisdomPath, 'fftw_wisdom.txt')
 
 
 def make():
