@@ -1117,7 +1117,7 @@ try:
             
 except ImportError:
     import warnings
-    warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), ImportWarning)
+    warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), RuntimeWarning)
     
     class Ms(WriterBase):
         """
