@@ -91,7 +91,7 @@ def downsample(vector, factor, rescale=True):
     if (len(vector) % factor):
         warnings.warn(colorfy("{{%%yellow Length of 'vector' is not divisible by 'factor'=%d, clipping!}}" % factor), RuntimeWarning)
         newlen = (len(vector)//factor)*factor
-        warnings.warn(colorfy("{{%%yellow Oldlen %d, newlen %d}}" % (len(vector), newlen), RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Oldlen %d, newlen %d}}" % (len(vector), newlen)), RuntimeWarning)
         vector = vector[:newlen]
     if rescale:
         newvector = numpy.reshape(vector, (len(vector)//factor, factor))/float(factor)
