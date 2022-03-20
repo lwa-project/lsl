@@ -48,7 +48,7 @@ def show():
     """
     
     if not os.path.exists(_WISDOM_FFTW):
-        print("No LSL-specific FFTW wisdom file found, consider running make()")
+        print("No LSL-specific FFTW wisdom file found, consider running 'python -m lsl.misc.wisdom'")
         return False
         
     fh = open(_WISDOM_FFTW, 'r')
