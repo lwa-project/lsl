@@ -71,7 +71,7 @@ class FileLock(object):
                 if e.errno != errno.EAGAIN:
                     raise
                 if blocking:
-                    if time.time()-t0 > self.timeout:
+                    if time.time()-t0 > timeout:
                         break
                 else:
                     break
