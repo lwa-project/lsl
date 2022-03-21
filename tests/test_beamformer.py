@@ -14,9 +14,10 @@ import numpy
 
 from lsl.misc import beamformer
 from lsl.common import stations
+import lsl.testing
 
 
-__version__  = "0.2"
+__version__  = "0.2s"
 __author__    = "Jayce Dowell"
 
 
@@ -46,13 +47,15 @@ class beamformer_tests(unittest.TestCase):
         antennas = station.antennas
         
         # Azimuth  checks
-        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, -5, 30)
-        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 365, 30)
-        
+        with self.subTest(type='azimuth'):
+            self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, -5, 30)
+            self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 365, 30)
+            
         # Elevation checks
-        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, -5)
-        self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, 95)
-        
+        with self.subTest(type='elevation'):
+            self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, -5)
+            self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, 95)
+            
     def test_int_delay_and_sum(self):
         """Check that the beamformer.int_delay_and_sum function actually runs"""
         

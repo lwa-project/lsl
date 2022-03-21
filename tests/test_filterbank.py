@@ -13,9 +13,11 @@ import numpy
 import unittest
 
 from lsl.correlator import filterbank
+from lsl.correlator.fx import null_window
+import lsl.testing
 
 
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -23,135 +25,51 @@ class filterbank_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.correlator.filterbank
     module."""
     
-    def test_filterbank2(self):
-        """Test that the 2-tap filter band works"""
+    def run_filterbank_test(self, dtype, ntap=2, nchan=256, window=null_window):
+        data = numpy.random.rand(nchan*ntap*4)
+        data = data.astype(dtype)
+        fnc = "fft%i" % ntap
+        if hasattr(filterbank, fnc):
+            getattr(filterbank, fnc)(data, nchan, window=window)
+        else:
+            filterbank.fft(data, nchan, P=ntap, window=window)
+            
+    def test_filterbank_real(self):
+        """Test that the filtebank works on real-valued data."""
         
-        data = numpy.random.rand(4096)
-        filterbank.fft2(data, 256)
+        for ntap in (1, 2, 4, 8, 16):
+            for dtype in (numpy.float32, numpy.float64):
+                with self.subTest(ntap=ntap, dtype=dtype):
+                    self.run_filterbank_test(dtype, ntap=ntap)
+                    
+    def test_filterbank_complex(self):
+        """Test that the filtebank works on real-valued data."""
         
-    def test_filterbank4(self):
-        """Test that the 4-tap filter band works"""
+        for ntap in (1, 2, 4, 8, 16):
+            for dtype in (numpy.complex64, numpy.complex128):
+                with self.subTest(ntap=ntap, dtype=dtype):
+                    self.run_filterbank_test(dtype, ntap=ntap)
+                    
+    def test_filterbank_window(self):
+        """Test that window functions can be passed to the filterbank."""
         
-        data = numpy.random.rand(4096)
-        filterbank.fft4(data, 256)
+        #
+        # Real
+        #
         
-    def test_filterbank8(self):
-        """Test that the 8-tap filter band works"""
+        for ntap in (1, 2, 4, 8, 16):
+            for dtype in (numpy.float32, numpy.float64):
+                with self.subTest(ntap=ntap, dtype=dtype):
+                    self.run_filterbank_test(dtype, ntap=ntap, window=numpy.blackman)
+                    
+        #
+        # Complex
+        #
         
-        data = numpy.random.rand(4096)
-        filterbank.fft8(data, 256)
-        
-    def test_filterbank16(self):
-        """Test that the 16-tap filter band works"""
-        
-        data = numpy.random.rand(4096)
-        filterbank.fft16(data, 256)
-        
-    def test_filterbankN(self):
-        """Test that a N-tap filter bank works"""
-        
-        data = numpy.random.rand(4096)
-        filterbank.fft(data, 256, P=2)
-        
-    def test_window(self):
-        """Test that a window function can be applied to the data"""
-        
-        data = numpy.random.rand(4096)
-        
-        # N-taps
-        filterbank.fft(data, 256, P=2, window=numpy.blackman)
-        
-        # 4-taps
-        filterbank.fft4(data, 256,window=numpy.bartlett)
-        
-        # 16-taps
-        filterbank.fft16(data, 256,window=numpy.hanning)
-        
-    def test_filterbank2_complex64(self):
-        """Test the 2-tap filter band with complex64 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex64)
-        filterbank.fft2(data, 256)
-        
-    def test_filterbank2_complex128(self):
-        """Test the 2-tap filter band with complex128 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex128)
-        filterbank.fft2(data, 256)
-        
-    def test_filterbank4_complex64(self):
-        """Test the 4-tap filter band with complex64 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex64)
-        filterbank.fft4(data, 256)
-        
-    def test_filterbank4_complex128(self):
-        """Test the 4-tap filter band with complex128 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex128)
-        filterbank.fft4(data, 256)
-        
-    def test_filterbank8_complex64(self):
-        """Test the 8-tap filter band with complex64 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex64)
-        filterbank.fft8(data, 256)
-        
-    def test_filterbank8_complex128(self):
-        """Test the 8-tap filter band with complex128 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex128)
-        filterbank.fft8(data, 256)
-        
-    def test_filterbank16_complex64(self):
-        """Test the 16-tap filter band with complex64 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex64)
-        filterbank.fft16(data, 256)
-        
-    def test_filterbank16_complex128(self):
-        """Test the 16-tap filter band with complex128 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex128)
-        filterbank.fft16(data, 256)
-        
-    def test_window_complex64(self):
-        """Test that a window function can be applied to complex64 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex64)
-        
-        # N-taps
-        filterbank.fft(data, 256, P=2, window=numpy.blackman)
-        
-        # 4-taps
-        filterbank.fft4(data, 256,window=numpy.bartlett)
-        
-        # 16-taps
-        filterbank.fft16(data, 256,window=numpy.hanning)
-        
-    def test_window_complex128(self):
-        """Test that a window function can be applied to complex128 data"""
-        
-        data = numpy.random.rand(4096)
-        data = data.astype(numpy.complex128)
-        
-        # N-taps
-        filterbank.fft(data, 256, P=2, window=numpy.blackman)
-        
-        # 4-taps
-        filterbank.fft4(data, 256,window=numpy.bartlett)
-        
-        # 16-taps
-        filterbank.fft16(data, 256,window=numpy.hanning)
+        for ntap in (1, 2, 4, 8, 16):
+            for dtype in (numpy.float32, numpy.float64):
+                with self.subTest(ntap=ntap, dtype=dtype):
+                    self.run_filterbank_test(dtype, ntap=ntap, window=numpy.hamming)
 
 
 class filterbank_test_suite(unittest.TestSuite):
@@ -167,4 +85,3 @@ class filterbank_test_suite(unittest.TestSuite):
 
 if __name__ == '__main__':
     unittest.main()
-

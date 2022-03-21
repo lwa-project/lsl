@@ -12,6 +12,7 @@ import os
 import unittest
 import numpy
 import tempfile
+import shutil
 
 import aipy
 
@@ -29,9 +30,7 @@ __author__    = "Jayce Dowell"
 class simdp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.sim.dp
     module."""
-
-    testPath = None
-
+    
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
@@ -107,11 +106,7 @@ class simdp_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class  simdp_test_suite(unittest.TestSuite):

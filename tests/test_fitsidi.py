@@ -20,6 +20,7 @@ from lsl.common import stations as lwa_common
 from lsl.correlator import uvutils
 from lsl.writer import fitsidi
 from lsl.astro import unix_to_taimjd
+import lsl.testing
 
 
 __version__  = "0.2"
@@ -29,16 +30,14 @@ __author__   = "Jayce Dowell"
 class fitsidi_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.writer.fitsidi.idi
     class."""
-
-    testPath = None
-
+    
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-fitsidi-', suffix='.tmp')
 
-    def __initData(self):
+    def _init_data(self):
         """Private function to generate a random set of data for writing a FITS
         IDI file.  The data is returned as a dictionary with keys:
          * freq - frequency array in Hz
@@ -68,7 +67,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-W.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -88,7 +87,8 @@ class fitsidi_tests(unittest.TestCase):
         # Check that all of the extensions are there
         extNames = [hdu.name for hdu in hdulist]
         for ext in ['ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'BANDPASS', 'SOURCE', 'UV_DATA']:
-            self.assertTrue(ext in extNames)
+            with self.subTest(table=ext):
+                self.assertTrue(ext in extNames)
         # Check header values that we set
         self.assertEqual('Dowell, Jayce', hdulist[0].header['OBSERVER'])
         self.assertEqual('LD009', hdulist[0].header['PROJECT'])
@@ -107,7 +107,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-ERR.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         for i in range(4):
             # Start the file
@@ -121,6 +121,7 @@ class fitsidi_tests(unittest.TestCase):
             if i != 3:
                 fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
             self.assertRaises(RuntimeError, fits.write)
+            fits.close()
             
     def test_array_geometry(self):
         """Test the ARRAY_GEOMETRY table."""
@@ -129,7 +130,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-AG.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -160,7 +161,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-FQ.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -195,7 +196,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-AN.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -225,7 +226,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-BP.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -259,7 +260,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-SO.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -288,7 +289,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-UV.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -342,8 +343,7 @@ class fitsidi_tests(unittest.TestCase):
             visData = numpy.zeros(len(data['freq']), dtype=numpy.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            for vd, sd in zip(visData, data['vis'][i,:]):
-                self.assertAlmostEqual(vd, sd, 8)
+            numpy.testing.assert_allclose(visData, data['vis'][i,:])
             i = i + 1
         
         hdulist.close()
@@ -355,7 +355,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-SM.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -396,7 +396,7 @@ class fitsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-MultiIF.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
@@ -456,41 +456,33 @@ class fitsidi_tests(unittest.TestCase):
             visData = numpy.zeros(2*len(data['freq']), dtype=numpy.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            for vd, sd in zip(visData[:len(data['freq'])], data['vis'][i,:]):
-                self.assertAlmostEqual(vd, sd, 8)
-                
+            numpy.testing.assert_allclose(visData[:len(data['freq'])], data['vis'][i,:])
+            
             # Extract the data and run the comparison - IF 2
             visData = numpy.zeros(2*len(data['freq']), dtype=numpy.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            for vd, sd in zip(visData[len(data['freq']):], 10*data['vis'][i,:]):
-                self.assertAlmostEqual(vd, sd, 8)
+            numpy.testing.assert_allclose(visData[len(data['freq']):], 10*data['vis'][i,:])
                 
         hdulist.close()
         
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class aipsidi_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.writer.fitsidi.aips
     class."""
-
-    testPath = None
-
+    
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-aipsidi-', suffix='.tmp')
 
-    def __initData(self):
+    def _init_data(self):
         """Private function to generate a random set of data for writing a FITS
         IDI file.  The data is returned as a dictionary with keys:
         * freq - frequency array in Hz
@@ -520,7 +512,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-W.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
@@ -552,7 +544,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-AG.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
@@ -583,7 +575,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-FQ.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
@@ -618,7 +610,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-AN.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
@@ -648,7 +640,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-BP.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
@@ -682,7 +674,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-SO.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
@@ -711,7 +703,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-UV.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
@@ -765,8 +757,7 @@ class aipsidi_tests(unittest.TestCase):
             visData = numpy.zeros(len(data['freq']), dtype=numpy.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            for vd, sd in zip(visData, data['vis'][i,:]):
-                self.assertAlmostEqual(vd, sd, 8)
+            numpy.testing.assert_allclose(visData, data['vis'][i,:])
             i = i + 1
         
         hdulist.close()
@@ -778,7 +769,7 @@ class aipsidi_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'idi-test-SM.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)

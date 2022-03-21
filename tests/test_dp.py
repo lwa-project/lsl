@@ -14,6 +14,7 @@ import numpy
 
 from lsl.common import dp
 from lsl.common import stations
+import lsl.testing
 
 
 __version__  = "0.2"
@@ -67,20 +68,22 @@ class dp_software_tests(unittest.TestCase):
         
         sdp = dp.SoftwareDP()
         
-        sdp.set_mode("DRX")
-        for i in range(7,0,-1):
-            if i >= 3:
-                sdp.set_filter(i)
-            else:
-                self.assertRaises(ValueError, sdp.set_filter, i)
-                
-        sdp.set_mode("TBN")
-        for i in range(7,0,-1):
-            if i >= 5:
-                sdp.set_filter(i)
-            else:
-                self.assertRaises(ValueError, sdp.set_filter, i)
-                
+        with self.subTest(type='DRX'):
+            sdp.set_mode("DRX")
+            for i in range(7,0,-1):
+                if i >= 3:
+                    sdp.set_filter(i)
+                else:
+                    self.assertRaises(ValueError, sdp.set_filter, i)
+                    
+        with self.subTest(type='TBN'):
+            sdp.set_mode("TBN")
+            for i in range(7,0,-1):
+                if i >= 5:
+                    sdp.set_filter(i)
+                else:
+                    self.assertRaises(ValueError, sdp.set_filter, i)
+                    
     def test_frequency(self):
         """Test that SoftwareDP the tuning works."""
         

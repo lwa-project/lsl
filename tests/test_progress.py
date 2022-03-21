@@ -13,26 +13,30 @@ import numpy
 import unittest
 
 from lsl.common import progress
+import lsl.testing
 
-__version__  = "021"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
 class progress_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the regressions in LSL."""
     
-    def test_bar_default(self):
-        """Test the progress bar, default options."""
-        
-        pbar = progress.ProgressBar()
+    def run_bar_default_test(self, bartype):
+        pbar = bartype()
         for i in range(101):
             pbar.inc(2)
             pbar.dec(1)
+    
+    def test_bar_default(self):
+        """Test the progress bar."""
         
-    def test_bar_attributes(self):
-        """Test the progress bar's attributes."""
-        
-        pbar2 = progress.ProgressBar()
+        for bartype in (progress.ProgressBar, progress.ProgressBarPlus, progress.DownloadBar):
+            with self.subTest(bartype=bartype):
+                self.run_bar_default_test(bartype)
+                
+    def run_bar_attibutes_test(self, bartype):
+        pbar2 = bartype()
         for i in range(101):
             pbar2 += 2
             pbar2 -= 1
@@ -41,93 +45,33 @@ class progress_tests(unittest.TestCase):
             pbar2 = pbar2 - 1
             
             self.assertEqual(pbar2.amount, i+1)
+            
+    def test_bar_attributes(self):
+        """Test the progress bar's attributes."""
+        
+        for bartype in (progress.ProgressBar, progress.ProgressBarPlus, progress.DownloadBar):
+            with self.subTest(bartype=bartype):
+                self.run_bar_attibutes_test(bartype)
+                
+    def run_bar_show_test(self, bartype):
+        # With percentage
+        pbar = bartype()
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
+            
+        # Without percentage
+        pbar = bartype(print_percent=False)
+        for i in range(101):
+            pbar.inc(1)
+            pbar.show()
             
     def test_bar_show(self):
         """Test the progress bar's rendering."""
         
-        # With percentage
-        pbar = progress.ProgressBar()
-        for i in range(101):
-            pbar.inc(1)
-            pbar.show()
-            
-        # Without percentage
-        pbar = progress.ProgressBar(print_percent=False)
-        for i in range(101):
-            pbar.inc(1)
-            pbar.show()
-            
-    def test_bar_plus_default(self):
-        """Test the progress bar plus, default options."""
-        
-        pbar = progress.ProgressBarPlus()
-        for i in range(101):
-            pbar.inc(2)
-            pbar.dec(1)
-        
-    def test_bar_plus_attributes(self):
-        """Test the progress bar plus's attributes."""
-        
-        pbar2 = progress.ProgressBarPlus()
-        for i in range(101):
-            pbar2 += 2
-            pbar2 -= 1
-            
-            pbar2 = pbar2 + 1
-            pbar2 = pbar2 - 1
-            
-            self.assertEqual(pbar2.amount, i+1)
-            
-    def test_bar_plus_show(self):
-        """Test the progress bar plus's rendering."""
-        
-        # With percentage
-        pbar = progress.ProgressBarPlus()
-        for i in range(101):
-            pbar.inc(1)
-            pbar.show()
-            
-        # Without percentage
-        pbar = progress.ProgressBarPlus(print_percent=False)
-        for i in range(101):
-            pbar.inc(1)
-            pbar.show()
-            
-    def test_download_default(self):
-        """Test the download bar, default options."""
-        
-        pbar = progress.ProgressBarPlus()
-        for i in range(101):
-            pbar.inc(2)
-            pbar.dec(1)
-        
-    def test_download_attributes(self):
-        """Test the download bar's attributes."""
-        
-        pbar2 = progress.DownloadBar()
-        for i in range(101):
-            pbar2 += 2
-            pbar2 -= 1
-            
-            pbar2 = pbar2 + 1
-            pbar2 = pbar2 - 1
-            
-            self.assertEqual(pbar2.amount, i+1)
-            
-    def test_download_show(self):
-        """Test the download bar's rendering."""
-        
-        # With percentage
-        pbar = progress.DownloadBar()
-        for i in range(101):
-            pbar.inc(1)
-            pbar.show()
-            
-        # Without percentage
-        pbar = progress.DownloadBar(print_percent=False)
-        for i in range(101):
-            pbar.inc(1)
-            pbar.show()
+        for bartype in (progress.ProgressBar, progress.ProgressBarPlus, progress.DownloadBar):
+            with self.subTest(bartype=bartype):
+                self.run_bar_show_test(bartype)
 
 
 class progress_test_suite(unittest.TestSuite):

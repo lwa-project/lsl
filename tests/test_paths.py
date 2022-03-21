@@ -44,6 +44,7 @@ class paths_tests(unittest.TestCase):
         timeFile = os.path.join(dataPath, 'astro', 'Leap_Second.dat')
         self.assertTrue(os.path.exists(timeFile))
 
+
 class paths_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.common.paths
     module unit tests."""

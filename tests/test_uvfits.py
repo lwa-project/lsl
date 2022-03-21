@@ -30,15 +30,13 @@ class uvfits_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.writer.uvfits.uv
     class."""
     
-    testPath = None
-    
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
         
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-uvfits-', suffix='.tmp')
         
-    def __initData(self):
+    def _init_data(self):
         """Private function to generate a random set of data for writing a UVFITS
         file.  The data is returned as a dictionary with keys:
          * freq - frequency array in Hz
@@ -68,7 +66,7 @@ class uvfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'uv-test-W.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = uvfits.Uv(testFile, ref_time=testTime)
@@ -100,7 +98,7 @@ class uvfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'uv-test-AG.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = uvfits.Uv(testFile, ref_time=testTime)
@@ -131,7 +129,7 @@ class uvfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'uv-test-AN.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = uvfits.Uv(testFile, ref_time=testTime)
@@ -157,7 +155,7 @@ class uvfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'uv-test-FQ.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = uvfits.Uv(testFile, ref_time=testTime)
@@ -187,7 +185,7 @@ class uvfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'uv-test-SU.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = uvfits.Uv(testFile, ref_time=testTime)
@@ -211,7 +209,7 @@ class uvfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'uv-test-BP.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = uvfits.Uv(testFile, ref_time=testTime)
@@ -235,7 +233,7 @@ class uvfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'uv-test-UV.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = uvfits.Uv(testFile, ref_time=testTime)
@@ -301,8 +299,7 @@ class uvfits_tests(unittest.TestCase):
             visData = numpy.zeros(len(data['freq']), dtype=numpy.complex64)
             visData.real = vis[:,0,0]
             visData.imag = vis[:,0,1]
-            for vd, sd in zip(visData, data['vis'][i,:]):
-                self.assertAlmostEqual(vd, sd, 8)
+            numpy.testing.assert_allclose(visData, data['vis'][i,:])
             i = i + 1
             
         hdulist.close()
