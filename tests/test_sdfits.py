@@ -13,6 +13,7 @@ import time
 import unittest
 import numpy
 import tempfile
+import shutil
 from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
@@ -26,8 +27,6 @@ __author__    = "Jayce Dowell"
 class sdfits_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.writer.sdfits
     module."""
-
-    testPath = None
     
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
@@ -35,7 +34,7 @@ class sdfits_tests(unittest.TestCase):
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-sdfits-', suffix='.tmp')
 
-    def __initData(self):
+    def _init_data(self):
         """Private function to generate a random set of data for writing a SDFITS 
         file.  The data is returned as a dictionary with keys:
         * freq - frequency array in Hz
@@ -63,7 +62,7 @@ class sdfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'sd-test-W.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = sdfits.Sd(testFile, ref_time=testTime)
@@ -73,6 +72,7 @@ class sdfits_tests(unittest.TestCase):
         fits.add_history('This is history')
         fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -93,7 +93,7 @@ class sdfits_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'sd-test-data.fits')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = sdfits.Sd(testFile, ref_time=testTime)
@@ -101,6 +101,7 @@ class sdfits_tests(unittest.TestCase):
         fits.set_frequency(data['freq'])
         fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])
         fits.write()
+        fits.close()
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
@@ -121,8 +122,7 @@ class sdfits_tests(unittest.TestCase):
                     i = i + 1
             
             # Extract the data and run the comparison
-            for fd, sd in zip(spec[0,0,0,:], data['spec'][i,:]):
-                self.assertAlmostEqual(fd, sd, 8)
+            numpy.testing.assert_allclose(spec[0,0,0,:], data['spec'][i,:])
             i = i + 1
         
         hdulist.close()
@@ -130,11 +130,7 @@ class sdfits_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class  sdfits_test_suite(unittest.TestSuite):

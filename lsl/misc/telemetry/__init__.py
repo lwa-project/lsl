@@ -32,28 +32,37 @@ from lsl.config import LSL_CONFIG
 TELE_CONFIG = LSL_CONFIG.view('telemetry')
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
            'track_script', 'track_module',
            'track_function', 'track_function_timed',
            'track_method', 'track_method_timed']
 
 
-# Create the cache directory
-if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-    os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-_CACHE_DIR = os.path.join(os.path.expanduser('~'), '.lsl', 'telemetry_cache')
-if not os.path.exists(_CACHE_DIR):
-    os.mkdir(_CACHE_DIR)
+try:
+    # Create the cache directory
+    if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
+        os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
+    _CACHE_DIR = os.path.join(os.path.expanduser('~'), '.lsl', 'telemetry_cache')
+    if not os.path.exists(_CACHE_DIR):
+        os.mkdir(_CACHE_DIR)
 
-# Load the install ID key, creating it if it doesn't exist
-_INSTALL_KEY = os.path.join(_CACHE_DIR, 'install.key')
-if not os.path.exists(_INSTALL_KEY):
-    with open(_INSTALL_KEY, 'w') as fh:
-        fh.write(str(uuid.uuid4()))
+    # Load the install ID key, creating it if it doesn't exist
+    _INSTALL_KEY = os.path.join(_CACHE_DIR, 'install.key')
+    if not os.path.exists(_INSTALL_KEY):
+        with open(_INSTALL_KEY, 'w') as fh:
+            fh.write(str(uuid.uuid4()))
 
-with open(_INSTALL_KEY, 'r') as fh:
-    _INSTALL_KEY = fh.read().rstrip()
+    with open(_INSTALL_KEY, 'r') as fh:
+        _INSTALL_KEY = fh.read().rstrip()
+        
+    _IS_READONLY = False
+except OSError as e:
+    _INSTALL_KEY = None
+    _IS_READONLY = True
+    
+    warnings.warn("Could not create telemetry cache, telemetry will be disabled for this session: %s" % str(e),
+                  RuntimeWarning)
 
 
 class _TelemetryClient(object):
@@ -76,12 +85,17 @@ class _TelemetryClient(object):
         self._cache = {}
         self._cache_count = 0
         
-        # Reporting lockout
-        self.active = TELE_CONFIG.get('enabled')
-        
-        # Register the "send" method to be called by atexit... at exit
-        atexit.register(self.send, True)
-        
+        if not _IS_READONLY:
+            # Reporting lockout
+            self.active = TELE_CONFIG.get('enabled')
+            
+            # Register the "send" method to be called by atexit... at exit
+            if not _IS_READONLY:
+                atexit.register(self.send, True)
+                
+        else:
+            self.active = False
+            
     def track(self, name, timing=0.0):
         """
         Add an entry to the telemetry cache with optional timing information.
@@ -165,8 +179,9 @@ class _TelemetryClient(object):
         """
         
         TELE_CONFIG.set('enabled', True)
-        self.active = TELE_CONFIG.get('enabled')
-        
+        if not _IS_READONLY:
+            self.active = TELE_CONFIG.get('enabled')
+            
     def disable(self):
         """
         Disable saving data to the telemetry cache in a persistent way.

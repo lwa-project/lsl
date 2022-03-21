@@ -1,13 +1,13 @@
 """
-Module for writing spectrometer output to a SDFITS file.  The SDFITS created by this 
-modulefiles closely follow the Parkes variant of the SDFITS convention 
-(see [http://fits.gsfc.nasa.gov/registry/sdfits.html]).  The main differences between 
-the two is that the LWA SDFITS do not contain calbration or weather information.  This,
-however, should not stop the files from being loaded into CASA with the ATNF Spectral 
-Analysis Package (ASAP).
+Module for writing spectrometer output to a SDFITS file.  The SDFITS created by
+this module closely follow the Parkes variant of the SDFITS convention
+(see [http://fits.gsfc.nasa.gov/registry/sdfits.html]).  The main differences
+between the two is that the LWA SDFITS do not contain calbration or weather
+information.  This, however, should not stop the files from being loaded into
+CASA with the ATNF Spectral Analysis Package (ASAP).
 
 .. versionchanged:: 0.5.0
-    The classes and functions defined in this module are based heavily off 
+    The classes and functions defined in this module are based heavily off
     the :mod:`lsl.writer.fitsidi` writer.
 """
 
@@ -21,13 +21,16 @@ import os
 import gc
 import numpy
 import warnings
+from astropy.time import Time as AstroTime
 from astropy.io import fits as astrofits
 from datetime import datetime
 from functools import cmp_to_key
 
 from lsl import astro
+from lsl.reader.base import FrameTimestamp
 from lsl.common.stations import lwa1
 from lsl.writer.fitsidi import WriterBase
+from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -73,13 +76,13 @@ class Sd(WriterBase):
             
     def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
-        Initialize a new SDFITS object using a filename and a reference time 
-        given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+        Initialize a new SDFITS object using a filename and a reference time
+        given in seconds since the UNIX 1970 ephem, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
             Added the 'memmap' and 'overwrite' keywords to control if the file
-            is memory mapped and whether or not to overwrite an existing file, 
+            is memory mapped and whether or not to overwrite an existing file,
             respectively.
         """
 
@@ -141,7 +144,12 @@ class Sd(WriterBase):
             numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol
-        
+            
+        if isinstance(obsTime, FrameTimestamp):
+            obsTime = obsTime.tai_mjd
+        elif isinstance(obsTime, AstroTime):
+            obsTime = obsTime.tai.mjd
+            
         dataDict = {}
         for i,b in enumerate(beam):
             dataDict[b] = data[i,:]
@@ -197,7 +205,7 @@ class Sd(WriterBase):
         primary.header['NAXIS'] = (0, 'indicates SD file')
         primary.header['EXTEND'] = (True, 'indicates SD file')
         ts = str(astro.get_date_from_sys())
-        primary.header['DATE'] = (ts.split()[0], 'IDI file creation date')
+        primary.header['DATE'] = (ts.split()[0], 'SDFITS file creation date')
         primary.header['ORIGIN'] = 'LSL SDFITS writer'
         primary.header['TELESCOP'] = (self.site.name, 'Telescope name')
         
@@ -273,7 +281,7 @@ class Sd(WriterBase):
                         try:
                             matrix[p,:] = tempMList[self.stokes[p]][b]
                         except KeyError:
-                            warnings.warn('Key mis-match %s %s' % (str(b), str(tempMList[self.stokes[p]].keys())), RuntimeWarning)
+                            warnings.warn(colorfy("{{%%yellow Key mis-match %s %s}}" % (str(b), str(tempMList[self.stokes[p]].keys()))), RuntimeWarning)
                             
                     mList.append(matrix.ravel())
                 scanCount += 1

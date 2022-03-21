@@ -9,6 +9,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import os
+import numpy
 import unittest
 
 from lsl.common.paths import DATA_BUILD
@@ -133,43 +134,19 @@ class reader_adp_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(12*256*2):
-            c = i // 2 // 256
-            s = i // 2 % 256
-            p = i % 2
-            self.assertAlmostEqual(frameT.payload.data[c,s,p], 2*frames[0].payload.data[c,s,p], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        for i in range(12*256*2):
-            c = i // 2 // 256
-            s = i // 2 % 256
-            p = i % 2
-            self.assertAlmostEqual(frameT.payload.data[c,s,p], 4*frames[0].payload.data[c,s,p], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        for i in range(12*256*2):
-            c = i // 2 // 256
-            s = i // 2 % 256
-            p = i % 2
-            self.assertAlmostEqual(frameT.payload.data[c,s,p], frames[0].payload.data[c,s,p]*frames[1].payload.data[c,s,p], 2)
-            
+        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(800):
-            c = i // 2 // 256
-            s = i // 2 % 256
-            p = i % 2
-            self.assertAlmostEqual(frameA.payload.data[c,s,p], 2+frames[0].payload.data[c,s,p], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        for i in range(800):
-            c = i // 2 // 256
-            s = i // 2 % 256
-            p = i % 2
-            self.assertAlmostEqual(frameA.payload.data[c,s,p], 4+frames[0].payload.data[c,s,p], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        for i in range(800):
-            c = i // 2 // 256
-            s = i // 2 % 256
-            p = i % 2
-            self.assertAlmostEqual(frameA.payload.data[c,s,p], frames[0].payload.data[c,s,p]+frames[1].payload.data[c,s,p], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
             
      ### COR ###
     
@@ -279,39 +256,20 @@ class reader_adp_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(72):
-            for j in range(2):
-                for k in range(2):
-                    self.assertAlmostEqual(frameT.payload.data[i,j,k], 2*frames[0].payload.data[i,j,k], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        for i in range(72):
-            for j in range(2):
-                for k in range(2):
-                    self.assertAlmostEqual(frameT.payload.data[i,j,k], 4*frames[0].payload.data[i,j,k], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        for i in range(72):
-            for j in range(2):
-                for k in range(2):
-                    self.assertAlmostEqual(frameT.payload.data[i,j,k], frames[0].payload.data[i,j,k]*frames[1].payload.data[i,j,k], 2)
-            
+        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(72):
-            for j in range(2):
-                for k in range(2):
-                    self.assertAlmostEqual(frameA.payload.data[i,j,k], 2+frames[0].payload.data[i,j,k], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        for i in range(72):
-            for j in range(2):
-                for k in range(2):
-                    self.assertAlmostEqual(frameA.payload.data[i,j,k], 4+frames[0].payload.data[i,j,k], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        for i in range(72):
-            for j in range(2):
-                for k in range(2):
-                    self.assertAlmostEqual(frameA.payload.data[i,j,k], frames[0].payload.data[i,j,k]+frames[1].payload.data[i,j,k], 2)
-            
-        
+        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
+
 
 class reader_adp_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.reader units 

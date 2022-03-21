@@ -68,19 +68,19 @@ def split_baseline(baseline, shift=None):
 class Uv(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array
-    geometry, frequency setup, etc., to a UVFITS file that can be read into 
+    geometry, frequency setup, etc., to a UVFITS file that can be read into
     AIPS via the UVLOD task.
     """
     
     def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
-        Initialize a new UVFITS object using a filename and a reference time 
-        given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+        Initialize a new UVFITS object using a filename and a reference time
+        given in seconds since the UNIX 1970 ephem, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
             Added the 'memmap' and 'overwrite' keywords to control if the file
-            is memory mapped and whether or not to overwrite an existing file, 
+            is memory mapped and whether or not to overwrite an existing file,
             respectively.
         """
         
@@ -148,7 +148,8 @@ class Uv(WriterBase):
         # If the mapper has been enabled, tell the user about it
         if enableMapper and self.verbose:
             print("UVFITS: stand ID mapping enabled")
-            for key, value in mapper.iteritems():
+            for key in mapper.keys():
+                value = mapper[key]
                 print("UVFITS:  stand #%i -> mapped #%i" % (key, value))
                 
         self.nAnt = len(ants)
@@ -180,7 +181,7 @@ class Uv(WriterBase):
             
     def write(self):
         """
-        Fill in the FITS-IDI file will all of the tables in the 
+        Fill in the UVFITS file will all of the tables in the
         correct order.
         """
         
@@ -266,10 +267,15 @@ class Uv(WriterBase):
         for dataSet in self.data:
             # Sort the data by packed baseline
             try:
-                order
+                if len(dataSet.visibilities) != len(order):
+                    raise NameError
             except NameError:
                 order = dataSet.argsort(mapper=mapper)
-                
+                try:
+                    del baselineMapped
+                except NameError:
+                    pass
+                    
             # Deal with defininig the values of the new data set
             if dataSet.pol == self.stokes[0]:
                 ## Figure out the new date/time for the observation
@@ -348,6 +354,8 @@ class Uv(WriterBase):
                 
                 ### Zero out the visibility data
                 try:
+                    if matrix.shape[0] != len(order):
+                        raise NameError
                     matrix *= 0.0
                 except NameError:
                     matrix = numpy.zeros((len(order), 1, 1, self.nChan, self.nStokes, 2), dtype=numpy.float32)

@@ -262,28 +262,26 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
     # Load in the response of a single isolated stand
     standBeam = _load_stand_response(freq)
     
-    # The multiprocessing module allows for the creation of worker pools to help speed
-    # things along.  If the processing module is found, use it.  Otherwise, set
-    # the 'usePool' variable to false and run single threaded.
-    try:
-        from multiprocessing import Pool, cpu_count
-        
-        # To get results pack from the pool, you need to keep up with the workers.  
-        # In addition, we need to keep up with which workers goes with which 
-        # baseline since the workers are called asynchronously.  Thus, we need a 
-        # taskList array to hold tuples of baseline ('count') and workers.
-        taskPool = Pool(processes=cpu_count())
-        taskList = []
-        
-        usePool = True
-        progress = False
-    except ImportError:
-        usePool = False
-        
-    # Turn off the thread pool if we are explicitly told not to use it.
-    if disable_pool:
-        usePool = False
-        
+    usePool = False
+    if not disable_pool:
+        # The multiprocessing module allows for the creation of worker pools to help speed
+        # things along.  If the processing module is found, use it.  Otherwise, set
+        # the 'usePool' variable to false and run single threaded.
+        try:
+            from multiprocessing import Pool, cpu_count
+            
+            # To get results pack from the pool, you need to keep up with the workers.  
+            # In addition, we need to keep up with which workers goes with which 
+            # baseline since the workers are called asynchronously.  Thus, we need a 
+            # taskList array to hold tuples of baseline ('count') and workers.
+            taskPool = Pool(processes=cpu_count())
+            taskList = []
+            
+            usePool = True
+            progress = False
+        except ImportError:
+            pass
+            
     # Build up the beam shape over all azimuths and elevations
     beam_shape =  numpy.zeros((360,90))
     for az in list(range(360)):

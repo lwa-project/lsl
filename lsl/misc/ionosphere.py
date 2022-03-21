@@ -12,13 +12,17 @@ if sys.version_info < (3,):
 import os
 import glob
 import gzip
+import unlzw
 import numpy
 import socket
 import shutil
 import tarfile
-import tempfile
 import warnings
 import subprocess
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 try:
     from urllib2 import urlopen
 except ImportError:
@@ -38,6 +42,8 @@ from lsl.common.stations import geo_to_ecef
 from lsl.common.paths import DATA as dataPath
 from lsl.common.progress import DownloadBar
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
+from lsl.misc.file_cache import FileCache, MemoryCache
+from lsl.common.color import colorfy
 
 from lsl.config import LSL_CONFIG
 IONO_CONFIG = LSL_CONFIG.view('ionosphere')
@@ -47,21 +53,22 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = "0.5"
+__version__ = "0.6"
 __all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
            'get_tec_value', 'get_ionospheric_pierce_point']
 
 
 # Create the cache directory
-if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-    os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-_CACHE_DIR = os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache')
-if not os.path.exists(_CACHE_DIR):
-    os.mkdir(_CACHE_DIR)
+try:
+    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache'),
+                           max_size=lambda: IONO_CONFIG.get('max_cache_size'))
+except OSError:
+    _CACHE_DIR = MemoryCache(max_size=lambda: IONO_CONFIG.get('max_cache_size'))
+    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
 
 
 # Create the on-line cache
-_CACHE = {}
+_ONLINE_CACHE = {}
 
 # Radius of the Earth in meters for the IGRF
 _RADIUS_EARTH = 6371.2*1e3
@@ -130,7 +137,7 @@ def _load_igrf(filename):
 
 def _compute_igrf_coefficents(year, coeffs):
     """
-    Given a decimal year and a coefficient dictionary from _parseIGRFModel(),
+    Given a decimal year and a coefficient dictionary from _load_igrf(),
     compute the actual coefficients for that epoch and return a dictionary
     containing the cosine and sine coefficients for that year.
     
@@ -290,12 +297,12 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     
     # Load in the coefficients
     try:
-        coeffs = _CACHE['IGRF']
+        coeffs = _ONLINE_CACHE['IGRF']
     except KeyError:
         filename = os.path.join(dataPath, 'igrf13coeffs.txt')
-        _CACHE['IGRF'] = _load_igrf(filename)
+        _ONLINE_CACHE['IGRF'] = _load_igrf(filename)
         
-        coeffs = _CACHE['IGRF']
+        coeffs = _ONLINE_CACHE['IGRF']
         
     # Compute the coefficients for the epoch
     coeffs = _compute_igrf_coefficents(year, coeffs)
@@ -400,29 +407,21 @@ def compute_magnetic_inclination(Bn, Be, Bz):
     return incl*180.0/numpy.pi
 
 
-def _cache_management():
+def _convert_to_gzip(filename):
     """
-    Simple cache manager.  It controls the size of the cache.
+    Given a unix compressed .Z file, convert it to a gzip .gz file and update
+    the cache.
     """
     
-    if IONO_CONFIG.get('max_cache_size') > 0:
-        # Get the list of files, their sizes, and their modificatio times
-        filenames = glob.glob(os.path.join(_CACHE_DIR, '*'))
-        sizes = [os.path.getsize(f)/1024.**2 for f in filenames]
-        mtimes = [os.path.getmtime(f) for f in filenames]
+    # Load in the file
+    with _CACHE_DIR.open(filename, 'rb') as fh:
+        compressed = fh.read()
+    uncompressed = unlzw.unlzw(compressed)
         
-        # Delete until we mee the cache size limit or until there is only one
-        # file left (the most recent one)
-        while sum(sizes) > IONO_CONFIG.get('max_cache_size') and len(filenames) > 1:
-            oldest = min(mtimes)
-            idx = mtimes.index(oldest)
-            try:
-                os.path.unlink(filenames[idx])
-                del filenames[idx]
-                del sizes[idx]
-                del mtimes[idx]
-            except OSError:
-                pass
+    # Write it back out
+    with _CACHE_DIR.open(filename, 'wb') as fh:
+        with gzip.GzipFile(fileobj=fh, mode='wb') as gh:
+            gh.write(uncompressed)
 
 
 def _download_worker_cddis(url, filename):
@@ -452,7 +451,8 @@ def _download_worker_cddis(url, filename):
     except FTP_ERROR:
         ftps.close()
         return False
-    with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+        
+    with _CACHE_DIR.open(filename, 'wb') as fh:
         pbar = DownloadBar(max=remote_size)
         def write(data):
             fh.write(data)
@@ -465,18 +465,14 @@ def _download_worker_cddis(url, filename):
         sys.stdout.flush()
         
     if not status.startswith("226"):
-        try:
-            os.unlink(filename)
-        except OSError:
-            pass
+        _CACHE_DIR.remove(filename)
         ftps.close()
         return False
         
     ## Further processing, if needed
     if os.path.splitext(filename)[1] == '.Z':
         ## Save it to a regular gzip'd file after uncompressing it.
-        subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-        subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
+        _convert_to_gzip(filename)
         
     # Done
     ftps.close()
@@ -513,7 +509,7 @@ def _download_worker_standard(url, filename):
         sys.stdout.write(pbar.show()+'\n')
         sys.stdout.flush()
     except IOError as e:
-        warnings.warn('Error downloading file from %s: %s' % (url, str(e)), RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         data = ''
     except socket.timeout:
         data = ''
@@ -525,14 +521,13 @@ def _download_worker_standard(url, filename):
         return False
     else:
         ## Success!  Save it to a file
-        with open(os.path.join(_CACHE_DIR, filename), 'wb') as fh:
+        with _CACHE_DIR.open(filename, 'wb') as fh:
             fh.write(data)
             
         ## Further processing, if needed
         if os.path.splitext(filename)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
-            subprocess.check_call(['gunzip', '-f', os.path.join(_CACHE_DIR, filename)])
-            subprocess.check_call(['gzip', '-f', os.path.join(_CACHE_DIR, os.path.splitext(filename)[0])])
+            _convert_to_gzip(filename)
             
         return True
 
@@ -547,10 +542,6 @@ def _download_worker(url, filename):
         status = _download_worker_cddis(url, filename)
     else:
         status = _download_worker_standard(url, filename)
-        
-    if status:
-        # Cache size management
-        _cache_management()
         
     return status
 
@@ -720,7 +711,7 @@ def _download_ustec(mjd):
     return _download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, filename), filename)
 
 
-def _parse_tec_map(filename):
+def _parse_tec_map(filename_or_fh):
     """
     Given the name of a file containing a TEC map from the IGC, parse it 
     and return a dictionary containing the files data.
@@ -745,8 +736,12 @@ def _parse_tec_map(filename):
     inMap = False
     inBlock = False
     
-    # Go
-    with gzip.open(filename, 'r') as fh:
+    try:
+        fh = gzip.GzipFile(filename_or_fh, 'rb')
+    except TypeError:
+        fh = gzip.GzipFile(fileobj=filename_or_fh, mode='rb')
+        
+    try:
         for line in fh:
             try:
                 line = line.decode('ascii', errors='ignore')
@@ -827,6 +822,9 @@ def _parse_tec_map(filename):
                     cmap[-1].extend( fields )
                     continue
                     
+    finally:
+        fh.close()
+        
     # Combine everything together
     dates = numpy.array(dates, dtype=numpy.float64)
     tec = numpy.array(tecMaps, dtype=numpy.float32)
@@ -848,11 +846,10 @@ def _parse_tec_map(filename):
     return output
 
 
-def _parse_ustec_individual(filename):
+def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
     """
-    Parse an individual TEC map from the USTEC project.  This returns a five-
+    Parse an individual TEC map from the USTEC project.  This returns a four-
     element tuple of:
-     * datetime for the start of the map
      * 2-D array of latitude values for the maps in degrees
      * 2-D array of longitude values for the maps in degrees
      * 2-D array of TEC values in TECU.  The dimensions are latitude by 
@@ -864,12 +861,15 @@ def _parse_ustec_individual(filename):
     https://www.ngdc.noaa.gov/stp/iono/ustec/README.html
     """
     
-    # Get the date/time from the filename
-    dt = os.path.basename(filename).split('_')[0]
-    dt = datetime.strptime(dt, "%Y%m%d%H%M")
-    
     # Open the TEC file for reading
-    with open(filename, 'r') as fh:
+    try:
+        fh = open(filename_or_fh, 'r')
+        do_close = True
+    except TypeError:
+        fh = filename_or_fh
+        do_close = False
+        
+    try:
         # Go!
         inBlock = False
         lats = []
@@ -900,6 +900,10 @@ def _parse_ustec_individual(filename):
                 lats.append( float(fields[0])/10 )
                 data.append( [float(f)/10 for f in fields[1:]] )
                 
+    finally:
+        if do_close:
+            fh.close()
+            
     # Bring it into NumPy
     lats = numpy.array(lats)
     lngs = numpy.array(lngs)
@@ -907,10 +911,16 @@ def _parse_ustec_individual(filename):
     data = numpy.array(data)
     
     # Check for an associated RMS file
-    rmsname = filename.replace('_TEC', '_ERR')
-    if os.path.exists(rmsname):
+    if rmsname_or_fh is not None:
         ## Oh good, we have one
-        with open(rmsname, 'r') as fh:
+        try:
+            fh = open(rmsname_or_fh, 'r')
+            do_close = True
+        except TypeError:
+            fh = rmsname_or_fh
+            do_close = False
+            
+        try:
             ## Go! (again)
             inBlock = False
             rlats = []
@@ -941,6 +951,10 @@ def _parse_ustec_individual(filename):
                     rlats.append( float(fields[0])/10 )
                     rdata.append( [float(f)/10 for f in fields[1:]] )
                     
+        finally:
+            if do_close:
+                fh.close()
+                
         # Bring it into NumPy
         rlats = numpy.array(rlats)
         rlngs = numpy.array(rlngs)
@@ -965,10 +979,10 @@ def _parse_ustec_individual(filename):
     rms  = rms[::-1,:]
     
     # Done
-    return dt, lats, lngs, data, rms
+    return lats, lngs, data, rms
 
 
-def _parse_ustec_height(filename):
+def _parse_ustec_height(filename_or_fh):
     """
     Parse emperical orthonormal functions to come up with an effective 
     height for the ionosphere.
@@ -978,7 +992,14 @@ def _parse_ustec_height(filename):
     """
     
     # Open the EOF file for reading
-    with open(filename, 'r') as fh:
+    try:
+        fh = open(filename_or_fh, 'r')
+        do_close = True
+    except TypeError:
+        fh = filename_or_fh
+        do_close = False
+        
+    try:
         # Go!
         inBlock = False
         heights = []
@@ -1003,6 +1024,10 @@ def _parse_ustec_height(filename):
                 height += step
                 data.append( float(fields[0]) )
                 
+    finally:
+        if do_close:
+            fh.close()
+            
     # Bring it into Numpy and get an average height
     heights = numpy.array(heights)
     data = numpy.array(data)
@@ -1012,7 +1037,7 @@ def _parse_ustec_height(filename):
     return height
 
 
-def _parse_ustec_map(filename):
+def _parse_ustec_map(filename_or_fh):
     """
     Given the name of a file containing a TEC map from the USTEC project, 
     parse it and return a dictionary containing the files data.
@@ -1028,52 +1053,82 @@ def _parse_ustec_map(filename):
         by latitude by longitude.
     """
     
-    tempDir = tempfile.mkdtemp(prefix='ionosphere-')
-    
-    tf = tarfile.open(filename, 'r:*')
-    tecFiles = [tio for tio in tf.getmembers() if tio.name.find('_TEC.txt') != -1]
-    errFiles = [tio for tio in tf.getmembers() if tio.name.find('_ERR.txt') != -1]
-    eofFiles = [tio for tio in tf.getmembers() if tio.name.find('_EOF.txt') != -1]
-    tf.extractall(path=tempDir, members=tecFiles)
-    tf.extractall(path=tempDir, members=errFiles)
-    tf.extractall(path=tempDir, members=eofFiles)
-    
-    # Variables to hold the map sequences
-    dates = []
-    tecMaps = []
-    rmsMaps = []
-    
-    # Get all of the TEC map files and load them in
-    tecfilenames = glob.glob(os.path.join(tempDir, '*_TEC.txt'))
-    tecfilenames.sort()
-    for tecfilename in tecfilenames:
+    try:
+        tf = tarfile.open(filename_or_fh, 'r:*')
+        do_close = True
+    except TypeError:
+        tf = tarfile.open(fileobj=filename_or_fh, mode='r:*')
+        do_close = False
+        
+    valid_filename = lambda x: ((x.find('_TEC.txt') != -1) \
+                                or (x.find('_ERR.txt') != -1) \
+                                or (x.find('_EOF.txt') != -1))
+    try:
+        tecFiles = {}
+        errFiles = {}
+        eofFiles = {}
+        for entry in tf:
+            if not valid_filename(entry.name):
+                continue
+                
+            contents = tf.extractfile(entry.name).read()
+            try:
+                contents = contents.decode()
+            except AttributeError:
+                # Python2 catch
+                pass
+            contents = StringIO(contents)
+            
+            if entry.name.find('_TEC.txt') != -1:
+                tecFiles[entry.name] = contents
+            elif entry.name.find('_ERR.txt') != -1:
+                errFiles[entry.name] = contents
+            elif entry.name.find('_EOF.txt') != -1:
+                eofFiles[entry.name] = contents
+                
+        # Variables to hold the map sequences
+        dates = []
+        tecMaps = []
+        rmsMaps = []
+        
+        # Get all of the TEC map files and load them in
+        tecfilenames = list(tecFiles.keys())
+        tecfilenames.sort()
+        for tecfilename in tecfilenames:
+            tecfh = tecFiles[tecfilename]
+            try:
+                rmsfilename = tecfilename.replace('_TEC', '_ERR')
+                rmsfh = errFiles[rmsfilename]
+            except KeyError:
+                rmsfh = None
+            lats, lngs, tec, rms = _parse_ustec_individual(tecfh, rmsname_or_fh=rmsfh)
+            
+            ### Figure out the MJD
+            dt = os.path.basename(tecfilename).split('_')[0]
+            dt = datetime.strptime(dt, "%Y%m%d%H%M")
+            mjd, mpm = datetime_to_mjdmpm(dt)
+            mjd = mjd + mpm/1000.0/3600.0/24.0
+            if mjd not in dates:
+                dates.append( mjd )
+                
+            # Stack on the new TEC and RMS maps
+            tecMaps.append( tec )
+            rmsMaps.append( rms )
+                
+            #except Exception as e:
+                #pass
+                
+        # Get the mean ionospheric height
+        eoffilename = list(eofFiles.keys())[0]
         #try:
-        dt, lats, lngs, tec, rms = _parse_ustec_individual(tecfilename)
+        height = _parse_ustec_height(eofFiles[eoffilename])
+        #except:
+        #	height = 450
         
-        ### Figure out the MJD
-        mjd, mpm = datetime_to_mjdmpm(dt)
-        mjd = mjd + mpm/1000.0/3600.0/24.0
-        if mjd not in dates:
-            dates.append( mjd )
+    finally:
+        if do_close:
+            tf.close()
             
-        # Stack on the new TEC and RMS maps
-        tecMaps.append( tec )
-        rmsMaps.append( rms )
-            
-        #except Exception as e:
-            #pass
-            
-    # Get the mean ionospheric height
-    eoffilename = glob.glob(os.path.join(tempDir, '*_EOF.txt'))[0]
-    #try:
-    height = _parse_ustec_height(eoffilename)
-    #except:
-    #	height = 450
-        
-    # Cleanup
-    tf.close()
-    shutil.rmtree(tempDir, ignore_errors=True)
-    
     # Combine everything together
     dates = numpy.array(dates, dtype=numpy.float64)
     tec = numpy.array(tecMaps, dtype=numpy.float32)
@@ -1101,8 +1156,8 @@ def _load_map(mjd, type='IGS'):
         downloader = _download_igs
         
         ## Filename templates
-        filenameTemplate = 'igsg%03i0.%02ii.gz'
-        filenameAltTemplate = 'igrg%03i0.%02ii.gz'
+        filenameTemplate = 'igsg%03i0.%02ii.Z'
+        filenameAltTemplate = 'igrg%03i0.%02ii.Z'
         
     elif type.upper() == 'JPL':
         ## Cache entry name
@@ -1112,8 +1167,8 @@ def _load_map(mjd, type='IGS'):
         downloader = _download_jpl
         
         ## Filename templates
-        filenameTemplate = 'jplg%03i0.%02ii.gz'
-        filenameAltTemplate = 'jprg%03i0.%02ii.gz'
+        filenameTemplate = 'jplg%03i0.%02ii.Z'
+        filenameAltTemplate = 'jprg%03i0.%02ii.Z'
         
     elif type.upper() == 'UQR':
         ## Cache entry name
@@ -1123,8 +1178,8 @@ def _load_map(mjd, type='IGS'):
         downloader = _download_uqr
         
         ## Filename templates
-        filenameTemplate = 'uqrg%03i0.%02ii.gz'
-        filenameAltTemplate = 'uqrg%03i0.%02ii.gz'
+        filenameTemplate = 'uqrg%03i0.%02ii.Z'
+        filenameAltTemplate = 'uqrg%03i0.%02ii.Z'
         
     elif type.upper() == 'CODE':
         ## Cache entry name
@@ -1134,8 +1189,8 @@ def _load_map(mjd, type='IGS'):
         downloader = _download_code
         
         ## Filename templates
-        filenameTemplate = 'codg%03i0.%02ii.gz'
-        filenameAltTemplate = 'codg%03i0.%02ii.gz'
+        filenameTemplate = 'codg%03i0.%02ii.Z'
+        filenameAltTemplate = 'codg%03i0.%02ii.Z'
         
     elif type.upper() == 'USTEC':
         ## Cache entry name
@@ -1153,7 +1208,7 @@ def _load_map(mjd, type='IGS'):
         
     try:
         # Is it already in the on-line cache?
-        tecMap = _CACHE[cacheName]
+        tecMap = _ONLINE_CACHE[cacheName]
     except KeyError:
         # Nope, we need to fetch it
         
@@ -1171,7 +1226,7 @@ def _load_map(mjd, type='IGS'):
             filename = filenameTemplate % (dateStr)
             
             # Is the primary file in the disk cache?
-            if not os.path.exists(os.path.join(_CACHE_DIR, filename)):
+            if filename not in _CACHE_DIR:
                 ## Can we download it?
                 status = downloader(mjd)
                 
@@ -1180,8 +1235,9 @@ def _load_map(mjd, type='IGS'):
                 pass
                 
             # Parse it
-            _CACHE[cacheName] = _parse_ustec_map(os.path.join(_CACHE_DIR, filename))
-            
+            with _CACHE_DIR.open(filename, 'rb') as fh:
+                _ONLINE_CACHE[cacheName] = _parse_ustec_map(fh)
+                
         else:
             
             # Pull out the year and the day-of-year
@@ -1194,12 +1250,12 @@ def _load_map(mjd, type='IGS'):
             filenameAlt = filenameAltTemplate % (dayOfYear, year%100)
             
             # Is the primary file in the disk cache?
-            if not os.path.exists(os.path.join(_CACHE_DIR, filename)):
+            if filename not in _CACHE_DIR:
                 ## Can we download it?
                 status = downloader(mjd, type='final')
                 if not status:
                     ## Nope, now check for the secondary file on disk
-                    if not os.path.exists(os.path.join(_CACHE_DIR, filenameAlt)):
+                    if filenameAlt not in _CACHE_DIR:
                         ## Can we download it?
                         status = downloader(mjd, type='rapid')
                         if status:
@@ -1213,9 +1269,10 @@ def _load_map(mjd, type='IGS'):
                 pass
                 
             # Parse it
-            _CACHE[cacheName] = _parse_tec_map(os.path.join(_CACHE_DIR, filename))
-            
-        tecMap = _CACHE[cacheName]
+            with _CACHE_DIR.open(filename, 'rb') as fh:
+                _ONLINE_CACHE[cacheName] = _parse_tec_map(fh)
+                
+        tecMap = _ONLINE_CACHE[cacheName]
         
     # Done
     return tecMap

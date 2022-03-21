@@ -14,6 +14,8 @@ import warnings
 import numpy
 from scipy.special import sph_harm
 
+from lsl.common.color import colorfy
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -50,7 +52,7 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
     """
     
     if allow_extrapolation:
-        warnings.warn("allow_extrapolation=True not honored for regrid_linear", RuntimeWarning)
+        warnings.warn(colorfy("{{%yellow allow_extrapolation=True not honored for regrid_linear"), RuntimeWarning)
         
     if newx.min() < x.min():
         raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
@@ -87,9 +89,9 @@ def downsample(vector, factor, rescale=True):
     """
 
     if (len(vector) % factor):
-        warnings.warn("Length of 'vector' is not divisible by 'factor'=%d, clipping!" % factor, RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Length of 'vector' is not divisible by 'factor'=%d, clipping!}}" % factor), RuntimeWarning)
         newlen = (len(vector)//factor)*factor
-        warnings.warn("Oldlen %d, newlen %d" % (len(vector), newlen), RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Oldlen %d, newlen %d}}" % (len(vector), newlen)), RuntimeWarning)
         vector = vector[:newlen]
     if rescale:
         newvector = numpy.reshape(vector, (len(vector)//factor, factor))/float(factor)

@@ -9,6 +9,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import os
+import numpy
 import unittest
 from datetime import timedelta
 
@@ -280,26 +281,20 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(800):
-            self.assertAlmostEqual(frameT.payload.data[i%2, i//2], 2*frames[0].payload.data[i%2, i//2], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data)
         frameT *= 2.0
-        for i in range(800):
-            self.assertAlmostEqual(frameT.payload.data[i%2, i//2], 4*frames[0].payload.data[i%2, i//2], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data)
         frameT = frames[0] * frames[1]
-        for i in range(800):
-            self.assertAlmostEqual(frameT.payload.data[i%2, i//2], frames[0].payload.data[i%2, i//2]*frames[1].payload.data[i%2, i//2], 2)
-            
+        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data)
+        
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(800):
-            self.assertAlmostEqual(frameA.payload.data[i%2, i//2], 2+frames[0].payload.data[i%2, i//2], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data)
         frameA += 2.0
-        for i in range(800):
-            self.assertAlmostEqual(frameA.payload.data[i%2, i//2], 4+frames[0].payload.data[i%2, i//2], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data)
         frameA = frames[0] + frames[1]
-        for i in range(800):
-            self.assertAlmostEqual(frameA.payload.data[i%2, i//2], frames[0].payload.data[i%2, i//2]+frames[1].payload.data[i%2, i//2], 2)
-            
+        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data)
+        
     ### TBN ###
     
     def test_tbn_read(self):
@@ -426,25 +421,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(512):
-            self.assertAlmostEqual(frameT.payload.data[i], 2*frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        for i in range(512):
-            self.assertAlmostEqual(frameT.payload.data[i], 4*frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        for i in range(512):
-            self.assertAlmostEqual(frameT.payload.data[i], frames[0].payload.data[i]*frames[1].payload.data[i], 2)
-            
+        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(512):
-            self.assertAlmostEqual(frameA.payload.data[i], 2+frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        for i in range(512):
-            self.assertAlmostEqual(frameA.payload.data[i], 4+frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        for i in range(512):
-            self.assertAlmostEqual(frameA.payload.data[i], frames[0].payload.data[i]+frames[1].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
             
     ### TBW/TBN Mix-up ###
     
@@ -599,25 +588,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(4096):
-            self.assertAlmostEqual(frameT.payload.data[i], 2*frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        for i in range(4096):
-            self.assertAlmostEqual(frameT.payload.data[i], 4*frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        for i in range(4096):
-            self.assertAlmostEqual(frameT.payload.data[i], frames[0].payload.data[i]*frames[1].payload.data[i], 2)
-            
+        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(4096):
-            self.assertAlmostEqual(frameA.payload.data[i], 2+frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        for i in range(4096):
-            self.assertAlmostEqual(frameA.payload.data[i], 4+frames[0].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        for i in range(4096):
-            self.assertAlmostEqual(frameA.payload.data[i], frames[0].payload.data[i]+frames[1].payload.data[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
             
     ### DR Spectrometer ###
     
@@ -745,25 +728,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(npts):
-            self.assertAlmostEqual(frameT.payload.XX0[i], 2*frames[0].payload.XX0[i], 2)
+        numpy.testing.assert_allclose(frameT.payload.XX0, 2*frames[0].payload.XX0, atol=1e-6)
         frameT *= 2.0
-        for i in range(npts):
-            self.assertAlmostEqual(frameT.payload.XX1[i], 4*frames[0].payload.XX1[i], 2)
+        numpy.testing.assert_allclose(frameT.payload.XX1, 4*frames[0].payload.XX1, atol=1e-6)
         frameT = frames[0] * frames[1]
-        for i in range(npts):
-            self.assertAlmostEqual(frameT.payload.YY0[i], frames[0].payload.YY0[i]*frames[1].payload.YY0[i], 2)
+        numpy.testing.assert_allclose(frameT.payload.YY0, frames[0].payload.YY0*frames[1].payload.YY0, atol=1e-6)
             
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(npts):
-            self.assertAlmostEqual(frameA.payload.XX0[i], 2+frames[0].payload.XX0[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.XX0, 2+frames[0].payload.XX0, atol=1e-6)
         frameA += 2.0
-        for i in range(npts):
-            self.assertAlmostEqual(frameA.payload.XX1[i], 4+frames[0].payload.XX1[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.XX0, 4+frames[0].payload.XX0, atol=1e-6)
         frameA = frames[0] + frames[1]
-        for i in range(npts):
-            self.assertAlmostEqual(frameA.payload.YY0[i], frames[0].payload.YY0[i]+frames[1].payload.YY0[i], 2)
+        numpy.testing.assert_allclose(frameA.payload.YY0, frames[0].payload.YY0+frames[1].payload.YY0, atol=1e-6)
             
     ### VDIF ###
     
@@ -906,31 +883,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        for i in range(nchan):
-            for j in range(nSamples):
-                self.assertAlmostEqual(frameT.payload.data[i,j], 2*frames[0].payload.data[i,j], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        for i in range(nchan):
-            for j in range(nSamples):
-                self.assertAlmostEqual(frameT.payload.data[i,j], 4*frames[0].payload.data[i,j], 2)
+        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        for i in range(nchan):
-            for j in range(nSamples):
-                self.assertAlmostEqual(frameT.payload.data[i,j], frames[0].payload.data[i,j]*frames[1].payload.data[i,j], 2)
-            
+        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        
         # Addition
         frameA = frames[0] + 2.0
-        for i in range(nchan):
-            for j in range(nSamples):
-                self.assertAlmostEqual(frameA.payload.data[i,j], 2+frames[0].payload.data[i,j], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        for i in range(nchan):
-            for j in range(nSamples):
-                self.assertAlmostEqual(frameA.payload.data[i,j], 4+frames[0].payload.data[i,j], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        for i in range(nchan):
-            for j in range(nSamples):
-                self.assertAlmostEqual(frameA.payload.data[i,j], frames[0].payload.data[i,j]+frames[1].payload.data[i,j], 2)
+        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
 
 
 class reader_test_suite(unittest.TestSuite):

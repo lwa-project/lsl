@@ -13,6 +13,7 @@ import pytz
 import ephem
 import tempfile
 import unittest
+import shutil
 from datetime import datetime, timedelta
 try:
     from StringIO import StringIO
@@ -24,6 +25,7 @@ from astropy.coordinates import Angle as AstroAngle
 from lsl.common.paths import DATA_BUILD
 from lsl.common import sdfADP, sdf as other_sdf
 from lsl.common.stations import lwa1, lwasv
+import lsl.testing
 
 
 __version__  = "0.1"
@@ -41,31 +43,10 @@ tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
 idfFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
 
 
-class _SilentVerbose(object):
-    def __init__(self, stdout=True, stderr=False):
-        self.stdout = stdout
-        self.stderr = stderr
-        
-    def __enter__(self):
-        if self.stdout:
-            sys.stdout = StringIO()
-        if self.stderr:
-            sys.stderr = StringIO()
-        return self
-        
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        if self.stdout:
-            sys.stdout = sys.__stdout__
-        if self.stderr:
-            sys.stderr = sys.__stderr__
-
-
 class sdf_adp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.sdf
     module."""
     
-    testPath = None
-
     def setUp(self):
         """Create the temporary file directory."""
 
@@ -300,7 +281,7 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parse_sdf(tbnFile)
         
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             # Bad project
             old_id = project.id
             project.id = 'ThisIsReallyLong'
@@ -474,7 +455,7 @@ class sdf_adp_tests(unittest.TestCase):
         
         project = sdfADP.parse_sdf(drxFile)
         
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             # Bad beam
             project.sessions[0].drx_beam = 6
             self.assertFalse(project.validate(verbose=True))
@@ -1074,7 +1055,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test writing a TBF SDF file."""
         
         project = sdfADP.parse_sdf(tbfFile)
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
     def test_tbf_errors(self):
@@ -1210,11 +1191,8 @@ class sdf_adp_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
+
 
 
 class sdf_adp_test_suite(unittest.TestSuite):

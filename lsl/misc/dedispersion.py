@@ -205,7 +205,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         
     # Go!
     for i in range(2*nSets+1):
-        start = i*N//2 - N//4
+        start = N//2*i - N//4
         stop = start + N
         
         if start < 0:
@@ -247,7 +247,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         dataOut = numpy.fft.ifft( dataOut )
         
         # Get the output data ranges
-        outStart  = i*N//2
+        outStart  = N//2*i
         outStop   = outStart + N//2
         dataStart = N//4
         dataStop  = dataStart + N//2
