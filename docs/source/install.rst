@@ -35,13 +35,13 @@ setup.py.  For instance, if the python interpreter is in
 Otherwise, the explicit <prefix> value is taken from the command line
 option.  The package will install files in the following locations:
  * <prefix>/bin
- * <prefix>/lib/python2.6/site-packages
+ * <prefix>/lib/python3.6/site-packages
  * <prefix>/share/doc
  * <prefix>/share/install
 
 If an alternate <prefix> value is provided, you should set the PATH
 environment to include directory '<prefix>/bin' and the PYTHONPATH
-environment to include directory '<prefix>/lib/python2.6/site-packages'.
+environment to include directory '<prefix>/lib/python3.6/site-packages'.
 
 If the '--user' option is provided, then then installation tree root 
 directory will be in the current user's home directory.
