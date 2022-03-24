@@ -61,8 +61,10 @@ class SilentVerbose(object):
         if self.stdout:
             buffer = sys.stdout
             sys.stdout = self._orig_stdout
+            buffer.flush()
             buffer.close()
         if self.stderr:
             buffer = sys.stderr
             sys.stderr = self._orig_stderr
+            buffer.flush()
             buffer.close()
