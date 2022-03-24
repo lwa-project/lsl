@@ -15,6 +15,7 @@ import unittest
 import numpy
 
 from lsl.misc import wisdom
+import lsl.testing
 
 
 __version__  = "0.1"
@@ -27,7 +28,8 @@ class wisdom_tests(unittest.TestCase):
     def test_show(self):
         """Test wisdom.show()"""
         
-        wisdom.show()
+        with lsl.testing.SilentVerbose():
+            wisdom.show()
 
 
 class wisdom_test_suite(unittest.TestSuite):
