@@ -176,7 +176,7 @@ class MemoryFile(object):
         if not self._closed:
             raise IOError("MemoryFile:%s is already open" % self.name)
             
-        self._lock.acquire(blocking=True)
+        self._lock.acquire(True)
         
         self.mtime = time.time()
         self._closed = False
@@ -290,10 +290,11 @@ class MemoryFile(object):
         Close the buffer and release the access lock.
         """
         
-        self.flush()
-        self.seek(0)
+        self._buffer.flush()
+        self._buffer.seek(0)
         self._closed = True
-        self._lock.release()
+        if self._lock.locked():
+            self._lock.release()
 
 
 # Lock for accessing the MemoryCache

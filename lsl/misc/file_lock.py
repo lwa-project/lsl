@@ -82,6 +82,7 @@ class FileLock(object):
     def release(self):
         if self._our_lock:
             os.unlink(self._lockname)
+            self._our_lock = False
         self._locked = False
         return True
 
