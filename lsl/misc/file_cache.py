@@ -146,12 +146,6 @@ class MemoryFile(object):
         self._closed = True
         self._is_binary = False
         
-    def __enter__(self):
-        return self
-        
-    def __exit__(self, type, value, tb):
-        self.close()
-        
     def __iter__(self):
         contents = self.readline()
         if len(contents) > 0:
@@ -173,6 +167,7 @@ class MemoryFile(object):
         
         return len(self._buffer)
         
+    @contextlib.contextmanager
     def open(self, mode='r'):
         """
         Prepare the buffer and lock it for access. 
@@ -182,11 +177,16 @@ class MemoryFile(object):
             raise IOError("MemoryFile:%s is already open" % self.name)
             
         self._lock.acquire(blocking=True)
+        
         self.mtime = time.time()
         self._closed = False
         self._is_binary = (mode.find('b') != -1)
-        return self
         
+        try:
+            yield self
+        finally:
+            self.close()
+            
     def seek(self, pos, whence=0):
         """
         Change the position in the buffer and return the new position.  The
@@ -296,6 +296,10 @@ class MemoryFile(object):
         self._lock.release()
 
 
+# Lock for accessing the MemoryCache
+_MEMORY_CACHE_LOCK = MemoryLock('cache_access')
+
+
 class MemoryCache(object):
     """
     Class to hold a file cache in memory using StringIO and enforce a maximum
@@ -310,7 +314,7 @@ class MemoryCache(object):
         
         self.max_size = max_size
         self._cache = {}
-        self._lock = MemoryLock('cache_access')
+        self._lock = _MEMORY_CACHE_LOCK
         
     def __contains__(self, filename):
         return filename in self._cache
