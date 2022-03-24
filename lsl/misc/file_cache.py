@@ -167,7 +167,6 @@ class MemoryFile(object):
         
         return len(self._buffer)
         
-    @contextlib.contextmanager
     def open(self, mode='r'):
         """
         Prepare the buffer and lock it for access. 
@@ -182,10 +181,7 @@ class MemoryFile(object):
         self._closed = False
         self._is_binary = (mode.find('b') != -1)
         
-        try:
-            yield self
-        finally:
-            self.close()
+        return self
             
     def seek(self, pos, whence=0):
         """
