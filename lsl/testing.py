@@ -57,8 +57,10 @@ class SilentVerbose(object):
         
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.stdout:
-            sys.stdout.close()
+            buffer = sys.stdout
             sys.stdout = sys.__stdout__
+            buffer.close()
         if self.stderr:
-            sys.stderr.close()
+            buffer = sys.stderr
             sys.stderr = sys.__stderr__
+            buffer.close()
