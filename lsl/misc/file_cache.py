@@ -51,10 +51,12 @@ class FileCache(object):
             os.mkdir(self.cache_dir)
             
         # Make sure we can write here
-        with open(os.path.join(self.cache_dir, 'write.test'), 'w') as fh:
-            fh.write('test')
-        os.unlink(os.path.join(self.cache_dir, 'write.test'))
-        
+        with self._lock:
+            assert(self._lock.locked())
+            with open(os.path.join(self.cache_dir, 'write.test'), 'w') as fh:
+                fh.write('test')
+            os.unlink(os.path.join(self.cache_dir, 'write.test'))
+            
     def __contains__(self, filename):
         return os.path.exists(os.path.join(self.cache_dir, filename))
         
