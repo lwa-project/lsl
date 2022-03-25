@@ -7,6 +7,7 @@ Basic file-based lock for filesystem operations.
 import os
 import time
 import errno
+import fcntl
 import warnings
 from threading import current_thread, RLock
 
@@ -63,8 +64,11 @@ class FileLock(object):
                         err.errno = errno.EAGAIN
                         raise err
                         
-                    with open(self._lockname, 'w') as fh:
+                    with open(self._lockname, 'a+') as fh:
+                        fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
+                        fh.truncate(0)
                         fh.write("%i" % ident)
+                        fh.flush()
                     self._our_lock = True
                 else:
                     self._our_lock = False
