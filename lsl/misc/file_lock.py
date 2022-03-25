@@ -50,7 +50,10 @@ class FileLock(object):
             try:
                 if os.path.exists(self._lockname):
                     with open(self._lockname, 'r') as fh:
-                        owner_ident = int(fh.read(), 10)
+                        try:
+                            owner_ident = int(fh.read(), 10)
+                        except ValueError:
+                            owner_ident = 0
                 else:
                     owner_ident = 0
                     
