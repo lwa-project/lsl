@@ -17,13 +17,8 @@ import re
 import sys
 import argparse
 import platform
-import warnings
 import subprocess
-try:
-    import cStringIO as StringIO
-except ImportError:
-    from io import StringIO
-    
+
 from lsl.misc import telemetry
 telemetry.track_script()
 
