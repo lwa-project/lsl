@@ -8,7 +8,6 @@ import os
 import time
 import errno
 import fcntl
-import warnings
 from threading import current_thread, RLock
 
 

@@ -10,15 +10,12 @@ if sys.version_info < (3,):
     range = xrange
     
 import os
-import glob
 import gzip
 import unlzw
 import numpy
 import socket
-import shutil
 import tarfile
 import warnings
-import subprocess
 try:
     from cStringIO import StringIO
 except ImportError:

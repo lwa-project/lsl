@@ -11,7 +11,6 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import os
 import sys
 import numpy
 from datetime import datetime

@@ -20,7 +20,6 @@ import argparse
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
-from lsl import astro
 from lsl.reader.ldp import LWASVDataFile, TBFFile
 from lsl.common import stations, metabundleADP
 from lsl.correlator import uvutils

@@ -17,7 +17,6 @@ import time
 import numpy
 import argparse
 
-from lsl import astro
 from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import fx as fxc

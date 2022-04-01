@@ -5,7 +5,6 @@ Module that provides classes for file cache management.
 """
 
 import os
-import sys
 import glob
 import time
 import contextlib
