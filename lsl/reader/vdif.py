@@ -389,10 +389,10 @@ def read_guppi_header(filehandle):
             name = name.strip()
         try:
             value = int(value, 10)
-        except:
+        except ValueError:
             try:
                 value = float(value)
-            except:
+            except ValueError:
                 value = value.strip().replace("'", '')
         header[name.strip()] = value
     header['OBSBW'] *= 1e6

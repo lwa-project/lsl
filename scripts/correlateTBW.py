@@ -97,7 +97,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
             
             try:
                 tempVis += vis
-            except:
+            except NameError:
                 tempVis = vis
                 
             pb.inc(amount=1)
