@@ -284,13 +284,12 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 
                 nosta = mapper.data.field('NOSTA')
                 noact = mapper.data.field('NOACT')
-                stabxyz = ag.data.field('STABXYZ')
                 anname = mapper.data.field('ANNAME')
             except KeyError:
                 nosta = ag.data.field('NOSTA')
                 noact = ag.data.field('NOSTA')
-                stabxyz = ag.data.field('STABXYZ')
                 anname = ag.data.field('ANNAME')
+            stabxyz = ag.data.field('STABXYZ')
             
             # Station/telescope information
             try:
