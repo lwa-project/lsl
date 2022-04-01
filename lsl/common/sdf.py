@@ -543,12 +543,12 @@ class Project(object):
         try:
             # Try to pull out the project office comments about the session
             pos = self.project_office.sessions[session]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the observations
             poo = self.project_office.observations[session]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office observation comments match the
         # actual number of observations
@@ -2509,7 +2509,7 @@ def parse_sdf(filename, verbose=False):
             # to deal with any indicies present
             try:
                 keywordSection, value = line.split(None, 1)
-            except:
+            except ValueError:
                 continue
             
             mtch = kwdRE.match(keywordSection)

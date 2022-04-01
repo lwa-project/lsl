@@ -214,12 +214,12 @@ class Project(object):
         try:
             # Try to pull out the project office comments about the run
             pos = self.project_office.runs[run]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the scans
             poo = self.project_office.scans[run]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office scan comments match the
         # actual number of scans
@@ -339,12 +339,12 @@ class Project(object):
         try:
             # Try to pull out the project office comments about the run
             pos = self.project_office.runs[run]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the scans
             poo = self.project_office.scans[run]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office scan comments match the
         # actual number of scans
@@ -1430,7 +1430,7 @@ def parse_idf(filename, verbose=False):
             # to deal with any indicies present
             try:
                 keywordSection, value = line.split(None, 1)
-            except:
+            except ValueError:
                 continue
             
             mtch = kwdRE.match(keywordSection)
