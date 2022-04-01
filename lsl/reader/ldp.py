@@ -26,6 +26,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import os
+import abc
 import copy
 import numpy
 import warnings
@@ -106,6 +107,8 @@ class LDPFileBase(object):
     data files.
     """
     
+    __metaclass__ = abc.ABCMeta
+    
     def __init__(self, filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
         # Make sure that we are given either a filename or an open file handle
         if filename is None and fh is None:
@@ -169,6 +172,7 @@ class LDPFileBase(object):
         output += ">"
         return tw_fill(output, subsequent_indent='    ')
         
+    @abc.abstractmethod
     def _ready_file(self):
         """
         Method for finding the start of valid data.  This will be over-
@@ -177,6 +181,7 @@ class LDPFileBase(object):
         
         raise NotImplementedError
         
+    @abc.abstractmethod
     def _describe_file(self):
         """
         Method for describing the contents of a file using.  This will 
@@ -251,6 +256,7 @@ class LDPFileBase(object):
         
         raise NotImplementedError
         
+    @abc.abstractmethod
     def read_frame(self):
         """
         Read a single frame from the data.
@@ -258,6 +264,7 @@ class LDPFileBase(object):
         
         raise NotImplementedError
         
+    @abc.abstractmethod
     def read(self, duration, time_in_samples=False):
         """
         Read a certain amount of time from the data.
