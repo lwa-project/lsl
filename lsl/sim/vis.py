@@ -912,16 +912,16 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     # Set the Julian Data for the AntennaArray object if it is provided.  The try...except
     # clause is used to deal with people who may want to pass an array of JDs in rather than
     # just one.  If one isn't provided, use the date set for the input 'station'.
-    if jd is not None:
+    if jd is None:
+        simAA.date = station.date
+    else:
         try:
             len(jd)
         except:
             simAA.set_jultime(jd)
         else:
             simAA.set_jultime(jd[0])
-    else:
-        simAA.date = station.date
-        
+            
     return simAA
 
 
@@ -954,15 +954,15 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         chanMax = chan[-1]
         
     # Update the JD if necessary
-    if jd is not None:
+    if jd is None:
+        jd = aa.get_jultime()
+    else:
         if verbose:
             if count is not None and max is not None:
                 print("Setting Julian Date to %.5f (%i of %i)" % (jd, count, max))
             else:
                 print("Setting Julian Date to %.5f" % jd)
         aa.set_jultime(jd)
-    else:
-        jd = aa.get_jultime()
     Gij_sf = aa.passband(0,1)
     def Bij_sf(xyz, pol):
         Bi = aa[0].bm_response(xyz, pol=pol[0]).transpose()
@@ -1109,14 +1109,14 @@ def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     """
     
     # Update the JD if necessary
-    if jd is not None:
+    if jd is None:
+        jd = [aa.get_jultime()]
+    else:
         try:
             len(jd)
         except TypeError:
             jd = [jd]
-    else:
-        jd = [aa.get_jultime()]
-        
+            
     # Build up output dictionary
     freq = aa.get_afreqs()*1e9
     if len(freq.shape) == 2:
