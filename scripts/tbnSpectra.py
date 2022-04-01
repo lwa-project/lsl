@@ -207,14 +207,14 @@ def main(args):
             # If there is more than one chunk, plot the difference between the global 
             # average and each chunk
             if nChunks > 1 and not args.disable_chunks:
-                for k in range(nChunks):
+                for l in range(nChunks):
                     # Some files are padded by zeros at the end and, thus, carry no 
                     # weight in the average spectra.  Skip over those.
-                    if masterWeight[k,j,:].sum() == 0:
+                    if masterWeight[l,j,:].sum() == 0:
                         continue
                         
                     # Calculate the difference between the spectra and plot
-                    subspectra = numpy.squeeze( numpy.log10(masterSpectra[k,j,:])*10.0 )
+                    subspectra = numpy.squeeze( numpy.log10(masterSpectra[l,j,:])*10.0 )
                     diff = subspectra - currSpectra
                     ax.plot(freq, diff)
                     
