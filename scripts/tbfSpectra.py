@@ -18,7 +18,6 @@ import argparse
 
 from lsl.reader import tbf, errors
 from lsl.common import stations, metabundleADP
-from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
