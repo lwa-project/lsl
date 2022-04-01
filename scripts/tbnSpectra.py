@@ -152,7 +152,7 @@ def main(args):
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
             
     # Apply the cable loss corrections, if requested
-    if False:
+    if args.gain_correct:
         for s in range(masterSpectra.shape[1]):
             currGain = antennas[s].cable.gain(freq)
             for c in range(masterSpectra.shape[0]):
@@ -263,6 +263,8 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
                         help='set FFT length')
+    parser.add_argument('-g', '--gain-correct', action='store_true',
+                        help='correct signals for the cable losses')
     parser.add_argument('-d', '--disable-chunks', action='store_true', 
                         help='disable plotting chunks in addition to the global average')
     parser.add_argument('-k', '--keep', type=aph.csv_int_list, default='all', 
