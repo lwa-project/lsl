@@ -897,6 +897,12 @@ class ARX(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
+    def __eq__(self, other):
+        if isinstance(other, ARX):
+            return self.id == other.id and self.channel == other.channel
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
