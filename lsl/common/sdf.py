@@ -324,6 +324,7 @@ class _TypedParentList(list):
     """
     
     def __init__(self, allowed_types, parent=None, iterable=None):
+        list.__init__(self, [])
         if not isinstance(allowed_types, (list, tuple)):
             allowed_types = [allowed_types,]
         self.allowed_types = tuple(allowed_types)
