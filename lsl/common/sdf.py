@@ -1132,15 +1132,13 @@ class TBW(Observation):
     """
     
     def __init__(self, name, target, start, samples, bits=12, comments=None):
-        samples = int(samples)
-        bits = int(bits)
-        assert(bits in (4, 12))
+        self.samples = int(samples)
+        self.bits = int(bits)
+        assert(self.bits in (4, 12))
         
-        duration = (samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
+        duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
         Observation.__init__(self, name, target, start, durStr, 'TBW', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
-        self.samples = samples
-        self.bits = bits
         
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
@@ -1546,7 +1544,6 @@ class Stepped(Observation):
     filter_codes = DRXFilters
     
     def __init__(self, name, target, start, filter, steps=None, is_radec=True, gain=-1, comments=None):
-        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         self.is_radec = bool(is_radec)
         self.steps = _TypedParentList(BeamStep, self)
         if steps is not None:
@@ -1554,7 +1551,8 @@ class Stepped(Observation):
                 self.steps.extend(steps)
             else:
                 self.steps.append(steps)
-                
+        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
+        
     def update(self):
         """Update the computed parameters from the string values."""
         
