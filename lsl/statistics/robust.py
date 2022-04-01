@@ -156,8 +156,6 @@ def mean(inputData, cut=3.0, axis=None, dtype=None):
         if sigmacut <= 4.5:
             dataSigma = dataSigma / (-0.15405 + 0.90723*sigmacut - 0.23584*sigmacut**2.0 + 0.020142*sigmacut**3.0)
             
-        dataSigma = dataSigma / math.sqrt(len(good)-1)
-        
     return dataMean
 
 
@@ -336,10 +334,8 @@ def linefit(inputX, inputY, max_iter=25, bisector=False, bisquare_limit=6.0, clo
     y = yIn - y0
     
     cc = numpy.zeros(2)
-    ss = numpy.zeros(2)
     sigma = 0.0
     yFit = yIn
-    badFit = 0
     nGood = n
     
     lsq = 0.0
@@ -409,7 +405,6 @@ def linefit(inputX, inputY, max_iter=25, bisector=False, bisquare_limit=6.0, clo
             u3 = yInt / r
             yp = u1*x + u2*y + u3
             yFit = y*0.0
-            ss = yp
         else:
             slope = ySlope
             yInt = yYInt
@@ -479,7 +474,6 @@ def linefit(inputX, inputY, max_iter=25, bisector=False, bisquare_limit=6.0, clo
             u3 = yInt / r
             yp = u1*x + u2*y + u3
             yFit = y*0.0
-            ss = yp
         else:
             yFit = yInt + slope*x
         cc[0] = yInt
@@ -490,7 +484,7 @@ def linefit(inputX, inputY, max_iter=25, bisector=False, bisquare_limit=6.0, clo
             break
             
         if nGood < 2:
-            badFit = 1
+            # bad fit
             break
         diff = min([numpy.abs(sigma1 - sigma)/sigma, numpy.abs(sigma2 - sigma)/sigma])
         
@@ -549,17 +543,9 @@ def polyfit(inputX, inputY, order, max_iter=25):
         v = y
         
     minPts = order + 1
-    if (n//4)*4 == n:
-        need2 = 1
-    else:
-        need2 = 0
-    n3 = 3*n//4
-    n1 = n//4
-
     nSeg = order + 2
     if (nSeg//2)*2 == nSeg:
         nSeg = nSeg + 1
-    min_pts = nSeg*3
     yp = y
     if n < 10000:
         lsqFit = 1
