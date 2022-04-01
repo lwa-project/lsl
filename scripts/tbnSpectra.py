@@ -19,7 +19,6 @@ import argparse
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.correlator import fx as fxc
-from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
