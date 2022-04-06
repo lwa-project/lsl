@@ -31,12 +31,10 @@ def main(args):
     filename = args.filename
     
     idi = utils.CorrelatedData(filename)
-    aa = idi.get_antennaarray()
     lo = idi.get_observer()
     lo.date = idi.date_obs.strftime("%Y/%m/%d %H:%M:%S")
     jd = lo.date + astro.DJD_OFFSET
-    lst = str(lo.sidereal_time())   # pylint:disable=no-member
-
+    
     nStand = len(idi.stands)
     nchan = len(idi.freq)
     freq = idi.freq
