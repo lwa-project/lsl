@@ -332,7 +332,7 @@ class TBWFile(LDPFileBase):
                 ## Find the sync word again
                 while True:
                     try:
-                        junkFrame = tbn.read_frame(self.fh)
+                        tbn.read_frame(self.fh)
                         break
                     except errors.SyncError:
                         self.fh.seek(-tbn.FRAME_SIZE+1, 1)
@@ -340,7 +340,7 @@ class TBWFile(LDPFileBase):
                 ## Find the end of the TBN data
                 while True:
                     try:
-                        junkFrame = tbn.read_frame(self.fh)
+                        tbn.read_frame(self.fh)
                     except errors.SyncError:
                         break
                 self.fh.seek(-2*tbn.FRAME_SIZE, 1)
@@ -366,8 +366,6 @@ class TBWFile(LDPFileBase):
             nFramesFile = (filesize - self.fh.tell()) // tbw.FRAME_SIZE
             srate = 196e6
             bits = junkFrame.data_bits
-            start = junkFrame.time
-            startRaw = junkFrame.payload.timetag
             
             # Trick to figure out how many antennas are in a file and the "real" 
             # start time.  For details of why this needs to be done, see the read()
@@ -718,7 +716,6 @@ class TBNFile(LDPFileBase):
         # Find out how many frames to read in
         frame_count = int(round(1.0 * duration * self.description['sample_rate'] / 512))
         frame_count = frame_count if frame_count else 1
-        duration = frame_count * 512 / self.description['sample_rate']
         
         nFrameSets = 0
         eofFound = False
@@ -926,7 +923,6 @@ class DRXFile(LDPFileBase):
         except AttributeError:
             filesize = self.fh.size
         nFramesFile = (filesize - self.fh.tell()) // drx.FRAME_SIZE
-        beams = drx.get_beam_count(self.fh)
         tunepols = drx.get_frames_per_obs(self.fh)
         tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
         beampols = tunepol
@@ -1099,7 +1095,6 @@ class DRXFile(LDPFileBase):
         # Find out how many frames to read in
         frame_count = int(round(1.0 * duration * self.description['sample_rate'] / 4096))
         frame_count = frame_count if frame_count else 1
-        duration = frame_count * 4096 / self.description['sample_rate']
         
         # Setup the output arrays
         setTime = None
@@ -1446,7 +1441,6 @@ class DRSpecFile(LDPFileBase):
         # Find out how many frames to read in
         frame_count = int(round(1.0 * duration / self.description['tint']))
         frame_count = frame_count if frame_count else 1
-        duration = frame_count * self.description['tint']
         
         # Setup the output arrays
         data = numpy.zeros((2*self.description['nproduct'],frame_count,self.description['LFFT']), dtype=numpy.float32)
@@ -1671,7 +1665,7 @@ class TBFFile(LDPFileBase):
         # Align on the start of a Mark5C packet
         while True:
             try:
-                junkFrame = tbf.read_frame(self.fh)
+                tbf.read_frame(self.fh)
                 break
             except errors.SyncError:
                 self.fh.seek(-tbf.FRAME_SIZE+1, 1)
@@ -1680,7 +1674,7 @@ class TBFFile(LDPFileBase):
         i = 0
         while True:
             try:
-                junkFrame = tbf.read_frame(self.fh)
+                tbf.read_frame(self.fh)
                 break
             except errors.SyncError:
                 i += 1
@@ -1967,7 +1961,7 @@ class CORFile(LDPFileBase):
         # Align on the start of a Mark5C packet
         while True:
             try:
-                junkFrame = cor.read_frame(self.fh)
+                cor.read_frame(self.fh)
                 break
             except errors.SyncError:
                 self.fh.seek(-cor.FRAME_SIZE+1, 1)
@@ -1976,7 +1970,7 @@ class CORFile(LDPFileBase):
         i = 0
         while True:
             try:
-                junkFrame = cor.read_frame(self.fh)
+                cor.read_frame(self.fh)
                 break
             except errors.SyncError:
                 i += 1
