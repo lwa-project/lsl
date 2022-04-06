@@ -72,7 +72,7 @@ def main(args):
     ax2 = plt.axes([0.75, 0.75, 0.1, 0.1])
     
     ## Part 1 - Station between -80 and 80 (the section inside the fence)
-    c = ax1.scatter(xyz[:,0], xyz[:,1], c=xyz[:,2], s=40.0, alpha=0.50)
+    ax1.scatter(xyz[:,0], xyz[:,1], c=xyz[:,2], s=40.0, alpha=0.50)
     for mSta,sAct in zip(nosta, noact):
         i = stands.index(sAct)
         ax1.plot(xyz[i,0], xyz[i,1], marker='x', linestyle=' ', alpha=1.0, color='k')
