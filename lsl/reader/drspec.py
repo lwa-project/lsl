@@ -599,7 +599,7 @@ def get_frame_size(filehandle):
     
     with FilePositionSaver(filehandle):
         cPos = filehandle.tell()
-        frame = read_frame(filehandle)
+        read_frame(filehandle)
         nPos = filehandle.tell()
         
     return nPos - cPos
