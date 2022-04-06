@@ -120,9 +120,6 @@ def main(args):
     # Parse command line options
     filename = args.filename
     
-    # Length of the FFT
-    LFFT = args.fft_length
-    
     # Setup the LWA station information
     if args.metadata is not None:
         try:

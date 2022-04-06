@@ -42,7 +42,6 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
     antennas = site.antennas
     
     # Get the metadata
-    sample_rate = idf.get_info('sample_rate')
     freq = idf.get_info('freq1')
     
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  

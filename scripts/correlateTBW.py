@@ -135,9 +135,6 @@ def main(args):
     # Parse command line options
     filename = args.filename
 
-    # Length of the FFT
-    LFFT = args.fft_length
-
     # Setup the LWA station information
     if args.metadata is not None:
         try:
@@ -199,7 +196,6 @@ def main(args):
     print("Number of integrations in file: %i" % nSets)
     print("==")
     
-    leftToDo = 1
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     
