@@ -143,11 +143,11 @@ def main(args):
     spec = spec.T
     
     # Apply the cable loss corrections, if requested
-    if False:
+    if args.gain_correct:
         for s in range(spec.shape[0]):
             currGain = antennas[s].cable.gain(freq)
             spec[s,:] /= currGain
-                
+            
     # Put the frequencies in the best units possible
     freq, units = _best_freq_units(freq)
     
@@ -217,6 +217,8 @@ if __name__ == "__main__":
                         help='name of the SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
                         help='run %(prog)s in silent mode')
+    parser.add_argument('-g', '--gain-correct', action='store_true',
+                        help='correct signals for the cable losses')
     parser.add_argument('-k', '--keep', type=aph.csv_int_list, default='all', 
                         help='only display the following comma-seperated list of stands')
     parser.add_argument('-o', '--output', type=str, 
