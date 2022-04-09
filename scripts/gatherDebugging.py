@@ -64,9 +64,9 @@ def main(args):
                 except AttributeError:
                     try:	
                         versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
-                        mtch = versionRE.search(eval("%s.__file__" % mod))
+                        mtch = versionRE.search(imod.__file__)
                         version = mtch.group('version')
-                    except:
+                    except (AttributeError, IndexError):
                         version = "unknown"
             print("%s:  version %s" % (mod, version))
             
@@ -89,9 +89,9 @@ def main(args):
                 except AttributeError:
                     try:	
                         versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
-                        mtch = versionRE.search(eval("%s.__file__" % mod))
+                        mtch = versionRE.search(imod.__file__)
                         version = mtch.group('version')
-                    except:
+                    except (AttributeError, IndexError):
                         version = "unknown"
             print("%s:  version %s" % (mod.capitalize(), version))
             
