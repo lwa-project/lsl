@@ -235,10 +235,6 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
         and insured that a 2-D array is always returned (pol(s) by samples)
     """
     
-    # Get the stand delays and convert the delay times from seconds to samples
-    delays = calc_delay(antennas, freq=freq, azimuth=azimuth, elevation=elevation)
-    delays = numpy.round(delays*sample_rate).astype(numpy.int16)
-    
     # Build up a base time array, load in the cable delays, and get the stand 
     # positions for geometric delay calculations.
     t = numpy.arange(0,1500)/sample_rate
@@ -293,10 +289,7 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
     # Build the output array and loop over all azimuths and elevations
     output = numpy.zeros((360,90))
     for az in list(range(360)):
-        rAz = az*numpy.pi/180.0
         for el in list(range(90)):
-            rEl = el*numpy.pi/180.0
-            
             # Display the progress meter if the `progress' keyword is set to True.  The
             # progress meter displays a `.' every 2% complete and the percentages every
             # 10%.  At 100%, `Done' is displayed.
@@ -437,10 +430,6 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
         numbers.
     """
     
-    # Get the stand delays and convert the delay times from seconds to samples
-    delays = calc_delay(antennas, freq=central_freq, azimuth=azimuth, elevation=elevation)
-    delays = numpy.round(delays*sample_rate).astype(numpy.int16)
-    
     # Build up a base time array, load in the cable delays, and get the stand 
     # positions for geometric delay calculations.
     t = numpy.arange(0,1500)/sample_rate
@@ -475,10 +464,7 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
     # Build the output array and loop over all azimuths and elevations
     output = numpy.zeros((360,90))
     for az in range(360):
-        rAz = az*numpy.pi/180.0
         for el in range(90):
-            rEl = el*numpy.pi/180.0
-            
             # Display the progress meter if the `progress' keyword is set to True.  The
             # progress meter displays a `.' every 2% complete and the percentages every
             # 10%.  At 100%, `Done' is displayed.
