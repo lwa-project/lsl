@@ -1677,8 +1677,6 @@ class Stepped(Observation):
         if self._parent is not None:
             station = self._parent.station
             
-        pnt = self.fixed_body
-        
         vis = 0
         cnt = 0
         relStart = 0
