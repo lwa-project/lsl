@@ -289,8 +289,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 nosta = ag.data.field('NOSTA')
                 noact = ag.data.field('NOSTA')
                 anname = ag.data.field('ANNAME')
-            stabxyz = ag.data.field('STABXYZ')
-            
+                
             # Station/telescope information
             try:
                 self.telescope = hdulist[0].header['TELESCOP']
