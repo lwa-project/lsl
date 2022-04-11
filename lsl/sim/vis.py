@@ -1228,9 +1228,6 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
         except IndexError:
             raise RuntimeError("Too few frequencies to determine the bandwidth, use the 'bandwidth' keyword")
             
-    # Calculate the standard deviation of the real/imaginary noise
-    visNoiseSigma = SEFD / efficiency / numpy.sqrt(2.0*bandwidth*tInt)
-    
     # Make sure that we have an SEFD for each antenna
     ants = []
     for i,j in dataSet.baselines:
@@ -1246,6 +1243,12 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     except TypeError:
         SEFD = numpy.ones(nAnts)*SEFD
         
+    # Calculate the standard deviation of the real/imaginary noise
+    visNoiseSigma = numpy.zeros((len(dataSet.baselines), len(dataSet.freq)))
+    for k,(i,j) in enumerate(dataSet.baselines):
+        visNoiseSigma[k,:] = numpy.sqrt(SEFD[i]*SEFD[j])
+    visNoiseSigma *= 1 / efficiency / numpy.sqrt(2.0*bandwidth*tInt)
+    
     # Build the VisibilityDataSet to hold the data with noise added
     bnData = dataSet.copy(include_pols=True)
     
