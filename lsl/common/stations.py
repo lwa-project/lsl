@@ -73,10 +73,7 @@ def ecef_to_geo(x, y, z):
     # Longitude
     lon = numpy.arctan2(y, x)
     
-    # Latitude (first approximation)
-    lat = numpy.arctan2(z, p)
-    
-    # Latitude (refined using Bowring's method)
+    # Latitude (using one iteration of Bowring's method)
     psi = numpy.arctan2(WGS84_a*z, WGS84_b*p)
     num = z + WGS84_b*ep2*numpy.sin(psi)**3
     den = p - WGS84_a*e2*numpy.cos(psi)**3
