@@ -1,3 +1,8 @@
+2.1.5
+ * Fixed a few more problems with the new cache management
+ * Fixed a problem in lsl.sim.vis.add_baseline_noise() that caused the SEFD values to be ignored in some cases
+ * Various clean ups
+
 2.1.4
  * Fixed a couple of problems with the new cache management
  * Fixed a couple of problems with the new file locking
