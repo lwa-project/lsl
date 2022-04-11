@@ -333,24 +333,9 @@ class Project(object):
             raise IndexError("Invalid run index")
         
         self.runs[run].update()
-        self.runs[run].scans.sort()
-           
+        self.runs[run].scans.sort()   
         ses = self.runs[run]
-        try:
-            # Try to pull out the project office comments about the run
-            pos = self.project_office.runs[run]
-        except (TypeError, IndexError):
-            pos = None
-        try:
-            # Try to pull out the project office comments about the scans
-            poo = self.project_office.scans[run]
-        except (TypeError, IndexError):
-            poo = []
-        # Enforce that the number of project office scan comments match the
-        # actual number of scans
-        while (len(ses.scans) - len(poo)) > 0:
-            poo.append(None)
-            
+        
         # Build the SDFs
         ## Setup the common information
         start = mjdmpm_to_datetime(ses.scans[0].mjd, ses.scans[0].mpm)
