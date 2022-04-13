@@ -65,6 +65,14 @@ class FileLock(object):
                         
                     with open(self._lockname, 'a+') as fh:
                         fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
+                        
+                        fh_stat = os.fstat(fh.fileno())
+                        lock_stat  = os.stat(fh.name)
+                        if fh_stat.st_ino != lock_stat.st_ino:
+                            err = IOError()
+                            err.errno = errno.EAGAIN
+                            raise err
+                            
                         fh.truncate(0)
                         fh.write("%i" % ident)
                         fh.flush()
