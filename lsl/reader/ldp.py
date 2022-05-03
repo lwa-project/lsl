@@ -15,6 +15,9 @@ Also included are the LWA1DataFile, LWASVDataFile, and LWADataFile functions
 that take a filename and try to determine the correct data format object to
 use.
 
+.. versionchanged:: 2.1.6
+    Added support for LWA-NA NDP data
+
 .. versionchanged:: 1.2.0
     Added support for LWA-SV ADP data
 """
@@ -49,9 +52,9 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
-           'LWASVDataFile', 'LWADataFile']
+           'LWASVDataFile', 'LWANADataFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):
@@ -2399,6 +2402,166 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                               buffering=buffering)
     elif mode == tbn:
         ldpInstance = TBNFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == tbf:
+        ldpInstance = TBFFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == cor:
+        ldpInstance = CORFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    else:
+        ldpInstance = DRSpecFile(filename=filename, fh=fh,
+                                 ignore_timetag_errors=ignore_timetag_errors,
+                                 buffering=buffering)
+        
+    # Done
+    return ldpInstance
+
+
+def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
+    """
+    Wrapper around the various LWA-NA-related classes defined here that takes
+    a file, determines the data type, and initializes and returns the 
+    appropriate LDP class.
+    """
+    
+    # Open the file as appropriate
+    is_splitfile = False
+    if fh is None:
+        fh = open(filename, 'rb')
+    else:
+        filename = fh.name
+        if not isinstance(fh, SplitFileWrapper):
+            if fh.mode.find('b') == -1:
+                fh.close()
+                fh = open(filename, 'rb')
+        else:
+            is_splitfile = True
+            
+    # Read a bit of data to try to find the right type
+    for mode in (drx, tbf, cor, drspec):
+        ## Set if we find a valid frame marker
+        foundMatch = False
+        ## Set if we can read more than one valid successfully
+        foundMode = False
+        
+        ## Sort out the frame size.  This is tricky because DR spectrometer files
+        ## have frames of different sizes depending on the mode
+        if mode == drspec:
+            try:
+                mfs = drspec.get_frame_size(fh)
+            except:
+                mfs = 0
+        else:
+            mfs = mode.FRAME_SIZE
+            
+        ## Loop over the frame size to try and find what looks like valid data.  If
+        ## is is found, set 'foundMatch' to True.
+        for i in range(mfs):
+            try:
+                junkFrame = mode.read_frame(fh)
+                foundMatch = True
+                break
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                fh.seek(-mfs+1, 1)
+                
+        ## Did we strike upon a valid frame?
+        if foundMatch:
+            ### Is so, we now need to try and read more frames to make sure we have 
+            ### the correct type of file
+            fh.seek(-mfs, 1)
+            
+            try:
+                for i in range(2):
+                    junkFrame = mode.read_frame(fh)
+                foundMode = True
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                ### Reset for the next mode...
+                fh.seek(0)
+        else:
+            ### Reset for the next mode...
+            fh.seek(0)
+            
+        ## Did we read more than one valid frame?
+        if foundMode:
+            break
+            
+    # There is an ambiguity that can arise for TBF data such that it *looks* 
+    # like DRX.  If the identified mode is DRX, skip halfway into the file and 
+    # verify that it is still DRX.
+    if mode in (drx, tbn):
+        ## Sort out the frame size
+        omfs = mode.FRAME_SIZE
+        
+        ## Seek half-way in
+        if is_splitfile:
+            nFrames = fh.size//omfs
+        else:
+            nFrames = os.path.getsize(filename)//omfs
+        fh.seek(nFrames//2*omfs)
+        
+        ## Read a bit of data to try to find the right type
+        for mode in (drx, tbf):
+            ### Set if we find a valid frame marker
+            foundMatch = False
+            ### Set if we can read more than one valid successfully
+            foundMode = False
+            
+            ### Sort out the frame size.
+            mfs = mode.FRAME_SIZE
+            
+            ### Loop over the frame size to try and find what looks like valid data.  If
+            ### is is found, set 'foundMatch' to True.
+            for i in range(mfs):
+                try:
+                    junkFrame = mode.read_frame(fh)
+                    foundMatch = True
+                    break
+                except errors.EOFError:
+                    break
+                except errors.SyncError:
+                    fh.seek(-mfs+1, 1)
+                    
+            ### Did we strike upon a valid frame?
+            if foundMatch:
+                #### Is so, we now need to try and read more frames to make sure we have 
+                #### the correct type of file
+                fh.seek(-mfs, 1)
+                
+                try:
+                    for i in range(4):
+                        junkFrame = mode.read_frame(fh)
+                    foundMode = True
+                except errors.SyncError:
+                    #### Reset for the next mode...
+                    fh.seek(nFrames//2*omfs)
+            else:
+                #### Reset for the next mode...
+                fh.seek(nFrames//2*omfs)
+                
+            ### Did we read more than one valid frame?
+            if foundMode:
+                break
+                
+    fh.seek(0)
+    if not is_splitfile:
+        fh.close()
+        fh = None
+    
+    # Raise an error if nothing is found
+    if not foundMode:
+        raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
+        
+    # Otherwise, build and return the correct LDPFileBase sub-class
+    if mode == drx:
+        ldpInstance = DRXFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
     elif mode == tbf:
