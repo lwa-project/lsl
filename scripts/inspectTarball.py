@@ -19,14 +19,14 @@ from datetime import datetime, timedelta
 
 from lsl.common import stations
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
-from lsl.common import metabundle, metabundleADP
+from lsl.common import metabundle, metabundleADP, metabundleNDP
 from lsl.common.sdf import get_observation_start_stop
 
 from lsl.misc import telemetry
 telemetry.track_script()
 
 
-__version__ = "0.2"
+__version__ = "0.3"
 
 # Date/time manipulation
 _UTC = pytz.utc
@@ -51,17 +51,29 @@ def main(args):
         aspConfigB = metabundle.get_asp_configuration_summary(inputTGZ, which='Beginning')
         aspConfigE = metabundle.get_asp_configuration_summary(inputTGZ, which='End')
     except:
-        # LWA-SV
-        ## Site changes
-        site = stations.lwasv
-        observer = site.get_observer()
-        ## Try again
-        project = metabundleADP.get_sdf(inputTGZ)
-        obsImpl = metabundleADP.get_observation_spec(inputTGZ)
-        fileInfo = metabundleADP.get_session_metadata(inputTGZ)
-        aspConfigB = metabundleADP.get_asp_configuration_summary(inputTGZ, which='Beginning')
-        aspConfigE = metabundleADP.get_asp_configuration_summary(inputTGZ, which='End')
-        
+        try:
+            # LWA-SV
+            ## Site changes
+            site = stations.lwasv
+            observer = site.get_observer()
+            ## Try again
+            project = metabundleADP.get_sdf(inputTGZ)
+            obsImpl = metabundleADP.get_observation_spec(inputTGZ)
+            fileInfo = metabundleADP.get_session_metadata(inputTGZ)
+            aspConfigB = metabundleADP.get_asp_configuration_summary(inputTGZ, which='Beginning')
+            aspConfigE = metabundleADP.get_asp_configuration_summary(inputTGZ, which='End')
+        except:
+            # LWA-NA
+            ## Site changes
+            site = stations.lwana
+            observer = site.get_observer()
+            ## Try again
+            project = metabundleNDP.get_sdf(inputTGZ)
+            obsImpl = metabundleNDP.get_observation_spec(inputTGZ)
+            fileInfo = metabundleNDP.get_session_metadata(inputTGZ)
+            aspConfigB = metabundleNDP.get_asp_configuration_summary(inputTGZ, which='Beginning')
+            aspConfigE = metabundleNDP.get_asp_configuration_summary(inputTGZ, which='End')
+            
     nObs = len(project.sessions[0].observations)
     tStart = [None,]*nObs
     for i in range(nObs):
@@ -182,4 +194,3 @@ if __name__ == "__main__":
                         help='metadata file to display')
     args = parser.parse_args()
     main(args)
-    

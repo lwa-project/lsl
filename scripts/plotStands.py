@@ -15,7 +15,7 @@ import sys
 import numpy
 import argparse
 
-from lsl.common import stations, metabundle, metabundleADP
+from lsl.common import stations, metabundle, metabundleADP, metabundleNDP
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -36,9 +36,14 @@ def main(args):
             try:
                 station = metabundle.get_station(args.metadata, apply_sdm=True)
             except:
-                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+                try:
+                    station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+                except:
+                    station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwa1
     stands = station.stands
@@ -110,8 +115,11 @@ if __name__ == "__main__":
         )
     parser.add_argument('stand', type=int, nargs='*', 
                         help='stand number to mark')
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA1')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-l', '--label', action='store_true', 
@@ -122,4 +130,3 @@ if __name__ == "__main__":
                         help='filename to save the plot to')
     args = parser.parse_args()
     main(args)
-    

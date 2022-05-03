@@ -21,7 +21,7 @@ from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
 from lsl.reader.ldp import LWASVDataFile, TBFFile
-from lsl.common import stations, metabundleADP
+from lsl.common import stations, metabundleADP, metabundleNDP
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
@@ -165,7 +165,12 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            try:
+                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            except ValueError:
+                station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwasv
     antennas = station.antennas
@@ -270,6 +275,8 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-n', '--lwana', action='store_true',
+                        help='use LWA-NA instead of LWA-SV')
     parser.add_argument('-t', '--avg-time', type=aph.positive_float, default=1.0, 
                         help='time window to average visibilities in seconds')
     parser.add_argument('-s', '--samples', type=aph.positive_int, default=1, 

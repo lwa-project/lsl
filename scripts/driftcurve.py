@@ -42,6 +42,9 @@ def main(args):
     if args.lwasv:
         nam = 'lwasv'
         sta = stations.lwasv
+    elif args.lwana:
+        nam = 'lwana'
+        sta = stations.lwana
     elif args.ovrolwa:
         nam = 'ovro'
         sta = stations.lwa1
@@ -189,8 +192,10 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--frequency', type=aph.frequency, default='74.0', 
                     help='frequency of the simulation in MHz')
     sgroup = parser.add_mutually_exclusive_group(required=False)
-    sgroup.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup.add_argument('-s', '--lwasv', action='store_true',
                         help='calculate for LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true',
+                        help='calculate for LWA-NA instead of LWA1')
     sgroup.add_argument('-o', '--ovrolwa', action='store_true',
                         help='calculate for OVRO-LWA instead of LWA1')
     parser.add_argument('-p', '--pol', type=str, default='EW', 

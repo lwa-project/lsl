@@ -119,6 +119,10 @@ def main(args):
         _name = 'LWA-SV'
         _ssmif = os.path.join(dataPath, 'lwasv-ssmif.txt')
         _url = "https://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
+    elif args.lwana:
+        _name = 'LWA-NA'
+        _ssmif = os.path.join(dataPath, 'lwana-ssmif.txt')
+        _url = "https://lda10g.alliance.unm.edu/metadata/lwana/ssmif/"
     else:
         _name = 'LWA1'
         _ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
@@ -246,8 +250,11 @@ if __name__ == "__main__":
             epilog='The -s/--lwasv option changes the behavior of all other options, e.g., -u/--update updates the LWA-SV SSMIF.',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
             )
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='update LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='update LWA-NA instead of LWA1')
     parser.add_argument('-u', '--update', action='store_true', 
                         help='update the default LWA1 SSMIF')
     parser.add_argument('-r', '--revert', action='store_true', 
