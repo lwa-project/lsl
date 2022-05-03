@@ -56,7 +56,7 @@ from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common.sdf import UCF_USERNAME_RE, Observer
-from lsl.common import sdf, sdfADP
+from lsl.common import sdf, sdfADP, sdfNDP
 
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
@@ -344,8 +344,13 @@ class Project(object):
         sdfs = []
         for i,station in enumerate(ses.stations):
             ### Session
-            sdfmod = sdf if station.interface.sdf == 'lsl.common.sdf' else sdfADP
-            
+            if station.interface.sdf == 'lsl.common.sdfADP':
+                sdfmode = sdfADP
+            elif station.interface.sdf == 'lsl.common.sdfNDP':
+                sdfmode = sdfNDP
+            else:
+                sdfmode = sdf
+                
             session = sdfmod.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
                                      starting_session_id, observations=[], station=station)
             session.drx_beam = 1

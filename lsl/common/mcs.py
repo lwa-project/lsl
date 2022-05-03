@@ -715,6 +715,8 @@ def sid_to_string(sid):
         return "DR #5"
     elif sid == 19:
         return "ADP"
+    elif sid == 20:
+        return "NDP"
     else:
         raise ValueError("Invalid sid code %i" % sid)
 

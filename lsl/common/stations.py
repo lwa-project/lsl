@@ -21,16 +21,16 @@ from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as dataPath
-from lsl.common import dp, mcs as mcsDP, adp, mcsADP
+from lsl.common import dp, mcs as mcsDP, adp, mcsADP, ndp, mcsNDP
 from lsl.misc.mathutils import to_dB, from_dB
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '2.3'
+__version__ = '2.4'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
-        'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations']
+           'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations']
 
 
 _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
@@ -428,9 +428,9 @@ class Antenna(object):
     Object to store the information about an antenna.  Stores antenna:
      * ID number (id)
      * ARX instance the antenna is attached to (arx)
-     * DP1/ROACH board number (board)
-     * DP1/ROACH  digitizer number (digitizer)
-     * DP/ADP rack input connector (input)
+     * DP1/ROACH/SNAP board number (board)
+     * DP1/ROACH/SNAP  digitizer number (digitizer)
+     * DP/ADP/NDP rack input connector (input)
      * Stand instance the antenna is part of (stand)
      * Polarization (0 == N-S; pol)
      * Antenna vertical mis-alignment in degrees (theta)
@@ -996,10 +996,14 @@ class LSLInterface(object):
             self._cache['backend'] = dp
         elif backend == 'lsl.common.adp':
             self._cache['backend'] = adp
+        elif backend == 'lsl.common.ndp':
+            self._cache['backend'] = ndp
         if mcs == 'lsl.common.mcs':
             self._cache['mcs'] = mcsDP
         elif mcs == 'lsl.common.mcsADP':
             self._cache['mcs'] = mcsADP
+        elif mcs == 'lsl.common.mcsNDP':
+            self._cache['mcs'] = mcsNDP
             
     def __str__(self):
         return "LSL Interfaces:\n Backend: %s\n MCS: %s\n SDF: %s\n Metadata: %s\n SDM: %s" % \
@@ -1423,9 +1427,11 @@ def _parse_ssmif_text(filename):
                 
             #
             # ROACH & Server Data - LWA-SV
+            #             and
+            # SNAP & Server Data - LWA-NA
             #
             
-            if keyword == 'N_ROACH':
+            if keyword in ('N_ROACH', 'N_SNAP'):
                 nRoach = int(value)
                 
                 roachID = ["UNK" for n in range(nRoach)]
@@ -1434,7 +1440,7 @@ def _parse_ssmif_text(filename):
                 
                 continue
                 
-            if keyword == 'N_ROACHCH':
+            if keyword in ('N_ROACHCH', 'N_SNAPCH'):
                 nChanRoach = int(value)
                 
                 roachStat = [[3 for c in range(nChanRoach)] for n in range(nRoach)]
@@ -1444,31 +1450,31 @@ def _parse_ssmif_text(filename):
                 
                 continue
                 
-            if keyword == 'ROACH_ID':
+            if keyword in ('ROACH_ID', 'SNAP_ID'):
                 roachID[ids[0]-1] = value
                 continue
                 
-            if keyword == 'ROACH_SLOT':
+            if keyword in ('ROACH_SLOT', 'SNAP_SLOT'):
                 roachSlot[ids[0]-1] = value
                 continue
                 
-            if keyword == 'ROACH_DESI':
+            if keyword in ('ROACH_DESI', 'SNAP_DESI'):
                 roachDesi[ids[0]-1] = int(value)
                 continue
                 
-            if keyword == 'ROACH_STAT':
+            if keyword in ('ROACH_STAT', 'SNAP_STAT'):
                 roachStat[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
-            if keyword == 'ROACH_INR':
+            if keyword in ('ROACH_INR', 'SNAP_INR'):
                 roachInR[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword == 'ROACH_INC':
+            if keyword in ('ROACH_INC', 'SNAP_INC'):
                 roachInC[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword == 'ROACH_ANT':
+            if keyword in ('ROACH_ANT', 'SNAP_ANT'):
                 roachAnt[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
@@ -1550,7 +1556,10 @@ def _parse_ssmif_binary(filename):
         fh.seek(0)
         
         overrides = {}
-        if version in (8,9):
+        if version == 10:
+            ## NDP
+            mode = mcsNDP
+        elif version in (8,9):
             ## ADP
             mode = mcsADP
             if version == 8:
@@ -1655,28 +1664,51 @@ def _parse_ssmif_binary(filename):
             dp2Stat = list(bssmif.eDP2Stat)
             dp2Desi = list(bssmif.eDP2Desi)
         except AttributeError:
-            #
-            # ROACH & Server Data
-            #
-            roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
-            roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-            roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
-            roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
-            roachDesi = list(bssmif.eRoachDesi)
-            roachStat = list(bssmif.eRoachStat)
-            roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
-            roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-            roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
-            roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-            roachAnt  = mcsDP.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
-            
-            serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
-            serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-            serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
-            serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
-            serverStat = list(bssmif.eServerStat)
-            serverDesi = list(bssmif.eServerDesi)
-            
+            try:
+                #
+                # ROACH & Server Data
+                #
+                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
+                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
+                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
+                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
+                roachDesi = list(bssmif.eRoachDesi)
+                roachStat = list(bssmif.eRoachStat)
+                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
+                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
+                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
+                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
+                roachAnt  = mcsDP.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
+                
+                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
+                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
+                serverStat = list(bssmif.eServerStat)
+                serverDesi = list(bssmif.eServerDesi)
+            except AttributeError:
+                #
+                # SNAP & Server Data
+                #
+                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
+                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
+                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
+                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
+                roachDesi = list(bssmif.eSnapDesi)
+                roachStat = list(bssmif.eSnapStat)
+                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
+                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
+                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
+                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
+                roachAnt  = mcsDP.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
+                
+                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
+                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
+                serverStat = list(bssmif.eServerStat)
+                serverDesi = list(bssmif.eServerDesi)
+                
         #
         # DR Data
         #
@@ -1748,16 +1780,19 @@ def parse_ssmif(filename):
     arxAnt   = ssmifDataDict['arxAnt']
     arxIn    = ssmifDataDict['arxIn']
     arxOut   = ssmifDataDict['arxOut']
-    ### DP/ADP
+    ### DP/ADP/NDP
     try:
         isDP = True
         dp1Ant = ssmifDataDict['dp1Ant']
         dp1InR = ssmifDataDict['dp1InR']
     except KeyError:
         isDP = False
-        roachAnt = ssmifDataDict['roachAnt']
-        roachInR = ssmifDataDict['roachInR']
-        
+        try:
+            roachAnt = ssmifDataDict['roachAnt']
+            roachInR = ssmifDataDict['roachInR']
+        except KeyError:
+            roachAnt = ssmifDataDict['snapAnt']
+            roachInR = ssmifDataDict['snapInR']
     # Build up a list of Stand instances and load them with data
     i = 1
     stands = []
@@ -1855,6 +1890,12 @@ def parse_ssmif(filename):
                                      sdf='lsl.common.sdfADP', 
                                      metabundle='lsl.common.metabundleADP', 
                                      sdm='lsl.common.sdmADP')
+        elif idn in ('NA',):
+            interface = LSLInterface(backend='lsl.common.ndp', 
+                                     mcs='lsl.common.mcsNDP', 
+                                     sdf='lsl.common.sdfNDP', 
+                                     metabundle='lsl.common.metabundleNDP', 
+                                     sdm='lsl.common.sdmNDP')
         else:
             interface = None
             
