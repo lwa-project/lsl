@@ -53,8 +53,6 @@ jobs:
             nbformat \
             nbconvert \
             coverage
-      - if: ${{ matrix.python-version == '2.7' }}
-        run: python -m pip install "healpy<1.14.0"
       - if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '2.7' }}
         run: python -m pip install python-casacore
       - name: "Software Install - Python, Part 2"
