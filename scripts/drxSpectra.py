@@ -17,7 +17,6 @@ import argparse
 
 import lsl.correlator.fx as fxc
 from lsl.reader.ldp import LWADataFile, DRXFile
-from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt

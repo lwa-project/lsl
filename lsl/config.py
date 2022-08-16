@@ -16,8 +16,10 @@ from lsl.misc.file_lock import FileLock
 try:
     if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
         os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-    with open(os.path.join(os.path.expanduser('~'), '.lsl', '.writeable'), 'w') as fh:
-        fh.write('test')
+    with FileLock(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test')):
+        with open(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'), 'w') as fh:
+            fh.write('test')
+        os.unlink(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'))
     _IS_READONLY = False
 except OSError:
     _IS_READONLY = True

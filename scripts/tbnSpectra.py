@@ -19,7 +19,6 @@ import argparse
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.correlator import fx as fxc
-from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
@@ -153,7 +152,7 @@ def main(args):
             masterWeight[i,stand,:] = int(readT*srate/LFFT)
             
     # Apply the cable loss corrections, if requested
-    if False:
+    if args.gain_correct:
         for s in range(masterSpectra.shape[1]):
             currGain = antennas[s].cable.gain(freq)
             for c in range(masterSpectra.shape[0]):
@@ -208,14 +207,14 @@ def main(args):
             # If there is more than one chunk, plot the difference between the global 
             # average and each chunk
             if nChunks > 1 and not args.disable_chunks:
-                for k in range(nChunks):
+                for l in range(nChunks):
                     # Some files are padded by zeros at the end and, thus, carry no 
                     # weight in the average spectra.  Skip over those.
-                    if masterWeight[k,j,:].sum() == 0:
+                    if masterWeight[l,j,:].sum() == 0:
                         continue
                         
                     # Calculate the difference between the spectra and plot
-                    subspectra = numpy.squeeze( numpy.log10(masterSpectra[k,j,:])*10.0 )
+                    subspectra = numpy.squeeze( numpy.log10(masterSpectra[l,j,:])*10.0 )
                     diff = subspectra - currSpectra
                     ax.plot(freq, diff)
                     
@@ -264,6 +263,8 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
                         help='set FFT length')
+    parser.add_argument('-g', '--gain-correct', action='store_true',
+                        help='correct signals for the cable losses')
     parser.add_argument('-d', '--disable-chunks', action='store_true', 
                         help='disable plotting chunks in addition to the global average')
     parser.add_argument('-k', '--keep', type=aph.csv_int_list, default='all', 

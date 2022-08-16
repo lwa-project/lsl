@@ -617,11 +617,11 @@ class imaging_tests(unittest.TestCase):
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
         
-        # Build an image
-        img = utils.build_gridded_image(out)
-        
-        # CLEAN
         with lsl.testing.SilentVerbose():
+            # Build an image
+            img = utils.build_gridded_image(out)
+            
+            # CLEAN
             deconv.clean(aa, out, img, max_iter=5, verbose=False, plot=run_plotting_tests)
             
     def test_clean_sources(self):
@@ -635,11 +635,11 @@ class imaging_tests(unittest.TestCase):
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
         
-        # Build an image
-        img = utils.build_gridded_image(out)
-        
-        # CLEAN
         with lsl.testing.SilentVerbose():
+            # Build an image
+            img = utils.build_gridded_image(out)
+            
+            # CLEAN
             deconv.clean_sources(aa, out, img, vis.SOURCES, max_iter=5, verbose=False, plot=run_plotting_tests)
             
     def test_clean_leastsq(self):
@@ -653,11 +653,11 @@ class imaging_tests(unittest.TestCase):
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
         
-        # Build an image
-        img = utils.build_gridded_image(out)
-        
-        # CLEAN
         with lsl.testing.SilentVerbose():
+            # Build an image
+            img = utils.build_gridded_image(out)
+            
+            # CLEAN
             deconv.lsq(aa, out, img, max_iter=2, verbose=False, plot=run_plotting_tests)
             
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")

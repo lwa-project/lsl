@@ -73,10 +73,7 @@ def ecef_to_geo(x, y, z):
     # Longitude
     lon = numpy.arctan2(y, x)
     
-    # Latitude (first approximation)
-    lat = numpy.arctan2(z, p)
-    
-    # Latitude (refined using Bowring's method)
+    # Latitude (using one iteration of Bowring's method)
     psi = numpy.arctan2(WGS84_a*z, WGS84_b*p)
     num = z + WGS84_b*ep2*numpy.sin(psi)**3
     den = p - WGS84_a*e2*numpy.cos(psi)**3
@@ -897,6 +894,12 @@ class ARX(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
+    def __eq__(self, other):
+        if isinstance(other, ARX):
+            return self.id == other.id and self.channel == other.channel
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 

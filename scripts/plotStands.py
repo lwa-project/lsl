@@ -89,7 +89,7 @@ def main(args):
                 ax1.annotate('%i' % (toMark[i]+1), xy=(data[toMark[i],0], data[toMark[i],1]), xytext=(data[toMark[i],0]+1, data[toMark[i],1]+1))
                 
     # Add and elevation colorbar to the right-hand side of the figure
-    cb = plt.colorbar(c, cax=ax4, orientation='vertical', ticks=[-2, -1, 0, 1, 2])
+    plt.colorbar(c, cax=ax4, orientation='vertical', ticks=[-2, -1, 0, 1, 2])
     
     # Set the axis limits
     ax1.set_xlim([-60, 60])

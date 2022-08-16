@@ -351,7 +351,7 @@ def get_sample_rate(filehandle, nframe=None, filter_code=False):
             key = 2*stand + pol
             try:
                 frames[key].append(cFrame)
-            except:
+            except KeyError:
                 frames[key] = [cFrame,]
                 
     # Any key with complete data will work for this, so pick the first key with two

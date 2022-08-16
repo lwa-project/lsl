@@ -20,7 +20,6 @@ import argparse
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
-from lsl import astro
 from lsl.reader.ldp import LWASVDataFile, TBFFile
 from lsl.common import stations, metabundleADP
 from lsl.correlator import uvutils
@@ -43,7 +42,6 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
     antennas = site.antennas
     
     # Get the metadata
-    sample_rate = idf.get_info('sample_rate')
     freq = idf.get_info('freq1')
     
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  

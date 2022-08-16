@@ -17,7 +17,6 @@ import time
 import numpy
 import argparse
 
-from lsl import astro
 from lsl.reader.ldp import LWA1DataFile, TBWFile
 from lsl.common import stations, metabundle
 from lsl.correlator import fx as fxc
@@ -98,7 +97,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
             
             try:
                 tempVis += vis
-            except:
+            except NameError:
                 tempVis = vis
                 
             pb.inc(amount=1)
@@ -135,9 +134,6 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
 def main(args):
     # Parse command line options
     filename = args.filename
-
-    # Length of the FFT
-    LFFT = args.fft_length
 
     # Setup the LWA station information
     if args.metadata is not None:
@@ -200,7 +196,6 @@ def main(args):
     print("Number of integrations in file: %i" % nSets)
     print("==")
     
-    leftToDo = 1
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     

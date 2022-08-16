@@ -50,13 +50,21 @@ class SilentVerbose(object):
         
     def __enter__(self):
         if self.stdout:
+            self._orig_stdout = sys.stdout
             sys.stdout = StringIO()
         if self.stderr:
+            self._orig_stderr = sys.stderr
             sys.stderr = StringIO()
         return self
         
     def __exit__(self, exc_type, exc_value, exc_tb):
         if self.stdout:
-            sys.stdout = sys.__stdout__
+            buffer = sys.stdout
+            sys.stdout = self._orig_stdout
+            buffer.flush()
+            buffer.close()
         if self.stderr:
-            sys.stderr = sys.__stderr__
+            buffer = sys.stderr
+            sys.stderr = self._orig_stderr
+            buffer.flush()
+            buffer.close()

@@ -17,7 +17,6 @@ import time
 import numpy
 import argparse
 
-from lsl import astro
 from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.common import stations, metabundle, metabundleADP
 from lsl.correlator import fx as fxc
@@ -120,9 +119,6 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
 def main(args):
     # Parse command line options
     filename = args.filename
-    
-    # Length of the FFT
-    LFFT = args.fft_length
     
     # Setup the LWA station information
     if args.metadata is not None:

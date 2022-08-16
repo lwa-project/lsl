@@ -14,16 +14,13 @@ if sys.version_info < (3,):
     
 import os
 import re
+import imp
 import sys
+import glob
 import argparse
 import platform
-import warnings
 import subprocess
-try:
-    import cStringIO as StringIO
-except ImportError:
-    from io import StringIO
-    
+
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -51,7 +48,8 @@ def main(args):
     ## Required
     for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
         try:
-            exec "import %s" % mod
+            info = imp.find_module(mod)
+            imod = imp.load_module(mod, *info)
         except ImportError as e:
             if (str(e)).find('not found') != -1:
                 print( "%s: not found" % mod)
@@ -59,23 +57,24 @@ def main(args):
                 print("%s: WARNING import error '%s'" % (mod, str(e)))
         else:
             try:
-                version = eval("%s.version.version" % mod)
+                version = imod.version.version
             except AttributeError:
                 try:
-                    version = eval("%s.__version__" % mod)
+                    version = imod.__version__
                 except AttributeError:
                     try:	
                         versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
-                        mtch = versionRE.search(eval("%s.__file__" % mod))
+                        mtch = versionRE.search(imod.__file__)
                         version = mtch.group('version')
-                    except:
+                    except (AttributeError, IndexError):
                         version = "unknown"
             print("%s:  version %s" % (mod, version))
             
     ## Optional
     for mod in ('matplotlib', 'h5py', 'psrfits_utils'):
         try:
-            exec "import %s" % mod
+            info = imp.find_module(mod)
+            imod = imp.load_module(mod, *info)
         except ImportError as e:
             if (str(e)).find('not found') != -1:
                 print( "%s: not found" % mod)
@@ -83,16 +82,16 @@ def main(args):
                 #print("%s: WARNING import error '%s'" % (mod, str(e)))
         else:
             try:
-                version = eval("%s.version.version" % mod)
+                version = imod.version.version
             except AttributeError:
                 try:
-                    version = eval("%s.__version__" % mod)
+                    version = imod.__version__
                 except AttributeError:
                     try:	
                         versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
-                        mtch = versionRE.search(eval("%s.__file__" % mod))
+                        mtch = versionRE.search(imod.__file__)
                         version = mtch.group('version')
-                    except:
+                    except (AttributeError, IndexError):
                         version = "unknown"
             print("%s:  version %s" % (mod.capitalize(), version))
             
@@ -109,18 +108,16 @@ def main(args):
     for pkgName in ('fftw3f',):
         try:
             pkgQuery = subprocess.Popen(['pkg-config', '--exists', pkgName])
-            o, e = pkgQuery.communicate()
+            o, _ = pkgQuery.communicate()
             try:
                 o = o.decode()
-                e = e.decode()
             except AttributeError:
                 pass
             if pkgQuery.returncode == 0:
                 pkgQuery = subprocess.Popen(['pkg-config', '--modversion', pkgName], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                o, e = pkgQuery.communicate()
+                o, _ = pkgQuery.communicate()
                 try:
                     o = o.decode()
-                    e = e.decode()
                 except AttributeError:
                     pass
                 o = o.replace('\n', '')
@@ -134,10 +131,9 @@ def main(args):
     ## Via 'ldconfig'
     try:
         p = subprocess.Popen(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, e = p.communicate()
+        o, _ = p.communicate()
         try:
             o = o.decode()
-            e = e.decode()
         except AttributeError:
             pass
         o = o.split('\n')
@@ -237,9 +233,8 @@ return 0;
     shutil.rmtree(tmpdir)
     
     p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    o, e = p.communicate()
+    _, e = p.communicate()
     try:
-        o = o.decode()
         e = e.decode()
     except AttributeError:
         pass
@@ -257,14 +252,13 @@ return 0;
     try:
         import numpy
         nfp,junk = os.path.split(numpy.__file__)
-        nfp = os.path.join(nfp, 'core', 'umath.so')
+        nfp = glob.glob(os.path.join(nfp, 'core', 'umath.*'))[0]
         nfp = os.path.realpath(nfp)
 
         p = subprocess.Popen(['file', nfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, e = p.communicate()
+        o, _ = p.communicate()
         try:
             o = o.decode()
-            e = e.decode()
         except AttributeError:
             pass
         junk, numpyLinkage = o.split(None, 1)
@@ -274,6 +268,10 @@ return 0;
         print("Numpy Path: %s" % nfp)
         print("Numpy Version: %s" % numpy.version.version)
         print("Numpy Linkage: %s" % numpyLinkage)
+    except (OSError, subprocess.CalledProcessError):
+        print("Numpy Path: %s" % nfp)
+        print("Numpy Version: %s" % numpy.version.version)
+        print("Numpy Linkage: %s" % "Unknown")
     except ImportError as e:
         print("Numpy Import Error: %s" % str(e))
     print(" ")
@@ -284,14 +282,13 @@ return 0;
     try:
         import lsl, lsl.version
         lfp,junk = os.path.split(lsl.__file__)
-        lfp = os.path.join(lfp, 'correlator', '_core.so')
+        lfp = glob.glob(os.path.join(lfp, 'correlator', '_core.*'))[0]
         lfp = os.path.realpath(lfp)
 
         p = subprocess.Popen(['file', lfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, e = p.communicate()
+        o, _ = p.communicate()
         try:
             o = o.decode()
-            e = e.decode()
         except AttributeError:
             pass
         junk, lslLinkage = o.split(None, 1)
@@ -301,6 +298,10 @@ return 0;
         print("LSL Path: %s" % lfp)
         print("LSL Version: %s" % lsl.version.version)
         print("LSL Linkage: %s" % lslLinkage)
+    except (OSError, subprocess.CalledProcessError):
+        print("LSL Path: %s" % lfp)
+        print("LSL Version: %s" % lsl.version.version)
+        print("LSL Linkage: %s" % "Unknown")
     except ImportError as e:
         print("LSL Import Error: %s" % str(e))
     print(" ")

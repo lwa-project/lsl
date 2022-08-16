@@ -5,7 +5,6 @@ Module that provides classes for file cache management.
 """
 
 import os
-import sys
 import glob
 import time
 import contextlib
@@ -51,10 +50,12 @@ class FileCache(object):
             os.mkdir(self.cache_dir)
             
         # Make sure we can write here
-        with open(os.path.join(self.cache_dir, 'write.test'), 'w') as fh:
-            fh.write('test')
-        os.unlink(os.path.join(self.cache_dir, 'write.test'))
-        
+        with self._lock:
+            assert(self._lock.locked())
+            with open(os.path.join(self.cache_dir, 'write.test'), 'w') as fh:
+                fh.write('test')
+            os.unlink(os.path.join(self.cache_dir, 'write.test'))
+            
     def __contains__(self, filename):
         return os.path.exists(os.path.join(self.cache_dir, filename))
         
@@ -144,12 +145,6 @@ class MemoryFile(object):
         self._closed = True
         self._is_binary = False
         
-    def __enter__(self):
-        return self
-        
-    def __exit__(self, type, value, tb):
-        self.close()
-        
     def __iter__(self):
         contents = self.readline()
         if len(contents) > 0:
@@ -179,12 +174,14 @@ class MemoryFile(object):
         if not self._closed:
             raise IOError("MemoryFile:%s is already open" % self.name)
             
-        self._lock.acquire(blocking=True)
+        self._lock.acquire(True)
+        
         self.mtime = time.time()
         self._closed = False
         self._is_binary = (mode.find('b') != -1)
-        return self
         
+        return self
+            
     def seek(self, pos, whence=0):
         """
         Change the position in the buffer and return the new position.  The
@@ -288,10 +285,15 @@ class MemoryFile(object):
         Close the buffer and release the access lock.
         """
         
-        self.flush()
-        self.seek(0)
+        self._buffer.flush()
+        self._buffer.seek(0)
         self._closed = True
-        self._lock.release()
+        if self._lock.locked():
+            self._lock.release()
+
+
+# Lock for accessing the MemoryCache
+_MEMORY_CACHE_LOCK = MemoryLock('cache_access')
 
 
 class MemoryCache(object):
@@ -308,7 +310,7 @@ class MemoryCache(object):
         
         self.max_size = max_size
         self._cache = {}
-        self._lock = MemoryLock('cache_access')
+        self._lock = _MEMORY_CACHE_LOCK
         
     def __contains__(self, filename):
         return filename in self._cache

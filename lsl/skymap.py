@@ -17,6 +17,7 @@ if sys.version_info < (3,):
     range = xrange
     
 import os
+import abc
 from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
 
 from scipy.interpolate import interp1d
@@ -47,6 +48,8 @@ class SkyMapBase(object):
                                       the desired frequency.
     """
     
+    __metaclass__ = abc.ABCMeta
+    
     # Class data 
     degToRad = (pi/180.)             # Usual conversion factor
     
@@ -58,6 +61,7 @@ class SkyMapBase(object):
         # Load in the coordinates and data
         self._load()
         
+    @abc.abstractmethod
     def _load(self):
         """
         Load in the specified filename and populate the ra, dec, and _power

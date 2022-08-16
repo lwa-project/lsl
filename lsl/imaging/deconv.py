@@ -691,7 +691,6 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         
     # Get a grid of right ascensions and dec values for the image we are working with
     xyz = aipyImg.get_eq(aa.sidereal_time(), aa.lat, center=(size,size))
-    top = aipyImg.get_top(center=(size,size))
     ra, dec = eq2radec(xyz)
     
     # Get the list of baselines to generate visibilites for

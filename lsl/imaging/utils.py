@@ -51,10 +51,6 @@ import shutil
 import tarfile
 import tempfile
 import warnings
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 from calendar import timegm
 from datetime import datetime
 from astropy.constants import c as vLight
@@ -66,6 +62,7 @@ from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
 from lsl.common.color import colorfy
+from lsl.testing import SilentVerbose
 
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -287,14 +284,12 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 
                 nosta = mapper.data.field('NOSTA')
                 noact = mapper.data.field('NOACT')
-                stabxyz = ag.data.field('STABXYZ')
                 anname = mapper.data.field('ANNAME')
             except KeyError:
                 nosta = ag.data.field('NOSTA')
                 noact = ag.data.field('NOSTA')
-                stabxyz = ag.data.field('STABXYZ')
                 anname = ag.data.field('ANNAME')
-            
+                
             # Station/telescope information
             try:
                 self.telescope = hdulist[0].header['TELESCOP']
@@ -1462,22 +1457,16 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     vis = numpy.concatenate(vis)
     wgt = numpy.concatenate(wgt)
     
-    if not verbose:
-        sys.stdout = StringIO()
-        
-    uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
-    u,v,w = uvw
-    order = numpy.argsort(w)
-    u,v,w = u.take(order), v.take(order), w.take(order)
-    vis,wgt = vis.take(order), numpy.array([wg.take(order) for wg in wgt]).squeeze()
-    if wgt.dtype != numpy.complex64:
-        wgt = wgt.astype(numpy.complex64)
-        
-    im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
-    
-    if not verbose:
-        sys.stdout.close()
-        sys.stdout = sys.__stdout__
+    with SilentVerbose(stdout=not verbose):
+        uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
+        u,v,w = uvw
+        order = numpy.argsort(w)
+        u,v,w = u.take(order), v.take(order), w.take(order)
+        vis,wgt = vis.take(order), numpy.array([wg.take(order) for wg in wgt]).squeeze()
+        if wgt.dtype != numpy.complex64:
+            wgt = wgt.astype(numpy.complex64)
+            
+        im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
         
     return im
 

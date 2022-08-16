@@ -501,7 +501,14 @@ def get_observation_spec(tarname, obs_id=None):
             obsList.append( read_obs_file(of) )
             
         # Cull the list based on the observation ID selection
-        if obs_id is not None:
+        if obs_id is None:
+            outObs = obsList
+        else:
+            try:
+                len(obs_id)
+            except TypeError:
+                obs_id = [obs_id]
+                
             outObs = []
             for o in obsList:
                 try:
@@ -513,9 +520,7 @@ def get_observation_spec(tarname, obs_id=None):
                         
             if len(outObs) == 1:
                 outObs = outObs[0]
-        else:
-            outObs = obsList
-            
+                
     # Return
     return outObs
 

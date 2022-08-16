@@ -1879,7 +1879,7 @@ def get_hrz_from_equ(target, observer, jD):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
     b.compute(o)
     az = rad_to_deg(b.az)
@@ -1908,7 +1908,7 @@ def get_equ_from_hrz(target, observer, jD):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
         
     ra,dec = o.radec_of(deg_to_rad(target.az), deg_to_rad(target.alt))
@@ -2691,7 +2691,7 @@ def get_object_rst(jD, observer, target):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
     
     b.compute(o)
@@ -2748,7 +2748,7 @@ def get_solar_rst(jD, observer):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
         
     b.compute(o)
@@ -2805,7 +2805,7 @@ def get_jupiter_rst(jD, observer):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
         
     b.compute(o)
@@ -2862,7 +2862,7 @@ def get_saturn_rst(jD, observer):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
         
     b.compute(o)
@@ -2919,7 +2919,7 @@ def get_lunar_rst(jD, observer):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
         
     b.compute(o)
@@ -2976,7 +2976,7 @@ def get_venus_rst(jD, observer):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
         
     b.compute(o)
@@ -3033,7 +3033,7 @@ def get_mars_rst(jD, observer):
     o.lat = deg_to_rad(observer.lat)
     try:
         o.elev = observer.elv
-    except:
+    except AttributeError:
         pass
         
     b.compute(o)

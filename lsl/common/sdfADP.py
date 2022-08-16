@@ -110,12 +110,12 @@ class Project(_Project):
         try:
             # Try to pull out the project office comments about the session
             pos = self.project_office.sessions[session]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the observations
             poo = self.project_office.observations[session]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office observation comments match the
         # actual number of observations
@@ -359,8 +359,9 @@ class TBF(Observation):
      * comments - comments about the observation
     """
     
+    filter_codes = DRXFilters
+    
     def __init__(self, name, target, start, frequency1, frequency2, filter, samples, comments=None):
-        self.filter_codes = DRXFilters
         self.samples = int(samples)
         
         duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN*(2 if frequency2 != 0 else 1) + 5000
@@ -633,7 +634,7 @@ def parse_sdf(filename, verbose=False):
             # to deal with any indicies present
             try:
                 keywordSection, value = line.split(None, 1)
-            except:
+            except ValueError:
                 continue
             
             mtch = kwdRE.match(keywordSection)

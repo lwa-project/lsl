@@ -324,6 +324,7 @@ class _TypedParentList(list):
     """
     
     def __init__(self, allowed_types, parent=None, iterable=None):
+        list.__init__(self, [])
         if not isinstance(allowed_types, (list, tuple)):
             allowed_types = [allowed_types,]
         self.allowed_types = tuple(allowed_types)
@@ -543,12 +544,12 @@ class Project(object):
         try:
             # Try to pull out the project office comments about the session
             pos = self.project_office.sessions[session]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the observations
             poo = self.project_office.observations[session]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office observation comments match the
         # actual number of observations
@@ -1133,6 +1134,7 @@ class TBW(Observation):
     def __init__(self, name, target, start, samples, bits=12, comments=None):
         self.samples = int(samples)
         self.bits = int(bits)
+        assert(self.bits in (4, 12))
         
         duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
@@ -1206,8 +1208,9 @@ class TBN(Observation):
      * comments - comments about the observation
     """
     
+    filter_codes = TBNFilters
+    
     def __init__(self, name, target, start, duration, frequency, filter, gain=-1, comments=None):
-        self.filter_codes = TBNFilters
         Observation.__init__(self, name, target, start, duration, 'TBN', 0.0, 0.0, frequency, 0.0, filter, gain=gain, comments=comments)
         
     def estimate_bytes(self):
@@ -1538,6 +1541,8 @@ class Stepped(Observation):
      * comments - comments about the observation
     """
     
+    filter_codes = DRXFilters
+    
     def __init__(self, name, target, start, filter, steps=None, is_radec=True, gain=-1, comments=None):
         self.is_radec = bool(is_radec)
         self.steps = _TypedParentList(BeamStep, self)
@@ -1546,7 +1551,6 @@ class Stepped(Observation):
                 self.steps.extend(steps)
             else:
                 self.steps.append(steps)
-        self.filter_codes = DRXFilters
         Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
     def update(self):
@@ -1673,8 +1677,6 @@ class Stepped(Observation):
         if self._parent is not None:
             station = self._parent.station
             
-        pnt = self.fixed_body
-        
         vis = 0
         cnt = 0
         relStart = 0
@@ -2509,7 +2511,7 @@ def parse_sdf(filename, verbose=False):
             # to deal with any indicies present
             try:
                 keywordSection, value = line.split(None, 1)
-            except:
+            except ValueError:
                 continue
             
             mtch = kwdRE.match(keywordSection)
