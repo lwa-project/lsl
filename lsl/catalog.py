@@ -12,6 +12,10 @@ import os
 import math
 import abc
 import collections
+try:
+    Mapping = collections.abc.Mapping
+except AttributeError:
+    Mapping = collections.Mapping
 
 from lsl import astro
 from lsl import transform
@@ -61,7 +65,7 @@ class CatalogEntry(object):
         return "%s.%s(%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.name), repr(self.position))
 
 
-class Catalog(collections.Mapping):
+class Catalog(Mapping):
     """
     Class representing astronomical source catalog information.
     This is an abstract class; derived classes must provide a
