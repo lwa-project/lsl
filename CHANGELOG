@@ -1,3 +1,7 @@
+2.1.6
+ * Updated for Python 3.10
+ * Cleaned up the naming of the tutorial notebooks
+
 2.1.5
  * Fixed a few more problems with the new cache management
  * Fixed a problem in lsl.sim.vis.add_baseline_noise() that caused the SEFD values to be ignored in some cases
