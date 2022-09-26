@@ -15,6 +15,7 @@ import collections
 try:
     Mapping = collections.abc.Mapping
 except AttributeError:
+    # Catch for < Py3.10
     Mapping = collections.Mapping
 
 from lsl import astro
