@@ -11,7 +11,7 @@ if sys.version_info < (3,):
 import os
 import numpy
 import unittest
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbw
@@ -54,7 +54,6 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.minute, 2)
         self.assertEqual(dt.second, 58)
         self.assertEqual(dt.microsecond, 500000)
-        self.assertEqual(dt, datetime.utcfromtimestamp(t))
         
         t = FrameTimestamp(1587495778.5)
         self.assertAlmostEqual(t.unix, 1587495778.5, 6)
@@ -67,7 +66,6 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.minute, 2)
         self.assertEqual(dt.second, 58)
         self.assertEqual(dt.microsecond, 500000)
-        self.assertEqual(dt, datetime.utcfromtimestamp(t))
         
         t = FrameTimestamp(1587495777.4, 1.1)
         self.assertAlmostEqual(t.unix, 1587495778.5, 6)
@@ -80,7 +78,6 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.minute, 2)
         self.assertEqual(dt.second, 58)
         self.assertEqual(dt.microsecond, 500000)
-        self.assertEqual(dt, datetime.utcfromtimestamp(t))
         
         t = FrameTimestamp.from_dp_timetag(1587495778*196000000 + 196000000/2)
         self.assertAlmostEqual(t.unix, 1587495778.5, 6)
@@ -102,7 +99,6 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.second, 1)
         self.assertEqual(dt.microsecond, 519000)
         self.assertTrue(dt.tzinfo is None)
-        self.assertEqual(dt, datetime.utcfromtimestamp(t))
         
         t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
         # 200423 16:48:01  58962  60481519 T   1099467 1 SHL RPT POWER-OUTAGE|
@@ -115,7 +111,6 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.second, 1)
         self.assertEqual(dt.microsecond, 519000)
         self.assertFalse(dt.tzinfo is None)
-        self.assertEqual(dt, datetime.utcfromtimestamp(t))
         
     def test_timestamp_string(self):
         """Test string representations of a FrameTimestamp"""
