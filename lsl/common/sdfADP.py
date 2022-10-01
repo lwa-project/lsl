@@ -230,6 +230,14 @@ class Project(_Project):
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+            elif obs.mode == 'TRK_LUN':
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'STEPPED':
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
@@ -545,6 +553,8 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
         obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+    elif mode == 'TRK_LUN':
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             print("[%i] -> found %i steps" % (os.getpid(), len(beam_temps)))
