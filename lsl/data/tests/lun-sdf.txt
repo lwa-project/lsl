@@ -14,9 +14,9 @@ OBS_ID           1
 OBS_TITLE        Observation 1 Title
 OBS_TARGET       Observation 1 Target
 OBS_REMPI        Observation 1 REMPI
-OBS_START_MJD    55616
-OBS_START_MPM    0
-OBS_START        UTC 2011 02 24 00:00:00.000000
+OBS_START_MJD    55615
+OBS_START_MPM    43200000
+OBS_START        UTC 2011 02 23 12:00:00.000000
 OBS_DUR          10000
 OBS_DUR+         00:00:10.000
 OBS_MODE         TRK_LUN
@@ -33,9 +33,9 @@ OBS_TITLE        Observation 2 Title
 OBS_TARGET       Observation 1 Target
 OBS_REMPI        Observation 1 REMPI
 OBS_REMPO        Estimated data volume for this observation is 790.1 MB
-OBS_START_MJD    55616
-OBS_START_MPM    10000
-OBS_START        UTC 2011 02 24 00:00:10.000000
+OBS_START_MJD    55615
+OBS_START_MPM    43210000
+OBS_START        UTC 2011 02 23 12:00:10.000000
 OBS_DUR          10000
 OBS_DUR+         00:00:10.000
 OBS_MODE         TRK_LUN
@@ -46,5 +46,3 @@ OBS_FREQ2        1621569285
 OBS_FREQ2+       73.999999990 MHz
 OBS_BW           7
 OBS_BW+          19.600 MHz
-
-

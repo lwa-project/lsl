@@ -708,8 +708,8 @@ class sdf_adp_tests(unittest.TestCase):
         
         # Observational setup - 1
         self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_LUN')
-        self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
-        self.assertEqual(project.sessions[0].observations[0].mpm,      0)
+        self.assertEqual(project.sessions[0].observations[0].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[0].mpm,  43200000)
         self.assertEqual(project.sessions[0].observations[0].dur,  10000)
         self.assertEqual(project.sessions[0].observations[0].freq1,  438261968)
         self.assertEqual(project.sessions[0].observations[0].freq2, 1928352663)
@@ -717,8 +717,8 @@ class sdf_adp_tests(unittest.TestCase):
         
         # Observational setup - 2
         self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_LUN')
-        self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
-        self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
+        self.assertEqual(project.sessions[0].observations[1].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[1].mpm,  43210000)
         self.assertEqual(project.sessions[0].observations[1].dur,  10000)
         self.assertEqual(project.sessions[0].observations[1].freq1,  832697741)
         self.assertEqual(project.sessions[0].observations[1].freq2, 1621569285)
@@ -728,13 +728,13 @@ class sdf_adp_tests(unittest.TestCase):
         """Test updating TRK_LUN values."""
         
         project = sdfADP.parse_sdf(lunFile)
-        project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 5:00:15"
         project.sessions[0].observations[1].duration = timedelta(seconds=15)
         project.sessions[0].observations[1].frequency1 = 75e6
         project.sessions[0].observations[1].frequency2 = 76e6
         
-        self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
-        self.assertEqual(project.sessions[0].observations[1].mpm,  15000)
+        self.assertEqual(project.sessions[0].observations[1].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[1].mpm,  43215000)
         self.assertEqual(project.sessions[0].observations[1].dur,  15000)
         self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
         self.assertEqual(project.sessions[0].observations[1].freq2, 1665395482)
