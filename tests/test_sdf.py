@@ -775,7 +775,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(len(project.sessions[0].observations), 2)
         
         # Observational setup - 1
-        self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_JOV')
+        self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_LUN')
         self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[0].mpm,      0)
         self.assertEqual(project.sessions[0].observations[0].dur,  10000)
@@ -784,7 +784,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].filter,   7)
         
         # Observational setup - 2
-        self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_JOV')
+        self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_LUN')
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
         self.assertEqual(project.sessions[0].observations[1].dur,  10000)

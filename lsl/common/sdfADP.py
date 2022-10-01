@@ -67,14 +67,14 @@ from lsl.reader.tbf import FRAME_SIZE as TBFSize
 
 from lsl.common.sdf import Observer, ProjectOffice
 from lsl.common.sdf import Project as _Project, Session as _Session
-from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
+from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, TBN, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
 __version__ = '1.2'
-__all__ = ['UCF_USERNAME_RE', 'parse_time', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__all__ = ['UCF_USERNAME_RE', 'parse_time', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _UTC = pytz.utc
