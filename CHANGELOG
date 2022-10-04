@@ -1,6 +1,7 @@
 2.1.6
  * Updated for Python 3.10
  * Cleaned up the naming of the tutorial notebooks
+ * Added support for observing with TRK_LUN
 
 2.1.5
  * Fixed a few more problems with the new cache management
