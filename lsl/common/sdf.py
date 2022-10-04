@@ -18,6 +18,7 @@ is:
                      - DRX - class for general DRX observation, with sub-classes:
                        * Solar - class for solar tracking
                        * Jovian - class for Jovian tracking
+                       * Lunar - class for Lunar tracking
                      - Stepped - class for stepped observations
   * BeamStep - class that holds the information about a particular step in a Stepped
                Observation
@@ -84,7 +85,7 @@ telemetry.track_module()
 
 
 __version__ = '1.2'
-__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
@@ -657,6 +658,14 @@ class Project(object):
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+            elif obs.mode == 'TRK_LUN':
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'STEPPED':
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
@@ -779,7 +788,7 @@ class Project(object):
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
-    handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped
+    handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, TRK_LUN and Stepped
     
     .. versionchanged:: 1.0.0
         Added support for RA/dec values as ephem.hours/ephem.degrees instances
@@ -1522,6 +1531,37 @@ class Jovian(DRX):
         pointed.  None if the observation mode is either TBN or TBW."""
         
         return ephem.Jupiter()
+
+
+class Lunar(DRX):
+    """Sub-class of DRX specifically for Lunar DRX observations.   It features a
+    reduced number of parameters needed to setup the observation.
+    
+    Required Arguments:
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation tuning frequency 1 (Hz)
+     * observation tuning frequency 1 (Hz)
+     * integer filter code
+    
+    Optional Keywords:
+     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+                 (default = False)
+     * comments - comments about the observation
+    """
+    
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_LUN', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+        
+    @property
+    def fixed_body(self):
+        """Return an ephem.Body object corresponding to where the observation is 
+        pointed.  None if the observation mode is either TBN or TBW."""
+        
+        return ephem.Moon()
 
 
 class Stepped(Observation):
@@ -2422,6 +2462,8 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
         obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+    elif mode == 'TRK_LUN':
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             print("[%i] -> found %i steps" % (os.getpid(), len(beam_temps)))
