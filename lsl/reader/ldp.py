@@ -934,30 +934,30 @@ class DRXFile(LDPFileBase):
             pols = []
             tuning1 = 0.0
             tuning2 = 0.0
-            for i in range(64):
+            for i in range(32):
                 try:
-                    junkFrame = self.read_frame()
-                except errors.SyncError:
-                    continue
-                except errors.EOFError:
+                    junkFrame0 = self.read_frame()
+                    junkFrame1 = self.read_frame()
+                except (errors.SyncError, errors.EOFError):
                     break
-                b,t,p = junkFrame.id
-                srate = junkFrame.sample_rate
-                if b not in beams:
-                    beams.append(b)
-                if t not in tunes:
-                    tunes.append(t)
-                if p not in pols:
-                    pols.append(p)
-                    
-                if t == 1:
-                    tuning1 = junkFrame.central_freq
-                else:
-                    tuning2 = junkFrame.central_freq
-                    
+                for junkFrame in (junkFrame0, junkFrame1):
+                    b,t,p = junkFrame.id
+                    srate = junkFrame.sample_rate
+                    if b not in beams:
+                        beams.append(b)
+                    if t not in tunes:
+                        tunes.append(t)
+                    if p not in pols:
+                        pols.append(p)
+                        
+                    if t == 1:
+                        tuning1 = junkFrame.central_freq
+                    else:
+                        tuning2 = junkFrame.central_freq
+                        
                 if i == 0:
-                    start = junkFrame.time
-                    startRaw = junkFrame.payload.timetag - junkFrame.header.time_offset
+                    start = junkFrame0.time
+                    startRaw = junkFrame0.payload.timetag - junkFrame0.header.time_offset
                     
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': drx.FRAME_SIZE,
                             'nbeampol': beampols, 'beam': b, 
