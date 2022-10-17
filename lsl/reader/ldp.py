@@ -934,7 +934,7 @@ class DRXFile(LDPFileBase):
             pols = []
             tuning1 = 0.0
             tuning2 = 0.0
-            for i in range(32):
+            for i in range(64):
                 junkFrame = self.read_frame()
                 b,t,p = junkFrame.id
                 srate = junkFrame.sample_rate
