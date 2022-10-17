@@ -937,7 +937,9 @@ class DRXFile(LDPFileBase):
             for i in range(64):
                 try:
                     junkFrame = self.read_frame()
-                except (errors.SyncError, errors.EOFError):
+                except errors.SyncError:
+                    continue
+                except errors.EOFError:
                     break
                 b,t,p = junkFrame.id
                 srate = junkFrame.sample_rate
