@@ -935,7 +935,10 @@ class DRXFile(LDPFileBase):
             tuning1 = 0.0
             tuning2 = 0.0
             for i in range(64):
-                junkFrame = self.read_frame()
+                try:
+                    junkFrame = self.read_frame()
+                except errors.EOFError:
+                    break
                 b,t,p = junkFrame.id
                 srate = junkFrame.sample_rate
                 if b not in beams:
