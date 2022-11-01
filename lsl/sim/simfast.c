@@ -18,7 +18,7 @@
 
 #include "../common/py3_compat.h"
 
-#include "protos.h"
+#include "gsl_sf.h"
 
 
 static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
@@ -278,7 +278,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
                         tempX = 2.0*NPY_PI * sqrt(tempX);
                         
                         if( tempX != 0.0 ) {
-                            tempX = 2.0 * j1(tempX)/tempX;
+                            tempX = 2.0 * gsl_sf_bessel_J1(tempX)/tempX;
                         } else {
                             tempX = 1.0;
                         }
@@ -421,4 +421,3 @@ MOD_INIT(_simfast) {
     
     return MOD_SUCCESS_VAL(m);
 }
-
