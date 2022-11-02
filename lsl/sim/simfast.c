@@ -247,8 +247,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
             blz = *(pos + 3*a1 + 2) - *(pos + 3*a2 + 2);
             
             // Baseline visibility
-            tempVis = (float complex *) malloc(nFreq*sizeof(float complex));
-            memset(tempVis, 0, nFreq*sizeof(float complex));
+            tempVis = (float complex *) calloc(nFreq*sizeof(float complex));
             
             for(j=0; j<nSrc; j++) {
                 // Source pointing
