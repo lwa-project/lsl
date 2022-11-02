@@ -13,6 +13,8 @@
     #endif
 #endif
 
+#include <gsl/gsl_sf.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
@@ -37,18 +39,6 @@ double signed_sqrt(double data) {
 }
 
 
-// Modified Bessel function of the first find
-double iv0(double x) {
-    double d = 0.0, ds = 1.0, sum = 1.0;
-    do {
-        d += 2.0;
-        ds *= x*x/(d*d);
-        sum += ds;
-    } while(ds > sum*1e-8);
-    return sum;
-}
-
-
 void kaiser_bessel_1d_kernel_filler(double *kernel1D) {
     int i;
     double x, v, scaleFactor;
@@ -57,7 +47,7 @@ void kaiser_bessel_1d_kernel_filler(double *kernel1D) {
     for(i=0; i<GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1; i++) {
         x = ((double) i) / GRID_KERNEL_OVERSAMPLE;
         v = sinc(x) / scaleFactor;
-        v *= iv0(8.6 * sqrt(1.0-(2*x/GRID_KERNEL_SIZE*2*x/GRID_KERNEL_SIZE)));
+        v *= gsl_sf_bessel_I0(8.6 * sqrt(1.0-(2*x/GRID_KERNEL_SIZE*2*x/GRID_KERNEL_SIZE)));
         // Deal with NaNs
         if(v != v) {
             if(i == 0) {

@@ -297,7 +297,7 @@ ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/rea
             Extension('correlator._spec', ['lsl/correlator/spec.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._core', ['lsl/correlator/core.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
-            Extension('imaging._gridder', ['lsl/imaging/gridder.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
+            Extension('imaging._gridder', ['lsl/imaging/gridder.cpp'], include_dirs=[numpy.get_include()], libraries=['m', 'gsl'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('sim._simfast', ['lsl/sim/simfast.c'], include_dirs=[numpy.get_include()], libraries=['m', 'gsl'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('misc._wisdom', ['lsl/misc/wisdom.cpp'],include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), ]
 
