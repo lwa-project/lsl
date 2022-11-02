@@ -13,7 +13,7 @@
     #endif
 #endif
 
-#include <gsl_sf.h>
+#include <gsl/gsl_sf.h>
 
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
