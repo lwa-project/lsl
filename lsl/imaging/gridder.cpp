@@ -43,7 +43,7 @@ void kaiser_bessel_1d_kernel_filler(double *kernel1D) {
     int i;
     double x, v, scaleFactor;
     
-    scaleFactor = iv0(8.6);
+    scaleFactor = gsl_sf_bessel_I0(8.6);
     for(i=0; i<GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1; i++) {
         x = ((double) i) / GRID_KERNEL_OVERSAMPLE;
         v = sinc(x) / scaleFactor;
@@ -136,7 +136,7 @@ void compute_kernel_correction(long nPixSide,
     long i, j;
     OutType temp, temp2;
     OutType *corr_full;
-    corr_full = (OutType*) calloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(OutType));
+    corr_full = (OutType*) calloc(nPixSide*GRID_KERNEL_OVERSAMPLE, sizeof(OutType));
     
     // Copy the kernel over
     for(i=0; i<nPixSide*GRID_KERNEL_OVERSAMPLE; i++) {
