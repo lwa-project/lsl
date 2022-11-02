@@ -20,6 +20,7 @@ REQUIREMENTS
 ------------
  * python >= 2.7
  * fftw3 >= 3.2 (single precision version)
+ * gsl >= 2.4
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
