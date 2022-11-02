@@ -13,12 +13,12 @@
     #endif
 #endif
 
+#include <gsl_sf.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
-
-#include "gsl_sf.h"
 
 
 static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
