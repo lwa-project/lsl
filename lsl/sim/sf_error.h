@@ -30,7 +30,7 @@ int sf_error_set_print(int flag);
 int sf_error_get_print(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* SF_ERROR_H_ */
