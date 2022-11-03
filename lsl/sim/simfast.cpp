@@ -1,8 +1,6 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <complex.h>
+#include <cmath>
+#include <complex>
 
 #ifdef _OPENMP
     #include <omp.h>
@@ -21,10 +19,153 @@
 #include "protos.h"
 
 
+/*
+  Complex types
+*/
+
+typedef std::complex<float> Complex32;
+typedef std::complex<double> Complex64;
+
+
+/*
+  Macro for 2*pi
+*/
+
+#define TPI (2*NPY_PI*Complex64(0,1))
+
+
+template<typename FluxType, typename OutType>
+void compute_visibility(long nBL,
+                        long nChan,
+                        long nSrc,
+                        long chanMin,
+                        long chanMax,
+                        long resolve,
+                        double phs_ha,
+                        double phs_dec,
+                        int const* bl_pair,
+                        double const* ant_pos,
+                        double const* freq,
+                        double const* src_ha,
+                        double const* src_dec,
+                        FluxType const* src_flux,
+                        double const* src_shape,
+                        double* uvw,
+                        OutType* vis) {
+    // Setup
+    long int i, j, k;
+    int a1, a2;
+    double blx, bly, blz;
+    Complex64 *tempVis;
+    double tempHA, tempDec;
+    double tempA0, tempA1, tempTheta, tempX;
+    double x, y, z;
+    double u, v, w;
+    
+    Py_BEGIN_ALLOW_THREADS
+    
+    // Equatorial to topocentric baseline conversion basis for the phase center
+    double pcsinHA, pccosHA, pcsinDec, pccosDec;
+    pcsinHA = sin(phs_ha);
+    pccosHA = cos(phs_ha);
+    pcsinDec = sin(phs_dec);
+    pccosDec = cos(phs_dec);
+    
+    #ifdef _OPENMP
+        #pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempA0, tempA1, tempTheta, tempX, tempVis, x, y, z, u, v, w, i, j, k)
+    #endif
+    {
+        tempVis = (Complex64 *) malloc(nChan*sizeof(Complex64));
+        
+        #ifdef _OPENMP
+            #pragma omp for schedule(OMP_SCHEDULER)
+        #endif
+        for(i=0; i<nBL; i++) {
+            // Antenna indicies for the baseline
+            a1 = *(bl_pair + 2*i + 0);
+            a2 = *(bl_pair + 2*i + 1);
+            
+            // Baseline in equatorial coordinates
+            blx = *(ant_pos + 3*a1 + 0) - *(ant_pos + 3*a2 + 0);
+            bly = *(ant_pos + 3*a1 + 1) - *(ant_pos + 3*a2 + 1);
+            blz = *(ant_pos + 3*a1 + 2) - *(ant_pos + 3*a2 + 2);
+            
+            // Baseline visibility
+            memset(tempVis, 0, nChan*sizeof(Complex64));
+            
+            for(j=0; j<nSrc; j++) {
+                // Source pointing
+                tempHA = *(src_ha + j);
+                tempDec = *(src_dec + j);
+                
+                // Shape
+                tempA0 = *(src_shape + 0*nSrc + j);
+                tempA1 = *(src_shape + 1*nSrc + j);
+                tempTheta = *(src_shape + 2*nSrc + j);
+                
+                // Baseline to topocentric coordinates
+                x =  sin(tempHA)*blx +              cos(tempHA)*bly;
+                y = -sin(tempDec)*cos(tempHA)*blx + sin(tempDec)*sin(tempHA)*bly + cos(tempDec)*blz;
+                z =  cos(tempDec)*cos(tempHA)*blx - cos(tempDec)*sin(tempHA)*bly + sin(tempDec)*blz;
+                
+                for(k=chanMin; k<chanMax; k++) {
+                    // Compute w
+                    u = *(freq + k) * x;
+                    v = *(freq + k) * y;
+                    w = *(freq + k) * z;
+                    
+                    // Correction for the source shape
+                    if( resolve && tempA0 != 0.0 && tempA1 != 0.0 ) {
+                        tempX  = tempA0*(u*cos(tempTheta) - v*sin(tempTheta)) * tempA0*(u*cos(tempTheta) - v*sin(tempTheta));
+                        tempX += tempA1*(u*sin(tempTheta) + v*cos(tempTheta)) * tempA1*(u*sin(tempTheta) + v*cos(tempTheta));
+                        tempX = 2.0*NPY_PI * sqrt(tempX);
+                        
+                        if( tempX != 0.0 ) {
+                            tempX = 2.0 * j1(tempX)/tempX;
+                        } else {
+                            tempX = 1.0;
+                        }
+                    } else {
+                        tempX = 1.0;
+                    }
+                    
+                    // Compute the contribution of this source to the baseline visibility (with the conjugation)
+                    *(tempVis + k) += tempX * ((Complex64) *(src_flux + nChan*j + k)) * exp(TPI*w);
+                }
+            }
+            
+            // Zenith pointing
+            x =  pcsinHA*blx +          pccosHA*bly;
+            y = -pcsinDec*pccosHA*blx + pcsinDec*pcsinHA*bly + pccosDec*blz;
+            z =  pccosDec*pccosHA*blx - pccosDec*pcsinHA*bly + pcsinDec*blz;
+            
+            for(k=chanMin; k<chanMax; k++) {
+                // Compute u, v, and w for a zenith pointing (hardcoded for LWA1)
+                u = *(freq + k) * x;
+                v = *(freq + k) * y;
+                w = *(freq + k) * z;
+                
+                // Save
+                *(uvw + i*3*nChan + 0*nChan + k) = u;
+                *(uvw + i*3*nChan + 1*nChan + k) = v;
+                *(uvw + i*3*nChan + 2*nChan + k) = w;
+                
+                // Phase to zenith
+                *(vis + i*nChan + k) = ((OutType) (*(tempVis + k) * exp(-TPI*w)));
+            }
+        }
+        
+        free(tempVis);
+    }
+    
+    Py_END_ALLOW_THREADS
+}
+
+
 static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *antarray, *bls, *output, *temp, *temp2, *temp3;
     PyArrayObject *freq=NULL, *ha=NULL, *dec=NULL, *flux=NULL, *shape=NULL, *uvwF=NULL, *visF=NULL, *tempA=NULL;
-    long int i, j, k;
+    long int i, j;
     long int resolve, nAnt, nSrc, nFreq, nBL, chanMin, chanMax;
     double lat, pcAz, pcEl, pcHA, pcDec;
     
@@ -33,8 +174,8 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     pcAz = 0.0;
     pcEl = 90.0;
     resolve = 0;
-    static char* kwlist[] = {"aa", "bls", "chan_min", "chan_max", "pc_az", "pc_el", "resolve_src", NULL};
-    if( !PyArg_ParseTupleAndKeywords(args, kwds, "OOlldd|i", kwlist, &antarray, &bls, &chanMin, &chanMax, &pcAz, &pcEl, &resolve) ) {
+    char const* kwlist[] = {"aa", "bls", "chan_min", "chan_max", "pc_az", "pc_el", "resolve_src", NULL};
+    if( !PyArg_ParseTupleAndKeywords(args, kwds, "OOlldd|i", const_cast<char **>(kwlist), &antarray, &bls, &chanMin, &chanMax, &pcAz, &pcEl, &resolve) ) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         goto fail;
     }
@@ -80,7 +221,9 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
         PyErr_Format(PyExc_TypeError, "Cannot find flux density array 'jys' in the simulation cache");
         goto fail;
     }
-    flux = (PyArrayObject *) PyArray_ContiguousFromObject(temp2, NPY_COMPLEX128, 2, 2);
+    flux = (PyArrayObject *) PyArray_ContiguousFromObject(temp2,
+                                                          PyArray_TYPE((PyArrayObject *) temp2),
+                                                          2, 2);
     /** Source shape **/
     temp2 = PyDict_GetItemString(temp, "s_shp");
     if( temp2 == NULL ) {
@@ -178,9 +321,9 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
         t = (double *) PyArray_DATA(tempA);
         
         for(j=0; j<3; j++) {
-            *(pos + 3*i + j) = *(t + j);
+          *(pos + 3*i + j) = *(t + j);
         }
-        
+          
         Py_XDECREF(tempA);
         Py_DECREF(temp3);
     }
@@ -204,122 +347,31 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
         Py_DECREF(temp2);
     }
     
-    Py_BEGIN_ALLOW_THREADS
+#define LAUNCH_COMPUTE_VIS(IterType) \
+        compute_visibility<IterType>(nBL, nFreq, nSrc, chanMin, chanMax, resolve, pcHA, pcDec, \
+                                     (int *) bll, \
+                                     (double *) pos, \
+                                     (double *) PyArray_DATA(freq), \
+                                     (double *) PyArray_DATA(ha), \
+                                     (double *) PyArray_DATA(dec), \
+                                     (IterType *) PyArray_DATA(flux), \
+                                     (double *) PyArray_DATA(shape), \
+                                     (double *) PyArray_DATA(uvwF), \
+                                     (Complex32 *) PyArray_DATA(visF));
     
-    // Equatorial to topocentric baseline conversion basis for the phase center
-    double pcsinHA, pccosHA, pcsinDec, pccosDec;
-    pcsinHA = sin(pcHA);
-    pccosHA = cos(pcHA);
-    pcsinDec = sin(pcDec);
-    pccosDec = cos(pcDec);
-    
-    // Setup variables for the loop
-    int a1, a2;
-    double blx, bly, blz, x, y, z, u, v, w;
-    double tempHA, tempDec, tempA0, tempA1, tempTheta, tempX;
-    float complex *tempVis;
-    double *a, *b, *c, *e, *g;
-    double complex *d;
-    float complex *f;
-    a = (double *) PyArray_DATA(freq);
-    b = (double *) PyArray_DATA(ha);
-    c = (double *) PyArray_DATA(dec);
-    d = (double complex *) PyArray_DATA(flux);
-    e = (double *) PyArray_DATA(uvwF);
-    f = (float complex *) PyArray_DATA(visF);
-    g = (double *) PyArray_DATA(shape);
-    
-    #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempA0, tempA1, tempTheta, tempX, tempVis, x, y, z, u, v, w, i, j, k)
-    #endif
-    {
-        #ifdef _OPENMP
-            #pragma omp for schedule(OMP_SCHEDULER)
-        #endif
-        for(i=0; i<nBL; i++) {
-            // Antenna indicies for the baseline
-            a1 = *(bll + 2*i + 0);
-            a2 = *(bll + 2*i + 1);
-            
-            // Baseline in equatorial coordinates
-            blx = *(pos + 3*a1 + 0) - *(pos + 3*a2 + 0);
-            bly = *(pos + 3*a1 + 1) - *(pos + 3*a2 + 1);
-            blz = *(pos + 3*a1 + 2) - *(pos + 3*a2 + 2);
-            
-            // Baseline visibility
-            tempVis = (float complex *) malloc(nFreq*sizeof(float complex));
-            memset(tempVis, 0, nFreq*sizeof(float complex));
-            
-            for(j=0; j<nSrc; j++) {
-                // Source pointing
-                tempHA = *(b + j);
-                tempDec = *(c + j);
-                
-                // Shape
-                tempA0 = *(g + 0*nSrc + j);
-                tempA1 = *(g + 1*nSrc + j);
-                tempTheta = *(g + 2*nSrc + j);
-                
-                // Baseline to topocentric coordinates
-                x =  sin(tempHA)*blx +              cos(tempHA)*bly;
-                y = -sin(tempDec)*cos(tempHA)*blx + sin(tempDec)*sin(tempHA)*bly + cos(tempDec)*blz;
-                z =  cos(tempDec)*cos(tempHA)*blx - cos(tempDec)*sin(tempHA)*bly + sin(tempDec)*blz;
-                
-                for(k=chanMin; k<chanMax; k++) {
-                    // Compute w
-                    u = *(a + k) * x;
-                    v = *(a + k) * y;
-                    w = *(a + k) * z;
-                    
-                    // Correction for the source shape
-                    if( resolve && tempA0 != 0.0 && tempA1 != 0.0 ) {
-                        tempX  = tempA0*(u*cos(tempTheta) - v*sin(tempTheta)) * tempA0*(u*cos(tempTheta) - v*sin(tempTheta));
-                        tempX += tempA1*(u*sin(tempTheta) + v*cos(tempTheta)) * tempA1*(u*sin(tempTheta) + v*cos(tempTheta));
-                        tempX = 2.0*NPY_PI * sqrt(tempX);
-                        
-                        if( tempX != 0.0 ) {
-                            tempX = 2.0 * j1(tempX)/tempX;
-                        } else {
-                            tempX = 1.0;
-                        }
-                    } else {
-                        tempX = 1.0;
-                    }
-                    
-                    // Compute the contribution of this source to the baseline visibility (with the conjugation)
-                    *(tempVis + k) += tempX * *(d + nFreq*j + k) * cexp(2*NPY_PI*_Complex_I*w);
-                }
-            }
-            
-            // Zenith pointing
-            x =  pcsinHA*blx +          pccosHA*bly;
-            y = -pcsinDec*pccosHA*blx + pcsinDec*pcsinHA*bly + pccosDec*blz;
-            z =  pccosDec*pccosHA*blx - pccosDec*pcsinHA*bly + pcsinDec*blz;
-            
-            for(k=chanMin; k<chanMax; k++) {
-                // Compute u, v, and w for a zenith pointing (hardcoded for LWA1)
-                u = *(a + k) * x;
-                v = *(a + k) * y;
-                w = *(a + k) * z;
-                
-                // Save
-                *(e + i*3*nFreq + 0*nFreq + k) = u;
-                *(e + i*3*nFreq + 1*nFreq + k) = v;
-                *(e + i*3*nFreq + 2*nFreq + k) = w;
-                
-                // Phase to zenith
-                *(f + i*nFreq + k) = *(tempVis + k) * cexp(-2*NPY_PI*_Complex_I*w);
-            }
-            
-            free(tempVis);
-        }
+    switch( PyArray_TYPE(flux) ){
+        case( NPY_FLOAT32    ): LAUNCH_COMPUTE_VIS(float);     break;
+        case( NPY_FLOAT64    ): LAUNCH_COMPUTE_VIS(double);    break;
+        case( NPY_COMPLEX64  ): LAUNCH_COMPUTE_VIS(Complex32); break;
+        case( NPY_COMPLEX128 ): LAUNCH_COMPUTE_VIS(Complex64); break;
+        default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
     }
-    
+        
+#undef LAUNCH_COMPUTE_VIS
+        
     // Cleanup
     free(pos);
     free(bll);
-    
-    Py_END_ALLOW_THREADS
     
     output = Py_BuildValue("(OO)", PyArray_Return(uvwF), PyArray_Return(visF));
     
@@ -421,4 +473,3 @@ MOD_INIT(_simfast) {
     
     return MOD_SUCCESS_VAL(m);
 }
-
