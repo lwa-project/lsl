@@ -51,13 +51,8 @@ import shutil
 import tarfile
 import tempfile
 import warnings
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 from calendar import timegm
 from datetime import datetime
-from operator import itemgetter
 from astropy.constants import c as vLight
 
 from lsl import astro
@@ -66,6 +61,8 @@ from lsl.common import stations
 from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
+from lsl.common.color import colorfy
+from lsl.testing import SilentVerbose
 
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -124,24 +121,21 @@ def CorrelatedData(filename, verbose=False):
         except Exception as e:
             if verbose:
                 print("FITSIDI - ERROR: %s" % str(e))
-            pass
-            
+                
         ## UVFITS
         try:
             return CorrelatedDataUV(filename)
         except Exception as e:
             if verbose:
                 print("UVFITS - ERROR: %s" % str(e))
-            pass
-            
+                
         ## Measurment Set as a compressed entity
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
             if verbose:
                 print("MS - ERROR: %s" % str(e))
-            pass
-            
+                
     if not valid:
         raise RuntimeError("File '%s' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet" % filename)
 
@@ -261,130 +255,125 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         CorrelatedDataBase.__init__(self, filename)
         
         # Open the file, check if it looks like FITS IDI, and pull out the UV_DATA table
-        hdulist = astrofits.open(self.filename)
-        tbls = [i.header['EXTNAME'] for i in hdulist[1:]]
-        for tbl in ('ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'SOURCE', 'UV_DATA'):
-            if tbl not in tbls:
-                raise RuntimeError("Cannot find table '%s' in '%s'" % (tbl, self.filename))
-        
-        self.extended = False
-        self.conjugate = True
-        try:
-            if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
-                self.extended = True
-        except KeyError:
-            ## Catch for LEDA64-NM data
-            pass
-        try:
-            if hdulist[0].header['LWAMAJV'] < 3:
-                self.conjugate = False
-        except KeyError:
-            pass
-        ag = hdulist['ARRAY_GEOMETRY']
-        fq = hdulist['FREQUENCY']
-        uvData = hdulist['UV_DATA']
-        
-        # Antennas
-        try:
-            mapper = hdulist['NOSTA_MAPPER']
+        with astrofits.open(self.filename) as hdulist:
+            tbls = [i.header['EXTNAME'] for i in hdulist[1:]]
+            for tbl in ('ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'SOURCE', 'UV_DATA'):
+                if tbl not in tbls:
+                    raise RuntimeError("Cannot find table '%s' in '%s'" % (tbl, self.filename))
             
-            nosta = mapper.data.field('NOSTA')
-            noact = mapper.data.field('NOACT')
-            stabxyz = ag.data.field('STABXYZ')
-            anname = mapper.data.field('ANNAME')
-        except KeyError:
-            nosta = ag.data.field('NOSTA')
-            noact = ag.data.field('NOSTA')
-            stabxyz = ag.data.field('STABXYZ')
-            anname = ag.data.field('ANNAME')
-        
-        # Station/telescope information
-        try:
-            self.telescope = hdulist[0].header['TELESCOP']
-            self.date_obs = datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
-        except ValueError:
-            ## Catch for DiFX FITS-IDI files
-            self.date_obs = datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%d")
-        except KeyError:
-            ## Catch for LEDA64-NM data
-            self.telescope = uvData.header['TELESCOP']
-            self.date_obs = datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
-            
-        ## Extract the site position
-        geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
-        site = stations.ecef_to_geo(*geo)
-        
-        ## Try to back out the "real" stand names
-        noact2 = []
-        for nam in anname:
+            self.extended = False
+            self.conjugate = True
             try:
-                mtch =  _annameRE.match(nam)
-                id = int(mtch.group('id'))
-                noact2.append(id)
-            except (ValueError, AttributeError):
-                break
-        if len(noact2) == len(noact):
-            noact = numpy.array(noact2)
+                if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
+                    self.extended = True
+            except KeyError:
+                ## Catch for LEDA64-NM data
+                pass
+            try:
+                if hdulist[0].header['LWAMAJV'] < 3:
+                    self.conjugate = False
+            except KeyError:
+                pass
+            ag = hdulist['ARRAY_GEOMETRY']
+            fq = hdulist['FREQUENCY']
+            uvData = hdulist['UV_DATA']
             
-        ## Create the ECI -> topocentric transform
-        lat  = site[0]
-        ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
-                            [-numpy.sin(lat), 0.0, numpy.cos(lat)],
-                            [ numpy.cos(lat), 0.0, numpy.sin(lat)]])
-        
-        ## Build up the list of antennas
-        antennas = []
-        for line,act in zip(ag.data, noact):
-            enz = numpy.dot(ecii, line['STABXYZ'])
+            # Antennas
+            try:
+                mapper = hdulist['NOSTA_MAPPER']
+                
+                nosta = mapper.data.field('NOSTA')
+                noact = mapper.data.field('NOACT')
+                anname = mapper.data.field('ANNAME')
+            except KeyError:
+                nosta = ag.data.field('NOSTA')
+                noact = ag.data.field('NOSTA')
+                anname = ag.data.field('ANNAME')
+                
+            # Station/telescope information
+            try:
+                self.telescope = hdulist[0].header['TELESCOP']
+                self.date_obs = datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
+            except ValueError:
+                ## Catch for DiFX FITS-IDI files
+                self.date_obs = datetime.strptime(hdulist[0].header['DATE-OBS'], "%Y-%m-%d")
+            except KeyError:
+                ## Catch for LEDA64-NM data
+                self.telescope = uvData.header['TELESCOP']
+                self.date_obs = datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
+                
+            ## Extract the site position
+            geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
+            site = stations.ecef_to_geo(*geo)
             
-            stand = stations.Stand(act, *enz)
-            antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
-            
-        ## Build up the station
-        self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
-        self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
-                            - astro.DJD_OFFSET
-        
-        self.stand_map = {}
-        self.stands = []
-        for sta, act in zip(nosta, noact):
-            self.stand_map[sta] = act
-            self.stands.append(act)
-            
-        self.antenna_map = {}
-        self.antennas = []
-        for stand in self.stands:
-            for ant in self.station.antennas:
-                if ant.stand.id == stand and ant.pol == 0:
-                    self.antennas.append(ant)
-                    self.antenna_map[ant.stand.id] = ant
+            ## Try to back out the "real" stand names
+            noact2 = []
+            for nam in anname:
+                try:
+                    mtch =  _annameRE.match(nam)
+                    id = int(mtch.group('id'))
+                    noact2.append(id)
+                except (ValueError, AttributeError):
                     break
-                    
-        # Polarization and frequency
-        self.pols  = numpy.arange(1, uvData.header['MAXIS2']+1) - uvData.header['CRPIX2']
-        self.pols *= uvData.header['CDELT2'] 
-        self.pols += uvData.header['CRVAL2']
-        self.freq  = numpy.array([], dtype=numpy.float64)
-        for i in range(uvData.header['NO_BAND']):
-            width = fq.data['CH_WIDTH'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['CH_WIDTH'][0]
-            offset = fq.data['BANDFREQ'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['BANDFREQ'][0]
+            if len(noact2) == len(noact):
+                noact = numpy.array(noact2)
+                
+            ## Create the ECI -> topocentric transform
+            lat  = site[0]
+            ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
+                                [-numpy.sin(lat), 0.0, numpy.cos(lat)],
+                                [ numpy.cos(lat), 0.0, numpy.sin(lat)]])
             
-            freqIF = numpy.arange(1, uvData.header['NO_CHAN']+1, dtype=numpy.float64) - uvData.header['REF_PIXL']
-            freqIF *= width
-            freqIF += uvData.header['REF_FREQ'] + offset
-            self.freq = numpy.concatenate([self.freq, freqIF])
+            ## Build up the list of antennas
+            antennas = []
+            for line,act in zip(ag.data, noact):
+                enz = numpy.dot(ecii, line['STABXYZ'])
+                
+                stand = stations.Stand(act, *enz)
+                antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
+                
+            ## Build up the station
+            self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                                - astro.DJD_OFFSET
             
-        # Total baseline count
-        self.total_baseline_count = len(uvData.data['BASELINE'])
-        
-        # Data set times and integration count
-        jd = uvData.data['DATE'] + uvData.data['TIME']
-        self._times = numpy.unique(jd)
-        self.integration_count = len(self._times)
-        
-        # Close
-        hdulist.close()
-        
+            self.stand_map = {}
+            self.stands = []
+            for sta, act in zip(nosta, noact):
+                self.stand_map[sta] = act
+                self.stands.append(act)
+                
+            self.antenna_map = {}
+            self.antennas = []
+            for stand in self.stands:
+                for ant in self.station.antennas:
+                    if ant.stand.id == stand and ant.pol == 0:
+                        self.antennas.append(ant)
+                        self.antenna_map[ant.stand.id] = ant
+                        break
+                        
+            # Polarization and frequency
+            self.pols  = numpy.arange(1, uvData.header['MAXIS2']+1) - uvData.header['CRPIX2']
+            self.pols *= uvData.header['CDELT2'] 
+            self.pols += uvData.header['CRVAL2']
+            self.freq  = numpy.array([], dtype=numpy.float64)
+            for i in range(uvData.header['NO_BAND']):
+                width = fq.data['CH_WIDTH'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['CH_WIDTH'][0]
+                offset = fq.data['BANDFREQ'][0][i] if uvData.header['NO_BAND'] > 1 else fq.data['BANDFREQ'][0]
+                
+                freqIF = numpy.arange(1, uvData.header['NO_CHAN']+1, dtype=numpy.float64) - uvData.header['REF_PIXL']
+                freqIF *= width
+                freqIF += uvData.header['REF_FREQ'] + offset
+                self.freq = numpy.concatenate([self.freq, freqIF])
+                
+            # Total baseline count
+            self.total_baseline_count = len(uvData.data['BASELINE'])
+            
+            # Data set times and integration count
+            jd = uvData.data['DATE'] + uvData.data['TIME']
+            self._times = numpy.unique(jd)
+            self.integration_count = len(self._times)
+            
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
         Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
@@ -404,136 +393,130 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         """
         
         # Open the file
-        hdulist = astrofits.open(self.filename)
-        uvData = hdulist['UV_DATA']
-        
-        # We need this a lot...
-        nPol = len(self.pols)
-        
-        dataSets = VisibilityData()
-        try:
-            len(sets)
-        except TypeError:
-            sets = range(sets, sets+1)
-        for set in sets:
-            # Set the time to look for
-            targetTime = self._times[set-1]
-            targetJD = targetTime
+        with astrofits.open(self.filename) as hdulist:
+            uvData = hdulist['UV_DATA']
             
-            # Figure out what rows we need
-            selection = numpy.where( (uvData.data['DATE'] + uvData.data['TIME']) == targetTime )[0]
-            
-            # Figure out the source we are working on and create a phase center
-            # if there is only a single source
-            phase_center = None
-            src_id = uvData.data['SOURCE'][selection]
-            src_id = numpy.unique(src_id)
-            if len(src_id) == 1:
-                src_id = src_id[0]
-                srcData = hdulist['SOURCE']
-                for row in srcData.data:
-                    if row['SOURCE_ID'] == src_id:
-                        phase_center = aipy.amp.RadioFixedBody(row['RAEPO'] * numpy.pi/180, 
-                                                            row['DECEPO'] * numpy.pi/180, 
-                                                            name=row['SOURCE'], 
-                                                            epoch=(row['EPOCH'] - 2000.0)*365.24 + ephem.J2000)
+            dataSets = VisibilityData()
+            try:
+                len(sets)
+            except TypeError:
+                sets = range(sets, sets+1)
+            for set in sets:
+                # Set the time to look for
+                targetTime = self._times[set-1]
+                targetJD = targetTime
+                
+                # Figure out what rows we need
+                selection = numpy.where( (uvData.data['DATE'] + uvData.data['TIME']) == targetTime )[0]
+                
+                # Figure out the source we are working on and create a phase center
+                # if there is only a single source
+                phase_center = None
+                src_id = uvData.data['SOURCE'][selection]
+                src_id = numpy.unique(src_id)
+                if len(src_id) == 1:
+                    src_id = src_id[0]
+                    srcData = hdulist['SOURCE']
+                    for row in srcData.data:
+                        if row['SOURCE_ID'] == src_id:
+                            phase_center = aipy.amp.RadioFixedBody(row['RAEPO'] * numpy.pi/180, 
+                                                                row['DECEPO'] * numpy.pi/180, 
+                                                                name=row['SOURCE'], 
+                                                                epoch=(row['EPOCH'] - 2000.0)*365.24 + ephem.J2000)
+                            
+                # Figure out if we have seperate WEIGHT data or not
+                seperateWeights = False
+                for col in uvData.data.columns:
+                    if col.name == 'WEIGHT':
+                        seperateWeights = True
+                        break
                         
-            # Figure out if we have seperate WEIGHT data or not
-            seperateWeights = False
-            for col in uvData.data.columns:
-                if col.name == 'WEIGHT':
-                    seperateWeights = True
-                    break
-                    
-            # Pull out the raw data from the table
-            bl = uvData.data['BASELINE'][selection]
-            jd = uvData.data['DATE'][selection] + uvData.data['TIME'][selection]
-            try:
-                u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
-            except KeyError:
-                u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
-            vis = numpy.ascontiguousarray(uvData.data['FLUX'][selection], dtype=numpy.float32)
-            if seperateWeights:
-                wgt = numpy.ascontiguousarray(uvData.data['WEIGHT'][selection])
-            else:
-                wgt = None
-                
-            # Re-work the data into something more useful
-            ## Axis sizes
-            nFreq = len(self.freq)
-            nStk = len(self.pols)
-            nCmp = 2 if seperateWeights else 3
-            if vis.size//nFreq//nStk//nCmp != len(bl):
-                ### Catch for FITS-IDI files generate by interfits
-                nCmp = 2 if nCmp == 3 else 3
-            ## Frequency for converting the u, v, and w coordinates
-            freq = self.freq*1.0
-            freq.shape += (1,)
-            ## Convert u, v, and w from seconds to wavelengths and then into one massive array
-            u = (u*freq).T
-            v = (v*freq).T
-            w = (w*freq).T
-            uvw = numpy.array([u,v,w], dtype=numpy.float32)
-            ## Reshape the visibilities and weights
-            vis.shape = (vis.size//nFreq//nStk//nCmp, nFreq, nStk, nCmp)
-            if seperateWeights:
-                if wgt.shape != nFreq*nStk:
-                    ## Catch for some old stuff
-                    wgt = numpy.concatenate([wgt for pol in self.pols])
-                wgt.shape = (wgt.size//nFreq//nStk, nFreq, nStk)
-            else:
+                # Pull out the raw data from the table
+                bl = uvData.data['BASELINE'][selection]
+                jd = uvData.data['DATE'][selection] + uvData.data['TIME'][selection]
                 try:
-                    wgt = vis[:,:,:,2]
-                    vis = vis[:,:,:,:2]
-                except IndexError:
-                    ### Catch for FITS-IDI files generate by interfits
-                    wgt = numpy.ones([vis.shape[i] for i in range(3)], dtype=numpy.float32)
-            ## Back to complex
-            vis = vis.view(numpy.complex64)
-            vis = vis[...,0]
-            if self.conjugate:
-                ## NOTE: This is this conjugate since there seems to be a convention mis-match
-                ##       between LSL and AIPS/the FITS-IDI convention.
-                vis = vis.conj()
-            ## Scale
-            try:
-                scl = uvData.header['VIS_SCAL']
-                vis /= scl
-            except KeyError:
-                pass
-                
-            # Setup the output data
-            baselines = []
-            select = []
-            for b in range(bl.size):
-                if not self.extended:
-                    i = self.stand_map[(bl[b] >> 8) & 255]
-                    j = self.stand_map[bl[b] & 255]
+                    u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
+                except KeyError:
+                    u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
+                vis = numpy.ascontiguousarray(uvData.data['FLUX'][selection], dtype=numpy.float32)
+                if seperateWeights:
+                    wgt = numpy.ascontiguousarray(uvData.data['WEIGHT'][selection])
                 else:
-                    i = self.stand_map[(bl[b] >> 16) & 65535]
-                    j = self.stand_map[bl[b] & 65535]
-                if i == j and not include_auto:
-                    ## Skip auto-correlations
-                    continue
-                ri = numpy.where(self.stands == i)[0][0]
-                rj = numpy.where(self.stands == j)[0][0]
-                baselines.append( (ri,rj) )
-                select.append( b )
+                    wgt = None
+                    
+                # Re-work the data into something more useful
+                ## Axis sizes
+                nFreq = len(self.freq)
+                nStk = len(self.pols)
+                nCmp = 2 if seperateWeights else 3
+                if vis.size//nFreq//nStk//nCmp != len(bl):
+                    ### Catch for FITS-IDI files generate by interfits
+                    nCmp = 2 if nCmp == 3 else 3
+                ## Frequency for converting the u, v, and w coordinates
+                freq = self.freq*1.0
+                freq.shape += (1,)
+                ## Convert u, v, and w from seconds to wavelengths and then into one massive array
+                u = (u*freq).T
+                v = (v*freq).T
+                w = (w*freq).T
+                uvw = numpy.array([u,v,w], dtype=numpy.float32)
+                ## Reshape the visibilities and weights
+                vis.shape = (vis.size//nFreq//nStk//nCmp, nFreq, nStk, nCmp)
+                if seperateWeights:
+                    if wgt.shape != nFreq*nStk:
+                        ## Catch for some old stuff
+                        wgt = numpy.concatenate([wgt,]*len(self.pols))
+                    wgt.shape = (wgt.size//nFreq//nStk, nFreq, nStk)
+                else:
+                    try:
+                        wgt = vis[:,:,:,2]
+                        vis = vis[:,:,:,:2]
+                    except IndexError:
+                        ### Catch for FITS-IDI files generate by interfits
+                        wgt = numpy.ones([vis.shape[i] for i in range(3)], dtype=numpy.float32)
+                ## Back to complex
+                vis = vis.view(numpy.complex64)
+                vis = vis[...,0]
+                if self.conjugate:
+                    ## NOTE: This is this conjugate since there seems to be a convention mis-match
+                    ##       between LSL and AIPS/the FITS-IDI convention.
+                    vis = vis.conj()
+                ## Scale
+                try:
+                    scl = uvData.header['VIS_SCAL']
+                    vis /= scl
+                except KeyError:
+                    pass
+                    
+                # Setup the output data
+                baselines = []
+                select = []
+                for b in range(bl.size):
+                    if not self.extended:
+                        i = self.stand_map[(bl[b] >> 8) & 255]
+                        j = self.stand_map[bl[b] & 255]
+                    else:
+                        i = self.stand_map[(bl[b] >> 16) & 65535]
+                        j = self.stand_map[bl[b] & 65535]
+                    if i == j and not include_auto:
+                        ## Skip auto-correlations
+                        continue
+                    ri = numpy.where(self.stands == i)[0][0]
+                    rj = numpy.where(self.stands == j)[0][0]
+                    baselines.append( (ri,rj) )
+                    select.append( b )
+                    
+                # Build the output data set
+                dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
+                                            uvw=uvw[:,select,:].transpose(1,0,2), 
+                                            antennaarray=self.get_antennaarray(), 
+                                            phase_center=phase_center)
+                for p,l in enumerate(self.pols):
+                    name = NUMERIC_STOKES[l]
+                    polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
+                    dataSet.append(polDataSet)
+                dataSets.append( dataSet )
                 
-            # Build the output data set
-            dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
-                                        uvw=uvw[:,select,:].transpose(1,0,2), 
-                                        antennaarray=self.get_antennaarray(), 
-                                        phase_center=phase_center)
-            for p,l in enumerate(self.pols):
-                name = NUMERIC_STOKES[l]
-                polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
-                dataSet.append(polDataSet)
-            dataSets.append( dataSet )
-            
-        # Close
-        hdulist.close()
-        
         # Sort
         if sort:
             dataSets.sort()
@@ -589,99 +572,95 @@ class CorrelatedDataUV(CorrelatedDataBase):
         CorrelatedDataBase.__init__(self, filename)
         
         # Open the various tables that we need
-        hdulist = astrofits.open(filename)
-        
-        uvData = hdulist[0]
-        ag = hdulist['AIPS AN']
-        
-        # Antennas
-        nosta = ag.data.field('NOSTA')
-        noact = ag.data.field('NOSTA')
-        anname = ag.data.field('ANNAME')
-        
-        # Station/telescope information
-        self.telescope = hdulist[0].header['TELESCOP']
-        dt = hdulist[0].header['DATE-OBS']
-        dt = dt.rsplit('.', 1)[0]
-        try:
-            self.date_obs = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
-        except ValueError:
-            ## Catch for AIPS UVFITS files which only have a date set
-            self.date_obs = datetime.strptime(dt, "%Y-%m-%d")
+        with astrofits.open(filename) as hdulist:
+            uvData = hdulist[0]
+            ag = hdulist['AIPS AN']
             
-        ## Extract the site position
-        geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
-        site = stations.ecef_to_geo(*geo)
-        
-        ## Try to back out the "real" stand names
-        noact2 = []
-        for nam in anname:
+            # Antennas
+            nosta = ag.data.field('NOSTA')
+            noact = ag.data.field('NOSTA')
+            anname = ag.data.field('ANNAME')
+            
+            # Station/telescope information
+            self.telescope = hdulist[0].header['TELESCOP']
+            dt = hdulist[0].header['DATE-OBS']
+            dt = dt.rsplit('.', 1)[0]
             try:
-                mtch =  _annameRE.match(nam)
-                id = int(mtch.group('id'))
-                noact2.append(id)
-            except (ValueError, AttributeError):
-                break
-        if len(noact2) == len(noact):
-            noact = numpy.array(noact2)
+                self.date_obs = datetime.strptime(dt, "%Y-%m-%dT%H:%M:%S")
+            except ValueError:
+                ## Catch for AIPS UVFITS files which only have a date set
+                self.date_obs = datetime.strptime(dt, "%Y-%m-%d")
+                
+            ## Extract the site position
+            geo = numpy.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
+            site = stations.ecef_to_geo(*geo)
             
-        ## Create the ECI -> topocentric transform
-        lat  = site[0]
-        ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
-                            [-numpy.sin(lat), 0.0, numpy.cos(lat)],
-                            [ numpy.cos(lat), 0.0, numpy.sin(lat)]])
-                        
-        ## Build up the list of antennas
-        antennas = []
-        for line,act in zip(ag.data, noact):
-            enz = numpy.dot(ecii, line['STABXYZ'])
-            
-            stand = stations.Stand(act, *enz)
-            antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
-            
-        ## Build up the station
-        self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
-        self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
-                            - astro.DJD_OFFSET
-        
-        self.stand_map = {}
-        self.stands = []
-        for nosta, noact in zip(nosta, noact):
-            self.stand_map[nosta] = noact
-            self.stands.append(noact)
-            
-        self.antenna_map = {}
-        self.antennas = []
-        for stand in self.stands:
-            for ant in self.station.antennas:
-                if ant.stand.id == stand and ant.pol == 0:
-                    self.antennas.append(ant)
-                    self.antenna_map[ant.stand.id] = ant
+            ## Try to back out the "real" stand names
+            noact2 = []
+            for nam in anname:
+                try:
+                    mtch =  _annameRE.match(nam)
+                    id = int(mtch.group('id'))
+                    noact2.append(id)
+                except (ValueError, AttributeError):
                     break
-                    
-        # Polarization and frequency
-        self.pols  = numpy.arange(1, uvData.header['NAXIS3']+1) - uvData.header['CRPIX3']
-        self.pols *= uvData.header['CDELT3'] 
-        self.pols += uvData.header['CRVAL3']
-        nChan = uvData.header['NAXIS4']
-        if uvData.header['CTYPE5'] == 'IF':
-            ## Merge the frequency and IF columns
-            nChan *= uvData.header['NAXIS5']
-        self.freq  = numpy.arange(1, nChan+1, dtype=numpy.float64) - uvData.header['CRPIX4']
-        self.freq *= uvData.header['CDELT4']
-        self.freq += uvData.header['CRVAL4']
-        
-        # Total baseline count
-        self.total_baseline_count = len(hdulist[0].data['BASELINE'])
-        
-        # Data set times and integration count
-        jd = hdulist[0].data['DATE'] + hdulist[0].data['_DATE']
-        self._times = numpy.unique(jd)
-        self.integration_count = len(self._times)
-        
-        # Close
-        hdulist.close()
-        
+            if len(noact2) == len(noact):
+                noact = numpy.array(noact2)
+                
+            ## Create the ECI -> topocentric transform
+            lat  = site[0]
+            ecii = numpy.array([[ 0.0,            1.0, 0.0           ],
+                                [-numpy.sin(lat), 0.0, numpy.cos(lat)],
+                                [ numpy.cos(lat), 0.0, numpy.sin(lat)]])
+                            
+            ## Build up the list of antennas
+            antennas = []
+            for line,act in zip(ag.data, noact):
+                enz = numpy.dot(ecii, line['STABXYZ'])
+                
+                stand = stations.Stand(act, *enz)
+                antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
+                
+            ## Build up the station
+            self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/numpy.pi, site[1]*180/numpy.pi, site[2], antennas=antennas)
+            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                                - astro.DJD_OFFSET
+            
+            self.stand_map = {}
+            self.stands = []
+            for nosta, noact in zip(nosta, noact):
+                self.stand_map[nosta] = noact
+                self.stands.append(noact)
+                
+            self.antenna_map = {}
+            self.antennas = []
+            for stand in self.stands:
+                for ant in self.station.antennas:
+                    if ant.stand.id == stand and ant.pol == 0:
+                        self.antennas.append(ant)
+                        self.antenna_map[ant.stand.id] = ant
+                        break
+                        
+            # Polarization and frequency
+            self.pols  = numpy.arange(1, uvData.header['NAXIS3']+1) - uvData.header['CRPIX3']
+            self.pols *= uvData.header['CDELT3'] 
+            self.pols += uvData.header['CRVAL3']
+            nChan = uvData.header['NAXIS4']
+            if uvData.header['CTYPE5'] == 'IF':
+                ## Merge the frequency and IF columns
+                nChan *= uvData.header['NAXIS5']
+            self.freq  = numpy.arange(1, nChan+1, dtype=numpy.float64) - uvData.header['CRPIX4']
+            self.freq *= uvData.header['CDELT4']
+            self.freq += uvData.header['CRVAL4']
+            
+            # Total baseline count
+            self.total_baseline_count = len(hdulist[0].data['BASELINE'])
+            
+            # Data set times and integration count
+            jd = hdulist[0].data['DATE'] + hdulist[0].data['_DATE']
+            self._times = numpy.unique(jd)
+            self.integration_count = len(self._times)
+            
     def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
         """
         Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
@@ -700,109 +679,104 @@ class CorrelatedDataUV(CorrelatedDataBase):
         """
         
         # Open the file
-        hdulist = astrofits.open(self.filename)
-        uvData = hdulist[0]
-        
-        # We need this a lot...
-        nPol = len(self.pols)
-        
-        dataSets = VisibilityData()
-        try:
-            len(sets)
-        except TypeError:
-            sets = range(sets, sets+1)
-        for set in sets:
-            # Set the time to look for
-            targetTime = self._times[set-1]
-            targetJD = targetTime
+        with astrofits.open(self.filename) as hdulist:
+            uvData = hdulist[0]
             
-            # Figure out what rows we need
-            selection = numpy.where( uvData.data['DATE']+uvData.data['_DATE'] == targetTime )[0]
-            
-            # Figure out the source we are working on and create a phase center
-            # if there is only a single source
-            phase_center = None
-            src_id = uvData.data['SOURCE'][selection]
-            src_id = numpy.unique(src_id)
-            if len(src_id) == 1:
-                src_id = src_id[0]
-                srcData = hdulist['AIPS SU']
-                for row in srcData.data:
-                    if row['ID. NO.'] == src_id:
-                        phase_center = aipy.amp.RadioFixedBody(row['RAEPO'] * numpy.pi/180, 
-                                                               row['DECEPO'] * numpy.pi/180, 
-                                                               name=row['SOURCE'], 
-                                                               epoch=(row['EPOCH'] - 2000.0)*365.25 + ephem.J2000)
-                        
-            # Pull out the raw data from the table
-            bl = uvData.data['BASELINE'][selection]
-            jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
+            dataSets = VisibilityData()
             try:
-                u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
-            except KeyError:
-                u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
-            vis = uvData.data['DATA'][selection]
-            wgt = None
-            
-            # Re-work the data into something more useful
-            ## Axis sizes
-            nFreq = len(self.freq)
-            nStk = len(self.pols)
-            nCmp = vis.shape[-1]
-            ## Frequency for converting the u, v, and w coordinates
-            freq = self.freq*1.0
-            freq.shape += (1,)
-            ## Convert u, v, and w from seconds to wavelengths and then into one massive array
-            u = (u*freq).T
-            v = (v*freq).T
-            w = (w*freq).T
-            uvw = numpy.array([u,v,w], dtype=numpy.float32)
-            ## Reshape the visibilities and weights
-            if len(vis.shape) == 7:
-                ### Merge the frequency and IF columns
-                vis = vis[:,0,0,:,:,:,:]
-                vis.shape = (vis.shape[0], vis.shape[1]*vis.shape[2], vis.shape[3], vis.shape[4])
-            else:
-                vis = vis[:,0,0,:,:,:]
-            if vis.shape[-1] == 3:
-                wgt = vis[:,:,:,2]
-                vis = vis[:,:,:,:2]
-            else:
-                wgt = numpy.ones((vis.shape[0], vis.shape[1], vis.shape[2]), dtype=numpy.float32)
-            ## Back to complex
-            vis = vis[:,:,:,0] + 1j*vis[:,:,:,1]
-            
-            # Setup the output data
-            baselines = []
-            select = []
-            for b in range(bl.size):
-                if bl[b] >= 65536:
-                    i = self.stand_map[int((bl[b] - 65536) / 2048)]
-                    j = self.stand_map[int((bl[b] - 65536) % 2048)]
-                else:
-                    i = self.stand_map[int(bl[b] / 256)]
-                    j = self.stand_map[int(bl[b] % 256)]
-                if i == j and not include_auto:
-                    ## Skip auto-correlations
-                    continue
-                ri = numpy.where(self.stands == i)[0][0]
-                rj = numpy.where(self.stands == j)[0][0]
-                baselines.append( (ri,rj) )
-                select.append( b )
+                len(sets)
+            except TypeError:
+                sets = range(sets, sets+1)
+            for set in sets:
+                # Set the time to look for
+                targetTime = self._times[set-1]
+                targetJD = targetTime
                 
-            # Build the output data set
-            dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
-                                        uvw=uvw[:,select,:].transpose(1,0,2), 
-                                        antennaarray=self.get_antennaarray(), 
-                                        phase_center=phase_center)
-            for p,l in enumerate(self.pols):
-                name = NUMERIC_STOKES[l]
-                polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
-                dataSet.append(polDataSet)
-            dataSets.append( dataSet )
-        # Close
-        hdulist.close()
-        
+                # Figure out what rows we need
+                selection = numpy.where( uvData.data['DATE']+uvData.data['_DATE'] == targetTime )[0]
+                
+                # Figure out the source we are working on and create a phase center
+                # if there is only a single source
+                phase_center = None
+                src_id = uvData.data['SOURCE'][selection]
+                src_id = numpy.unique(src_id)
+                if len(src_id) == 1:
+                    src_id = src_id[0]
+                    srcData = hdulist['AIPS SU']
+                    for row in srcData.data:
+                        if row['ID. NO.'] == src_id:
+                            phase_center = aipy.amp.RadioFixedBody(row['RAEPO'] * numpy.pi/180, 
+                                                                   row['DECEPO'] * numpy.pi/180, 
+                                                                   name=row['SOURCE'], 
+                                                                   epoch=(row['EPOCH'] - 2000.0)*365.25 + ephem.J2000)
+                            
+                # Pull out the raw data from the table
+                bl = uvData.data['BASELINE'][selection]
+                jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
+                try:
+                    u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
+                except KeyError:
+                    u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
+                vis = uvData.data['DATA'][selection]
+                wgt = None
+                
+                # Re-work the data into something more useful
+                ## Axis sizes
+                nFreq = len(self.freq)
+                nStk = len(self.pols)
+                nCmp = vis.shape[-1]
+                ## Frequency for converting the u, v, and w coordinates
+                freq = self.freq*1.0
+                freq.shape += (1,)
+                ## Convert u, v, and w from seconds to wavelengths and then into one massive array
+                u = (u*freq).T
+                v = (v*freq).T
+                w = (w*freq).T
+                uvw = numpy.array([u,v,w], dtype=numpy.float32)
+                ## Reshape the visibilities and weights
+                if len(vis.shape) == 7:
+                    ### Merge the frequency and IF columns
+                    vis = vis[:,0,0,:,:,:,:]
+                    vis.shape = (vis.shape[0], vis.shape[1]*vis.shape[2], vis.shape[3], vis.shape[4])
+                else:
+                    vis = vis[:,0,0,:,:,:]
+                if vis.shape[-1] == 3:
+                    wgt = vis[:,:,:,2]
+                    vis = vis[:,:,:,:2]
+                else:
+                    wgt = numpy.ones((vis.shape[0], vis.shape[1], vis.shape[2]), dtype=numpy.float32)
+                ## Back to complex
+                vis = vis[:,:,:,0] + 1j*vis[:,:,:,1]
+                
+                # Setup the output data
+                baselines = []
+                select = []
+                for b in range(bl.size):
+                    if bl[b] >= 65536:
+                        i = self.stand_map[int((bl[b] - 65536) / 2048)]
+                        j = self.stand_map[int((bl[b] - 65536) % 2048)]
+                    else:
+                        i = self.stand_map[int(bl[b] / 256)]
+                        j = self.stand_map[int(bl[b] % 256)]
+                    if i == j and not include_auto:
+                        ## Skip auto-correlations
+                        continue
+                    ri = numpy.where(self.stands == i)[0][0]
+                    rj = numpy.where(self.stands == j)[0][0]
+                    baselines.append( (ri,rj) )
+                    select.append( b )
+                    
+                # Build the output data set
+                dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
+                                            uvw=uvw[:,select,:].transpose(1,0,2), 
+                                            antennaarray=self.get_antennaarray(), 
+                                            phase_center=phase_center)
+                for p,l in enumerate(self.pols):
+                    name = NUMERIC_STOKES[l]
+                    polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
+                    dataSet.append(polDataSet)
+                dataSets.append( dataSet )
+                
         # Sort
         if sort:
             dataSets.sort()
@@ -902,7 +876,7 @@ try:
                 src = table(os.path.join(self.filename, 'SOURCE'), ack=False)
             except:
                 src = None
-                warnings.warn("Cannot find table 'SOURCE' in '%s', assuming zenith is the only source" % self.filename, RuntimeWarning)
+                warnings.warn(colorfy("{{%%yellow Cannot find table 'SOURCE' in '%s', assuming zenith is the only source}}" % self.filename), RuntimeWarning)
             try:
                 fld = table(os.path.join(self.filename, 'FIELD'), ack=False)
             except:
@@ -984,6 +958,7 @@ try:
             self._sources = []
             if src is not None:
                 for sdir,name in zip(src.col('DIRECTION'), src.col('NAME')):
+                    sdir = sdir.flatten()
                     self._sources.append( aipy.amp.RadioFixedBody(*sdir, name=name) )
             else:
                 self._sources.append('z')
@@ -1028,9 +1003,6 @@ try:
             
             # Open the data table
             data = table(self.filename, ack=False)
-            
-            # We need this a lot...
-            nPol = len(self.pols)
             
             dataSets = VisibilityData()
             try:
@@ -1144,8 +1116,8 @@ try:
             return dataSets
             
 except ImportError:
-    import warnings
-    warnings.warn('Cannot import casacore.tables, MS support disabled', ImportWarning)
+    print('here')
+    warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), RuntimeWarning)
     
     class CorrelatedDataMS(object):
         """
@@ -1166,26 +1138,6 @@ class ImgWPlus(aipy.img.ImgW):
     the field of view and the pixels near the phase center.
     """
     
-    def __init__(self, size=100, res=1, wres=.5, mf_order=0):
-        """
-        size = number of wavelengths which the UV matrix spans (this 
-        determines the image resolution).
-        res = resolution of the UV matrix (determines image field of view).
-        wres: the gridding resolution of sqrt(w) when projecting to w=0.
-        """
-        
-        self.res = float(res)
-        self.size = float(size)
-        ## Small change needed to work with Numpy 1.12+
-        dim = numpy.int64(numpy.round(self.size / self.res))
-        self.shape = (dim,dim)
-        self.uv = numpy.zeros(shape=self.shape, dtype=numpy.complex64)
-        self.bm = []
-        for i in range(mf_order+1):
-            self.bm.append(numpy.zeros(shape=self.shape, dtype=numpy.complex64))
-        self.wres = float(wres)
-        self.wcache = {}
-        
     def __iadd__(self, uv, bm=None):
         if isinstance(uv, ImgWPlus):
             if self.shape != uv.shape:
@@ -1487,7 +1439,7 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     if chan is not None:
         # Make sure that `chan' is an array by trying to find its length
         try:
-            junk = len(chan)
+            len(chan)
         except TypeError:
             chan = [chan]
             
@@ -1505,22 +1457,16 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=N
     vis = numpy.concatenate(vis)
     wgt = numpy.concatenate(wgt)
     
-    if not verbose:
-        sys.stdout = StringIO()
-        
-    uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
-    u,v,w = uvw
-    order = numpy.argsort(w)
-    u,v,w = u.take(order), v.take(order), w.take(order)
-    vis,wgt = vis.take(order), numpy.array([wg.take(order) for wg in wgt]).squeeze()
-    if wgt.dtype != numpy.complex64:
-        wgt = wgt.astype(numpy.complex64)
-        
-    im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
-    
-    if not verbose:
-        sys.stdout.close()
-        sys.stdout = sys.__stdout__
+    with SilentVerbose(stdout=not verbose):
+        uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
+        u,v,w = uvw
+        order = numpy.argsort(w)
+        u,v,w = u.take(order), v.take(order), w.take(order)
+        vis,wgt = vis.take(order), numpy.array([wg.take(order) for wg in wgt]).squeeze()
+        if wgt.dtype != numpy.complex64:
+            wgt = wgt.astype(numpy.complex64)
+            
+        im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, numpy.float64(res), numpy.float64(wres))
         
     return im
 
@@ -1577,7 +1523,7 @@ def get_image_radec(gimg, aa, phase_center='z', shifted=True):
     """
     
     # Get the phase center
-    if phase_center is not 'z':
+    if phase_center != 'z':
         phase_center.compute(aa)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
@@ -1624,14 +1570,6 @@ def get_image_azalt(gimg, aa, phase_center='z', shifted=True):
     
     .. versionadded: 1.1.0
     """
-    
-    # Get the phase center
-    if phase_center is not 'z':
-        phase_center.compute(aa)
-        pcRA, pcDec = phase_center.ra, phase_center.dec
-    else:
-        pcRA, pcDec = aa.sidereal_time(), aa.lat
-    rot = aipy.coord.eq2top_m(0, pcDec)
     
     # Get the RA and dec. coordinates for each pixel
     ra, dec = get_image_radec(gimg, aa, phase_center=phase_center, shifted=shifted)

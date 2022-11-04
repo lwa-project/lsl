@@ -13,6 +13,8 @@ import glob
 import sys
 import re
 import os
+from tempfile import mkdtemp
+from shutil import rmtree
 
 currentDir = os.path.abspath(os.getcwd())
 if os.path.exists(os.path.join(currentDir, '..', 'docs', 'notebooks')):
@@ -35,7 +37,7 @@ __version__  = "0.1"
 __author__   = "Jayce Dowell"
 
 
-def run_notebook(notebook_path, kernel_name=None):
+def run_notebook(notebook_path, run_path=None, kernel_name=None):
     """
     From:
         http://www.blog.pythonlibrary.org/2018/10/16/testing-jupyter-notebooks/
@@ -46,6 +48,11 @@ def run_notebook(notebook_path, kernel_name=None):
     
     with open(notebook_path) as f:
         nb = nbformat.read(f, as_version=4)
+        
+    cleanup = False
+    if run_path is None:
+        run_path = mkdtemp(prefix='test-notebooks-', suffix='.tmp')
+        cleanup = True
         
     proc = ExecutePreprocessor(timeout=600, kernel_name=kernel_name)
     proc.allow_errors = True
@@ -61,6 +68,13 @@ def run_notebook(notebook_path, kernel_name=None):
             for output in cell['outputs']:
                 if output.output_type == 'error':
                     errors.append(output)
+                    
+    if cleanup:
+        try:
+            rmtree(run_path)
+        except OSError:
+            pass
+            
     return nb, errors
 
 

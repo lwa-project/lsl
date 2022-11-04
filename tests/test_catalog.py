@@ -11,9 +11,10 @@ if sys.version_info < (3,):
 import unittest
 
 from lsl import catalog
+import lsl.testing
 
 
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "D.L.Wood"
 __maintainer__ = "Jayce Dowell"
 
@@ -22,41 +23,13 @@ class catalog_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.catalog
     module."""
     
-    def test_LWDA(self):
-        """Test catalog.LWA_Catalog constructor."""
+    def test_constructor(self):
+        """Test catalog constructors."""
         
-        catalog.CatalogFactory.get_catalog('LWA')
-        
-    def test_PSR(self):
-        """Test catalog.PSR_Catalog contructor."""
-        
-        catalog.CatalogFactory.get_catalog('PSR')
-        
-    def test_PKS(self):
-        """Test catalog.PKS_Catalog constructor."""
-        
-        catalog.CatalogFactory.get_catalog('PKS')
-        
-    def test_PKS90(self):
-        """Test catalog.PKS90_Catalog constructor."""
-        
-        catalog.CatalogFactory.get_catalog('PKS90')
-        
-    def test_C3C(self):
-        """Test catalog.C3C_Catalog constructor."""
-        
-        catalog.CatalogFactory.get_catalog('3C')
-        
-    def test_C4C(self):
-        """Test catalog.C4C_Catalog constructor."""
-        
-        catalog.CatalogFactory.get_catalog('4C')
-        
-    def test_2FGL(self):
-        """Test catalog.F2FGL_Catalog constructor."""
-        
-        catalog.CatalogFactory.get_catalog('2FGL')
-        
+        for name in ('LWA', 'PSR', 'PKS', 'PKS90', '3C', '4C', '2FGL'):
+            with self.subTest(name=name):
+                catalog.CatalogFactory.get_catalog(name)
+                
     def test_get_names(self):
         """Test catalog.CatalogFactory.get_names() method."""
         

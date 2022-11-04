@@ -37,15 +37,13 @@ class measurementset_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.writer.measurementset.Ms
     class."""
     
-    testPath = None
-    
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
        
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-measurementset-', suffix='.tmp')
         
-    def __initData(self):
+    def _init_data(self):
         """Private function to generate a random set of data for writing a UVFITS
         file.  The data is returned as a dictionary with keys:
          * freq - frequency array in Hz
@@ -75,14 +73,14 @@ class measurementset_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'ms-test-W.ms')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the table
         tbl = measurementset.Ms(testFile, ref_time=testTime)
         tbl.set_stokes(['xx'])
         tbl.set_frequency(data['freq'])
         tbl.set_geometry(data['site'], data['antennas'])
-        tbl.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        tbl.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         tbl.write()
         
         # Make sure everyone is there
@@ -99,7 +97,7 @@ class measurementset_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'ms-test-ERR.ms')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         for i in range(4):
             # Start the file
@@ -121,14 +119,14 @@ class measurementset_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'ms-test-UV.ms')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = measurementset.Ms(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
         fits.write()
         
         # Open the table and examine
@@ -182,7 +180,7 @@ class measurementset_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'ms-test-MultiIF.ms')
         
         # Get some data
-        data = self.__initData()
+        data = self._init_data()
         
         # Start the file
         fits = measurementset.Ms(testFile, ref_time=testTime)
@@ -190,7 +188,7 @@ class measurementset_tests(unittest.TestCase):
         fits.set_frequency(data['freq'])
         fits.set_frequency(data['freq']+10e6)
         fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(TestTime), 6.0, data['bl'], 
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], 
                           numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         

@@ -107,9 +107,8 @@ class simvis_tests(unittest.TestCase):
         self.assertEqual(len(aa.ants), len(antennas))
         
         # Check the frequencies comming out
-        for fo, fi in zip(aa.get_afreqs(), freqs):
-            self.assertAlmostEqual(fo, fi/1e9, 6)
-            
+        numpy.testing.assert_allclose(aa.get_afreqs(), freqs/1e9)
+        
         # Check that other methods even run
         aa.get_baseline_fast(0, 1)
         aa.gen_uvw_fast(0, 1)
@@ -132,9 +131,8 @@ class simvis_tests(unittest.TestCase):
         out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Do a check of frequencies
-        for fa, fq in zip(out.freq, freqs):
-            self.assertAlmostEqual(fa, fq, 6)
-            
+        numpy.testing.assert_allclose(out.freq, freqs)
+        
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
         self.assertTrue('XX' in out.pols)
@@ -159,9 +157,8 @@ class simvis_tests(unittest.TestCase):
         out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Do a check of frequencies
-        for fa, fq in zip(out.freq, freqs):
-            self.assertAlmostEqual(fa, fq, 6)
-            
+        numpy.testing.assert_allclose(out.freq, freqs)
+        
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
         self.assertTrue('XX' in out.pols)
@@ -183,9 +180,8 @@ class simvis_tests(unittest.TestCase):
         
         # Do a check of keys
         # Do a check of frequencies
-        for fa, fq in zip(out.freq, freqs):
-            self.assertAlmostEqual(fa, fq, 6)
-            
+        numpy.testing.assert_allclose(out.freq, freqs)
+        
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
         self.assertTrue('XX' in out.pols)
@@ -207,9 +203,8 @@ class simvis_tests(unittest.TestCase):
         out = vis.build_sim_data(aa, vis.SOURCES, resolve_src=True)
         
         # Do a check of frequencies
-        for fa, fq in zip(out.freq, freqs):
-            self.assertAlmostEqual(fa, fq, 6)
-            
+        numpy.testing.assert_allclose(out.freq, freqs)
+        
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
         self.assertTrue('XX' in out.pols)

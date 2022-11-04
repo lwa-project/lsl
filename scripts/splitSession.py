@@ -10,6 +10,7 @@ from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info < (3,):
     range = xrange
+    input = raw_input
     
 import os
 import sys
@@ -241,7 +242,7 @@ def main(args):
             ## Split
             if os.path.exists(outname):
                 if not args.force:
-                    yn = raw_input("WARNING: '%s' exists, overwrite? [Y/n] " % outname)
+                    yn = input("WARNING: '%s' exists, overwrite? [Y/n] " % outname)
                 else:
                     yn = 'y'
                     

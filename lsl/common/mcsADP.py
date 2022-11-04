@@ -40,19 +40,9 @@ The other functions:
 
 # Python2 compatibility
 from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    import anydbm as dbm
-else:
-    import dbm
-    
+
 import re
-import aipy
-import math
-import numpy
 import ctypes
-import struct
 from datetime import datetime
 
 from lsl.common import adp as adpCommon

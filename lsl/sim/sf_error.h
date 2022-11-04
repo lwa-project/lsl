@@ -1,3 +1,8 @@
+/*   
+ *     From the SciPi GitHub Repository
+ *     https://github.com/scipy/scipy/blob/master/scipy/special/
+ */
+
 #ifndef SF_ERROR_H_
 #define SF_ERROR_H_
 
@@ -25,7 +30,7 @@ int sf_error_set_print(int flag);
 int sf_error_get_print(void);
 
 #ifdef __cplusplus
-}
+} // extern "C"
 #endif
 
 #endif /* SF_ERROR_H_ */

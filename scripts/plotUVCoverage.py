@@ -83,8 +83,8 @@ def main(args):
     ax5.yaxis.set_major_formatter( NullFormatter() )
     
     # Part 3 - uv plane plot
-    c = ax1.scatter(uvw[:,0], uvw[:,1], c=uvw[:,2], s=10.0, alpha=0.75)
-    d = ax1.scatter(-uvw[:,0], -uvw[:,1], c=-uvw[:,2], s=10.0, alpha=0.75)
+    ax1.scatter(uvw[:,0], uvw[:,1], c=uvw[:,2], s=10.0, alpha=0.75)
+    ax1.scatter(-uvw[:,0], -uvw[:,1], c=-uvw[:,2], s=10.0, alpha=0.75)
     ax1.set_xlabel('u [$\\lambda$]')
     ax1.set_ylabel('v [$\\lambda$]')
     ax1.set_title('UV Coverage for HA=%+.3f$^h$, $\delta$=%+.3f$^\circ$ at %s' % (HA, dec, station.name))

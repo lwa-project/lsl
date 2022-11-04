@@ -54,7 +54,6 @@ if sys.version_info < (3,):
     
 import os
 import aipy
-import copy
 import math
 import lsl._astroephem as ephem
 import numpy
@@ -82,7 +81,7 @@ __all__ = ['SOURCES', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray
 speedOfLight = speedOfLight.to('m/s').value
 
 
-# A dictionary of bright sources in the sky to use for simulations
+#: A dictionary of bright sources in the sky to use for simulations
 SOURCES = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
 
 
@@ -213,27 +212,6 @@ class BeamAlm(aipy.amp.BeamAlm):
     beam response at all points.
     """
     
-    def __init__(self, freqs, lmax=8, mmax=8, deg=7, nside=64, coeffs={}):
-        """
-        AIPY __init__() function.
-        
-        lmax = maximum spherical harmonic term
-        mmax = maximum spherical harmonic term in the z direction
-        deg = order of polynomial to used for mapping response of each pointing
-        nside = resolution of underlying HealpixMap to use
-        coeffs = dictionary of polynomial term (integer) and corresponding Alm 
-        coefficients (see healpix.py doc).
-        """
-        
-        aipy.phs.Beam.__init__(self, freqs)
-        self.alm = [aipy.healpix.Alm(lmax, mmax) for i in range(deg+1)]
-        self.hmap = [aipy.healpix.HealpixMap(nside, scheme='RING', interp=True)
-            for a in self.alm]
-        for c in coeffs:
-            if c < len(self.alm):
-                self.alm[-1-c].set_data(coeffs[c])
-        self._update_hmap()
-        
     def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.BeamAlm.response function.
@@ -299,17 +277,6 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
         Clarified what 'xwidth' and 'ywidth' are.
     """
     
-    def __init__(self, freqs, xwidth=numpy.Inf, ywidth=numpy.Inf):
-        """
-        AIPY __init__() function.
-        
-        xwidth = angular width (radians) in EW direction
-        ywidth = angular width (radians) in NS direction
-        """
-        
-        aipy.phs.Beam.__init__(self, freqs)
-        self.xwidth, self.ywidth = xwidth, ywidth
-        
     def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
@@ -370,19 +337,7 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
     similar to what aipy.img.ImgW.get_top() produces, and computes the 
     beam response at all points.
     """
-    def __init__(self, freqs, poly_azfreq=numpy.array([[.5]])):
-        """
-        AIPY __init__() function.
-        
-        poly_azfreq = a 2D polynomial in cos(2*n*az) for first axis and 
-        in freq**n for second axis.
-        """
-        
-        self.poly = poly_azfreq
-        aipy.phs.Beam.__init__(self, freqs)
-        self.poly = poly_azfreq
-        self._update_sigma()
-        
+    
     def _response_primitive(self, top):
         """
         Copy of the original aipy.amp.Beam2DGaussian.response function.
@@ -517,13 +472,10 @@ class Antenna(aipy.amp.Antenna):
           * pointing = antenna pointing (az,alt).  Default is zenith.
         """
         
-        aipy.phs.Antenna.__init__(self, x,y,z, beam=beam, phsoff=phsoff)
-        self.set_pointing(*pointing)
-        self.bp_r = bp_r
-        self.bp_i = bp_i
-        self.amp = amp
+        aipy.amp.Antenna.__init__(self, x,y,z, beam=beam, phsoff=phsoff,
+                                  bp_r=bp_r, bp_i=bp_i, amp=amp,
+                                  pointing=pointing)
         self.stand = stand
-        self._update_gain()
         
     def bm_response(self, top, pol='x'):
         """
@@ -619,6 +571,11 @@ class AntennaArray(aipy.amp.AntennaArray):
         
     def __repr__(self):
         return str(self)
+        
+    def __copy__(self):
+        result = AntennaArray((self.lat, self.lon, self.elev), self.ants)
+        result.__dict__.update(self.__dict__)
+        return result
         
     def __reduce__(self):
         return (AntennaArray, ((self.lat, self.lon, self.elev), self.ants))
@@ -955,16 +912,14 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     # Set the Julian Data for the AntennaArray object if it is provided.  The try...except
     # clause is used to deal with people who may want to pass an array of JDs in rather than
     # just one.  If one isn't provided, use the date set for the input 'station'.
-    if jd is not None:
-        try:
-            junk = len(jd)
-        except:
-            simAA.set_jultime(jd)
-        else:
-            simAA.set_jultime(jd[0])
-    else:
+    if jd is None:
         simAA.date = station.date
-        
+    else:
+        try:
+            simAA.set_jultime(jd[0])
+        except TypeError:
+            simAA.set_jultime(jd)
+            
     return simAA
 
 
@@ -997,15 +952,15 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         chanMax = chan[-1]
         
     # Update the JD if necessary
-    if jd is not None:
+    if jd is None:
+        jd = aa.get_jultime()
+    else:
         if verbose:
             if count is not None and max is not None:
                 print("Setting Julian Date to %.5f (%i of %i)" % (jd, count, max))
             else:
                 print("Setting Julian Date to %.5f" % jd)
         aa.set_jultime(jd)
-    else:
-        jd = aa.get_jultime()
     Gij_sf = aa.passband(0,1)
     def Bij_sf(xyz, pol):
         Bi = aa[0].bm_response(xyz, pol=pol[0]).transpose()
@@ -1091,7 +1046,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     UVData = VisibilityDataSet(jd, freq, baselines, [], antennaarray=aa, phase_center=phase_center)
     
     # Go!
-    if phase_center is not 'z':
+    if phase_center != 'z':
         phase_center.compute(aa)
         pcAz = phase_center.az*180/numpy.pi
         pcEl = phase_center.alt*180/numpy.pi
@@ -1152,14 +1107,14 @@ def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     """
     
     # Update the JD if necessary
-    if jd is not None:
+    if jd is None:
+        jd = [aa.get_jultime()]
+    else:
         try:
-            junk = len(jd)
+            len(jd)
         except TypeError:
             jd = [jd]
-    else:
-        jd = [aa.get_jultime()]
-        
+            
     # Build up output dictionary
     freq = aa.get_afreqs()*1e9
     if len(freq.shape) == 2:
@@ -1273,9 +1228,6 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
         except IndexError:
             raise RuntimeError("Too few frequencies to determine the bandwidth, use the 'bandwidth' keyword")
             
-    # Calculate the standard deviation of the real/imaginary noise
-    visNoiseSigma = SEFD / efficiency / numpy.sqrt(2.0*bandwidth*tInt)
-    
     # Make sure that we have an SEFD for each antenna
     ants = []
     for i,j in dataSet.baselines:
@@ -1291,6 +1243,12 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
     except TypeError:
         SEFD = numpy.ones(nAnts)*SEFD
         
+    # Calculate the standard deviation of the real/imaginary noise
+    visNoiseSigma = numpy.zeros((len(dataSet.baselines), len(dataSet.freq)))
+    for k,(i,j) in enumerate(dataSet.baselines):
+        visNoiseSigma[k,:] = numpy.sqrt(SEFD[i]*SEFD[j])
+    visNoiseSigma *= 1 / efficiency / numpy.sqrt(2.0*bandwidth*tInt)
+    
     # Build the VisibilityDataSet to hold the data with noise added
     bnData = dataSet.copy(include_pols=True)
     

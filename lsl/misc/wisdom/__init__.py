@@ -11,7 +11,7 @@ import os
 import numpy
 from datetime import datetime
 
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import WISDOM as wisdomPath
 from lsl.common.busy import BusyIndicator
 from lsl.misc import _wisdom
 
@@ -19,12 +19,12 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = "0.3"
+__version__ = "0.4"
 __all__ = ["make", "show"]
 
 
 # Path to the LSL-specific FFTW wisdom file
-_WISDOM_FFTW = os.path.join(dataPath, 'fftw_wisdom.txt')
+_WISDOM_FFTW = os.path.join(wisdomPath, 'fftw_wisdom.txt')
 
 
 def make():
@@ -48,7 +48,7 @@ def show():
     """
     
     if not os.path.exists(_WISDOM_FFTW):
-        print("No LSL-specific FFTW wisdom file found, consider running make()")
+        print("No LSL-specific FFTW wisdom file found, consider running 'python -m lsl.misc.wisdom'")
         return False
         
     fh = open(_WISDOM_FFTW, 'r')

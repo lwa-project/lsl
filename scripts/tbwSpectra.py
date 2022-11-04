@@ -19,7 +19,6 @@ import argparse
 from lsl.common import stations, metabundle
 from lsl.reader.ldp import LWA1DataFile, TBWFile
 from lsl.correlator import fx as fxc
-from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
@@ -219,4 +218,3 @@ if __name__ == "__main__":
                         help='output file name for spectra image')
     args = parser.parse_args()
     main(args)
-

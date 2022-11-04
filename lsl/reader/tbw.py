@@ -42,10 +42,6 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import copy
-import numpy
-
-from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbw
 from lsl.reader._gofast import SyncError as gSyncError
@@ -61,6 +57,7 @@ __version__ = '0.6'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'FRAME_SIZE', 'get_data_bits', 'get_frames_per_obs']
 
+#: TBW packet size (header + payload)
 FRAME_SIZE = 1224
 
 

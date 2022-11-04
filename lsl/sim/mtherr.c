@@ -2,11 +2,6 @@
  *
  *     Library common error handling routine
  *
- *     From the SciPi GitHub Repository
- *     https://github.com/scipy/scipy/blob/master/scipy/special/cephes/
- *
- *
- *
  * SYNOPSIS:
  *
  * char *fctnam;

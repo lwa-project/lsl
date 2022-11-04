@@ -14,6 +14,8 @@ import warnings
 import numpy
 from scipy.special import sph_harm
 
+from lsl.common.color import colorfy
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -50,7 +52,7 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
     """
     
     if allow_extrapolation:
-        warnings.warn("allow_extrapolation=True not honored for regrid_linear", RuntimeWarning)
+        warnings.warn(colorfy("{{%yellow allow_extrapolation=True not honored for regrid_linear"), RuntimeWarning)
         
     if newx.min() < x.min():
         raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
@@ -87,9 +89,9 @@ def downsample(vector, factor, rescale=True):
     """
 
     if (len(vector) % factor):
-        warnings.warn("Length of 'vector' is not divisible by 'factor'=%d, clipping!" % factor, RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Length of 'vector' is not divisible by 'factor'=%d, clipping!}}" % factor), RuntimeWarning)
         newlen = (len(vector)//factor)*factor
-        warnings.warn("Oldlen %d, newlen %d" % (len(vector), newlen), RuntimeWarning)
+        warnings.warn(colorfy("{{%%yellow Oldlen %d, newlen %d}}" % (len(vector), newlen)), RuntimeWarning)
         vector = vector[:newlen]
     if rescale:
         newvector = numpy.reshape(vector, (len(vector)//factor, factor))/float(factor)
@@ -320,7 +322,15 @@ def gaussparams(data, x=None, y=None):
     total = data.sum()
     height = data.max()
     
-    if len(data.shape) == 2:
+    if len(data.shape) == 1:
+        # 1-D Data
+        if x is None:
+            x = numpy.arange(data.size)
+        center = (x*data).sum() / total
+        width = numpy.sqrt(abs(numpy.sum((x-center)**2*data)/total))
+        return height, center, width
+        
+    elif len(data.shape) == 2:
         # 2-D Data
         if x is None or y is None:
             x, y = numpy.indices(data.shape)
@@ -336,12 +346,8 @@ def gaussparams(data, x=None, y=None):
         return height, centerX, centerY, widthX, widthY, 0.0
         
     else:
-        # 1-D Data
-        if x is None:
-            x = numpy.arange(data.size)
-        center = (x*data).sum() / total
-        width = numpy.sqrt(abs(numpy.sum((x-center)**2*data)/total))
-        return height, center, width
+        # N-D data
+        raise ValueError("Cannot estimate parameters for %i-D" % (len(data.shape),))        
 
 
 def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):

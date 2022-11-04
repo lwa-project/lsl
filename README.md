@@ -1,9 +1,10 @@
 LSL - The LWA Software Library
 ==============================
 
-[![Travis](https://travis-ci.org/lwa-project/lsl.svg?branch=master)](https://travis-ci.org/lwa-project/lsl)  [![Coverage Status](https://coveralls.io/repos/github/lwa-project/lsl/badge.svg?branch=master)](https://coveralls.io/github/lwa-project/lsl)  [![Documentation Status](https://readthedocs.org/projects/lsl/badge/?version=latest)](https://lsl.readthedocs.io/en/latest/?badge=latest)
+[![GHA](https://github.com/lwa-project/lsl/actions/workflows/main.yml/badge.svg)](https://github.com/lwa-project/lsl/actions/workflows/main.yml)  [![Coverage Status](https://codecov.io/gh/lwa-project/lsl/branch/master/graph/badge.svg?token=CNCKDKBX9R)](https://codecov.io/gh/lwa-project/lsl)
+  [![Documentation Status](https://readthedocs.org/projects/lsl/badge/?version=latest)](https://lsl.readthedocs.io/en/latest/?badge=latest)
 
-[![Paper](https://img.shields.io/badge/arXiv-1209.1576-blue.svg)](https://arxiv.org/abs/1209.1576)
+[![Paper](https://img.shields.io/badge/arXiv-1209.1576-blue.svg)](https://arxiv.org/abs/1209.1576)    [![PyPi](https://img.shields.io/pypi/v/lsl.svg)](https://pypi.org/project/lsl/)
 
 DESCRIPTION
 -----------
@@ -18,8 +19,7 @@ This package contains a collection of tools for reading, format shifting, and an
 REQUIREMENTS
 ------------
  * python >= 2.7
- * atlas >= 3.6
- * fftw3 >= 3.2
+ * fftw3 >= 3.2 (single precision version)
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
@@ -27,6 +27,7 @@ REQUIREMENTS
  * sgp4 >= 2.12
  * aipy >= 3.0.1
  * pytz >= 2012c
+ * unlzw >= 0.1.1
  * matplotlib >= 1.1 (required for some of the scripts)
  * BeautifulSoup (required for some of the scripts)
  * casacore (required for measurement set support)
@@ -41,11 +42,11 @@ Install LSL by running:
 
 If the '--root' option is not provided, then the installation tree root directory is the same as for the Python interpreter used to run `setup.py`.  For instance, if the Python interpreter is in '/usr/local/bin/python', then '<prefix>' will be set to '/usr/local'.  Otherwise, the explicit <prefix> value is taken from the command line option.  The package will install files in the following locations:
  * <prefix>/bin
- * <prefix>/lib/python2.6/site-packages
+ * <prefix>/lib/python3.6/site-packages
  * <prefix>/share/doc
  * <prefix>/share/install
 
-If an alternate '<prefix>' value is provided, you should set the PATH environment to include directory '<prefix>/bin' and the PYTHONPATH environment to include directory '<prefix>/lib/python2.6/site-packages'.
+If an alternate '<prefix>' value is provided, you should set the PATH environment to include directory '<prefix>/bin' and the PYTHONPATH environment to include directory '<prefix>/lib/python3.6/site-packages'.
 
 If the '--user' option is provided, then then installation tree root directory will be in the current user's home directory.
 
@@ -69,9 +70,9 @@ development.  The data collected as part of this consist seven things:
  * which LSL scripts are used.
 These data are sent to the LWA using a HTTP POST request where they are aggregated.
 
-Users can opt out of telemetry collection using the provided lslTelemetry.py script via:
+Users can opt out of telemetry collection using the lsl.misc.telemetry module via:
 
-    python lslTelemetry.py --disable
+    python -m lsl.misc.telemetry --disable
 
 This command will set a disk-based flag that disables the reporting process.  This script can also be used to re-enable telemetry and check the unique installation identifier being used.
 

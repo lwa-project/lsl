@@ -3,17 +3,28 @@ Module for managing configuration parameters for LSL
 """
 
 import os
-import copy
+import warnings
 import contextlib
 from datetime import datetime
 from collections import OrderedDict
 from textwrap import fill as tw_fill
 
 from lsl.version import full_version as lsl_version
+from lsl.misc.file_lock import FileLock
 
 # Create the .lsl directory and set the config filename
-if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-    os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
+try:
+    if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
+        os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
+    with FileLock(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test')):
+        with open(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'), 'w') as fh:
+            fh.write('test')
+        os.unlink(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'))
+    _IS_READONLY = False
+except OSError:
+    _IS_READONLY = True
+    warnings.warn('\u001b[33mCannot create or write to on-disk configuration cache\u001b[0m', RuntimeWarning)
+    
 _CONFIG_FILENAME = os.path.join(os.path.expanduser('~'), '.lsl', 'lsl.cfg')
 
 
@@ -240,10 +251,14 @@ class LSLConfigContainer(object):
         """
         
         if self._changed:
-            with open(self.filename, 'w') as fh:
-                fh.write(str(self))
-            self._changed = False
-            
+            if not _IS_READONLY:
+                with FileLock(self.filename) as lock:
+                    assert(lock.locked())
+                    
+                    with open(self.filename, 'w') as fh:
+                        fh.write(str(self))
+                    self._changed = False
+                    
     def view(self, section):
         """
         Return a configuration sub-container that defaults to looking up 
@@ -350,7 +365,7 @@ class LSLConfigSubContainer(object):
             self.container.set_temp(name, value)
 
 
-# The LSLConfigContainer that users shoudl use
+#: The LSLConfigContainer that users should use
 LSL_CONFIG = LSLConfigContainer()
 
 import atexit

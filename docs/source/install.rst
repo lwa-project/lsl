@@ -1,7 +1,7 @@
 Requirements
 ============
  * python >= 2.7
- * fftw3 >= 3.2
+ * fftw3 >= 3.2 (single precision version)
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
@@ -9,6 +9,7 @@ Requirements
  * sgp4 >= 2.12
  * aipy >= 3.0.1
  * pytz >= 2012c
+ * unlzw >= 0.1.1
  * matplotlib >= 1.1 [1]_
  * BeautifulSoup [1]_
  * casacore [2]_
@@ -34,13 +35,13 @@ setup.py.  For instance, if the python interpreter is in
 Otherwise, the explicit <prefix> value is taken from the command line
 option.  The package will install files in the following locations:
  * <prefix>/bin
- * <prefix>/lib/python2.6/site-packages
+ * <prefix>/lib/python3.6/site-packages
  * <prefix>/share/doc
  * <prefix>/share/install
 
 If an alternate <prefix> value is provided, you should set the PATH
 environment to include directory '<prefix>/bin' and the PYTHONPATH
-environment to include directory '<prefix>/lib/python2.6/site-packages'.
+environment to include directory '<prefix>/lib/python3.6/site-packages'.
 
 If the '--user' option is provided, then then installation tree root 
 directory will be in the current user's home directory.
@@ -68,10 +69,10 @@ development.  The data collected as part of this consist seven things:
 These data are sent to the LWA using a HTTP POST request where they
 are aggregated.
 
-Users can opt out of telemetry collection using the provided lslTelemetry.py
-script via::
+Users can opt out of telemetry collection using the lsl.misc.telemetry module
+via::
 
-    python lslTelemetry.py --disable
+    python -m lsl.misc.telemetry --disable
 
 This command will set a disk-based flag that disables the reporting process.
 This script can also be used to re-enable telemetry and check the unique

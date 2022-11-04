@@ -1,9 +1,6 @@
 /*                                                     mconf.h
  *
  *     Common include file for math routines
- *     
- *     From the SciPi GitHub Repository
- *     https://github.com/scipy/scipy/blob/master/scipy/special/cephes/
  *
  *
  *
@@ -68,6 +65,10 @@
 #ifndef CEPHES_MCONF_H
 #define CEPHES_MCONF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "protos.h"
 
 /* Constant definitions for math error conditions
@@ -84,15 +85,6 @@
 
 #define EDOM		33
 #define ERANGE		34
-
-/* Long double complex numeral.  */
-/*
- * typedef struct
- * {
- * long double r;
- * long double i;
- * } cmplxl;
- */
 
 /* Type of computer arithmetic */
 
@@ -144,5 +136,9 @@
 extern int merror;
 
 #define gamma Gamma
+
+#ifdef __cplusplus
+} // extern "C"
+#endif
 
 #endif				/* CEPHES_MCONF_H */

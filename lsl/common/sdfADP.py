@@ -57,32 +57,26 @@ import lsl._astroephem as ephem
 import weakref
 from datetime import datetime, timedelta
 
-from astropy.time import Time as AstroTime
-
 from lsl.transform import Time
-from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
-from lsl.astro import date as astroDate, get_date as astroGetDate
+from lsl.astro import utcjd_to_unix, MJD_OFFSET
 from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.adp import freq_to_word, word_to_freq, fC
-from lsl.common.stations import lwa1, lwasv
-from lsl.reader.tbn import FILTER_CODES as TBNFilters
+from lsl.common.mcsADP import LWA_MAX_NSTD
+from lsl.common.adp import word_to_freq, fC
+from lsl.common.stations import lwasv
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_SIZE as TBFSize
-from lsl.reader.tbn import FRAME_SIZE as TBNSize
-from lsl.reader.drx import FRAME_SIZE as DRXSize
 
-from lsl.common.sdf import parse_time, _TypedParentList, Observer, ProjectOffice
-from lsl.common.sdf import UCF_USERNAME_RE, Project as _Project, Session as _Session
-from lsl.common.sdf import UCF_USERNAME_RE, Observation, TBN, DRX, Solar, Jovian, Stepped, BeamStep
+from lsl.common.sdf import Observer, ProjectOffice
+from lsl.common.sdf import Project as _Project, Session as _Session
+from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, TBN, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
 __version__ = '1.2'
-__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__all__ = ['UCF_USERNAME_RE', 'parse_time', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _UTC = pytz.utc
@@ -118,12 +112,12 @@ class Project(_Project):
         try:
             # Try to pull out the project office comments about the session
             pos = self.project_office.sessions[session]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the observations
             poo = self.project_office.observations[session]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office observation comments match the
         # actual number of observations
@@ -166,7 +160,7 @@ class Project(_Project):
         if ses.drx_beam != -1:
             output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
+            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag is None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.recordMIB[component] != -1:
                 output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
@@ -191,7 +185,7 @@ class Project(_Project):
             output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided',)
             output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided',)
             output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
-            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] is None else poo[i],)
             output += "OBS_START_MJD    %i\n" % (obs.mjd,)
             output += "OBS_START_MPM    %i\n" % (obs.mpm,)
             output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
@@ -231,6 +225,14 @@ class Project(_Project):
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_JOV':
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+            elif obs.mode == 'TRK_LUN':
                 output += "OBS_B            %s\n" % (obs.beam,)
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
                 output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
@@ -367,8 +369,9 @@ class TBF(Observation):
      * comments - comments about the observation
     """
     
+    filter_codes = DRXFilters
+    
     def __init__(self, name, target, start, frequency1, frequency2, filter, samples, comments=None):
-        self.filter_codes = DRXFilters
         self.samples = int(samples)
         
         duration = (self.samples / _TBF_TIME_SCALE + 1)*_TBF_TIME_GAIN*(2 if frequency2 != 0 else 1) + 5000
@@ -407,10 +410,11 @@ class TBF(Observation):
         
         self.update()
         
-        station = lwa1
+        station = lwasv
         if self._parent is not None:
             station = self._parent.station
         backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
         
         failures = 0
         # Basic - Sample size, frequency, and filter
@@ -420,11 +424,13 @@ class TBF(Observation):
             failures += 1
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
+                print("[%i] Error: Specified frequency for tuning 1 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
+                print("[%i] Error: Specified frequency for tuning 2 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
@@ -549,6 +555,8 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
         obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+    elif mode == 'TRK_LUN':
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             print("[%i] -> found %i steps" % (os.getpid(), len(beam_temps)))
@@ -638,7 +646,7 @@ def parse_sdf(filename, verbose=False):
             # to deal with any indicies present
             try:
                 keywordSection, value = line.split(None, 1)
-            except:
+            except ValueError:
                 continue
             
             mtch = kwdRE.match(keywordSection)

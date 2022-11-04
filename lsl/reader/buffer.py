@@ -27,6 +27,7 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
+import abc
 import copy
 from functools import cmp_to_key
 from collections import deque, OrderedDict
@@ -94,6 +95,8 @@ class FrameBufferBase(object):
         full or partially full.  This can be retrieved using the buffer's 
         'flush()' function.
     """
+    
+    __metaclass__ = abc.ABCMeta
     
     def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nsegments=6, reorder=False):
         """
@@ -197,6 +200,7 @@ class FrameBufferBase(object):
         
         return True if len(self.buffer) > self.nsegments else False
         
+    @abc.abstractmethod
     def get_max_frames(self):
         """
         Calculate the maximum number of frames that we expect from 
@@ -208,6 +212,7 @@ class FrameBufferBase(object):
         
         raise NotImplementedError
         
+    @abc.abstractmethod
     def get_figure_of_merit(self, frame):
         """
         Figure of merit for storing/sorting frames in the ring buffer.
@@ -217,6 +222,7 @@ class FrameBufferBase(object):
         
         raise NotImplementedError
         
+    @abc.abstractmethod
     def create_fill(self, key, frameParameters):
         """
         Create a 'fill' frame of zeros using an existing good

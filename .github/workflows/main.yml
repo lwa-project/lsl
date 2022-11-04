@@ -1,0 +1,94 @@
+name: "Build and Test"
+on: [push, pull_request]
+jobs:
+  pre_build:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: 'same_content'
+          skip_after_successful_duplicate: 'true'
+          do_not_skip: '["pull_request", "release", "workflow_dispatch", "schedule"]'
+  build:
+    needs: pre_build
+    if: ${{ needs.pre_build.outputs.should_skip != 'true' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['2.7', '3.6', '3.8', '3.10']
+      fail-fast: false
+    steps:
+      - name: "Software Install - Ubuntu"
+        if: ${{ matrix.os == 'ubuntu-latest' }}
+        run: |
+          sudo apt-get install -y \
+            build-essential \
+            ca-certificates \
+            coreutils \
+            curl \
+            git \
+            gpg \
+            gpgv \
+            gzip \
+            libboost-python-dev \
+            libcfitsio-dev \
+            libfftw3-dev \
+            libgdbm-dev \
+            pkg-config \
+            software-properties-common
+          sudo add-apt-repository -y ppa:kernsuite/kern-7
+          sudo apt-get -q update
+          sudo apt-get -y install casacore-dev wcslib-dev
+      - name: "Software Install - MacOS"
+        if: ${{ matrix.os == 'macos-latest' }}
+        run: |
+          brew install \
+            fftw \
+            pkg-config
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - uses: actions/checkout@v3
+      - name: "Software Install - Python" 
+        run: |
+          python -m pip install \
+            setuptools \
+            numpy \
+            matplotlib \
+            scipy \
+            "ephem<4.1.1" \
+            jupyterlab \
+            jupyter_client \
+            nbformat \
+            nbconvert \
+            coverage
+      - if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '2.7' }}
+        run: python -m pip install python-casacore
+      - name: "Build and Install"
+        run: python -m pip install .
+      - name: Test
+        run: |
+          cd tests
+          coverage run --source=lsl -m unittest discover
+          coverage xml
+      - name: "Upload Coverage"
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' }}
+        uses: codecov/codecov-action@v2
+        with:
+          directory: ./tests/
+          fail_ci_if_error: false
+          verbose: true
+      - name: Build Package
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+        run: |
+          python setup.py sdist
+      - name: Publish Package
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}

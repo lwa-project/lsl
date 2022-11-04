@@ -53,9 +53,6 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
-import copy
-import numpy
-
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbn
@@ -72,9 +69,10 @@ __version__ = '0.8'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
            'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
+#: TBN packet size (header + payload)
 FRAME_SIZE = 1048
 
-# List of filter codes and their corresponding sample rates in Hz
+#: List of filter codes and their corresponding sample rates in Hz
 FILTER_CODES = {1:   1000, 2:   3125, 3:    6250, 4:    12500, 5: 25000, 6: 50000, 7: 100000}
 
 
@@ -317,7 +315,7 @@ def get_sample_rate(filehandle, nframe=None, filter_code=False):
             key = 2*stand + pol
             try:
                 frames[key].append(cFrame)
-            except:
+            except KeyError:
                 frames[key] = [cFrame,]
                 
     # Any key with complete data will work for this, so pick the first key with two

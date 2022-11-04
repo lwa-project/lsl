@@ -20,13 +20,12 @@ import argparse
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
-from lsl import astro
 from lsl.reader.ldp import LWASVDataFile, TBFFile
 from lsl.common import stations, metabundleADP
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
-from lsl.writer import fitsidi
+from lsl.writer import fitsidi, measurementset
 from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
@@ -43,7 +42,6 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
     antennas = site.antennas
     
     # Get the metadata
-    sample_rate = idf.get_info('sample_rate')
     freq = idf.get_info('freq1')
     
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  
@@ -56,6 +54,15 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
     # Create a list of unqiue stands to know what style of IDI file to create
     stands = set( [antennas[i].stand.id for i in good] )
     
+    # Figure out the output mode
+    if os.path.splitext(filename)[1].find('.ms_') != -1:
+        writer_class = measurementset.Ms
+    else:
+        if len(stands) > 255:
+            writer_class = fitsidi.ExtendedIdi
+        else:
+            writer_class = fitsidi.Idi
+            
     # Main loop over the input file to read in the data and organize it.  Several control 
     # variables are defined for this:
     #  ref_time -> time (in seconds since the UNIX epoch) for the first data set
@@ -131,17 +138,13 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
             if s  == 0 and pol == pols[0]:
                 pol1, pol2 = fxc.pol_to_pols(pol)
                 
-                if len(stands) > 255:
-                    fits = fitsidi.ExtendedIdi(filename, ref_time=ref_time)
-                else:
-                    fits = fitsidi.Idi(filename, ref_time=ref_time)
+                fits = writer_class(filename, ref_time=ref_time)
                 fits.set_stokes(pols)
                 fits.set_frequency(freq[toUse])
                 fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
-            obsTime = astro.unix_to_taimjd(setTime)
-            fits.add_data_set(obsTime, readT, blList, vis[:,toUse], pol=pol)
+            fits.add_data_set(setTime, readT, blList, vis[:,toUse], pol=pol)
         print("->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1)))
         
     # Cleanup after everything is done
@@ -208,8 +211,8 @@ def main(args):
         
     # Number of frames to read in at once and average
     nFrames = min([int(args.avg_time*sample_rate), nInts])
-    args.offset = idf.offset(args.offset)
     nSets = idf.get_info('nframe') // nFpO // nFrames
+    args.offset = idf.offset(args.offset)
     nSets = nSets - int(args.offset*sample_rate) // nFrames
     
     central_freq = idf.get_info('freq1')
@@ -239,8 +242,11 @@ def main(args):
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     while leftToDo > 0:
-        fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
-        
+        if args.casa:
+            fitsFilename = "%s.ms_%i" % (basename, (s+1),)
+        else:
+            fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
+            
         if leftToDo > 100:
             chunk = 100
         else:
@@ -283,6 +289,8 @@ if __name__ == "__main__":
                         help='compute only the XX and YY polarization products')
     pgroup.add_argument('-4', '--four-products', dest='products', action='store_const', const=['xx','yy','xy','yx'], 
                         help='compute the XX, XY, YX, and YY polarization products')
+    parser.add_argument('--casa', action='store_true',
+                        help='write out measurement sets instead of FITS-IDI files')
     args = parser.parse_args()
     main(args)
     

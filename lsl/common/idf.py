@@ -50,11 +50,10 @@ from astropy.coordinates import Angle as AstroAngle
 
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
-from lsl.astro import date as astroDate, get_date as astroGetDate
 from lsl.common.color import colorfy
 
 from lsl.common.mcsADP import datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.adp import freq_to_word, word_to_freq, fC
+from lsl.common.adp import freq_to_word, word_to_freq
 from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
@@ -217,12 +216,12 @@ class Project(object):
         try:
             # Try to pull out the project office comments about the run
             pos = self.project_office.runs[run]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the scans
             poo = self.project_office.scans[run]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office scan comments match the
         # actual number of scans
@@ -274,7 +273,7 @@ class Project(object):
             output += "SCAN_TARGET      %s\n" % (obs.target,)
             output += "SCAN_INTENT      %s\n" % (obs.intent,)
             output += "SCAN_REMPI       %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
-            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] is None else poo[i],)
             output += "SCAN_START_MJD   %i\n" % (obs.mjd,)
             output += "SCAN_START_MPM   %i\n" % (obs.mpm,)
             output += "SCAN_START       %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
@@ -296,14 +295,14 @@ class Project(object):
             ## Alternate phase centers
             if len(obs.alt_phase_centers) > 0:
                 output += "SCAN_ALT_N             %i\n" % (len(obs.alt_phase_centers),)
-                for i,phase_center in enumerate(obs.alt_phase_centers):
-                    output += "SCAN_ALT_TARGET[%i]    %s\n" % (i+1, phase_center.target)  
-                    output += "SCAN_ALT_INTENT[%i]    %s\n" % (i+1, phase_center.intent) 
-                    output += "SCAN_ALT_RA[%i]        %.9f\n" % (i+1, phase_center.ra)  
-                    output += "SCAN_ALT_DEC[%i]       %+.9f\n" % (i+1, phase_center.dec)
+                for j,phase_center in enumerate(obs.alt_phase_centers):
+                    output += "SCAN_ALT_TARGET[%i]    %s\n" % (j+1, phase_center.target)  
+                    output += "SCAN_ALT_INTENT[%i]    %s\n" % (j+1, phase_center.intent) 
+                    output += "SCAN_ALT_RA[%i]        %.9f\n" % (j+1, phase_center.ra)  
+                    output += "SCAN_ALT_DEC[%i]       %+.9f\n" % (j+1, phase_center.dec)
                     if phase_center.pm[0] != 0.0 or phase_center.pm[1] != 0.0:
-                        output += "SCAN_ALT_PM_RA[%i]       %+.1f\n" % (i+1, phase_center.pm[0])
-                        output += "SCAN_ALT_PM_DEC[%i]      %+.1f\n" % (i+1, phase_center.pm[1])
+                        output += "SCAN_ALT_PM_RA[%i]       %+.1f\n" % (j+1, phase_center.pm[0])
+                        output += "SCAN_ALT_PM_DEC[%i]      %+.1f\n" % (j+1, phase_center.pm[1])
                         
             ## ASP filter setting
             if obs.asp_filter != -1:
@@ -336,24 +335,9 @@ class Project(object):
             raise IndexError("Invalid run index")
         
         self.runs[run].update()
-        self.runs[run].scans.sort()
-           
+        self.runs[run].scans.sort()   
         ses = self.runs[run]
-        try:
-            # Try to pull out the project office comments about the run
-            pos = self.project_office.runs[run]
-        except:
-            pos = None
-        try:
-            # Try to pull out the project office comments about the scans
-            poo = self.project_office.scans[run]
-        except:
-            poo = []
-        # Enforce that the number of project office scan comments match the
-        # actual number of scans
-        while (len(ses.scans) - len(poo)) > 0:
-            poo.append(None)
-            
+        
         # Build the SDFs
         ## Setup the common information
         start = mjdmpm_to_datetime(ses.scans[0].mjd, ses.scans[0].mpm)
@@ -1405,9 +1389,6 @@ def parse_idf(filename, verbose=False):
     # in the keywords
     kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9\+]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?(\[(?P<id4>[0-9]+?)\])?')
     
-    # Create the metatag regular expression to deal with spectrometer mode settings
-    metaRE = re.compile(r'\{.*\}')
-    
     # Create empty objects to get things started.  Values will get filled in as they
     # are found in the file
     po = ProjectOffice()
@@ -1436,7 +1417,7 @@ def parse_idf(filename, verbose=False):
             # to deal with any indicies present
             try:
                 keywordSection, value = line.split(None, 1)
-            except:
+            except ValueError:
                 continue
             
             mtch = kwdRE.match(keywordSection)

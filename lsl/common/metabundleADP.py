@@ -22,7 +22,6 @@ from datetime import datetime, timedelta
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
 from lsl.common.adp import word_to_freq, fS
-from lsl.transform import Time
 from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
 
@@ -455,9 +454,6 @@ def get_observation_spec(tarname, obs_id=None):
     """
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find all of the .obs files and extract them
         tf = _open_tarball(tarname)
         tis = []
@@ -472,7 +468,14 @@ def get_observation_spec(tarname, obs_id=None):
             obsList.append( read_obs_file(of) )
             
         # Cull the list based on the observation ID selection
-        if obs_id is not None:
+        if obs_id is None:
+            outObs = obsList
+        else:
+            try:
+                len(obs_id)
+            except TypeError:
+                obs_id = [obs_id]
+                
             outObs = []
             for o in obsList:
                 try:
@@ -484,9 +487,7 @@ def get_observation_spec(tarname, obs_id=None):
                         
             if len(outObs) == 1:
                 outObs = outObs[0]
-        else:
-            outObs = obsList
-            
+                
     # Return
     return outObs
 
@@ -505,9 +506,6 @@ def get_sdf(tarname):
     
     # Find the SDF file contained in the tarball
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find the right .txt file (not the metadata one) and extract it
         tf = _open_tarball(tarname)
         for ti in _get_members(tarname):
@@ -529,9 +527,6 @@ def get_command_script(tarname):
     """
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find the .cs file and extract it
         tf = _open_tarball(tarname)
         for ti in _get_members(tarname):
@@ -567,9 +562,6 @@ def get_asp_configuration(tarname, which='beginning'):
                  'asp_atten_split': [-1 for i in range(264)]}
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
-        path, basename = os.path.split(tarname)
-        basename, ext = os.path.splitext(basename)
-        
         # Find the .pag file and extract it
         tf = _open_tarball(tarname)
         mibs = []

@@ -274,9 +274,9 @@ class VisibilityDataSet(object):
         self.antennaarray.set_jultime(self.jd)
         
         # Recompute
-        if self.phase_center is not 'z':
+        if self.phase_center != 'z':
             self.phase_center.compute(self.antennaarray)
-        if new_phase_center is not 'z':
+        if new_phase_center != 'z':
             new_phase_center.compute(self.antennaarray)
             
         # Go!
@@ -324,6 +324,7 @@ class VisibilityDataSet(object):
         new_baselines = [self.baselines[b] for b in selection]
         new_data = self.copy(include_pols=False)
         new_data.baselines = new_baselines
+        new_data.uvw = self.uvw[selection,:,:]*1.0
         
         for pds in self:
             new_data.append( pds.subset(selection) )
@@ -379,6 +380,7 @@ class VisibilityDataSet(object):
         new_baselines = [self.baselines[b] for b in selection]
         new_data = self.copy(include_pols=False)
         new_data.baselines = new_baselines
+        new_data.uvw = self.uvw[selection,:,:]*1.0
         
         for pds in self:
             new_data.append( pds.subset(selection) )

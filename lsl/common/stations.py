@@ -11,7 +11,6 @@ if sys.version_info < (3,):
 import os
 import re
 import imp
-import copy
 import numpy
 import lsl._astroephem as ephem
 import struct
@@ -73,12 +72,8 @@ def ecef_to_geo(x, y, z):
     
     # Longitude
     lon = numpy.arctan2(y, x)
-    p = numpy.sqrt(x**2 + y**2)
     
-    # Latitude (first approximation)
-    lat = numpy.arctan2(z, p)
-    
-    # Latitude (refined using Bowring's method)
+    # Latitude (using one iteration of Bowring's method)
     psi = numpy.arctan2(WGS84_a*z, WGS84_b*p)
     num = z + WGS84_b*ep2*numpy.sin(psi)**3
     den = p - WGS84_a*e2*numpy.cos(psi)**3
@@ -899,6 +894,12 @@ class ARX(object):
     def __hash__(self):
         return hash(self.__reduce__()[1])
         
+    def __eq__(self, other):
+        if isinstance(other, ARX):
+            return self.id == other.id and self.channel == other.channel
+        else:
+            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            
     def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
@@ -1021,6 +1022,7 @@ class LSLInterface(object):
                 raise RuntimeError("Unknown module for interface type '%s'" % which)
             modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
             self._cache[which] = imp.load_module(value, *modInfo)
+            modInfo[0].close()
         return self._cache[which]
 
 
@@ -1864,18 +1866,18 @@ def parse_ssmif(filename):
     return station
 
 
-# LWAVL
+#: LWAVL
 _ssmifvl = os.path.join(dataPath, 'lwa1-ssmif.txt')
 lwavl = parse_ssmif(_ssmifvl)
 
-# LWAVL is also known as LWA1
+#: LWAVL is also known as LWA1
 lwa1 = lwavl
 
-# LWANA
+#: LWANA
 _ssmifna = os.path.join(dataPath, 'lwana-ssmif.txt')
 lwana = parse_ssmif(_ssmifna)
 
-# LWASV
+#: LWASV
 _ssmifsv = os.path.join(dataPath, 'lwasv-ssmif.txt')
 lwasv = parse_ssmif(_ssmifsv)
 

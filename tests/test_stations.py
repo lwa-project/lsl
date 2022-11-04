@@ -10,15 +10,17 @@ if sys.version_info < (3,):
     
 import os
 import ephem
+import numpy
 import pickle
 import unittest
 from datetime import datetime
 
 from lsl.common.paths import DATA_BUILD
 from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
+import lsl.testing
 
 
-__version__  = "0.4"
+__version__  = "0.5"
 __author__    = "Jayce Dowell"
 
 
@@ -29,12 +31,10 @@ class stations_tests(unittest.TestCase):
     def test_station(self):
         """Test retrieving stations from the stations module."""
 
-        lwa1 = stations.lwa1
-        self.assertTrue(isinstance(lwa1, stations.LWAStation))
-        
-        lwasv = stations.lwasv
-        self.assertTrue(isinstance(lwasv, stations.LWAStation))
-        
+        for station in (stations.lwa1, stations.lwasv):
+            with self.subTest(station=station.name):
+                self.assertTrue(isinstance(station, stations.LWAStation))
+                
     def test_observer(self):
         """Test the ephem.Observer portion of an LWAStation."""
         
@@ -55,48 +55,27 @@ class stations_tests(unittest.TestCase):
     def test_pickle(self):
         """Test pickling of LWAStation instances."""
         
-        lwa1 = stations.lwa1
-        
-        # Pickle and re-load
-        out  = pickle.dumps(lwa1)
-        lwa1Prime = pickle.loads(out)
-        
-        # Test similarity
-        self.assertAlmostEqual(lwa1.lat, lwa1Prime.lat)
-        self.assertAlmostEqual(lwa1.long, lwa1Prime.long)
-        self.assertAlmostEqual(lwa1.elev, lwa1Prime.elev)
-        for i in range(520):
-            self.assertEqual(lwa1.antennas[i].id, lwa1Prime.antennas[i].id)
-            self.assertEqual(lwa1.antennas[i].stand.id, lwa1Prime.antennas[i].stand.id)
-            self.assertEqual(lwa1.antennas[i].digitizer, lwa1Prime.antennas[i].digitizer)
-        self.assertEqual(lwa1.interface.mcs, lwa1Prime.interface.mcs)
-        self.assertEqual(lwa1.interface.sdf, lwa1Prime.interface.sdf)
-        
-        # Check independence
-        lwa1Prime.antennas[100].stand.id = 888
-        self.assertTrue(lwa1.antennas[100].stand.id != lwa1Prime.antennas[100].stand.id)
-        
-        lwasv = stations.lwasv
-        
-        # Pickle and re-load
-        out  = pickle.dumps(lwasv)
-        lwasvPrime = pickle.loads(out)
-        
-        # Test similarity
-        self.assertAlmostEqual(lwasv.lat, lwasvPrime.lat)
-        self.assertAlmostEqual(lwasv.long, lwasvPrime.long)
-        self.assertAlmostEqual(lwasv.elev, lwasvPrime.elev)
-        for i in range(512):
-            self.assertEqual(lwasv.antennas[i].id, lwasvPrime.antennas[i].id)
-            self.assertEqual(lwasv.antennas[i].stand.id, lwasvPrime.antennas[i].stand.id)
-            self.assertEqual(lwasv.antennas[i].digitizer, lwasvPrime.antennas[i].digitizer)
-        self.assertEqual(lwasv.interface.mcs, lwasvPrime.interface.mcs)
-        self.assertEqual(lwasv.interface.sdf, lwasvPrime.interface.sdf)
-        
-        # Check independence
-        lwasvPrime.antennas[100].stand.id = 888
-        self.assertTrue(lwasv.antennas[100].stand.id != lwasvPrime.antennas[100].stand.id)
-        
+        for station in (stations.lwa1, stations.lwasv):
+            with self.subTest(station=station.name):
+                # Pickle and re-load
+                out  = pickle.dumps(station)
+                stationPrime = pickle.loads(out)
+                
+                # Test similarity
+                self.assertAlmostEqual(station.lat, stationPrime.lat)
+                self.assertAlmostEqual(station.long, stationPrime.long)
+                self.assertAlmostEqual(station.elev, stationPrime.elev)
+                for i in range(len(station.antennas)):
+                    self.assertEqual(station.antennas[i].id, stationPrime.antennas[i].id)
+                    self.assertEqual(station.antennas[i].stand.id, stationPrime.antennas[i].stand.id)
+                    self.assertEqual(station.antennas[i].digitizer, stationPrime.antennas[i].digitizer)
+                self.assertEqual(station.interface.mcs, stationPrime.interface.mcs)
+                self.assertEqual(station.interface.sdf, stationPrime.interface.sdf)
+                
+                # Check independence
+                stationPrime.antennas[100].stand.id = 888
+                self.assertTrue(station.antennas[100].stand.id != stationPrime.antennas[100].stand.id)
+            
     def test_strings(self):
         """Test string representations in the stations module."""
         
@@ -129,9 +108,7 @@ class stations_tests(unittest.TestCase):
         lng = 0.0
         elev = 0.0
         x, y, z = stations.geo_to_ecef(lat, lng, elev)
-        self.assertAlmostEqual(x, 6378137.0)
-        self.assertAlmostEqual(y, 0.0)
-        self.assertAlmostEqual(z, 0.0)
+        numpy.testing.assert_allclose((x,y,z), (6378137.0,0.0,0.0))
         
     def test_interfaces(self):
         """Test retrieving LSL interface information."""
@@ -174,44 +151,30 @@ class stations_tests(unittest.TestCase):
         self.assertFalse(lwasv.interface.get_module('metabundle') == metabundle)
         self.assertFalse(lwasv.interface.get_module('sdm') == sdm)
         
-    def test_ssmif_text(self):
-        """Test the text SSMIF parser."""
+    def test_ssmif(self):
+        """Test the SSMIF parser."""
         
-        ssmifFile = os.path.join(DATA_BUILD, 'lwa1-ssmif.txt')
-        out = stations.parse_ssmif(ssmifFile)
-        
-    def test_ssmif_test_adp(self):
-        """Test the text SSMIF parser for ADP-based stations."""
-        
-        ssmifFile = os.path.join(DATA_BUILD, 'lwasv-ssmif.txt')
-        out = stations.parse_ssmif(ssmifFile)
-        
-    def test_ssmif_binary(self):
-        """Test the binary SSMIF parser."""
-        
-        ssmifFile = os.path.join(DATA_BUILD, 'tests', 'ssmif.dat')
-        out = stations.parse_ssmif(ssmifFile)
-        
-    def test_ssmif_binary_adp(self):
-        """Test the binary SSMIF parser for ADP-based stations."""
-        
-        ssmifFile = os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat')
-        out = stations.parse_ssmif(ssmifFile)
-        
+        filenames = [os.path.join(DATA_BUILD, 'lwa1-ssmif.txt'),
+                     os.path.join(DATA_BUILD, 'lwasv-ssmif.txt'),
+                     os.path.join(DATA_BUILD, 'tests', 'ssmif.dat'),
+                     os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat')]
+        sites = ['LWA1', 'LWA-SV', 'LWA1', 'LWA-SV']
+        types = ['text', 'text', 'binary', 'binary']
+        for filename,site,type in zip(filenames, sites, types):
+            with self.subTest(station=site, type=type):
+                out = stations.parse_ssmif(filename)
+                
     def test_responses(self):
         """Test the various frequency responses."""
         
-        lwa1 = stations.lwa1
-        lwa1[0].fee.response()
-        lwa1[0].cable.response()
-        for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
-            lwa1[0].arx.response(filt)
-            
-        lwasv = stations.lwasv
-        lwasv[0].fee.response()
-        lwasv[0].cable.response()
-        for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
-            lwasv[0].arx.response(filt)
+        for station in (stations.lwa1, stations.lwasv):
+            with self.subTest(station=station.name):
+                station[0].fee.response()
+                station[0].cable.response()
+                
+            for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
+                with self.subTest(station=station.name, filter=filt):
+                    station[0].arx.response(filt)
 
 
 class stations_test_suite(unittest.TestSuite):

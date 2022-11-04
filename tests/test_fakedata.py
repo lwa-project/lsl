@@ -12,6 +12,7 @@ import os
 import copy
 import unittest
 import tempfile
+import shutil
 import numpy
 
 from lsl.common.paths import DATA_BUILD
@@ -32,8 +33,6 @@ drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
 class fake_TBN_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.sim.tbn
     module."""
-    
-    testPath = None
     
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
@@ -139,18 +138,12 @@ class fake_TBN_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
         
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class fake_DRX_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.sim.drx
     module."""
-    
-    testPath = None
     
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
@@ -265,11 +258,7 @@ class fake_DRX_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
         
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class fakedata_test_suite(unittest.TestSuite):
@@ -286,4 +275,3 @@ class fakedata_test_suite(unittest.TestSuite):
 
 if __name__ == '__main__':
     unittest.main()
-

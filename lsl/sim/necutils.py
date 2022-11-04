@@ -17,6 +17,7 @@ if sys.version_info < (3,):
     
 from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
 from lsl.misc.mathutils import regrid
+from lsl.common.color import colorfy
 import os
 import re
 import warnings
@@ -239,13 +240,13 @@ class NECPattern:
         try:
             fh, filefreq = open_and_get_nec_freq(outname)
         except:
-            warnings.warn("NEC .out file not found!  Running NEC", RuntimeWarning)
+            warnings.warn(colorfy("{{%yellow NEC .out file not found!  Running NEC}}"), RuntimeWarning)
             fh = None
             
         if fh is None or not close_to(filefreq, freq):
             if rerun:
-                warnings.warn("NEC output file is at a different frequency \
-                    than the requested frequency: re-running", RuntimeWarning)
+                warnings.warn(colorfy("{{%yellow NEC output file is at a different frequency \
+                    than the requested frequency: re-running}}"), RuntimeWarning)
                 if fh is not None:
                     fh.close()
                 change_nec_freq(necname, freq)

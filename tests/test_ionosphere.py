@@ -14,6 +14,7 @@ import numpy
 
 from lsl.common.stations import lwa1
 from lsl.misc import ionosphere
+import lsl.testing
 
 
 __version__  = "0.1"
@@ -134,95 +135,88 @@ class ionosphere_tests(unittest.TestCase):
         self.assertAlmostEqual(pos[0], lat, 1)
         self.assertAlmostEqual(pos[1], lng, 1)
         
-    def test_tec_value_igs(self):
-        """Test retrieving the TEC value at a particular location from IGS"""
+    def test_tec_value(self):
+        """Test retrieving the TEC value at a particular location"""
         
-        """
-        LSL 1.2.5
-        
-        Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
-        [GCC 7.4.0] on linux2
-        Type "help", "copyright", "credits" or "license" for more information.
-        >>> from lsl.misc import ionosphere
-        >>> ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='IGS')
-        (array([[ 14.87999992]]), array([[ 0.73999999]]))
-        """
-        
-        tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='IGS')
-        self.assertAlmostEqual(tec[0][0], 14.87999992, 6)
-        self.assertAlmostEqual(rms[0][0],  0.73999999, 6)
-        
-    def test_tec_values_jpl(self):
-        """Test retrieving the TEC value at a particular location from JPL"""
-        
-        """
-        LSL 1.2.5
-        
-        Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
-        [GCC 7.4.0] on linux2
-        Type "help", "copyright", "credits" or "license" for more information.
-        >>> from lsl.misc import ionosphere
-        >>> ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='JPL')
-        (array([[ 15.66000019]]), array([[ 2.5]]))
-        """
-        
-        tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='JPL')
-        self.assertAlmostEqual(tec[0][0], 15.66000019, 6)
-        self.assertAlmostEqual(rms[0][0],  2.50000000, 6)
-        
-    def test_tec_values_code(self):
-        """Test retrieving the TEC value at a particular location from CODE"""
-        
-        """
-        LSL 1.2.5
-        
-        Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
-        [GCC 7.4.0] on linux2
-        Type "help", "copyright", "credits" or "license" for more information.
-        >>> from lsl.misc import ionosphere
-        ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='CODE')
-        (array([[ 14.14000015]]), array([[ 0.76]]))
-        """
-        
-        tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='CODE')
-        self.assertAlmostEqual(tec[0][0], 14.14000015, 6)
-        self.assertAlmostEqual(rms[0][0],  0.76000000, 6)
-        
-    def test_tec_values_uqr(self):
-        """Test retrieving the TEC value at a particular location from UQR"""
-        
-        """
-        LSL 1.2.5
-        
-        Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
-        [GCC 7.4.0] on linux2
-        Type "help", "copyright", "credits" or "license" for more information.
-        >>> from lsl.misc import ionosphere
-        >>> ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='UQR')
-        (array([[ 13.25999996]]), array([[ 6.91600008]]))
-        """
-        
-        tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='UQR')
-        self.assertAlmostEqual(tec[0][0], 13.25999996, 6)
-        self.assertAlmostEqual(rms[0][0],  6.91600008, 6)
-        
-    def test_tec_values_ustec(self):
-        """Test retrieving the TEC value at a particular location from USTEC"""
-        
-        """
-        LSL 1.2.5
-        
-        Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
-        [GCC 7.4.0] on linux2
-        Type "help", "copyright", "credits" or "license" for more information.
-        >>> from lsl.misc import ionosphere
-        >>> ionosphere.getTECValue(58415, lat=34.0, lng=-107.0, includeRMS=True, type='USTEC')
-        (array([[ 17.29999924]]), array([[ 2.5999999]]))
-        """
-        
-        tec, rms = ionosphere.get_tec_value(58415, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
-        self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
-        self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
+        with self.subTest(service='IGS'):
+            """
+            LSL 1.2.5
+            
+            Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
+            [GCC 7.4.0] on linux2
+            Type "help", "copyright", "credits" or "license" for more information.
+            >>> from lsl.misc import ionosphere
+            >>> ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='IGS')
+            (array([[ 14.87999992]]), array([[ 0.73999999]]))
+            """
+            
+            tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='IGS')
+            self.assertAlmostEqual(tec[0][0], 14.87999992, 6)
+            self.assertAlmostEqual(rms[0][0],  0.73999999, 6)
+            
+        with self.subTest(service='JPL'):
+            """
+            LSL 1.2.5
+            
+            Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
+            [GCC 7.4.0] on linux2
+            Type "help", "copyright", "credits" or "license" for more information.
+            >>> from lsl.misc import ionosphere
+            >>> ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='JPL')
+            (array([[ 15.66000019]]), array([[ 2.5]]))
+            """
+            
+            tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='JPL')
+            self.assertAlmostEqual(tec[0][0], 15.66000019, 6)
+            self.assertAlmostEqual(rms[0][0],  2.50000000, 6)
+            
+        with self.subTest(service='CODE'):
+            """
+            LSL 1.2.5
+            
+            Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
+            [GCC 7.4.0] on linux2
+            Type "help", "copyright", "credits" or "license" for more information.
+            >>> from lsl.misc import ionosphere
+            ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='CODE')
+            (array([[ 14.14000015]]), array([[ 0.76]]))
+            """
+            
+            tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='CODE')
+            self.assertAlmostEqual(tec[0][0], 14.14000015, 6)
+            self.assertAlmostEqual(rms[0][0],  0.76000000, 6)
+            
+        with self.subTest(service='UQR'):
+            """
+            LSL 1.2.5
+            
+            Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
+            [GCC 7.4.0] on linux2
+            Type "help", "copyright", "credits" or "license" for more information.
+            >>> from lsl.misc import ionosphere
+            >>> ionosphere.getTECValue(58215, lat=34.0, lng=-107.0, includeRMS=True, type='UQR')
+            (array([[ 13.25999996]]), array([[ 6.91600008]]))
+            """
+            
+            tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='UQR')
+            self.assertAlmostEqual(tec[0][0], 13.25999996, 6)
+            self.assertAlmostEqual(rms[0][0],  6.91600008, 6)
+            
+        with self.subTest(service='USTEC'):
+            """
+            LSL 1.2.5
+            
+            Python 2.7.17 (default, Nov  7 2019, 10:07:09) 
+            [GCC 7.4.0] on linux2
+            Type "help", "copyright", "credits" or "license" for more information.
+            >>> from lsl.misc import ionosphere
+            >>> ionosphere.getTECValue(58415, lat=34.0, lng=-107.0, includeRMS=True, type='USTEC')
+            (array([[ 17.29999924]]), array([[ 2.5999999]]))
+            """
+            
+            tec, rms = ionosphere.get_tec_value(58415, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
+            self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
+            self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
 
 
 class ionosphere_test_suite(unittest.TestSuite):

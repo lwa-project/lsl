@@ -14,9 +14,10 @@ import numpy
 
 from lsl.correlator import uvutils
 from lsl.common import stations
+import lsl.testing
 
 
-__version__  = "0.5"
+__version__  = "0.6"
 __author__    = "Jayce Dowell"
 
 
@@ -89,6 +90,21 @@ class uvutils_tests(unittest.TestCase):
         ind = uvutils.antennas_to_baseline(0, 3, standList, include_auto=False, indicies=True)
         self.assertEqual(ind, 2)
         
+    def run_compute_uvw_test(self, antennas, freq):
+        out = uvutils.compute_uvw(antennas, freq=freq)
+        
+        nbl = len(antennas)*(len(antennas)-1)//2
+        try:
+            expected_shape = freq.shape
+        except AttributeError:
+            try:
+                expected_shape = (len(freq),)
+            except TypeError:
+                expected_shape = (1,)
+        expected_shape = (nbl,3)+expected_shape
+        self.assertEqual(out.shape, expected_shape)
+        return out
+        
     def test_compute_uvw(self):
         """Test the the compute_uvw function runs."""
         
@@ -96,49 +112,36 @@ class uvutils_tests(unittest.TestCase):
         antennas = station.antennas
         
         # Frequency is a scalar
-        freq = 45e6
-        out = uvutils.compute_uvw(antennas[0:60:2], freq=freq)
-        self.assertEqual(len(out.shape), 3)
-        self.assertEqual(out.shape[-1], 1)
-        
+        with self.subTest(mode='scalar'):
+            freq = 45e6
+            out = self.run_compute_uvw_test(antennas[0:60:2], freq)
+            
         # Frequency is a list
-        freq = [45e6, 60e6]
-        out = uvutils.compute_uvw(antennas[0:60:2], freq=freq)
-        self.assertEqual(len(out.shape), 3)
-        self.assertEqual(out.shape[-1], 2)
+        with self.subTest(mode='list'):
+            freq = [45e6, 60e6]
+            out = self.run_compute_uvw_test(antennas[0:60:2], freq)
 
         # Frequency is an array
         ## 1-D
-        freq = numpy.linspace(45e6, 60e6, 1024)
-        out0 = uvutils.compute_uvw(antennas[0:60:2], freq=freq)
-        
+        with self.subTest(mode='1D'):
+            freq = numpy.linspace(45e6, 60e6, 1024)
+            out0 = self.run_compute_uvw_test(antennas[0:60:2], freq)
+            
         ## 2-D
-        freq.shape = (512, 2)
-        out1 = uvutils.compute_uvw(antennas[0:60:2], freq=freq)
+        with self.subTest(mode='2D'):
+            freq.shape = (512, 2)
+            out1 = self.run_compute_uvw_test(antennas[0:60:2], freq)
         
         ## 3-D
-        freq.shape = (128, 4, 2)
-        out2 = uvutils.compute_uvw(antennas[0:60:2], freq=freq)
+        with self.subTest(mode='3D'):
+            freq.shape = (128, 4, 2)
+            out2 = self.run_compute_uvw_test(antennas[0:60:2], freq)
         
-        shape0 = (out0.shape[0], 3, 1024)
-        shape1 = (out0.shape[0], 3, 512, 2)
-        shape2 = (out0.shape[0], 3, 128, 4, 2)
-        
-        # Make sure we have the right dimensions
-        for i in range(len(shape0)):
-            self.assertEqual(out0.shape[i], shape0[i])
-        for i in range(len(shape1)):
-            self.assertEqual(out1.shape[i], shape1[i])
-        for i in range(len(shape2)):
-            self.assertEqual(out2.shape[i], shape2[i])
-            
         # Make sure the values are the same
-        out1.shape = shape0
-        out2.shape = shape0
-        diff01 = ((out0 - out1)**2).sum()
-        diff02 = ((out0 - out2)**2).sum()
-        self.assertAlmostEqual(diff01, 0.0, 6)
-        self.assertAlmostEqual(diff02, 0.0, 6)
+        out1.shape = out0.shape
+        out2.shape = out0.shape
+        numpy.testing.assert_allclose(out0, out1)
+        numpy.testing.assert_allclose(out0, out2)
         
     def test_compute_uv_track(self):
         """Test that the compute_uv_track function runs."""

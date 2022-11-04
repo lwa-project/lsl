@@ -17,7 +17,6 @@ import numpy
 import argparse
 
 from lsl.reader.ldp import LWADataFile, DRSpecFile
-from lsl.astro import unix_to_utcjd, DJD_OFFSET
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt

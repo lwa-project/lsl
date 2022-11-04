@@ -12,6 +12,7 @@ import os
 import time
 import unittest
 import tempfile
+import shutil
 import numpy
 
 from lsl.common.paths import DATA_BUILD
@@ -29,46 +30,39 @@ tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
 class vdif_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.writer.vdif
     module."""
-
-    testPath = None
-
+    
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
         numpy.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-vdif-', suffix='.tmp')
 
-    def __getTBW(self):
+    def _get_tbw(self):
         """Private function to load in the test TBW data and get the frames."""
 
-        fh = open(tbwFile, 'rb')
-
-        # Frames 1 through 8
-        frames = []
-        for i in range(1,9):
-            frames.append(tbw.read_frame(fh))
-
-        fh.close()
+        with open(tbwFile, 'rb') as fh:
+            # Frames 1 through 8
+            frames = []
+            for i in range(1,9):
+                frames.append(tbw.read_frame(fh))
+                
         return frames
 
-    def __getTBN(self, vanilla=False):
+    def _get_tbn(self):
         """Private function to load in the test TBN data and get the frames.  If 
         the keyword 'vanilla' is set to True, gain, sample rate, and frequency meta-
         data are not added to the frames."""
 
-        fh = open(tbnFile, 'rb')
-
-        # Frames 1 through 8
-        frames = []
-        for i in range(1,9):
-            frames.append(tbn.read_frame(fh))
-
-        if not vanilla:
-            # Set some values for the other meta-data
-            for frame in frames:
-                frame.sample_rate = 100000
-
-        fh.close()
+        with open(tbnFile, 'rb') as fh:
+            # Frames 1 through 8
+            frames = []
+            for i in range(1,9):
+                frames.append(tbn.read_frame(fh))
+                # WAR for bad TBN timetags
+                frames[-1].payload.timetag += 1073741823*196000000
+                frames[-1].payload.timetag //= 19600000
+                frames[-1].payload.timetag *= 19600000
+                
         return frames
 
     def test_vdif_real(self):
@@ -78,25 +72,21 @@ class vdif_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'tbw-test-W.fits')
 
         # Get some data
-        frames = self.__getTBW()
+        frames = self._get_tbw()
 
         # Write the data
-        fh = open(testFile, 'wb')
-        for frame in frames:
-            vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.payload.data[0,:].astype(numpy.int8))
-            vFrame.write_raw_frame(fh)
-        fh.close()
-
-        # Read it back in
-        fh = open(testFile, 'rb')
-        for tFrame in frames:
-            vFrame = vrdr.read_frame(fh)
-            self.assertAlmostEqual(vFrame.time, tFrame.time, 6)
-            for v,t in zip((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(numpy.int8)):
-                self.assertAlmostEqual(v, t, 6)
+        with open(testFile, 'wb') as fh:
+            for frame in frames:
+                vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.payload.data[0,:].astype(numpy.int8), sample_rate=196e6)
+                vFrame.write_raw_frame(fh)
                 
-        fh.close()
-        
+        # Read it back in
+        with open(testFile, 'rb') as fh:
+            for tFrame in frames:
+                vFrame = vrdr.read_frame(fh, sample_rate=196e6)
+                self.assertAlmostEqual(vFrame.time, tFrame.time, 6)
+                numpy.testing.assert_allclose((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(numpy.int8), atol=1e-6)
+                
     def test_vdif_complex(self):
         """Test writing complex data to VIDF format."""
 
@@ -104,35 +94,35 @@ class vdif_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'tbn-test-W.fits')
 
         # Get some data
-        frames = self.__getTBN()
+        frames = self._get_tbn()
         
         # Write the data
-        fh = open(testFile, 'wb')
-        for frame in frames:
-            stand, pol = frame.id
-            if pol == 1:
-                continue
-            vFrame = vdif.Frame(stand, frame.time, bits=8, data=frame.payload.data, sample_rate=100e3)
-            vFrame.write_raw_frame(fh)
-        fh.close()
-
-        # Read it back in
-        fh = open(testFile, 'rb')
-        for tFrame in frames[::2]:
-            vFrame = vrdr.read_frame(fh)
-            for v,t in zip((vFrame.payload.data*256-1-1j)/2, tFrame.payload.data):
-                self.assertAlmostEqual(v, t, 6)
+        with open(testFile, 'wb') as fh:
+            for frame in frames:
+                stand, pol = frame.id
+                if pol == 1:
+                    continue
+                ## We need an integer number of frame per second so adjust the sample rate
+                vFrame = vdif.Frame(stand, frame.time, bits=8, data=frame.payload.data, sample_rate=102.4e3)
+                vFrame.write_raw_frame(fh)
                 
-        fh.close()
-
+        # Read it back in
+        with open(testFile, 'rb') as fh:
+            for tFrame in frames:
+                stand, pol = tFrame.id
+                if pol == 1:
+                    continue
+                vFrame = vrdr.read_frame(fh, sample_rate=102.4e3)
+                self.assertAlmostEqual(vFrame.time, tFrame.time, 6)
+                vData = vFrame.payload.data
+                vData.real = (vData.real*256-1).astype(numpy.int8)//2
+                vData.imag = (vData.imag*256-1).astype(numpy.int8)//2
+                numpy.testing.assert_allclose(vData, tFrame.payload.data, atol=1e-6)
+                
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class  vdif_test_suite(unittest.TestSuite):

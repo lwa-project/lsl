@@ -3,9 +3,6 @@
  *
  *     Evaluate polynomial
  *
- *     From the SciPi GitHub Repository
- *     https://github.com/scipy/scipy/blob/master/scipy/special/cephes/
- *
  *
  *
  * SYNOPSIS:

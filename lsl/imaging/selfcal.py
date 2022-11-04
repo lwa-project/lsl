@@ -23,7 +23,6 @@ if sys.version_info < (3,):
 import numpy
 
 from lsl.statistics import robust
-from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet
 
 from lsl.misc import telemetry
 telemetry.track_module()

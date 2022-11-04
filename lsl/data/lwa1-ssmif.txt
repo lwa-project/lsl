@@ -1,6 +1,8 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2022 Mar 07 by J. Dowell
+#  -- Updated for re-cabling the rack 4 and rack 5 PDUs
 # 2018 Oct 22 by J. Dowell
 #  -- Updated for an ARX board swap and after another round of FEE replacements
 # 2016 Jul 07 by J. Dowell
@@ -6989,51 +6991,57 @@ PWR_NAME[2][8] FAN
 
 ###
 
-PWR_SS[4][1] DR1
-PWR_NAME[4][1] PC
+# FIXME -- using undefined keywords below -- need to revise software to recognize them
+# 3BY: is the 3-bay rack, value is FAN
+# DSU: are DRSU for multiple DRs
+# ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
+#PWR_SS[4][1] 3BY
+#PWR_NAME[4][1] ACC # KVM monitor
 
 PWR_SS[4][2] DR2
 PWR_NAME[4][2] PC
 
-PWR_SS[4][3] DR3
-PWR_NAME[4][3] PC
+#PWR_SS[4][3] 3BY
+#PWR_NAME[4][3] ACC # KVM plus voltage monitor via a surge protector
 
-PWR_SS[4][4] DR4
-PWR_NAME[4][4] PC
+PWR_SS[4][5] DR3
+PWR_NAME[4][5] PC
 
-PWR_SS[4][5] MCS
-PWR_NAME[4][5] TP
+#PWR_SS[4][6] 3BY
+#PWR_NAME[4][6] FAN # On a thermostat
 
-PWR_SS[4][7] DP_
-PWR_NAME[4][7] MCS
+#PWR_SS[4][7] DR5
+#PWR_NAME[4][7] DSU # DR5 via a surge protector
+
+PWR_SS[4][8] DR4
+PWR_NAME[4][8] PC
 
 ###
 
 # FIXME -- using undefined keywords below -- need to revise software to recognize them
 # 3BY: is the 3-bay rack, value is FAN
 # DSU: are DRSU for multiple DRs
-#PWR_SS[5][1] 3BY
-#PWR_NAME[5][1] DSU	# DRSUs for DR4 and DR5
-
-PWR_SS[5][2] ASP
-PWR_NAME[5][2] MCS
-
-# FIXME -- using undefined keywords below -- need to revise software to recognize them
-# 3BY: is the 3-bay rack, value is FAN
-# DSU: are DRSU for multiple DRs
 # ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
-#PWR_SS[5][3] 3BY
-#PWR_NAME[5][3] FAN
-#PWR_SS[5][4] 3BY	# DRSUs for DR1, DR2, and DR3
-#PWR_NAME[5][4] DSU
-#PWR_SS[5][5] 3BY	# Timing distribution
-#PWR_NAME[5][5] ACC
-#PWR_SS[5][6] 3BY	# Wall warts
-#PWR_NAME[5][6] ACC
-#PWR_SS[5][7] 3BY	# KVM
-#PWR_NAME[5][7] ACC
-#PWR_SS[5][8] 3BY	# Display/keyboard
-#PWR_NAME[5][8] ACC
+PWR_SS[5][1] DP_
+PWR_NAME[5][1] MCS # Plus the shelter switch via a surge protector
+
+PWR_SS[5][2] MCS
+PWR_NAME[5][2] EXE
+
+PWR_SS[5][3] DR2
+PWR_NAME[5][3] PC
+
+PWR_SS[5][4] DR4
+PWR_NAME[5][4] PC
+
+PWR_SS[5][5] DR1
+PWR_NAME[5][5] PC
+
+PWR_SS[5][6] DR3
+PWR_NAME[5][6] PC
+
+PWR_SS[5][7] DR5
+PWR_NAME[5][7] PC
 
 MCS_CRA 1
 
@@ -7052,4 +7060,3 @@ DRX_GAIN 7   # FIXME
 # 2 = "Suspect; possibly bad (If used, provide warning)"
 # 1 = "Bad (Don't use)"
 # 0 = "Not Installed"
-

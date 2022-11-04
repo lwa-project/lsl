@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 from astropy.time import Time as AstroTime
 
 from lsl.common import dp as dp_common
-from lsl.astro import unix_to_utcjd, MJD_OFFSET
+from lsl.astro import unix_to_utcjd, MJD_OFFSET, unix_to_taimjd
 
 
 __version__ = '0.2'
@@ -487,9 +487,6 @@ class FrameTimestamp(object):
     def __repr__(self):
         return "<FrameTimestamp i=%i, f=%.9f>" % (self._int, self._frac)
         
-    def __int__(self):
-        return self._int
-        
     def __float__(self):
         return self._int+self._frac
         
@@ -511,6 +508,15 @@ class FrameTimestamp(object):
                 _int += 1
                 _frac -= 1
             return FrameTimestamp(_int, _frac)
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
+            _int = self._int + oi
+            _frac = self._frac + of
+            if _frac >= 1:
+                _int += 1
+                _frac -= 1
+            return FrameTimestamp(_int, _frac)
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
@@ -518,6 +524,15 @@ class FrameTimestamp(object):
         if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
+            self._int += oi
+            self._frac += of
+            if self._frac >= 1:
+                self._int += 1
+                self._frac -= 1
+            return self
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
             self._int += oi
             self._frac += of
             if self._frac >= 1:
@@ -545,6 +560,15 @@ class FrameTimestamp(object):
                 _int -= 1
                 _frac += 1
             return FrameTimestamp(_int, _frac)
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
+            _int = self._int - oi
+            _frac = self._frac - of
+            if _frac < 0:
+                _int -= 1
+                _frac += 1
+            return FrameTimestamp(_int, _frac)
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
@@ -552,6 +576,15 @@ class FrameTimestamp(object):
         if isinstance(other, (int, float, numpy.integer, numpy.floating)):
             oi = int(other)
             of = other - oi
+            self._int -= oi
+            self._frac -= of
+            if self._frac < 0:
+                self._int -= 1
+                self._frac += 1
+            return self
+        elif isinstance(other, timedelta):
+            oi = other.days*86400 + other.seconds
+            of = other.microseconds/1e6
             self._int -= oi
             self._frac -= of
             if self._frac < 0:
@@ -611,7 +644,7 @@ class FrameTimestamp(object):
     @property
     def jd(self):
         """
-        JD as a floating point value.
+        UTC JD as a floating point value.
         """
         
         return unix_to_utcjd(self)
@@ -619,7 +652,7 @@ class FrameTimestamp(object):
     @property
     def mjd(self):
         """
-        MJD as a floating point value.
+        UTC MJD as a floating point value.
         """
         
         return self.jd - MJD_OFFSET
@@ -627,13 +660,21 @@ class FrameTimestamp(object):
     @property
     def pulsar_mjd(self):
         """
-        MJD as  three-element tuple of integer number of MJD days, fractional
-        MJD day, and fractional seconds.
+        UTC MJD as  three-element tuple of integer number of MJD days,
+        fractional MJD day, and fractional seconds.
         """
         
         days = self._int // 86400
         frac = (self._int - days*86400) / 86400.0
         return (days + 40587, frac, self._frac)
+        
+    @property
+    def tai_mjd(self):
+        """
+        TAI MJD as a floating point value.
+        """
+        
+        return unix_to_taimjd(self)
         
     @property
     def dp_timetag(self):

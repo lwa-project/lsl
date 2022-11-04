@@ -1,5 +1,5 @@
 """
-Module for writing correlator output to a FITS IDI file.  The classes and 
+Module for writing correlator output to a FITS IDI file.  The classes and
 functions defined in this module are based heavily off the lwda_fits library.
 
 .. note::
@@ -236,7 +236,10 @@ class WriterBase(object):
             refDateTime = datetime.utcfromtimestamp(ref_time)
             ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
         elif isinstance(ref_time, (FrameTimestamp, AstroTime)):
-            refDateTime = ref_time.datetime
+            try:
+                refDateTime = ref_time.utc.datetime
+            except AttributeError:
+                refDateTime = ref_time.datetime
             ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
         elif isinstance(ref_time, datetime):
             ref_time = ref_time.strftime("%Y-%m-%dT%H:%M:%S")
@@ -269,7 +272,7 @@ class WriterBase(object):
         self.siteName = 'Unknown'
         
         # Observation-specific information
-        self.observer = 'UKNOWN'
+        self.observer = 'UNKNOWN'
         self.project = 'UNKNOWN'
         self.mode = 'ZA'
         self.ref_time = self.parse_time(ref_time)
@@ -399,7 +402,7 @@ class WriterBase(object):
             numericPol = pol
             
         if isinstance(obsTime, FrameTimestamp):
-            obsTime = astro.unix_to_taimjd(obsTime.unix)
+            obsTime = obsTime.tai_mjd
         elif isinstance(obsTime, AstroTime):
             obsTime = obsTime.tai.mjd
             
@@ -502,7 +505,8 @@ class Idi(WriterBase):
         # If the mapper has been enabled, tell the user about it
         if enableMapper and self.verbose:
             print("FITS IDI: stand ID mapping enabled")
-            for key, value in mapper.iteritems():
+            for key in mapper.keys():
+                value = mapper[key]
                 print("FITS IDI:  stand #%i -> mapped #%i" % (key, value))
                 
         self.nAnt = len(ants)
@@ -715,7 +719,6 @@ class Idi(WriterBase):
             with iers.Conf().set_temp('iers_auto_url', 'ftp://cddis.gsfc.nasa.gov/pub/products/iers/finals2000A.all'):
                 eop = iers.IERS_Auto.open()
                 ut1_utc = eop.ut1_utc(refAT)
-                pm_xy = eop.pm_xy(refAT)
                 pm_xy = eop.pm_xy(refAT)
                  
         ag.header['UT1UTC'] = (ut1_utc.to('s').value, 'difference UT1 - UTC for reference date')
@@ -1111,10 +1114,15 @@ class Idi(WriterBase):
                 
             # Sort the data by packed baseline
             try:
-                order
+                if len(dataSet.visibilities) != len(order):
+                    raise NameError
             except NameError:
                 order = dataSet.argsort(mapper=mapper, shift=self._PACKING_BIT_SHIFT)
-                
+                try:
+                    del baselineMapped
+                except NameError:
+                    pass
+                    
             # Deal with defininig the values of the new data set
             if dataSet.pol == self.stokes[0]:
                 ## Figure out the new date/time for the observation
@@ -1176,16 +1184,18 @@ class Idi(WriterBase):
                 wList.extend( uvwCoords[order,2] )
                 
                 ### Add in the new date/time and integration time
-                dateList.extend( [utc0 for bl in dataSet.baselines] )
-                timeList.extend( [utc-utc0 for bl in dataSet.baselines] )
-                intTimeList.extend( [dataSet.intTime for bl in dataSet.baselines] )
+                dateList.extend( [utc0,]*len(dataSet.baselines) )
+                timeList.extend( [utc-utc0,]*len(dataSet.baselines) )
+                intTimeList.extend( [dataSet.intTime,]*len(dataSet.baselines) )
                 
                 ### Add in the new new source ID and name
-                sourceList.extend( [sourceID for bl in dataSet.baselines] )
-                nameList.extend( [name for bl in dataSet.baselines] )
+                sourceList.extend( [sourceID,]*len(dataSet.baselines) )
+                nameList.extend( [name,]*len(dataSet.baselines) )
                 
                 ### Zero out the visibility data
                 try:
+                    if matrix.shape[0] != len(order):
+                        raise NameError
                     matrix[...] = 0.0
                     weights[...] = 1.0
                 except NameError:

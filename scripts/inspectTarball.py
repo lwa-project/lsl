@@ -13,7 +13,6 @@ if sys.version_info < (3,):
     
 import sys
 import pytz
-import getopt
 import argparse
 
 from datetime import datetime, timedelta

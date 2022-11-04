@@ -15,6 +15,7 @@ import pytz
 import ephem
 import tempfile
 import unittest
+import shutil
 from math import pi
 from datetime import datetime, timedelta
 try:
@@ -28,6 +29,7 @@ from lsl.astro import MJD_OFFSET, DJD_OFFSET
 from lsl.common.paths import DATA_BUILD
 from lsl.common import idf
 from lsl.common.stations import lwa1, lwasv
+import lsl.testing
 
 
 __version__  = "0.1"
@@ -41,31 +43,10 @@ jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-idf.txt')
 sdfFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
 
 
-class _SilentVerbose(object):
-    def __init__(self, stdout=True, stderr=False):
-        self.stdout = stdout
-        self.stderr = stderr
-        
-    def __enter__(self):
-        if self.stdout:
-            sys.stdout = StringIO()
-        if self.stderr:
-            sys.stderr = StringIO()
-        return self
-        
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        if self.stdout:
-            sys.stdout = sys.__stdout__
-        if self.stderr:
-            sys.stderr = sys.__stderr__
-
-
 class idf_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.idf
     module."""
     
-    testPath = None
-
     def setUp(self):
         """Create the temporary file directory."""
 
@@ -225,7 +206,7 @@ class idf_tests(unittest.TestCase):
         """Test writing a TRK_RADEC IDF file."""
         
         project = idf.parse_idf(drxFile)
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
         
     def test_drx_proper_motion(self):
@@ -251,7 +232,7 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(drxFile)
         
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             # Bad project
             old_id = project.id
             project.id = 'ThisIsReallyLong'
@@ -432,7 +413,7 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(altFile)
         
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             # Bad interferometer
             with self.assertRaises(ValueError):
                 project.runs[0].stations = [lwa1,]
@@ -801,11 +782,7 @@ class idf_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class idf_test_suite(unittest.TestSuite):

@@ -183,7 +183,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, Pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
+def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
     A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -215,7 +215,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     # Decode the polarization product into something that we can use to figure 
     # out which antennas to use for the cross-correlation
-    pol1, pol2 = pol_to_pols(Pol)
+    pol1, pol2 = pol_to_pols(pol)
     
     antennas1 = [a for a in antennas if a.pol == pol1]
     signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == pol1]

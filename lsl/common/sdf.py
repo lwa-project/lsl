@@ -18,6 +18,7 @@ is:
                      - DRX - class for general DRX observation, with sub-classes:
                        * Solar - class for solar tracking
                        * Jovian - class for Jovian tracking
+                       * Lunar - class for Lunar tracking
                      - Stepped - class for stepped observations
   * BeamStep - class that holds the information about a particular step in a Stepped
                Observation
@@ -84,7 +85,7 @@ telemetry.track_module()
 
 
 __version__ = '1.2'
-__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
@@ -234,8 +235,7 @@ def parse_time(s, station=lwa1):
                     tz = 'LST'
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
-                    import warnings
-                    warnings.warn("Entering pytz search mode for '%s'" % tzName, RuntimeWarning)
+                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
@@ -325,6 +325,7 @@ class _TypedParentList(list):
     """
     
     def __init__(self, allowed_types, parent=None, iterable=None):
+        list.__init__(self, [])
         if not isinstance(allowed_types, (list, tuple)):
             allowed_types = [allowed_types,]
         self.allowed_types = tuple(allowed_types)
@@ -544,12 +545,12 @@ class Project(object):
         try:
             # Try to pull out the project office comments about the session
             pos = self.project_office.sessions[session]
-        except:
+        except (TypeError, IndexError):
             pos = None
         try:
             # Try to pull out the project office comments about the observations
             poo = self.project_office.observations[session]
-        except:
+        except (TypeError, IndexError):
             poo = []
         # Enforce that the number of project office observation comments match the
         # actual number of observations
@@ -592,7 +593,7 @@ class Project(object):
         if ses.drx_beam != -1:
             output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag == None else ses.spcMetatag)
+            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag is None else ses.spcMetatag)
         for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.recordMIB[component] != -1:
                 output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
@@ -617,7 +618,7 @@ class Project(object):
             output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided',)
             output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided',)
             output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
-            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] == None else poo[i],)
+            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] is None else poo[i],)
             output += "OBS_START_MJD    %i\n" % (obs.mjd,)
             output += "OBS_START_MPM    %i\n" % (obs.mpm,)
             output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
@@ -650,6 +651,14 @@ class Project(object):
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_JOV':
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+            elif obs.mode == 'TRK_LUN':
                 output += "OBS_B            %s\n" % (obs.beam,)
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
                 output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
@@ -779,7 +788,7 @@ class Project(object):
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
-    handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, and Stepped
+    handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, TRK_LUN and Stepped
     
     .. versionchanged:: 1.0.0
         Added support for RA/dec values as ephem.hours/ephem.degrees instances
@@ -1021,7 +1030,7 @@ class Observation(object):
                 print("[%i] Error: Invalid number of ASP filter settings (%i < %i)" % (os.getpid(), len(self.asp_filter), nstand))
         for f,filt in enumerate(self.asp_filter):
             if is_dp and filt > 3:
-                warnings.warn("ASP filter %i is degenerate with %i for DP-based stations" % (filt, filt-4), RuntimeWarning)
+                warnings.warn(colorfy("{{%%yellow ASP filter %i is degenerate with %i for DP-based stations}}" % (filt, filt-4)), RuntimeWarning)
                 
             if filt not in (-1, 0, 1, 2, 3, 4, 5):
                 failures += 1
@@ -1134,6 +1143,7 @@ class TBW(Observation):
     def __init__(self, name, target, start, samples, bits=12, comments=None):
         self.samples = int(samples)
         self.bits = int(bits)
+        assert(self.bits in (4, 12))
         
         duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
@@ -1207,8 +1217,9 @@ class TBN(Observation):
      * comments - comments about the observation
     """
     
+    filter_codes = TBNFilters
+    
     def __init__(self, name, target, start, duration, frequency, filter, gain=-1, comments=None):
-        self.filter_codes = TBNFilters
         Observation.__init__(self, name, target, start, duration, 'TBN', 0.0, 0.0, frequency, 0.0, filter, gain=gain, comments=comments)
         
     def estimate_bytes(self):
@@ -1239,6 +1250,7 @@ class TBN(Observation):
         if self._parent is not None:
             station = self._parent.station
         backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
         
         failures = 0
         # Basic - Duration, frequency, and filter code values
@@ -1248,7 +1260,8 @@ class TBN(Observation):
             failures += 1
         if self.freq1 < backend.TBN_TUNING_WORD_MIN or self.freq1 > backend.TBN_TUNING_WORD_MAX:
             if verbose:
-                print("[%i] Error: Specified frequency is outside of DP tuning range" % os.getpid())
+                print("[%i] Error: Specified frequency is outside of the %s tuning range" % (os.getpid(),
+                                                                                             be_name))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
@@ -1413,6 +1426,7 @@ class DRX(Observation):
         if self._parent is not None:
             station = self._parent.station
         backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
         
         failures = 0
         # Basic - Duration, frequency, and filter code values
@@ -1422,11 +1436,13 @@ class DRX(Observation):
             failures += 1
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
+                print("[%i] Error: Specified frequency for tuning 1 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
+                print("[%i] Error: Specified frequency for tuning 2 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
@@ -1517,6 +1533,37 @@ class Jovian(DRX):
         return ephem.Jupiter()
 
 
+class Lunar(DRX):
+    """Sub-class of DRX specifically for Lunar DRX observations.   It features a
+    reduced number of parameters needed to setup the observation.
+    
+    Required Arguments:
+     * observation name
+     * observation target
+     * observation start date/time (UTC YYYY/MM/DD HH:MM:SS.SSS string or timezone-
+       aware datetime instance)
+     * observation duration (HH:MM:SS.SSS string or timedelta instance)
+     * observation tuning frequency 1 (Hz)
+     * observation tuning frequency 1 (Hz)
+     * integer filter code
+    
+    Optional Keywords:
+     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+                 (default = False)
+     * comments - comments about the observation
+    """
+    
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_LUN', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+        
+    @property
+    def fixed_body(self):
+        """Return an ephem.Body object corresponding to where the observation is 
+        pointed.  None if the observation mode is either TBN or TBW."""
+        
+        return ephem.Moon()
+
+
 class Stepped(Observation):
     """Sub-class of Observation for dealing with STEPPED-mode observations.  It 
     features a reduced number of parameters needed to setup the observation and added
@@ -1534,6 +1581,8 @@ class Stepped(Observation):
      * comments - comments about the observation
     """
     
+    filter_codes = DRXFilters
+    
     def __init__(self, name, target, start, filter, steps=None, is_radec=True, gain=-1, comments=None):
         self.is_radec = bool(is_radec)
         self.steps = _TypedParentList(BeamStep, self)
@@ -1542,7 +1591,6 @@ class Stepped(Observation):
                 self.steps.extend(steps)
             else:
                 self.steps.append(steps)
-        self.filter_codes = DRXFilters
         Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
         
     def update(self):
@@ -1585,7 +1633,7 @@ class Stepped(Observation):
     @duration.setter
     def duration(self, value):
         if value != 'please_dont_warn_me':
-            warnings.warn("The duration of a STEPPED observation can only be changed by adjusting the step durations", RuntimeWarning)
+            warnings.warn(colorfy("{{%yellow The duration of a STEPPED observation can only be changed by adjusting the step durations}}"), RuntimeWarning)
             
     def append(self, newStep):
         """Add a new BeamStep step to the list of steps."""
@@ -1669,8 +1717,6 @@ class Stepped(Observation):
         if self._parent is not None:
             station = self._parent.station
             
-        pnt = self.fixed_body
-        
         vis = 0
         cnt = 0
         relStart = 0
@@ -1977,6 +2023,7 @@ class BeamStep(object):
                 station = self._parent._parent.station
         mandc = station.interface.get_module('mcs')
         backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
         
         failures = 0
         # Basic - Delay and gain settings are correctly configured
@@ -2016,11 +2063,13 @@ class BeamStep(object):
         # Basic - Frequency and filter code values
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 1 is outside of DP tuning range" % os.getpid())
+                print("[%i] Error: Specified frequency for tuning 1 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 2 is outside of DP tuning range" % os.getpid())
+                print("[%i] Error: Specified frequency for tuning 2 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
             failures += 1
         # Any failures indicates a bad observation
         if failures == 0:
@@ -2413,6 +2462,8 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
         obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+    elif mode == 'TRK_LUN':
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             print("[%i] -> found %i steps" % (os.getpid(), len(beam_temps)))
@@ -2502,7 +2553,7 @@ def parse_sdf(filename, verbose=False):
             # to deal with any indicies present
             try:
                 keywordSection, value = line.split(None, 1)
-            except:
+            except ValueError:
                 continue
             
             mtch = kwdRE.match(keywordSection)

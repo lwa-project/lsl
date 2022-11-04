@@ -17,11 +17,10 @@ import time
 import numpy
 import argparse
 
-from lsl import astro
 from lsl.reader.ldp import LWA1DataFile, TBWFile
 from lsl.common import stations, metabundle
 from lsl.correlator import fx as fxc
-from lsl.writer import fitsidi
+from lsl.writer import fitsidi, measurementset
 from lsl.common.progress import ProgressBar
 from lsl.misc import parser as aph
 
@@ -51,6 +50,15 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
     # Create a list of unqiue stands to know what style of IDI file to create
     stands = set( [antennas[i].stand.id for i in good] )
     
+    # Figure out the output mode
+    if os.path.splitext(filename)[1].find('.ms_') != -1:
+        writer_class = measurementset.Ms
+    else:
+        if len(stands) > 255:
+            writer_class = fitsidi.ExtendedIdi
+        else:
+            writer_class = fitsidi.Idi
+            
     wallTime = time.time()
     readT, t, data = idf.read()
     setTime = t
@@ -82,14 +90,14 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
         
         # Loop over sub-integrations (set by nSec)
         for k in range(nSec):
-            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, Pol=pol, return_baselines=True, gain_correct=True)
+            blList, freq, vis = fxc.FXMaster(data[toKeep,k*secSize:(k+1)*secSize], mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=0.0, pol=pol, return_baselines=True, gain_correct=True)
             
             toUse = numpy.where( (freq>=5.0e6) & (freq<=93.0e6) )
             toUse = toUse[0]
             
             try:
                 tempVis += vis
-            except:
+            except NameError:
                 tempVis = vis
                 
             pb.inc(amount=1)
@@ -103,17 +111,13 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
         if pol == pols[0]:
             pol1, pol2 = fxc.pol_to_pols(pol)
             
-            if len(stands) > 255:
-                fits = fitsidi.ExtendedIdi(filename, ref_time=ref_time)
-            else:
-                fits = fitsidi.Idi(filename, ref_time=ref_time)
+            fits = writer_class(filename, ref_time=ref_time)
             fits.set_stokes(pols)
             fits.set_frequency(freq[toUse])
             fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
             
         # Add the visibilities
-        obsTime = astro.unix_to_taimjd(setTime)
-        fits.add_data_set(obsTime, readT, blList, vis[:,toUse], pol=pol)
+        fits.add_data_set(setTime, readT, blList, vis[:,toUse], pol=pol)
         sys.stdout.write(pb.show()+'\r')
         sys.stdout.write('\n')
         sys.stdout.flush()
@@ -130,9 +134,6 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
 def main(args):
     # Parse command line options
     filename = args.filename
-
-    # Length of the FFT
-    LFFT = args.fft_length
 
     # Setup the LWA station information
     if args.metadata is not None:
@@ -195,11 +196,14 @@ def main(args):
     print("Number of integrations in file: %i" % nSets)
     print("==")
     
-    leftToDo = 1
     basename = os.path.split(filename)[1]
     basename, ext = os.path.splitext(basename)
     
-    fitsFilename = "%s.FITS_1" % basename
+    if args.casa:
+        fitsFilename = "%s.ms_1" % (basename,)
+    else:
+        fitsFilename = "%s.FITS_1" % (basename,)
+        
     process_chunk(idf, station, good, fitsFilename, LFFT=args.fft_length, overlap=1, pfb=args.pfb, pols=args.products)
     
     idf.close()
@@ -231,6 +235,8 @@ if __name__ == "__main__":
                         help='compute only the XX and YY polarization products')
     pgroup.add_argument('-4', '--four-products', dest='products', action='store_const', const=['xx','yy','xy','yx'], 
                         help='compute the XX, XY, YX, and YY polarization products')
+    parser.add_argument('--casa', action='store_true',
+                        help='write out measurement sets instead of FITS-IDI files')
     args = parser.parse_args()
     main(args)
     

@@ -10,6 +10,7 @@ from __future__ import print_function, division, absolute_import
 import sys
 if sys.version_info < (3,):
     range = xrange
+    input = raw_input
     
 import os
 import re
@@ -42,7 +43,10 @@ def _parse_index(index):
     """
     
     from xml.etree import ElementTree as ET
-    from BeautifulSoup import BeautifulSoup
+    try:
+        from BeautifulSoup import BeautifulSoup
+    except ImportError:
+        from bs4 import BeautifulSoup
     
     # Find the table
     start = index.find('<table>')
@@ -54,9 +58,17 @@ def _parse_index(index):
             (re.compile('<hr>'), lambda match: ''), 
             (re.compile('&nbsp;'), lambda match: ' '), 
             (re.compile('<a.*?>(.*)</a>'), lambda mtch: mtch.group(1))]
-    soup = BeautifulSoup(index, markupMassage=myMassage)
+    for massage in myMassage:
+        regex, replace = massage
+        index = re.sub(regex, replace, index)
+        
+    soup = BeautifulSoup(index)
     index = soup.prettify()
-    
+    index = index.replace('<html>', '<?xml version="1.0" encoding="utf-8"?>')
+    for tag in ('body', 'html'):
+        index = index.replace("<%s>" % tag, '')
+        index = index.replace("</%s>" % tag, '')
+        
     # Parse it
     table = ET.XML(index)
     rows = iter(table)
@@ -87,7 +99,7 @@ def _compute_md5(filename, block_size=262144):
     Compute the MD5 checksum of a file.
     """
     
-    fh = open(filename, 'r')
+    fh = open(filename, 'rb')
     
     m = hashlib.md5()
     while True:
@@ -122,7 +134,7 @@ def main(args):
                 ah = urlopen(_url, timeout=LSL_CONFIG.get('download.timeout'))
                 index = ah.read()
                 try:
-                    index = index.decode(encoding='ascii', error='ignore')
+                    index = index.decode()
                 except AttributeError:
                     pass
                 ah.close()
@@ -137,7 +149,7 @@ def main(args):
                 print("%i: %s" % (i, filename))
             i = -1
             while i not in range(0, len(versions)):
-                i = raw_input("Enter SSMIF to revert to: ")
+                i = input("Enter SSMIF to revert to: ")
                 try:
                     i = int(i)
                 except ValueError:

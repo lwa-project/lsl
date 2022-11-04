@@ -15,6 +15,7 @@ import pytz
 import ephem
 import tempfile
 import unittest
+import shutil
 from datetime import datetime, timedelta
 try:
     from StringIO import StringIO
@@ -26,6 +27,7 @@ from astropy.coordinates import Angle as AstroAngle
 from lsl.common.paths import DATA_BUILD
 from lsl.common import sdf, sdfADP as other_sdf
 from lsl.common.stations import lwa1, lwasv
+import lsl.testing
 
 
 __version__  = "0.4"
@@ -37,37 +39,17 @@ tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-sdf.txt')
 drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
 solFile = os.path.join(DATA_BUILD, 'tests', 'sol-sdf.txt')
 jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-sdf.txt')
+lunFile = os.path.join(DATA_BUILD, 'tests', 'lun-sdf.txt')
 stpFile = os.path.join(DATA_BUILD, 'tests', 'stp-sdf.txt')
 spcFile = os.path.join(DATA_BUILD, 'tests', 'spc-sdf.txt')
 tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
 idfFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
 
 
-class _SilentVerbose(object):
-    def __init__(self, stdout=True, stderr=False):
-        self.stdout = stdout
-        self.stderr = stderr
-        
-    def __enter__(self):
-        if self.stdout:
-            sys.stdout = StringIO()
-        if self.stderr:
-            sys.stderr = StringIO()
-        return self
-        
-    def __exit__(self, exc_type, exc_value, exc_tb):
-        if self.stdout:
-            sys.stdout = sys.__stdout__
-        if self.stderr:
-            sys.stderr = sys.__stderr__
-
-
 class sdf_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.sdf
     module."""
     
-    testPath = None
-
     def setUp(self):
         """Create the temporary file directory."""
 
@@ -263,7 +245,7 @@ class sdf_tests(unittest.TestCase):
         """Test writing a TBW SDF file."""
         
         project = sdf.parse_sdf(tbwFile)
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
     def test_tbw_errors(self):
@@ -359,7 +341,7 @@ class sdf_tests(unittest.TestCase):
         """Test writing a TBN SDF file."""
         
         project = sdf.parse_sdf(tbnFile)
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
     def test_tbn_errors(self):
@@ -367,7 +349,7 @@ class sdf_tests(unittest.TestCase):
         
         project = sdf.parse_sdf(tbnFile)
         
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             # Bad project
             old_id = project.id
             project.id = 'ThisIsReallyLong'
@@ -509,7 +491,7 @@ class sdf_tests(unittest.TestCase):
         """Test writing a TRK_RADEC SDF file."""
         
         project = sdf.parse_sdf(drxFile)
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
         project.sessions[0].observations[0].fee_power = [[1,1] for i in project.sessions[0].observations[0].asp_filter]
@@ -542,7 +524,7 @@ class sdf_tests(unittest.TestCase):
         
         project = sdf.parse_sdf(drxFile)
         
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             # Bad beam
             project.sessions[0].drx_beam = 6
             self.assertFalse(project.validate(verbose=True))
@@ -781,6 +763,90 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].observations[0].update()
         self.assertFalse(project.validate())
         
+    ### DRX - TRK_LUN ###
+    
+    def test_lun_parse(self):
+        """Test reading in a TRK_LUN SDF file."""
+        
+        project = sdf.parse_sdf(lunFile)
+        
+        # Basic file structure
+        self.assertEqual(len(project.sessions), 1)
+        self.assertEqual(len(project.sessions[0].observations), 2)
+        
+        # Observational setup - 1
+        self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_LUN')
+        self.assertEqual(project.sessions[0].observations[0].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[0].mpm,  43200000)
+        self.assertEqual(project.sessions[0].observations[0].dur,  10000)
+        self.assertEqual(project.sessions[0].observations[0].freq1,  438261968)
+        self.assertEqual(project.sessions[0].observations[0].freq2, 1928352663)
+        self.assertEqual(project.sessions[0].observations[0].filter,   7)
+        
+        # Observational setup - 2
+        self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_LUN')
+        self.assertEqual(project.sessions[0].observations[1].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[1].mpm,  43210000)
+        self.assertEqual(project.sessions[0].observations[1].dur,  10000)
+        self.assertEqual(project.sessions[0].observations[1].freq1,  832697741)
+        self.assertEqual(project.sessions[0].observations[1].freq2, 1621569285)
+        self.assertEqual(project.sessions[0].observations[1].filter,   7)
+        
+    def test_lun_update(self):
+        """Test updating TRK_LUN values."""
+        
+        project = sdf.parse_sdf(lunFile)
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 5:00:15"
+        project.sessions[0].observations[1].duration = timedelta(seconds=15)
+        project.sessions[0].observations[1].frequency1 = 75e6
+        project.sessions[0].observations[1].frequency2 = 76e6
+        
+        self.assertEqual(project.sessions[0].observations[1].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[1].mpm,  43215000)
+        self.assertEqual(project.sessions[0].observations[1].dur,  15000)
+        self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
+        self.assertEqual(project.sessions[0].observations[1].freq2, 1665395482)
+        
+    def test_lun_write(self):
+        """Test writing a TRK_LUN SDF file."""
+        
+        project = sdf.parse_sdf(lunFile)
+        out = project.render()
+        
+    def test_lun_errors(self):
+        """Test various TRK_LUN SDF errors."""
+        
+        project = sdf.parse_sdf(lunFile)
+        
+        # Bad beam
+        project.sessions[0].drx_beam = 6
+        self.assertFalse(project.validate())
+        
+        # No beam (this is allowed now)
+        project.sessions[0].drx_beam = -1
+        self.assertTrue(project.validate())
+        
+        # Bad filter
+        project.sessions[0].observations[0].filter = 10
+        self.assertFalse(project.validate())
+        
+        # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 90.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].frequency1 = 38.0e6
+        project.sessions[0].observations[0].frequency2 = 90.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        # Bad duration
+        project.sessions[0].observations[0].frequency2 = 38.0e6
+        project.sessions[0].observations[0].duration = '96:00:00.000'
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
     ### DRX - STEPPED ###
     
     def test_stp_parse(self):
@@ -892,7 +958,7 @@ class sdf_tests(unittest.TestCase):
         """Test writing a STEPPED SDF file."""
         
         project = sdf.parse_sdf(stpFile)
-        with _SilentVerbose() as sv:
+        with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
     def test_stp_errors(self):
@@ -1257,11 +1323,7 @@ class sdf_tests(unittest.TestCase):
     def tearDown(self):
         """Remove the test path directory and its contents"""
 
-        tempFiles = os.listdir(self.testPath)
-        for tempFile in tempFiles:
-            os.unlink(os.path.join(self.testPath, tempFile))
-        os.rmdir(self.testPath)
-        self.testPath = None
+        shutil.rmtree(self.testPath, ignore_errors=True)
 
 
 class sdf_test_suite(unittest.TestSuite):

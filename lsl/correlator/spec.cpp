@@ -726,7 +726,7 @@ MOD_INIT(_spec) {
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");
     if( pModule != NULL ) {
-        pDataPath = PyObject_GetAttrString(pModule, "DATA");
+        pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
             sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
             read_wisdom(filename, m);
