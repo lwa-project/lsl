@@ -113,7 +113,7 @@ class Observer(object):
         The geodetic latitude of the Observer.  Positive is North.
         """
         
-        return degrees(self.__lat)
+        return degrees(self.__lat).to('rad').value
     @lat.setter
     def lat(self, value):
         self.__lat = degrees(value)
@@ -125,7 +125,7 @@ class Observer(object):
         The geodetic longtiude of the Observer.  Positive is East.
         """
         
-        return degrees(self.__lon)
+        return degrees(self.__lon).to('rad').value
     @lon.setter
     def lon(self, value):
         self.__lon = degrees(value)
