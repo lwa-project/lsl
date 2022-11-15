@@ -1,3 +1,7 @@
+2.1.7
+ * Updated the LWA-SV SSMIF to 2022/11/15
+ * Updated the LWA1 SSMIF to 2022/11/15
+
 2.1.6
  * Updated for Python 3.10
  * Cleaned up the naming of the tutorial notebooks
