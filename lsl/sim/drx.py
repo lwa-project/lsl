@@ -224,9 +224,13 @@ class SimFrame(drx.Frame):
 
         # Does the data type make sense?
         if len(self.payload.data.shape) == 1 and self.payload.data.dtype.kind != 'c':
-            if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
-            return False
+            if self.payload.data.dtype == CI8:
+                self.payload.data = self.payload.data.view(numpy.int8)
+                self.payload.data = self.payload.data.reshape(4096, 2)
+            else:
+                if raise_errors:
+                    raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
+                return False
         elif len(self.payload.data.shape) == 2 and self.payload.data.dtype != numpy.int8:
             if raise_errors:
                 raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
