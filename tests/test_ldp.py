@@ -286,7 +286,7 @@ class ldp_tests(unittest.TestCase):
         
         # Read a chunk - short
         tInt, tStart, data = f.read(0.005, return_ci8=True)
-        self.assertEqual(len(data.shape), 3)
+        self.assertEqual(len(data.shape), 2)
         
         # Reset
         f.reset()
@@ -294,14 +294,14 @@ class ldp_tests(unittest.TestCase):
         # Offset and read a chunk - short
         tSkip = f.offset(0.005)
         tInt, tStart, data = f.read(0.005, return_ci8=True)
-        self.assertEqual(len(data.shape), 3)
+        self.assertEqual(len(data.shape), 2)
         
         # Reset
         f.reset()
         
         # Read a chunk - long
         tInt, tStart, data = f.read(1.00, return_ci8=True)
-        self.assertEqual(len(data.shape), 3)
+        self.assertEqual(len(data.shape), 2)
         
     ### DRX ###
     
@@ -463,7 +463,7 @@ class ldp_tests(unittest.TestCase):
         
         # Read a chunk - short
         tInt, tStart, data = f.read(0.005, return_ci8=True)
-        self.assertEqual(len(data.shape), 3)
+        self.assertEqual(len(data.shape), 2)
         
         # Reset
         f.reset()
@@ -471,14 +471,14 @@ class ldp_tests(unittest.TestCase):
         # Offset and read a chunk - short
         tSkip = f.offset(0.0001)
         tInt, tStart, data = f.read(0.005, return_ci8=True)
-        self.assertEqual(len(data.shape), 3)
+        self.assertEqual(len(data.shape), 2)
         
         # Reset
         f.reset()
         
         # Read a chunk - long
         tInt, tStart, data = f.read(1.00, return_ci8=True)
-        self.assertEqual(len(data.shape), 3)
+        self.assertEqual(len(data.shape), 2)
         
     ### DR Spectrometer ###
     
