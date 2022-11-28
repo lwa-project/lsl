@@ -35,6 +35,7 @@ import numpy
 from astropy.constants import c as speedOfLight
 from astropy.coordinates import AltAz as AstroAltAz
 
+from lsl.reader.base import CI8
 from lsl.common import dp as dp_common
 from lsl.correlator import uvutils, _spec, _stokes, _core
 
@@ -98,6 +99,12 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
+    elif signals.dtype == CI8:
+        lFactor = 1
+        doFFTShift = True
+        central_freq = float(central_freq)
+        signals = signals.view(numpy.int8)
+        signals = signals.reshape(signals.shape[0], -1, 2)
     else:
         lFactor = 2
         doFFTShift = False
@@ -147,6 +154,12 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
+    elif signals.dtype == CI8:
+        lFactor = 1
+        doFFTShift = True
+        central_freq = float(central_freq)
+        signals = signals.view(numpy.int8)
+        signals = signals.reshape(signals.shape[0], -1, 2)
     else:
         lFactor = 2
         doFFTShift = False
@@ -232,6 +245,12 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
+    elif signals.dtype == CI8:
+        lFactor = 1
+        doFFTShift = True
+        central_freq = float(central_freq)
+        signals = signals.view(numpy.int8)
+        signals = signals.reshape(signals.shape[0], -1, 2)
     else:
         lFactor = 2
         doFFTShift = False
@@ -382,6 +401,12 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
+    elif signals.dtype == CI8:
+        lFactor = 1
+        doFFTShift = True
+        central_freq = float(central_freq)
+        signals = signals.view(numpy.int8)
+        signals = signals.reshape(signals.shape[0], -1, 2)
     else:
         lFactor = 2
         doFFTShift = False
