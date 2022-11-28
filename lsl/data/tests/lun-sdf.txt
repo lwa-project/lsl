@@ -1,0 +1,48 @@
+PI_ID            1
+PI_NAME          Ellingson, Steven
+
+PROJECT_ID       TPSS0001
+PROJECT_TITLE    Project Title
+PROJECT_REMPI    Project REMPI
+
+SESSION_ID       1
+SESSION_TITLE    tp_session_sch SDF test #1
+SESSION_REMPI    Test SDF consisting of 2 short TRK_RADEC observations
+SESSION_DRX_BEAM 1
+
+OBS_ID           1
+OBS_TITLE        Observation 1 Title
+OBS_TARGET       Observation 1 Target
+OBS_REMPI        Observation 1 REMPI
+OBS_START_MJD    55615
+OBS_START_MPM    43200000
+OBS_START        UTC 2011 02 23 12:00:00.000000
+OBS_DUR          10000
+OBS_DUR+         00:00:10.000
+OBS_MODE         TRK_LUN
+OBS_B            SIMPLE
+OBS_FREQ1        438261968
+OBS_FREQ1+       19.999999955 MHz
+OBS_FREQ2        1928352663
+OBS_FREQ2+       87.999999977 MHz
+OBS_BW           7
+OBS_BW+          19.600 MHz
+
+OBS_ID           2
+OBS_TITLE        Observation 2 Title
+OBS_TARGET       Observation 1 Target
+OBS_REMPI        Observation 1 REMPI
+OBS_REMPO        Estimated data volume for this observation is 790.1 MB
+OBS_START_MJD    55615
+OBS_START_MPM    43210000
+OBS_START        UTC 2011 02 23 12:00:10.000000
+OBS_DUR          10000
+OBS_DUR+         00:00:10.000
+OBS_MODE         TRK_LUN
+OBS_B            SIMPLE
+OBS_FREQ1        832697741
+OBS_FREQ1+       37.999999997 MHz
+OBS_FREQ2        1621569285
+OBS_FREQ2+       73.999999990 MHz
+OBS_BW           7
+OBS_BW+          19.600 MHz

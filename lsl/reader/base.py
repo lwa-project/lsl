@@ -487,9 +487,6 @@ class FrameTimestamp(object):
     def __repr__(self):
         return "<FrameTimestamp i=%i, f=%.9f>" % (self._int, self._frac)
         
-    def __int__(self):
-        return self._int
-        
     def __float__(self):
         return self._int+self._frac
         

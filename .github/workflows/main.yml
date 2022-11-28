@@ -1,12 +1,25 @@
 name: "Build and Test"
 on: [push, pull_request]
 jobs:
+  pre_build:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: 'same_content'
+          skip_after_successful_duplicate: 'true'
+          do_not_skip: '["pull_request", "release", "workflow_dispatch", "schedule"]'
   build:
+    needs: pre_build
+    if: ${{ needs.pre_build.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest]
-        python-version: ['2.7', '3.6', '3.8']
+        python-version: ['2.7', '3.6', '3.8', '3.10']
       fail-fast: false
     steps:
       - name: "Software Install - Ubuntu"
@@ -36,10 +49,10 @@ jobs:
           brew install \
             fftw \
             pkg-config
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Software Install - Python" 
         run: |
           python -m pip install \
@@ -69,3 +82,13 @@ jobs:
           directory: ./tests/
           fail_ci_if_error: false
           verbose: true
+      - name: Build Package
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+        run: |
+          python setup.py sdist
+      - name: Publish Package
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}

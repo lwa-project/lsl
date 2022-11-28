@@ -23,5 +23,5 @@ See the individual package descriptions for more information.
 from lsl import version
 from lsl.common import paths
 
-__version__ = '0.9'
+__version__ = version.version
 __author__ = "Jayce Dowell"

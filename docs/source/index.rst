@@ -84,10 +84,10 @@ Included Scripts
 
 Tutorials
 =========
-* `General LSL Routines <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20General%20Tutorial.ipynb>`_
-* `Building SDFs Programmatically <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20SDF%20Generation.ipynb>`_
-* `Observation Metadata <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20MCS%20Metadata%20Tutorial.ipynb>`_
-* `Working with Data <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20LDP%20Tutorial.ipynb>`_
+* `General LSL Routines <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/General%20Tutorial.ipynb>`_
+* `Building SDFs Programmatically <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/SDF%20Generation.ipynb>`_
+* `Observation Metadata <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/MCS%20Metadata%20Tutorial.ipynb>`_
+* `Working with Data <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LDP%20Tutorial.ipynb>`_
 
 Advanced
 ========
@@ -103,4 +103,3 @@ Indices and Tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
