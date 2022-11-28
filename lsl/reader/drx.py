@@ -247,6 +247,7 @@ def read_frame_ci8(filehandle, gain=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_drx_ci8(filehandle, Frame())
+        newFrame.payload._data = newFrame.payload.data.view(CI8)[...,0]
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
