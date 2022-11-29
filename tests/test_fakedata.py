@@ -151,8 +151,8 @@ class fake_TBN_tests(unittest.TestCase):
             # Test raw data values
             self.assertEqual(fakeFrame.payload.timetag, origFrame.payload.timetag)
             for i in range(512):
-                self.assertEqual(fakeFrame.payload.data[i,0], origFrame.payload.data[i,0])
-                self.assertEqual(fakeFrame.payload.data[i,1], origFrame.payload.data[i,1])
+                self.assertEqual(fakeFrame.payload.data[i]['re'], origFrame.payload.data[i]['re'])
+                self.assertEqual(fakeFrame.payload.data[i]['im'], origFrame.payload.data[i]['im'])
                 
     def test_frame_data_errors(self):
         """Test the data error scenarios when validating a TBN SimFrame."""
@@ -325,8 +325,8 @@ class fake_DRX_tests(unittest.TestCase):
             self.assertEqual(fakeFrame.payload.timetag, origFrame.payload.timetag)
             self.assertEqual(fakeFrame.payload.flags, origFrame.payload.flags)
             for i in range(4096):
-                self.assertEqual(fakeFrame.payload.data[i,0], origFrame.payload.data[i,0])
-                self.assertEqual(fakeFrame.payload.data[i,1], origFrame.payload.data[i,1])
+                self.assertEqual(fakeFrame.payload.data[i]['re'], origFrame.payload.data[i]['re'])
+                self.assertEqual(fakeFrame.payload.data[i]['im'], origFrame.payload.data[i]['im'])
                 
     def test_frame_data_errors(self):
         """Test the data error scenarios when validating a DRX SimFrame."""
