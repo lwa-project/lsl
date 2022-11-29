@@ -66,10 +66,10 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
     }
     
     // Create the output data array
-    npy_intp dims[1 + (N == NPY_INT8)];
+    npy_intp dims[1];
     dims[0] = (npy_intp) 4096;
-    if( N == NPY_INT8) dims[1] = (npy_intp) 2;
-    data = (PyArrayObject*) PyArray_ZEROS(1 + (N == NPY_INT8), dims, N, 0);
+    if( N == NPY_INT8) dims[0] *= 2;
+    data = (PyArrayObject*) PyArray_ZEROS(1, dims, N, 0);
     if(data == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
         Py_XDECREF(data);

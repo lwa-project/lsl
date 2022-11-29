@@ -55,13 +55,13 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     }
     
     // Create the output data array
-    npy_intp dims[3 + (N == NPY_INT8)];
+    npy_intp dims[3];
     // 4+4-bit Data -> 6144 samples in the data section as 12 channels, 256 stands, and 2 pols.
     dims[0] = (npy_intp) 12;
     dims[1] = (npy_intp) 256;
     dims[2] = (npy_intp) 2;
-    if(N == NPY_INT8) dims[3] = (npy_intp) 2;
-    data = (PyArrayObject*) PyArray_ZEROS(3 + (N == NPY_INT8), dims, N, 0);
+    if(N == NPY_INT8) dims[2] *= 2;
+    data = (PyArrayObject*) PyArray_ZEROS(3, dims, N, 0);
     if(data == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
         Py_XDECREF(data);
