@@ -224,8 +224,7 @@ class SimFrame(drx.Frame):
             return False
 
         # Does the data type make sense?
-        if len(self.payload.data.shape) == 1 \
-           and (self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c'):
+        if self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c':
             if raise_errors:
                 raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
