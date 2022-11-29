@@ -44,7 +44,7 @@ def _make_complex_data(shape, scale=1.0, offset=0.0, dtype=numpy.complex64):
         new_shape.append(2)
         data.shape = tuple(new_shape)
         data = numpy.round(data)
-        data = data.astype(dtype)
+        data = data.astype(numpy.int8)
         data_comp = data[...,0] + 1j*data[...,1]
         data_comp = data_comp.astype(numpy.complex64)
         
