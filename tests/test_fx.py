@@ -17,6 +17,7 @@ import numpy
 from lsl.common.paths import DATA_BUILD
 from lsl.common import stations
 from lsl.correlator import fx
+from lsl.reader.base import CI8
 import lsl.testing
 
 _SSMIF = os.path.join(DATA_BUILD, 'lwa1-ssmif.txt')
@@ -35,7 +36,7 @@ def _make_complex_data(shape, scale=1.0, offset=0.0, dtype=numpy.complex64):
     i = numpy.random.rand(*shape)*scale + offset
     q = numpy.random.rand(*shape)*scale + offset
     data = i + 1j*q
-    if dtype == numpy.int8:
+    if dtype == CI8:
         data = data.astype(numpy.complex64)
         data = data.view(numpy.float32)
         new_shape = list(data.shape)
@@ -46,6 +47,9 @@ def _make_complex_data(shape, scale=1.0, offset=0.0, dtype=numpy.complex64):
         data = data.astype(dtype)
         data_comp = data[...,0] + 1j*data[...,1]
         data_comp = data_comp.astype(numpy.complex64)
+        
+        data = data.view(CI8)
+        data.shape = data.shape[:-1]
     else:
         data = data.astype(dtype)
         data_comp = data.copy()
@@ -134,7 +138,7 @@ class SpecMaster_tests(unittest.TestCase):
     def test_spectra_complex(self):
         """Test the SpecMaster function on complex-valued data."""
         
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_specmaster_test_complex(dtype)
                 
@@ -151,7 +155,7 @@ class SpecMaster_tests(unittest.TestCase):
         #
         # Complex
         #
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_specmaster_test_complex(dtype, window=numpy.hamming)
             
@@ -174,7 +178,7 @@ class SpecMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_specmaster_test_complex(dtype, window=wndw2)
                 
@@ -184,7 +188,7 @@ class SpecMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_specmaster_test_complex(dtype, nchan=259)
             
@@ -299,7 +303,7 @@ class StokesMaster_tests(unittest.TestCase):
     def test_spectra_complex(self):
         """Test the StokesMaster function on complex-valued data."""
 
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_stokesmaster_test_complex(dtype)
                 
@@ -316,7 +320,7 @@ class StokesMaster_tests(unittest.TestCase):
         #
         # Complex
         #
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_stokesmaster_test_complex(dtype, window=numpy.hamming)
                 
@@ -340,7 +344,7 @@ class StokesMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_stokesmaster_test_complex(dtype, window=wndw2)
                 
@@ -350,7 +354,7 @@ class StokesMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_stokesmaster_test_complex(dtype, nchan=259)
                 
@@ -390,7 +394,7 @@ class StokesMaster_tests(unittest.TestCase):
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
         
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             fakeData, fakeData_np = _make_complex_data((self.nAnt,1024*4), scale=16, offset=3+3j, dtype=dtype)
             freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], pfb=True, sample_rate=1e5, central_freq=38e6)
         
@@ -515,7 +519,7 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex(self):
         """Test the C-based correlator on complex-valued data."""
         
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype)
                 
@@ -529,7 +533,7 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex_window(self):
         """Test the C-based correlator on complex-valued data window."""
         
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype, window=numpy.hamming)
                 
@@ -577,7 +581,7 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex_pfb(self):
         """Test the C-based PFB version of the correlator on complex-valued data."""
         
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             fakeData, fakeData_np = _make_complex_data((self.nAnt,1024*4), scale=16, offset=3+3j, dtype=dtype)
             
             station = stations.parse_ssmif(_SSMIF)
@@ -681,7 +685,7 @@ class FXMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_correlator_test_complex(dtype, nchan=259)
             
@@ -793,7 +797,7 @@ class FXStokes_tests(unittest.TestCase):
     def test_correlator_complex(self):
         """Test the C-based correlator on complex-valued data."""
         
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype)
                 
@@ -807,7 +811,7 @@ class FXStokes_tests(unittest.TestCase):
     def test_correlator_complex_window(self):
         """Test the C-based correlator on complex-valued data window."""
         
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype, window=numpy.hamming)
             
@@ -922,7 +926,7 @@ class FXStokes_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.int8, numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_correlator_test_complex(dtype, nchan=259)
             
