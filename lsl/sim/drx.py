@@ -13,6 +13,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import drx
+from lsl.reader.base import CI8
 
 from lsl.misc import telemetry
 telemetry.track_module()
