@@ -283,7 +283,10 @@ class lsl_build_ext(build_ext):
                     
         ## HACK: Update the log verbosity - for some reason this gets set to 
         ##       WARN when I replace build_ext
-        log.setLevel(min([log.INFO, log._global_log.threshold]))
+        try:
+            log.set_threshold(min([log.INFO, log._global_log.threshold]))
+        except AttributeError:
+            pass
 
 
 coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
