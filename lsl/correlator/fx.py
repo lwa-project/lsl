@@ -95,16 +95,13 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype.kind == 'c' or signals.dtype == CI8:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
-    elif signals.dtype == CI8:
-        lFactor = 1
-        doFFTShift = True
-        central_freq = float(central_freq)
-        signals = signals.view(numpy.int8)
-        signals = signals.reshape(signals.shape[0], -1, 2)
+        if signals.dtype == CI8:
+            signals = signals.view(numpy.int8)
+            signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
         doFFTShift = False
@@ -150,16 +147,13 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype.kind == 'c' or signals.dtype == CI8:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
-    elif signals.dtype == CI8:
-        lFactor = 1
-        doFFTShift = True
-        central_freq = float(central_freq)
-        signals = signals.view(numpy.int8)
-        signals = signals.reshape(signals.shape[0], -1, 2)
+        if signals.dtype == CI8:
+            signals = signals.view(numpy.int8)
+            signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
         doFFTShift = False
@@ -241,16 +235,13 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype.kind == 'c' or signals.dtype == CI8:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
-    elif signals.dtype == CI8:
-        lFactor = 1
-        doFFTShift = True
-        central_freq = float(central_freq)
-        signals = signals.view(numpy.int8)
-        signals = signals.reshape(signals.shape[0], -1, 2)
+        if signals.dtype == CI8:
+            signals = signals.view(numpy.int8)
+            signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
         doFFTShift = False
@@ -397,16 +388,13 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
     # itive and negative Fourier frequencies.
-    if signals.dtype.kind == 'c':
+    if signals.dtype.kind == 'c' or signals.dtype == CI8:
         lFactor = 1
         doFFTShift = True
         central_freq = float(central_freq)
-    elif signals.dtype == CI8:
-        lFactor = 1
-        doFFTShift = True
-        central_freq = float(central_freq)
-        signals = signals.view(numpy.int8)
-        signals = signals.reshape(signals.shape[0], -1, 2)
+        if signals.dtype == CI8:
+            signals = signals.view(numpy.int8)
+            signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
         doFFTShift = False
