@@ -64,8 +64,8 @@ def frame_to_frame(tbn_frame):
     rawFrame[22] = (tbn_frame.payload.timetag>>8) & 255
     rawFrame[23] = tbn_frame.payload.timetag & 255
     ## Data
-    if tbn_frame.payload.data.dtype == numpy.int8:
-        iq = tbn_frame.payload.data.ravel().copy()
+    if tbn_frame.payload.data.dtype == CI8:
+        iq = tbn_frame.payload.data.view(numpy.int8).ravel().copy()
     else:
         iq = tbn_frame.payload.data
         iq.real
@@ -188,19 +188,12 @@ class SimFrame(tbn.Frame):
             return False
 
         # Does the data type make sense?
-        if len(self.payload.data.shape) == 1 and self.payload.data.dtype.kind != 'c':
-            if self.payload.data.dtype == CI8:
-                self.payload.data = self.payload.data.view(numpy.int8)
-                self.payload.data = self.payload.data.reshape(512, 2)
-            else:
-                if raise_errors:
-                    raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
-                return False
-        elif len(self.payload.data.shape) == 2 and self.payload.data.dtype != numpy.int8:
+        if len(self.payload.data.shape) == 1 \
+           and (self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c'):
             if raise_errors:
                 raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
-
+            
         # If we made it this far, it's valid
         return True
 

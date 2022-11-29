@@ -75,9 +75,9 @@ def frame_to_frame(drx_frame):
     rawFrame[30] = (drx_frame.payload.flags>>8) & 255
     rawFrame[31] = drx_frame.payload.flags & 255
     ## Data
-    if drx_frame.payload.data.dtype == numpy.int8:
-        i = drx_frame.payload.data[:,0].copy()
-        q = drx_frame.payload.data[:,1].copy()
+    if drx_frame.payload.data.dtype == CI8:
+        i = drx_frame.payload.data['re'].copy()
+        q = drx_frame.payload.data['im'].copy()
     else:
         i = drx_frame.payload.data.real
         q = drx_frame.payload.data.imag
@@ -224,19 +224,12 @@ class SimFrame(drx.Frame):
             return False
 
         # Does the data type make sense?
-        if len(self.payload.data.shape) == 1 and self.payload.data.dtype.kind != 'c':
-            if self.payload.data.dtype == CI8:
-                self.payload.data = self.payload.data.view(numpy.int8)
-                self.payload.data = self.payload.data.reshape(4096, 2)
-            else:
-                if raise_errors:
-                    raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
-                return False
-        elif len(self.payload.data.shape) == 2 and self.payload.data.dtype != numpy.int8:
+        if len(self.payload.data.shape) == 1 \
+           and (self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c'):
             if raise_errors:
                 raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
-
+            
         # If we made it this far, it's valid
         return True
 
