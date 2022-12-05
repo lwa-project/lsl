@@ -1,6 +1,7 @@
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
  * Updated the LWA1 SSMIF to 2022/11/15
+ * Fixed a build problem on Python 3.8+
 
 2.1.6
  * Updated for Python 3.10
