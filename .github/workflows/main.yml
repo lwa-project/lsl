@@ -2,7 +2,7 @@ name: "Build and Test"
 on: [push, pull_request]
 jobs:
   pre_build:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -18,8 +18,13 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-latest]
-        python-version: ['2.7', '3.6', '3.8', '3.10']
+        os: [ubuntu-latest, macos-latest]
+        python-version: ['3.8', '3.10']
+        include:
+          - os: ubuntu-20.04
+            python-version: ['2.7', '3.6']
+          - os: macos-latest
+            python-version: ['2.7', '3.6']
       fail-fast: false
     steps:
       - name: "Software Install - Ubuntu"
