@@ -1,8 +1,9 @@
 2.1.7
-  * Updated the LWA-SV SSMIF to 2022/11/15
-  * Updated the LWA1 SSMIF to 2022/11/15
-  * Added support to the lsl.readers for returning DRX, TBN, and TBF data as "ci8" data
-  * Added support to the lsl.readers for returning VDIF data as "i8" data
+ * Updated the LWA-SV SSMIF to 2022/11/15
+ * Updated the LWA1 SSMIF to 2022/11/15
+ * Fixed a build problem on Python 3.8+
+ * Added support to the lsl.readers for returning DRX, TBN, and TBF data as "ci8" data
+ * Added support to the lsl.readers for returning VDIF data as "i8" data
 
 2.1.6
   * Updated for Python 3.10
