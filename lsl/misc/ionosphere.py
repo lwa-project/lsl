@@ -36,7 +36,7 @@ from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
 
 from lsl.common.stations import geo_to_ecef
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA as DATA_PATH
 from lsl.common.progress import DownloadBar
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.misc.file_cache import FileCache, MemoryCache
@@ -296,7 +296,7 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     try:
         coeffs = _ONLINE_CACHE['IGRF']
     except KeyError:
-        filename = os.path.join(dataPath, 'igrf13coeffs.txt')
+        filename = os.path.join(DATA_PATH, 'igrf13coeffs.txt')
         _ONLINE_CACHE['IGRF'] = _load_igrf(filename)
         
         coeffs = _ONLINE_CACHE['IGRF']

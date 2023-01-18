@@ -62,7 +62,7 @@ from scipy.interpolate import interp1d
 from astropy.constants import c as speedOfLight
 
 from lsl import astro
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA as DATA_PATH
 from lsl.correlator import uvutils
 from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -863,8 +863,8 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         beam = Beam(freqs)
         
     else:
-        if os.path.exists(os.path.join(dataPath, 'beam-shape.npz')):
-            dd = numpy.load(os.path.join(dataPath, 'beam-shape.npz'))
+        if os.path.exists(os.path.join(DATA_PATH, 'beam-shape.npz')):
+            dd = numpy.load(os.path.join(DATA_PATH, 'beam-shape.npz'))
             coeffs = dd['coeffs']
             
             deg = coeffs.shape[0]-1

@@ -23,7 +23,7 @@ import hashlib
 import argparse
 from datetime import datetime
 
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA as DATA_PATH
 from lsl.common.progress import DownloadBar
 
 from lsl.config import LSL_CONFIG
@@ -117,11 +117,11 @@ def main(args):
     # Current LSL SSMIF
     if args.lwasv:
         _name = 'LWA-SV'
-        _ssmif = os.path.join(dataPath, 'lwasv-ssmif.txt')
+        _ssmif = os.path.join(DATA_PATH, 'lwasv-ssmif.txt')
         _url = "https://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
     else:
         _name = 'LWA1'
-        _ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+        _ssmif = os.path.join(DATA_PATH, 'lwa1-ssmif.txt')
         _url = "https://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/"
         
     urlToDownload = None

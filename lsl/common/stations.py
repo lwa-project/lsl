@@ -20,7 +20,7 @@ from functools import total_ordering
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA as DATA_PATH
 from lsl.common import dp, mcs as mcsDP, adp, mcsADP
 from lsl.misc.mathutils import to_dB, from_dB
 
@@ -530,7 +530,7 @@ class Antenna(object):
         """
         
         # Find the filename to use
-        filename = os.path.join(dataPath, 'BurnsZ.txt')
+        filename = os.path.join(DATA_PATH, 'BurnsZ.txt')
         
         # Read in the data
         data = numpy.loadtxt(filename)
@@ -710,7 +710,7 @@ class FEE(object):
         """
         
         # Find the filename to use
-        filename = os.path.join(dataPath, 'fee.txt')
+        filename = os.path.join(DATA_PATH, 'fee.txt')
         
         # Read in the data
         data = numpy.loadtxt(filename)
@@ -929,7 +929,7 @@ class ARX(object):
         
         # Find the filename to use
         filename = 'ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
-        filename = os.path.join(dataPath, 'arx', filename)
+        filename = os.path.join(DATA_PATH, 'arx', filename)
         
         # Read in the file and convert it to a numpy array
         try:
@@ -1867,18 +1867,18 @@ def parse_ssmif(filename):
 
 
 #: LWAVL
-_ssmifvl = os.path.join(dataPath, 'lwa1-ssmif.txt')
+_ssmifvl = os.path.join(DATA_PATH, 'lwa1-ssmif.txt')
 lwavl = parse_ssmif(_ssmifvl)
 
 #: LWAVL is also known as LWA1
 lwa1 = lwavl
 
 #: LWANA
-_ssmifna = os.path.join(dataPath, 'lwana-ssmif.txt')
+_ssmifna = os.path.join(DATA_PATH, 'lwana-ssmif.txt')
 lwana = parse_ssmif(_ssmifna)
 
 #: LWASV
-_ssmifsv = os.path.join(dataPath, 'lwasv-ssmif.txt')
+_ssmifsv = os.path.join(DATA_PATH, 'lwasv-ssmif.txt')
 lwasv = parse_ssmif(_ssmifsv)
 
 

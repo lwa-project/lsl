@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d
 
 from lsl import skymap, astro
 from lsl.common import stations
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA as DATA_PATH
 from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
@@ -61,7 +61,7 @@ def main(args):
             print("Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
     
     # Get the emperical model of the beam and compute it for the correct frequencies
-    beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
+    beamDict = numpy.load(os.path.join(DATA_PATH, 'lwa1-dipole-emp.npz'))
     if args.pol == 'EW':
         beamCoeff = beamDict['fitX']
     else:
@@ -83,7 +83,7 @@ def main(args):
         print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
         
     if args.empirical:
-        corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
+        corrDict = numpy.load(os.path.join(DATA_PATH, 'lwa1-dipole-cor.npz'))
         cFreqs = corrDict['freqs']
         cAlts  = corrDict['alts']
         if corrDict['degrees'].item():

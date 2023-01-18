@@ -18,7 +18,7 @@ import argparse
 
 from scipy.interpolate import interp1d
 
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA as DATA_PATH
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
@@ -43,7 +43,7 @@ def main(args):
     
     # Get the emperical model of the beam and compute it for the correct frequencies
     i = 0
-    beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
+    beamDict = numpy.load(os.path.join(DATA_PATH, 'lwa1-dipole-emp.npz'))
     for beamCoeff in (beamDict['fitX'], beamDict['fitY']):
         alphaE = numpy.polyval(beamCoeff[0,0,:], args.frequency)
         betaE =  numpy.polyval(beamCoeff[0,1,:], args.frequency)
@@ -58,7 +58,7 @@ def main(args):
             print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
             
         if args.empirical:
-            corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
+            corrDict = numpy.load(os.path.join(DATA_PATH, 'lwa1-dipole-cor.npz'))
             cFreqs = corrDict['freqs']
             cAlts  = corrDict['alts']
             if corrDict['degrees'].item():
