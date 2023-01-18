@@ -14,6 +14,10 @@ import imp
 import numpy
 import ephem
 import struct
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
 from textwrap import fill as tw_fill
 from functools import total_ordering
     
@@ -23,6 +27,12 @@ from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as DATA_PATH
 from lsl.common import dp, mcs as mcsDP, adp, mcsADP
 from lsl.misc.mathutils import to_dB, from_dB
+from lsl.common.progress import DownloadBar
+from lsl.misc.file_cache import FileCache
+from lsl.common.color import colorfy
+
+from lsl.config import LSL_CONFIG
+DOWN_CONFIG = LSL_CONFIG.view('download')
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -37,6 +47,14 @@ _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
 
 
 speedOfLight = speedOfLight.to('m/s').value
+
+
+# Create the cache directory
+try:
+    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'arx_cache'), max_size=0)
+except OSError:
+    _CACHE_DIR = MemoryCache(max_size=0)
+    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
 
 
 def geo_to_ecef(lat, lon, elev):
@@ -929,21 +947,40 @@ class ARX(object):
         
         # Find the filename to use
         filename = 'ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
-        filename = os.path.join(DATA_PATH, 'arx', filename)
-        
+        if filename not in _CACHE_DIR:
+            remote_filename = 'https://fornax.phys.unm.edu/lwa/data/lsl/arx/' + filename
+            with urlopen(remote_filename, timeout=120) as uh:
+                meta = uh.info()
+                try:
+                    remote_size = int(meta.getheaders("Content-Length")[0])
+                except AttributeError:
+                    remote_size = 1
+                    
+                pbar = DownloadBar(max=remote_size)
+                with _CACHE_DIR.open(filename.replace(os.path.sep, '_'), 'wb') as fh:
+                    while True:
+                        new_data = uh.read(DOWN_CONFIG.get('block_size'))
+                        if len(new_data) == 0:
+                            break
+                        fh.write(new_data)
+                        pbar.inc(len(new_data))
+                        sys.stdout.write(pbar.show()+'\r')
+                        sys.stdout.flush()
+                        
         # Read in the file and convert it to a numpy array
-        try:
-            dataDict = numpy.load(filename)
-        except IOError:
-            raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
-            
-        freq = dataDict['freq']
-        data = dataDict['data']
-        try:
-            dataDict.close()
-        except AttributeError:
-            pass
-            
+        with _CACHE_DIR.open(filename, 'rb') as fh:
+            try:
+                dataDict = numpy.load(fh)
+            except IOError:
+                raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
+                
+            freq = dataDict['freq']
+            data = dataDict['data']
+            try:
+                dataDict.close()
+            except AttributeError:
+                pass
+                
         if not dB:
             data = from_dB(data)
             
