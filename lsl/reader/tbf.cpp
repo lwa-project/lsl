@@ -103,10 +103,19 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     const int8_t *fp;
     T *a;
     a = (T *) PyArray_DATA(data);
-    for(i=0; i<6144; i++) {
+    for(i=0; i<6144; i+=4) {
         fp = tbfLUT[ cFrame.payload.bytes[i] ];
         *(a + 2*i + 0) = fp[0];
         *(a + 2*i + 1) = fp[1];
+        fp = tbfLUT[ cFrame.payload.bytes[i+1] ];
+        *(a + 2*i + 2) = fp[0];
+        *(a + 2*i + 3) = fp[1];
+        fp = tbfLUT[ cFrame.payload.bytes[i+2] ];
+        *(a + 2*i + 4) = fp[0];
+        *(a + 2*i + 5) = fp[1];
+        fp = tbfLUT[ cFrame.payload.bytes[i+3] ];
+        *(a + 2*i + 6) = fp[0];
+        *(a + 2*i + 7) = fp[1];
     }
     
     Py_END_ALLOW_THREADS
