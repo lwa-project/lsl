@@ -2,7 +2,7 @@ name: "Build and Test"
 on: [push, pull_request, release]
 jobs:
   pre_build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
     steps:
@@ -22,11 +22,7 @@ jobs:
         python-version: ['3.8', '3.10']
         include:
           - os: ubuntu-20.04
-            python-version: '2.7'
-          - os: ubuntu-20.04
             python-version: '3.6'
-          - os: macos-latest
-            python-version: '2.7'
           - os: macos-latest
             python-version: '3.6'
       fail-fast: false
