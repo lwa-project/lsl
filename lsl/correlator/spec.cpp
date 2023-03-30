@@ -373,7 +373,7 @@ void compute_pfb_complex(long nStand,
                     }
                     
                     if( window != NULL ) {
-                      in[k] *= *(pfb + k);
+                      in[k] *= *(window + k);
                     }
                 }
                 
@@ -539,6 +539,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     PyArrayObject *data=NULL, *dataF=NULL, *windowData=NULL;
     int isReal;
     int nChan = 64;
+    int nTap = 4;
     int Overlap = 1;
     int Clip = 0;
     
@@ -573,7 +574,6 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     isReal = 1 - PyArray_ISCOMPLEX(data);
     
     // Calculate the windowing function for the PFB
-    int nTap = 4;
     double *pfb;
     pfb = (double*) malloc(sizeof(float) * nChan*nTap);
     for(int i=0; i<nChan*nTap; i++) {
@@ -594,12 +594,12 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_PFB_REAL(IterType) \
-        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, 4, Overlap, Clip, \
+        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
                                    (IterType*) PyArray_DATA(data), \
                                    pfb, \
                                    (double*) PyArray_DATA(dataF))
 #define LAUNCH_PFB_COMPLEX(IterType) \
-        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, 4, Overlap, Clip, \
+        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
                                       (IterType*) PyArray_DATA(data), \
                                       pfb, \
                                       (double*) PyArray_DATA(dataF))
