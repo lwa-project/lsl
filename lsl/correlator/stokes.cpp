@@ -33,17 +33,17 @@ static PyObject *windowFunc = NULL;
 */
 
 template<typename InType, typename OutType>
-void compute_real(long nStand,
-                  long nSamps,
-                  long nFFT,
-                  int nChan,
-                  int nTap,
-                  int Overlap,
-                  int Clip,
-                  InType const* dataX,
-                  InType const* dataY,
-                  double const* window,
-                  OutType* psd) {
+void compute_stokes_real(long nStand,
+                         long nSamps,
+                         long nFFT,
+                         int nChan,
+                         int nTap,
+                         int Overlap,
+                         int Clip,
+                         InType const* dataX,
+                         InType const* dataY,
+                         double const* window,
+                         OutType* psd) {
     // Setup
     long i, j, k, l;
     
@@ -161,17 +161,17 @@ void compute_real(long nStand,
 
 
 template<typename InType, typename OutType>
-void compute_complex(long nStand,
-                     long nSamps,
-                     long nFFT,
-                     int nChan,
-                     int nTap,
-                     int Overlap,
-                     int Clip,
-                     InType const* dataX,
-                     InType const* dataY,
-                     double const* window,
-                     OutType* psd) {
+void compute_stokes_complex(long nStand,
+                            long nSamps,
+                            long nFFT,
+                            int nChan,
+                            int nTap,
+                            int Overlap,
+                            int Clip,
+                            InType const* dataX,
+                            InType const* dataY,
+                            double const* window,
+                            OutType* psd) {
     // Setup
     long i, j, k, l;
     
@@ -368,17 +368,17 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_PSD_REAL(IterType) \
-        compute_real<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
-                               (IterType*) PyArray_DATA(dataX), \
-                               (IterType*) PyArray_DATA(dataY), \
-                               (double*) PyArray_SAFE_DATA(windowData), \
-                               (double*) PyArray_DATA(dataF))
+        compute_stokes_real<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
+                                      (IterType*) PyArray_DATA(dataX), \
+                                      (IterType*) PyArray_DATA(dataY), \
+                                      (double*) PyArray_SAFE_DATA(windowData), \
+                                      (double*) PyArray_DATA(dataF))
 #define LAUNCH_PSD_COMPLEX(IterType) \
-        compute_complex<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
-                                  (IterType*) PyArray_DATA(dataX), \
-                                  (IterType*) PyArray_DATA(dataY), \
-                                  (double*) PyArray_SAFE_DATA(windowData), \
-                                  (double*) PyArray_DATA(dataF))
+        compute_stokes_complex<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
+                                         (IterType*) PyArray_DATA(dataX), \
+                                         (IterType*) PyArray_DATA(dataY), \
+                                         (double*) PyArray_SAFE_DATA(windowData), \
+                                         (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(dataX) ){
         case( NPY_INT8       ): LAUNCH_PSD_REAL(int8_t);    break;
@@ -513,17 +513,17 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_PFB_REAL(IterType) \
-        compute_real<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
-                               (IterType*) PyArray_DATA(dataX), \
-                               (IterType*) PyArray_DATA(dataY), \
-                               pfb, \
-                               (double*) PyArray_DATA(dataF))
+        compute_stokes_real<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
+                                      (IterType*) PyArray_DATA(dataX), \
+                                      (IterType*) PyArray_DATA(dataY), \
+                                      pfb, \
+                                      (double*) PyArray_DATA(dataF))
 #define LAUNCH_PFB_COMPLEX(IterType) \
-        compute_complex<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
-                                  (IterType*) PyArray_DATA(dataX), \
-                                  (IterType*) PyArray_DATA(dataY), \
-                                  pfb, \
-                                  (double*) PyArray_DATA(dataF))
+        compute_stokes_complex<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
+                                         (IterType*) PyArray_DATA(dataX), \
+                                         (IterType*) PyArray_DATA(dataY), \
+                                         pfb, \
+                                         (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(dataX) ){
         case( NPY_INT8       ): LAUNCH_PFB_REAL(int8_t);    break;

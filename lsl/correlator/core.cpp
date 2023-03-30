@@ -113,21 +113,21 @@ FFT Functions ("F-engines")
 
 
 template<typename InType, typename OutType>
-void compute_pfbengine_real(long nStand,
-                            long nSamps,
-                            long nFFT,
-                            int nChan,
-                            int nTap,
-                            int Overlap,
-                            int Clip,
-                            double SampleRate,
-                            InType const* data,
-                            double const* freq,
-                            long const* fifo,
-                            double const* frac,
-                            double const* window,
-                            OutType* fdomain,
-                            unsigned char* valid) {
+void compute_fengine_real(long nStand,
+                          long nSamps,
+                          long nFFT,
+                          int nChan,
+                          int nTap,
+                          int Overlap,
+                          int Clip,
+                          double SampleRate,
+                          InType const* data,
+                          double const* freq,
+                          long const* fifo,
+                          double const* frac,
+                          double const* window,
+                          OutType* fdomain,
+                          unsigned char* valid) {
     // Setup
     long ij, i, j, k, l;
     
@@ -222,21 +222,21 @@ void compute_pfbengine_real(long nStand,
 
 
 template<typename InType, typename OutType>
-void compute_pfbengine_complex(long nStand,
-                               long nSamps,
-                               long nFFT,
-                               int nChan,
-                               int nTap,
-                               int Overlap,
-                               int Clip,
-                               double SampleRate,
-                               InType const* data,
-                               double const* freq,
-                               long const* fifo,
-                               double const* frac,
-                               double const* window,
-                               OutType* fdomain,
-                               unsigned char* valid) {
+void compute_fengine_complex(long nStand,
+                             long nSamps,
+                             long nFFT,
+                             int nChan,
+                             int nTap,
+                             int Overlap,
+                             int Clip,
+                             double SampleRate,
+                             InType const* data,
+                             double const* freq,
+                             long const* fifo,
+                             double const* frac,
+                             double const* window,
+                             OutType* fdomain,
+                             unsigned char* valid) {
     // Setup
     long ij, i, j, k, l;
     
@@ -441,21 +441,21 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_FENGINE_REAL(IterType) \
-        compute_pfbengine_real<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, SampleRate, \
-                                         (IterType*) PyArray_DATA(data), \
-                                         (double*) PyArray_DATA(freq), \
-                                         (long*) fifo, (double*) frac, \
-                                         (double*) PyArray_SAFE_DATA(windowData), \
-                                         (Complex32*) PyArray_DATA(dataF), \
-                                         (unsigned char*) PyArray_DATA(validF))
+        compute_fengine_real<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, SampleRate, \
+                                       (IterType*) PyArray_DATA(data), \
+                                       (double*) PyArray_DATA(freq), \
+                                       (long*) fifo, (double*) frac, \
+                                       (double*) PyArray_SAFE_DATA(windowData), \
+                                       (Complex32*) PyArray_DATA(dataF), \
+                                       (unsigned char*) PyArray_DATA(validF))
 #define LAUNCH_FENGINE_COMPLEX(IterType) \
-        compute_pfbengine_complex<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, SampleRate, \
-                                            (IterType*) PyArray_DATA(data), \
-                                            (double*) PyArray_DATA(freq), \
-                                            (long*) fifo, (double*) frac, \
-                                            (double*) PyArray_SAFE_DATA(windowData), \
-                                            (Complex32*) PyArray_DATA(dataF), \
-                                            (unsigned char*) PyArray_DATA(validF))
+        compute_fengine_complex<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, SampleRate, \
+                                          (IterType*) PyArray_DATA(data), \
+                                          (double*) PyArray_DATA(freq), \
+                                          (long*) fifo, (double*) frac, \
+                                          (double*) PyArray_SAFE_DATA(windowData), \
+                                          (Complex32*) PyArray_DATA(dataF), \
+                                          (unsigned char*) PyArray_DATA(validF))
     
     switch( PyArray_TYPE(data) ){
         case( NPY_INT8       ): LAUNCH_FENGINE_REAL(int8_t);    break;
@@ -638,21 +638,21 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_PFBENGINE_REAL(IterType) \
-        compute_pfbengine_real<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, SampleRate, \
-                                         (IterType*) PyArray_DATA(data), \
-                                         (double*) PyArray_DATA(freq), \
-                                         (long*) fifo, (double*) frac, \
-                                         pfb, \
-                                         (Complex32*) PyArray_DATA(dataF), \
-                                         (unsigned char*) PyArray_DATA(validF))
+        compute_fengine_real<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, SampleRate, \
+                                       (IterType*) PyArray_DATA(data), \
+                                       (double*) PyArray_DATA(freq), \
+                                       (long*) fifo, (double*) frac, \
+                                       pfb, \
+                                       (Complex32*) PyArray_DATA(dataF), \
+                                       (unsigned char*) PyArray_DATA(validF))
 #define LAUNCH_PFBENGINE_COMPLEX(IterType) \
-        compute_pfbengine_complex<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, SampleRate, \
-                                            (IterType*) PyArray_DATA(data), \
-                                            (double*) PyArray_DATA(freq), \
-                                            (long*) fifo, (double*) frac, \
-                                            pfb, \
-                                            (Complex32*) PyArray_DATA(dataF), \
-                                            (unsigned char*) PyArray_DATA(validF))
+        compute_fengine_complex<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, SampleRate, \
+                                          (IterType*) PyArray_DATA(data), \
+                                          (double*) PyArray_DATA(freq), \
+                                          (long*) fifo, (double*) frac, \
+                                          pfb, \
+                                          (Complex32*) PyArray_DATA(dataF), \
+                                          (unsigned char*) PyArray_DATA(validF))
     
     switch( PyArray_TYPE(data) ){
         case( NPY_INT8       ): LAUNCH_PFBENGINE_REAL(int8_t);    break;
