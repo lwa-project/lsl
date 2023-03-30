@@ -573,6 +573,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     isReal = 1 - PyArray_ISCOMPLEX(data);
     
     // Calculate the windowing function for the PFB
+    int nTap = 4;
     double *pfb;
     pfb = (double*) malloc(sizeof(float) * nChan*nTap);
     for(int i=0; i<nChan*nTap; i++) {
