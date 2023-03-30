@@ -31,105 +31,18 @@ static PyObject *windowFunc = NULL;
     1. FPSD - FFT a real or complex-valued collection of signals
 */
 
-template<typename InType, typename OutType>
-void compute_psd_real(long nStand,
-                      long nSamps,
-                      long nFFT,
-                      int nChan, 
-                      int Overlap, 
-                      int Clip, 
-                      InType const* data,
-                      double const* window,
-                      OutType* psd) {
-    // Setup
-    long i, j, k;
-    
-    Py_BEGIN_ALLOW_THREADS
-    
-    // Create the FFTW plan                          
-    float *inP, *in;                          
-    Complex32 *outP, *out;
-    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan);
-    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1));
-    fftwf_plan p;
-    p = fftwf_plan_dft_r2c_1d(2*nChan, \
-                              inP, \
-                              reinterpret_cast<fftwf_complex*>(outP), \
-                              FFTW_ESTIMATE);
-    
-    // Data indexing and access
-    long secStart;
-    
-    // Time-domain blanking control
-    double cleanFactor;
-    long nActFFT;
-    
-    #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(in, out, i, j, k, secStart, cleanFactor, nActFFT)
-    #endif
-    {
-        in = (float*) fftwf_malloc(sizeof(float) * 2*nChan);
-        out = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1));
-        
-        #ifdef _OPENMP
-            #pragma omp for schedule(OMP_SCHEDULER)
-        #endif
-        for(i=0; i<nStand; i++) {
-            nActFFT = 0;
-            
-            for(j=0; j<nFFT; j++) {
-                cleanFactor = 1.0;
-                secStart = nSamps * i + 2*nChan*j/Overlap;
-                
-                for(k=0; k<2*nChan; k++) {
-                    in[k] = (float) *(data + secStart + k);
-                    
-                    if( Clip && fabs(in[k]) >= Clip ) {
-                        cleanFactor = 0.0;
-                    }
-                    
-                    if( window != NULL ) {
-                        in[k] *= *(window + k);
-                    }
-                }
-                
-                fftwf_execute_dft_r2c(p, \
-                                      in, \
-                                      reinterpret_cast<fftwf_complex*>(out));
-                
-                for(k=0; k<nChan; k++) {
-                    *(psd + nChan*i + k) += cleanFactor*abs2(out[k]);
-                }
-                
-                nActFFT += (long) cleanFactor;
-            }
-            
-            // Scale FFTs
-            blas_scal(nChan, 1.0/(2*nChan*nActFFT), (psd + i*nChan), 1);
-        }
-        
-        fftwf_free(in);
-        fftwf_free(out);
-    }
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
-    fftwf_free(outP);
-    
-    Py_END_ALLOW_THREADS
-}
-
 
 template<typename InType, typename OutType>
-void compute_pfb_real(long nStand,
-                      long nSamps,
-                      long nFFT,
-                      int nChan,
-                      int nTap,
-                      int Overlap, 
-                      int Clip, 
-                      InType const* data,
-                      double const* window,
-                      OutType* psd) {
+void compute_real(long nStand,
+                  long nSamps,
+                  long nFFT,
+                  int nChan,
+                  int nTap,
+                  int Overlap,
+                  int Clip,
+                  InType const* data,
+                  double const* window,
+                  OutType* psd) {
     // Setup
     long i, j, k, l;
     
@@ -220,107 +133,16 @@ void compute_pfb_real(long nStand,
 
 
 template<typename InType, typename OutType>
-void compute_psd_complex(long nStand,
-                         long nSamps,
-                         long nFFT,
-                         int nChan, 
-                         int Overlap, 
-                         int Clip, 
-                         InType const* data,
-                         double const* window,
-                         OutType* psd) {
-    // Setup
-    long i, j, k;
-    
-    Py_BEGIN_ALLOW_THREADS
-    
-    // Create the FFTW plan
-    Complex32 *inP, *in;
-    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan);
-    fftwf_plan p;
-    p = fftwf_plan_dft_1d(nChan, \
-                          reinterpret_cast<fftwf_complex*>(inP), \
-                          reinterpret_cast<fftwf_complex*>(inP), \
-                          FFTW_FORWARD, FFTW_ESTIMATE);
-    
-    // Data indexing and access
-    long secStart;
-    double* temp2;
-    // Time-domain blanking control
-    double cleanFactor;
-    long nActFFT;
-    
-    #ifdef _OPENMP
-        #pragma omp parallel default(shared) private(in, i, j, k, secStart, cleanFactor, nActFFT, temp2)
-    #endif
-    {
-        in = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan);
-        temp2 = (double*) malloc(sizeof(double) * (nChan/2+nChan%2));
-        
-        #ifdef _OPENMP
-            #pragma omp for schedule(OMP_SCHEDULER)
-        #endif
-        for(i=0; i<nStand; i++) {
-            nActFFT = 0;
-            
-            for(j=0; j<nFFT; j++) {
-                cleanFactor = 1.0;
-                secStart = nSamps * i + nChan*j/Overlap;
-                
-                for(k=0; k<nChan; k++) {
-                    in[k] = Complex32(*(data + 2*secStart + 2*k + 0), \
-                                      *(data + 2*secStart + 2*k + 1));
-                    
-                    if( Clip && abs(in[k]) >= Clip ) {
-                        cleanFactor = 0.0;
-                    }
-                    
-                    if( window != NULL ) {
-                        in[k] *= *(window + k);
-                    }
-                }
-                
-                fftwf_execute_dft(p, \
-                                  reinterpret_cast<fftwf_complex*>(in), \
-                                  reinterpret_cast<fftwf_complex*>(in));
-                
-                for(k=0; k<nChan; k++) {
-                    *(psd + nChan*i + k) += cleanFactor*abs2(in[k]);
-                }
-                
-                nActFFT += (long) cleanFactor;
-            }
-            
-            // Shift FFTs
-            memcpy(temp2, psd + nChan*i, sizeof(OutType)*(nChan/2+nChan%2));
-            memmove(psd + nChan*i, psd + nChan*i+nChan/2+nChan%2, sizeof(OutType)*nChan/2);
-            memcpy(psd + nChan*i+nChan/2, temp2, sizeof(OutType)*(nChan/2+nChan%2));
-            
-            // Scale FFTs
-            blas_scal(nChan, 1.0/(nActFFT*nChan), (psd + i*nChan), 1);
-        }
-        
-        fftwf_free(in);
-        free(temp2);
-    }
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
-    
-    Py_END_ALLOW_THREADS
-}
-
-
-template<typename InType, typename OutType>
-void compute_pfb_complex(long nStand,
-                         long nSamps,
-                         long nFFT,
-                         int nChan,
-                         int nTap,
-                         int Overlap, 
-                         int Clip, 
-                         InType const* data,
-                         double const* window,
-                         OutType* psd) {
+void compute_complex(long nStand,
+                      long nSamps,
+                      long nFFT,
+                      int nChan,
+                      int nTap,
+                      int Overlap,
+                      int Clip,
+                      InType const* data,
+                      double const* window,
+                      OutType* psd) {
     // Setup
     long i, j, k, l;
     
@@ -472,15 +294,15 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_PSD_REAL(IterType) \
-        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
-                                   (IterType*) PyArray_DATA(data), \
-                                   (double*) PyArray_SAFE_DATA(windowData), \
-                                   (double*) PyArray_DATA(dataF))
+        compute_real<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
+                               (IterType*) PyArray_DATA(data), \
+                               (double*) PyArray_SAFE_DATA(windowData), \
+                               (double*) PyArray_DATA(dataF))
 #define LAUNCH_PSD_COMPLEX(IterType) \
-        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
-                                      (IterType*) PyArray_DATA(data), \
-                                      (double*) PyArray_SAFE_DATA(windowData), \
-                                      (double*) PyArray_DATA(dataF))
+        compute_complex<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
+                                  (IterType*) PyArray_DATA(data), \
+                                  (double*) PyArray_SAFE_DATA(windowData), \
+                                  (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(data) ){
         case( NPY_INT8       ): LAUNCH_PSD_REAL(int8_t);    break;
@@ -539,11 +361,12 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     PyArrayObject *data=NULL, *dataF=NULL, *windowData=NULL;
     int isReal;
     int nChan = 64;
-    int nTap = 4;
+    int nTap = PFB_NTAP;
     int Overlap = 1;
     int Clip = 0;
     
     long nStand, nSamps, nFFT;
+    double *pfb = NULL;
     
     char const* kwlist[] = {"signals", "LFFT", "overlap", "clip_level", "window", NULL};
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "O|iiiO:set_callback", const_cast<char **>(kwlist), &signals, &nChan, &Overlap, &Clip, &window)) {
@@ -574,8 +397,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     isReal = 1 - PyArray_ISCOMPLEX(data);
     
     // Calculate the windowing function for the PFB
-    double *pfb;
-    pfb = (double*) malloc(sizeof(float) * nChan*nTap);
+    pfb = (double*) malloc(sizeof(double) * (1+isReal)*nChan*nTap);
     for(int i=0; i<(1+isReal)*nChan*nTap; i++) {
         *(pfb + i) = sinc((i - (1+isReal)*nChan*nTap/2.0 + 0.5)/((1+isReal)*nChan));
         *(pfb + i) *= hamming(2*NPY_PI*i/((1+isReal)*nChan*nTap));
@@ -589,20 +411,19 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     dataF = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_DOUBLE, 0);
     if(dataF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-        free(pfb);
         goto fail;
     }
     
 #define LAUNCH_PFB_REAL(IterType) \
-        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
-                                   (IterType*) PyArray_DATA(data), \
-                                   pfb, \
-                                   (double*) PyArray_DATA(dataF))
+        compute_real<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
+                               (IterType*) PyArray_DATA(data), \
+                               pfb, \
+                               (double*) PyArray_DATA(dataF))
 #define LAUNCH_PFB_COMPLEX(IterType) \
-        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
-                                      (IterType*) PyArray_DATA(data), \
-                                      pfb, \
-                                      (double*) PyArray_DATA(dataF))
+        compute_complex<IterType>(nStand, nSamps, nFFT, nChan, nTap, Overlap, Clip, \
+                                  (IterType*) PyArray_DATA(data), \
+                                  pfb, \
+                                  (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(data) ){
         case( NPY_INT8       ): LAUNCH_PFB_REAL(int8_t);    break;
@@ -630,6 +451,9 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     return signalsF;
     
 fail:
+    if( pfb != NULL ) {
+      free(pfb);
+    }
     Py_XDECREF(data);
     Py_XDECREF(windowData);
     Py_XDECREF(dataF);
