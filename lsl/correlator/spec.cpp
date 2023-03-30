@@ -576,7 +576,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     // Calculate the windowing function for the PFB
     double *pfb;
     pfb = (double*) malloc(sizeof(float) * nChan*nTap);
-    for(int i=0; i<nChan*nTap; i++) {
+    for(int i=0; i<(1+isReal)*nChan*nTap; i++) {
         *(pfb + i) = sinc((i - (1+isReal)*nChan*nTap/2.0 + 0.5)/((1+isReal)*nChan));
         *(pfb + i) *= hamming(2*NPY_PI*i/((1+isReal)*nChan*nTap));
     }
