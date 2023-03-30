@@ -179,7 +179,7 @@ void compute_pfb_real(long nStand,
     pfb = (float*) malloc(sizeof(float) * 2*nChan*PFB_NTAP);
     for(i=0; i<2*nChan*PFB_NTAP; i++) {
         *(pfb + i) = sinc((i - 2.0*nChan*PFB_NTAP/2.0 + 0.5)/(2.0*nChan));
-        *(pfb + i) *= hanning(2*NPY_PI*i/(2*nChan*PFB_NTAP));
+        *(pfb + i) *= hamming(2*NPY_PI*i/(2*nChan*PFB_NTAP));
     }
     
     // Data indexing and access
@@ -428,7 +428,7 @@ void compute_pfb_complex(long nStand,
     pfb = (float*) malloc(sizeof(float) * nChan*PFB_NTAP);
     for(i=0; i<nChan*PFB_NTAP; i++) {
         *(pfb + i) = sinc((i - nChan*PFB_NTAP/2.0 + 0.5)/nChan);
-        *(pfb + i) *= hanning(2*NPY_PI*i/(nChan*PFB_NTAP));
+        *(pfb + i) *= hamming(2*NPY_PI*i/(nChan*PFB_NTAP));
     }
     
     // Data indexing and access
