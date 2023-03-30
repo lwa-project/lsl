@@ -211,7 +211,6 @@ void compute_pfb_real(long nStand,
         fftwf_free(in);
         fftwf_free(out);
     }
-    free(pfb);
     fftwf_destroy_plan(p);
     fftwf_free(inP);
     fftwf_free(outP);
@@ -407,7 +406,6 @@ void compute_pfb_complex(long nStand,
         fftwf_free(in);
         free(temp2);
     }
-    free(pfb);
     fftwf_destroy_plan(p);
     fftwf_free(inP);
     
@@ -577,7 +575,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     // Calculate the windowing function for the PFB
     double *pfb;
     pfb = (double*) malloc(sizeof(float) * nChan*nTap);
-    for(i=0; i<nChan*nTap; i++) {
+    for(int i=0; i<nChan*nTap; i++) {
         *(pfb + i) = sinc((i - (1+isReal)*nChan*nTap/2.0 + 0.5)/((1+isReal)*nChan));
         *(pfb + i) *= hamming(2*NPY_PI*i/((1+isReal)*nChan*nTap));
     }
@@ -590,6 +588,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     dataF = (PyArrayObject*) PyArray_ZEROS(2, dims, NPY_DOUBLE, 0);
     if(dataF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
+        free(pfb);
         goto fail;
     }
     
@@ -618,6 +617,8 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
         
 #undef LAUNCH_PFB_REAL
 #undef LAUNCH_PFB_COMPLEX
+    
+    free(pfb);
     
     signalsF = Py_BuildValue("O", PyArray_Return(dataF));
     
