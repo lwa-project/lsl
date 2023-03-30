@@ -123,7 +123,8 @@ template<typename InType, typename OutType>
 void compute_pfb_real(long nStand,
                       long nSamps,
                       long nFFT,
-                      int nChan, 
+                      int nChan,
+                      int nTap,
                       int Overlap, 
                       int Clip, 
                       InType const* data,
@@ -137,22 +138,14 @@ void compute_pfb_real(long nStand,
     // Create the FFTW plan                          
     float *inP, *in;                          
     Complex32 *outP, *out;
-    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan*PFB_NTAP);
-    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*PFB_NTAP);
+    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
+    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
     fftwf_plan p;
     int n[] = {2*nChan,};
-    p = fftwf_plan_many_dft_r2c(1, n, PFB_NTAP, \
+    p = fftwf_plan_many_dft_r2c(1, n, nTap, \
                                 inP, NULL, 1, 2*nChan, \
                                 reinterpret_cast<fftwf_complex*>(outP), NULL, 1, nChan+1, \
                                 FFTW_ESTIMATE);
-    
-    // Filter bank
-    float *pfb;
-    pfb = (float*) malloc(sizeof(float) * 2*nChan*PFB_NTAP);
-    for(i=0; i<2*nChan*PFB_NTAP; i++) {
-        *(pfb + i) = sinc((i - 2.0*nChan*PFB_NTAP/2.0 + 0.5)/(2.0*nChan));
-        *(pfb + i) *= hamming(2*NPY_PI*i/(2*nChan*PFB_NTAP));
-    }
     
     // Data indexing and access
     long secStart;
@@ -165,8 +158,8 @@ void compute_pfb_real(long nStand,
         #pragma omp parallel default(shared) private(in, out, i, j, k, l, secStart, cleanFactor, nActFFT)
     #endif
     {
-        in = (float*) fftwf_malloc(sizeof(float) * 2*nChan*PFB_NTAP);
-        out = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*PFB_NTAP);
+        in = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
+        out = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -178,25 +171,27 @@ void compute_pfb_real(long nStand,
                 cleanFactor = 1.0;
                 secStart = nSamps * i + 2*nChan*j/Overlap;
                 
-                for(k=0; k<2*nChan*PFB_NTAP; k++) {
-                    if( secStart - 2*nChan*(PFB_NTAP-1) + k < nSamps*i ) {
+                for(k=0; k<2*nChan*nTap; k++) {
+                    if( secStart - 2*nChan*(nTap-1) + k < nSamps*i ) {
                         in[k] = 0.0;
                     } else {
-                        in[k] = (float) *(data + secStart - 2*nChan*(PFB_NTAP-1) + k);
+                        in[k] = (float) *(data + secStart - 2*nChan*(nTap-1) + k);
                     }
                     
                     if( Clip && fabs(in[k]) >= Clip ) {
                         cleanFactor = 0.0;
                     }
                     
-                    in[k] *= *(pfb + k);
+                    if( window != NULL ) {
+                      in[k] *= *(window + k);
+                    }
                 }
                 
                 fftwf_execute_dft_r2c(p, \
                                       in, \
                                       reinterpret_cast<fftwf_complex*>(out));
                 
-                for(l=1; l<PFB_NTAP; l++) {
+                for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
                         out[k] += out[k+l*(nChan+1)];
                     }
@@ -320,7 +315,8 @@ template<typename InType, typename OutType>
 void compute_pfb_complex(long nStand,
                          long nSamps,
                          long nFFT,
-                         int nChan, 
+                         int nChan,
+                         int nTap,
                          int Overlap, 
                          int Clip, 
                          InType const* data,
@@ -333,21 +329,13 @@ void compute_pfb_complex(long nStand,
     
     // Create the FFTW plan
     Complex32 *inP, *in;
-    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*PFB_NTAP);
+    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
     fftwf_plan p;
     int n[] = {nChan,};
-    p = fftwf_plan_many_dft(1, n, PFB_NTAP, \
+    p = fftwf_plan_many_dft(1, n, nTap, \
                             reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
                             reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
                             FFTW_FORWARD, FFTW_ESTIMATE);
-    
-    // Filter bank
-    float *pfb;
-    pfb = (float*) malloc(sizeof(float) * nChan*PFB_NTAP);
-    for(i=0; i<nChan*PFB_NTAP; i++) {
-        *(pfb + i) = sinc((i - nChan*PFB_NTAP/2.0 + 0.5)/nChan);
-        *(pfb + i) *= hamming(2*NPY_PI*i/(nChan*PFB_NTAP));
-    }
     
     // Data indexing and access
     long secStart;
@@ -360,7 +348,7 @@ void compute_pfb_complex(long nStand,
         #pragma omp parallel default(shared) private(in, i, j, k, l, secStart, cleanFactor, nActFFT, temp2)
     #endif
     {
-        in = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*PFB_NTAP);
+        in = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
         temp2 = (double*) malloc(sizeof(double) * (nChan/2+nChan%2));
         
         #ifdef _OPENMP
@@ -373,26 +361,28 @@ void compute_pfb_complex(long nStand,
                 cleanFactor = 1.0;
                 secStart = nSamps * i + nChan*j/Overlap;
                 
-                for(k=0; k<nChan*PFB_NTAP; k++) {
-                    if( secStart - nChan*(PFB_NTAP-1) + k < nSamps*i ) {
+                for(k=0; k<nChan*nTap; k++) {
+                    if( secStart - nChan*(nTap-1) + k < nSamps*i ) {
                         in[k] = 0.0;
                     } else {
-                        in[k] = Complex32(*(data + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 0), \
-                                          *(data + 2*secStart - 2*nChan*(PFB_NTAP-1) + 2*k + 1));
+                        in[k] = Complex32(*(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
+                                          *(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
                     }
                     
                     if( Clip && abs(in[k]) >= Clip ) {
                         cleanFactor = 0.0;
                     }
                     
-                    in[k] *= *(pfb + k);
+                    if( window != NULL ) {
+                      in[k] *= *(pfb + k);
+                    }
                 }
                 
                 fftwf_execute_dft(p, \
                                   reinterpret_cast<fftwf_complex*>(in), \
                                   reinterpret_cast<fftwf_complex*>(in));
                 
-                for(l=1; l<PFB_NTAP; l++) {
+                for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
                         in[k] += in[k+l*nChan];
                     }
@@ -484,12 +474,12 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_PSD_REAL(IterType) \
-        compute_psd_real<IterType>(nStand, nSamps, nFFT, nChan, Overlap, Clip, \
+        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
                                    (IterType*) PyArray_DATA(data), \
                                    (double*) PyArray_SAFE_DATA(windowData), \
                                    (double*) PyArray_DATA(dataF))
 #define LAUNCH_PSD_COMPLEX(IterType) \
-        compute_psd_complex<IterType>(nStand, nSamps, nFFT, nChan, Overlap, Clip, \
+        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, 1, Overlap, Clip, \
                                       (IterType*) PyArray_DATA(data), \
                                       (double*) PyArray_SAFE_DATA(windowData), \
                                       (double*) PyArray_DATA(dataF))
@@ -584,13 +574,12 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     nSamps = (long) PyArray_DIM(data, 1);
     isReal = 1 - PyArray_ISCOMPLEX(data);
     
-    // Calculate the windowing function
-    if( windowFunc != Py_None ) {
-        arglist = Py_BuildValue("(i)", (1+isReal)*nChan);
-        windowValue = PyObject_CallObject(windowFunc, arglist);
-        windowData = (PyArrayObject *) PyArray_ContiguousFromObject(windowValue, NPY_DOUBLE, 1, 1);
-        Py_DECREF(arglist);
-        Py_DECREF(windowValue);
+    // Calculate the windowing function for the PFB
+    double *pfb;
+    pfb = (double*) malloc(sizeof(float) * nChan*nTap);
+    for(i=0; i<nChan*nTap; i++) {
+        *(pfb + i) = sinc((i - (1+isReal)*nChan*nTap/2.0 + 0.5)/((1+isReal)*nChan));
+        *(pfb + i) *= hamming(2*NPY_PI*i/((1+isReal)*nChan*nTap));
     }
     
     // Find out how large the output array needs to be and initialize it
@@ -605,14 +594,14 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
 #define LAUNCH_PFB_REAL(IterType) \
-        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, Overlap, Clip, \
+        compute_pfb_real<IterType>(nStand, nSamps, nFFT, nChan, 4, Overlap, Clip, \
                                    (IterType*) PyArray_DATA(data), \
-                                   (double*) PyArray_SAFE_DATA(windowData), \
+                                   pfb, \
                                    (double*) PyArray_DATA(dataF))
 #define LAUNCH_PFB_COMPLEX(IterType) \
-        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, Overlap, Clip, \
+        compute_pfb_complex<IterType>(nStand, nSamps, nFFT, nChan, 4, Overlap, Clip, \
                                       (IterType*) PyArray_DATA(data), \
-                                      (double*) PyArray_SAFE_DATA(windowData), \
+                                      pfb, \
                                       (double*) PyArray_DATA(dataF))
     
     switch( PyArray_TYPE(data) ){
