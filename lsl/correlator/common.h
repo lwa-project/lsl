@@ -72,12 +72,12 @@ inline float hanning(float x) {
 */
 
 inline double hamming(double x) {
-    return 0.53836 - 0.46164*cos(x);
+    return 0.543478261 - 0.456521739*cos(x);
     
 }
 
 inline float hamming(float x) {
-    return 0.53836 - 0.46164*cos(x);
+    return 0.543478261 - 0.456521739*cos(x);
 }
 
 
