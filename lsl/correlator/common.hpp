@@ -1,5 +1,4 @@
-#ifndef CORRELATOR_COMMON_H_INCLUDE_GUARD_
-#define CORRELATOR_COMMON_H_INCLUDE_GUARD_
+#pragma once
 
 #include "Python.h"
 #include <cmath>
@@ -113,5 +112,3 @@ inline float abs2(Complex32 z) {
 inline double abs2(Complex64 z) {
     return z.real()*z.real() + z.imag()*z.imag();
 }
-
-#endif // CORRELATOR_COMMON_H_INCLUDE_GUARD_

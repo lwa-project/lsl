@@ -17,7 +17,7 @@
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
-#include "../correlator/common.h"
+#include "../correlator/common.hpp"
 
 
 // Maximum number of w-planes to project

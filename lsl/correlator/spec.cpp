@@ -16,8 +16,8 @@
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
-#include "common.h"
-#include "blas.h"
+#include "common.hpp"
+#include "blas.hpp"
 
 /*
   Holder for window function callback
