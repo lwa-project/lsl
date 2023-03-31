@@ -3,8 +3,26 @@
 #include "Python.h"
 #include <cmath>
 #include <complex>
+#include <cstdlib>
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
+
+/*
+ 64-byte aligned memory allocator/deallocator
+*/
+
+inline void* aligned64_malloc(size_t size) {
+  void *ptr = NULL;
+  int err = posix_memalign(&ptr, 64, size);
+  if( err != 0 ) {
+    return NULL;
+  }
+  return ptr;
+}
+
+inline void aligned64_free(void* ptr) {
+  free(ptr);
+}
 
 
 /*
