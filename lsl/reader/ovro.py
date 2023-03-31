@@ -25,6 +25,7 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
+import os
 import json
 import numpy
 import struct
@@ -44,11 +45,13 @@ telemetry.track_module()
 __version__ = '0.1'
 
 class FrameHeader(FrameHeaderBase):
-    _header_attrs = ['time_tag', 'seq0', 'first_chan', 'nchan']
+    _header_attrs = ['timetag', 'seq0', 'sync_time', 'pipeline_id', 'first_chan', 'nchan']
     
-    def __init__(self, timetag=None, seq0=None, first_chan=None, nchan=None):
-        self.timetag = time_tag
+    def __init__(self, timetag=None, seq0=None, sync_time=None, pipeline_id=None, first_chan=None, nchan=None):
+        self.timetag = timetag
         self.seq0 = seq0
+        self.sync_time = sync_time
+        self.pipeline_id = pipeline_id
         self.first_chan = first_chan
         self.nchan = nchan
         FrameHeaderBase.__init__(self)
@@ -61,7 +64,8 @@ class FrameHeader(FrameHeaderBase):
         `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        return FrameTimestamp.from_dp_timetag(self.timetag)
+        return FrameTimestamp.from_dp_timetag(self.sync_time*196000000 + self.timetag*8192)
+        
     @property
     def channel_freqs(self):
         """
@@ -80,7 +84,7 @@ class FramePayload(FramePayloadBase):
     
     _payload_attrs = []
     
-    def __init__(self, timetag=None, fDomain=None):
+    def __init__(self, fDomain=None):
         FramePayloadBase.__init__(self, fDomain)
 
 
@@ -124,7 +128,7 @@ def read_frame(filehandle, verbose=False):
         nchan = header['nchan']
         nstand = header['nstand']
         npol = header['npol']
-        filehandle.seek(hblock_size))
+        filehandle.seek(hblock_size)
         ntime = os.path.getsize(filehandle.name) - filehandle.tell()
         ntime //= (nchan*nstand*npol*1) 
         
@@ -133,6 +137,8 @@ def read_frame(filehandle, verbose=False):
         newFrame = Frame()
         newFrame.header.timetag = header['time_tag']
         newFrame.header.seq0 = header['seq0']
+        newFrame.header.sync_time = header['sync_time']
+        newFrame.header.pipeline_id = header['pipeline_id']
         newFrame.header.first_chan = header['chan0']
         newFrame.header.nchan = nchan
         newFrame.payload._data = data

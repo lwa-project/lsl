@@ -19,7 +19,7 @@ PyObject *ovro_size   = NULL;
 
 
 PyObject *read_ovro(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
+    PyObject *ph, *buffer, *output;
     PyArrayObject *data;
     long i;
     int ntime, nchan, nstand, npol;
