@@ -4,6 +4,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <fftw3.h>
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
