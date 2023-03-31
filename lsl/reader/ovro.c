@@ -22,21 +22,20 @@ PyObject *read_ovro(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output;
     PyArrayObject *data;
     long i;
-    int ntime, nchan, nstand, npol;
+    int nchan, nstand, npol;
     
-    if(!PyArg_ParseTuple(args, "Oiiii", &ph, &ntime, &nchan, &nstand, &npol)) {
+    if(!PyArg_ParseTuple(args, "Oiii", &ph, &nchan, &nstand, &npol)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         return NULL;
     }
     
     // Create the output data array
-    npy_intp dims[4];
-    // 4+4-bit Data -> 6144 samples in the data section as 12 channels, 256 stands, and 2 pols.
-    dims[0] = (npy_intp) ntime;
-    dims[1] = (npy_intp) nchan;
-    dims[2] = (npy_intp) nstand;
-    dims[3] = (npy_intp) npol;
-    data = (PyArrayObject*) PyArray_ZEROS(4, dims, NPY_COMPLEX64, 0);
+    npy_intp dims[3];
+    // 4+4-bit Data -> N samples in the data section as nchan channels, nstand stands, and npol pols.
+    dims[0] = (npy_intp) nchan;
+    dims[1] = (npy_intp) nstand;
+    dims[2] = (npy_intp) npol;
+    data = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
     if(data == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
         Py_XDECREF(data);
@@ -46,7 +45,7 @@ PyObject *read_ovro(PyObject *self, PyObject *args) {
     // Read from the file
     if( ovro_method == NULL ) {
         ovro_method = Py_BuildValue("s", "read");
-        ovro_size = Py_BuildValue("i", ntime*nchan*nstand*npol*1);
+        ovro_size = Py_BuildValue("i", nchan*nstand*npol*1);
     }
     buffer = PyObject_CallMethodObjArgs(ph, ovro_method, ovro_size, NULL);
     if( buffer == NULL ) {
@@ -57,7 +56,7 @@ PyObject *read_ovro(PyObject *self, PyObject *args) {
         }
         Py_XDECREF(data);
         return NULL;
-    } else if( PyString_GET_SIZE(buffer) != (ntime*nchan*nstand*npol*1) ) {
+    } else if( PyString_GET_SIZE(buffer) != (nchan*nstand*npol*1) ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(data);
         Py_XDECREF(buffer);
@@ -70,7 +69,7 @@ PyObject *read_ovro(PyObject *self, PyObject *args) {
     const float *fp;
     float complex *a;
     a = (float complex *) PyArray_DATA(data);
-    for(i=0; i<ntime*nchan*nstand*npol; i++) {
+    for(i=0; i<nchan*nstand*npol; i++) {
         fp = ovroLUT[ (PyString_AS_STRING(buffer))[i] ];
         *(a + i) = fp[0] + _Complex_I * fp[1];
     }
@@ -86,6 +85,6 @@ PyObject *read_ovro(PyObject *self, PyObject *args) {
 }
 
 char read_ovro_doc[] = PyDoc_STR(\
-"Function to read in the data section of a OVRO-LWA triggered voltage buffer\n\
-dump file and return it as a 4-D numpy array.\n\
+"Function to read in a single set of spectra from the data section of a OVRO-LWA\n\
+triggered voltage buffer dump file and return it as a 3-D numpy.complex64 array.\n\
 ");

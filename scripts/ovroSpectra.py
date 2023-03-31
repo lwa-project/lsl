@@ -56,22 +56,31 @@ def _best_freq_units(freq):
 def main(args):
     fh = open(args.filename, 'rb')
     
-    # Read in the frame and pull out the start time as well as the number of stand/pols.
-    frame = ovro.read_frame(fh)
-    beginDate = frame.time
-    antpols = frame.payload.data.shape[-2]*frame.payload.data.shape[-1]
+    # Read in the first frame and get the date/time of the first sample 
+    # of the frame.  This is needed to get the list of stands.
+    junkFrame = ovro.read_frame(fh)
+    fh.seek(0)
+    beginDate = junkFrame.time.datetime
+    
+    # Figure out how many frames are in the file
+    nFrames = (os.path.getsize(args.filename) - 1048576) // junkFrame.payload.data.size
     
     # Make a dummy list of antennas
+    nstand = junkFrame.payload.data.shape[-2]
+    npol = junkFrame.payload.data.shape[-1]
+    antpols = nstand*npol
     antennas = list(range(antpols))
     
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
-    nFrames = nFramesPerObs = 1
-    nchannels = frame.header.nchan
-    nSamples = frame.payload.data.shape[0]
+    nFramesPerObs = ovro.get_frames_per_obs(fh)
+    nchannels = ovro.get_channel_count(fh)
+    
+    # Figure out how many chunks we need to work with
+    nChunks = nFrames // nFramesPerObs
     
     # Calculate the frequencies
-    freq = frame.channel_freqs
+    freq = junkFrame.channel_freqs
     
     # File summary
     print("Filename: %s" % args.filename)
@@ -80,11 +89,20 @@ def main(args):
     print("Channel Count: %i" % nchannels)
     print("Frames: %i" % nFrames)
     print("===")
+    print("Chunks: %i" % nChunks)
     
-    # Convert to spectra
-    spec = numpy.abs(frame.payload.data)**2
-    spec = spec.mean(axis=0)
-    
+    spec = numpy.zeros((nchannels,nstand,npol))
+    norm = numpy.zeros_like(spec)
+    for i in range(nChunks):
+        # Read in the next frame and anticipate any problems that could occur
+        try:
+            cFrame = ovro.read_frame(fh)
+        except errors.EOFError:
+            break
+        spec[:,:,:] += numpy.abs(cFrame.payload.data)**2
+        norm[:,:,:] += 1
+        
+    spec /= norm
     fh.close()
     
     # Reshape and transpose to get it in to a "normal" order

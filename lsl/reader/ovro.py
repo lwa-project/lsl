@@ -116,6 +116,8 @@ class Frame(FrameBase):
         return self.header.time
 
 
+_HEADER_CACHE = {}
+
 def read_frame(filehandle, verbose=False):
     """
     Function to read in a single OVRO-LWA triggered voltage buffer dump file
@@ -123,19 +125,29 @@ def read_frame(filehandle, verbose=False):
     """
     
     try:
-        hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
-        header = json.loads(filehandle.read(hsize))
-        nchan = header['nchan']
-        nstand = header['nstand']
-        npol = header['npol']
-        filehandle.seek(hblock_size)
-        ntime = os.path.getsize(filehandle.name) - filehandle.tell()
-        ntime //= (nchan*nstand*npol*1) 
-        
-        data = read_ovro(filehandle, ntime, nchan, nstand, npol)
+        hsize, hblock_size, header = _HEADER_CACHE[filehandle]
+    except KeyError:
+        # Read in the file header
+        with FilePositionSaver(filehandle):
+            filehandle.seek(0)
+            
+            hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
+            header = json.loads(filehandle.read(hsize))
+            _HEADER_CACHE[filehandle] = (hsize, hblock_size, header)
+            
+        if filehandle.tell() < hblock_size:
+            filehandle.seek(hblock_size)
+            
+    nchan = header['nchan']
+    nstand = header['nstand']
+    npol = header['npol']
+    
+    try:
+        delta_timetag = (filehandle.tell() - hblock_size) // (nchan*nstand*npol*1)
+        data = read_ovro(filehandle, nchan, nstand, npol)
         
         newFrame = Frame()
-        newFrame.header.timetag = header['time_tag']
+        newFrame.header.timetag = header['time_tag'] + delta_timetag
         newFrame.header.seq0 = header['seq0']
         newFrame.header.sync_time = header['sync_time']
         newFrame.header.pipeline_id = header['pipeline_id']
@@ -146,3 +158,52 @@ def read_frame(filehandle, verbose=False):
         raise EOFError
         
     return newFrame
+
+
+def get_frames_per_obs(filehandle):
+    """
+    Find out how many frames are present per time stamp.  Return the number of
+    frames per observation.
+    """
+    
+    return 1
+
+
+def get_channel_count(filehandle):
+    """
+    Find out the total number of channels that are present.  Return the number
+    of channels found.
+    """
+    
+    # Go to the file header
+    with FilePositionSaver(filehandle):
+        filehandle.seek(0)
+        
+        hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
+        header = json.loads(filehandle.read(hsize))
+        nchan = header['nchan']
+        
+    # Return the number of channels
+    return nchan
+
+
+def get_first_channel(filehandle, frequency=False):
+    """
+    Find and return the lowest frequency channel in a OVRO-LWA triggered voltage
+    buffer dump file.  If the `frequency` keyword is True the returned value is
+    in Hz.
+    """
+    
+    # Go to the file header
+    with FilePositionSaver(filehandle):
+        filehandle.seek(0)
+        
+        hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
+        header = json.loads(filehandle.read(hsize))
+        chan0 = header['chan0']
+        
+        if frequency:
+            chan0 = chan0 * 196e6/8192
+            
+    # Return the lowest frequency channel
+    return chan0
