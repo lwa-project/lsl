@@ -84,19 +84,25 @@ void compute_spec_real(long nStand,
                 cleanFactor = 1.0;
                 secStart = nSamps * i + 2*nChan*j/Overlap;
                 
-                for(k=0; k<2*nChan*nTap; k++) {
+                for(k=0; k<2*nChan*nTap; k+=2) {
                     if( secStart - 2*nChan*(nTap-1) + k < nSamps*i ) {
                         in[k] = 0.0;
                     } else {
                         in[k] = (float) *(data + secStart - 2*nChan*(nTap-1) + k);
                     }
+                    if( secStart - 2*nChan*(nTap-1) + k + 1 < nSamps*i ) {
+                        in[k+1] = 0.0;
+                    } else {
+                        in[k+1] = (float) *(data + secStart - 2*nChan*(nTap-1) + k + 1);
+                    }
                     
-                    if( Clip && fabs(in[k]) >= Clip ) {
+                    if( Clip && (fabs(in[k]) >= Clip || fabs(in[k+1]) >= Clip) ) {
                         cleanFactor = 0.0;
                     }
                     
                     if( window != NULL ) {
                       in[k] *= *(window + k);
+                      in[k+1] *= *(window + k + 1);
                     }
                 }
                 

@@ -87,7 +87,7 @@ void compute_stokes_real(long nStand,
                 cleanFactor = 1.0;
                 secStart = nSamps * i + 2*nChan*j/Overlap;
                 
-                for(k=0; k<2*nChan*nTap; k++) {
+                for(k=0; k<2*nChan*nTap; k+=2) {
                     if( secStart - 2*nChan*(nTap-1) + k < nSamps*i ) {
                         inX[k] = 0.0;
                         inY[k] = 0.0;
@@ -95,14 +95,24 @@ void compute_stokes_real(long nStand,
                         inX[k] = (float) *(dataX + secStart - 2*nChan*(nTap-1) + k);
                         inY[k] = (float) *(dataY + secStart - 2*nChan*(nTap-1) + k);
                     }
+                    if( secStart - 2*nChan*(nTap-1) + k + 1 < nSamps*i ) {
+                        inX[k+1] = 0.0;
+                        inY[k+1] = 0.0;
+                    } else {
+                        inX[k+1] = (float) *(dataX + secStart - 2*nChan*(nTap-1) + k + 1);
+                        inY[k+1] = (float) *(dataY + secStart - 2*nChan*(nTap-1) + k + 1);
+                    }
                     
-                    if( Clip && ( fabs(inX[k]) >= Clip || fabs(inY[k]) >= Clip ) ) {
+                    if( Clip && (   fabs(inX[k]) >= Clip || fabs(inY[k]) >= Clip \
+                                 || fabs(inX[k+1]) >= Clip || fabs(inY[k+1]) >= Clip) ) {
                         cleanFactor = 0.0;
                     }
                     
                     if( window != NULL ) {
                         inX[k] *= *(window + k);
                         inY[k] *= *(window + k);
+                        inX[k+1] *= *(window + k + 1);
+                        inY[k+1] *= *(window + k + 1);
                     }
                 }
                 
