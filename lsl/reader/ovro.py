@@ -32,7 +32,7 @@ import struct
 
 from lsl.common import adp as adp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_ovro
+from lsl.reader._gofast import read_ovro_spec
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -144,7 +144,7 @@ def read_frame(filehandle, verbose=False):
     
     try:
         delta_timetag = (filehandle.tell() - hblock_size) // (nchan*nstand*npol*1)
-        data = read_ovro(filehandle, nchan, nstand, npol)
+        data = read_ovro_spec(filehandle, nchan, nstand, npol)
         
         newFrame = Frame()
         newFrame.header.timetag = header['time_tag'] + delta_timetag

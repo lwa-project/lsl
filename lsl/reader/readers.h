@@ -113,7 +113,7 @@ extern PyObject *read_cor(PyObject*, PyObject*);
 extern char read_cor_doc[];
 
 // ovro.c
-extern PyObject *read_ovro(PyObject*, PyObject*);
-extern char read_ovro_doc[];
+extern PyObject *read_ovro_spec(PyObject*, PyObject*);
+extern char read_ovro_spec_doc[];
 
 #endif	// __READERS_H

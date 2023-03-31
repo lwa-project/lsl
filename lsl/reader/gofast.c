@@ -86,14 +86,14 @@ static void initLWALUTs(void) {
 */
 
 static PyMethodDef GoFastMethods[] = {
-    {"read_tbw",    (PyCFunction) read_tbw,    METH_VARARGS,               read_tbw_doc   }, 
-    {"read_tbn",    (PyCFunction) read_tbn,    METH_VARARGS,               read_tbn_doc   }, 
-    {"read_drx",    (PyCFunction) read_drx,    METH_VARARGS,               read_drx_doc   }, 
-    {"read_drspec", (PyCFunction) read_drspec, METH_VARARGS,               read_drspec_doc},
-    {"read_vdif",   (PyCFunction) read_vdif,   METH_VARARGS|METH_KEYWORDS, read_vdif_doc  }, 
-    {"read_tbf",    (PyCFunction) read_tbf,    METH_VARARGS,               read_tbf_doc   }, 
-    {"read_cor",    (PyCFunction) read_cor,    METH_VARARGS,               read_cor_doc   }, 
-    {"read_ovro",   (PyCFunction) read_ovro,   METH_VARARGS,               read_ovro_doc  }, 
+    {"read_tbw",       (PyCFunction) read_tbw,       METH_VARARGS,               read_tbw_doc      }, 
+    {"read_tbn",       (PyCFunction) read_tbn,       METH_VARARGS,               read_tbn_doc      }, 
+    {"read_drx",       (PyCFunction) read_drx,       METH_VARARGS,               read_drx_doc      }, 
+    {"read_drspec",    (PyCFunction) read_drspec,    METH_VARARGS,               read_drspec_doc   },
+    {"read_vdif",      (PyCFunction) read_vdif,      METH_VARARGS|METH_KEYWORDS, read_vdif_doc     }, 
+    {"read_tbf",       (PyCFunction) read_tbf,       METH_VARARGS,               read_tbf_doc      }, 
+    {"read_cor",       (PyCFunction) read_cor,       METH_VARARGS,               read_cor_doc      }, 
+    {"read_ovro_spec", (PyCFunction) read_ovro_spec, METH_VARARGS,               read_ovro_spec_doc}, 
     {NULL,          NULL,                      0,                          NULL           }
 };
 
@@ -167,7 +167,7 @@ MOD_INIT(_gofast) {
     PyList_Append(all, PyString_FromString("read_vdif"));
     PyList_Append(all, PyString_FromString("read_tbf"));
     PyList_Append(all, PyString_FromString("read_cor"));
-    PyList_Append(all, PyString_FromString("read_ovro"));
+    PyList_Append(all, PyString_FromString("read_ovro_spec"));
     PyList_Append(all, PyString_FromString("SyncError"));
     PyList_Append(all, PyString_FromString("EOFError"));
     PyList_Append(all, PyString_FromString("NCHAN_COR"));

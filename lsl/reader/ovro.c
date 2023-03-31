@@ -18,7 +18,7 @@ PyObject *ovro_method = NULL;
 PyObject *ovro_size   = NULL;
 
 
-PyObject *read_ovro(PyObject *self, PyObject *args) {
+PyObject *read_ovro_spec(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output;
     PyArrayObject *data;
     long i;
@@ -84,7 +84,7 @@ PyObject *read_ovro(PyObject *self, PyObject *args) {
     return output;
 }
 
-char read_ovro_doc[] = PyDoc_STR(\
+char read_ovro_spec_doc[] = PyDoc_STR(\
 "Function to read in a single set of spectra from the data section of a OVRO-LWA\n\
 triggered voltage buffer dump file and return it as a 3-D numpy.complex64 array.\n\
 ");
