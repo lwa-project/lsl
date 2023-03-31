@@ -176,13 +176,22 @@ def get_channel_count(filehandle):
     """
     
     # Go to the file header
-    with FilePositionSaver(filehandle):
-        filehandle.seek(0)
-        
-        hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
-        header = json.loads(filehandle.read(hsize))
-        nchan = header['nchan']
-        
+    try:
+        hsize, hblock_size, header = _HEADER_CACHE[filehandle]
+    except KeyError:
+        # Read in the file header
+        with FilePositionSaver(filehandle):
+            filehandle.seek(0)
+            
+            hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
+            header = json.loads(filehandle.read(hsize))
+            _HEADER_CACHE[filehandle] = (hsize, hblock_size, header)
+            
+        if filehandle.tell() < hblock_size:
+            filehandle.seek(hblock_size)
+            
+    nchan = header['nchan']
+    
     # Return the number of channels
     return nchan
 
@@ -195,15 +204,23 @@ def get_first_channel(filehandle, frequency=False):
     """
     
     # Go to the file header
-    with FilePositionSaver(filehandle):
-        filehandle.seek(0)
-        
-        hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
-        header = json.loads(filehandle.read(hsize))
-        chan0 = header['chan0']
-        
-        if frequency:
-            chan0 = chan0 * 196e6/8192
+    try:
+        hsize, hblock_size, header = _HEADER_CACHE[filehandle]
+    except KeyError:
+        # Read in the file header
+        with FilePositionSaver(filehandle):
+            filehandle.seek(0)
             
+            hsize, hblock_size = struct.unpack('<II', filehandle.read(8))
+            header = json.loads(filehandle.read(hsize))
+            _HEADER_CACHE[filehandle] = (hsize, hblock_size, header)
+            
+        if filehandle.tell() < hblock_size:
+            filehandle.seek(hblock_size)
+            
+    chan0 = header['chan0']
+    if frequency:
+        chan0 = chan0 * 196e6/8192
+        
     # Return the lowest frequency channel
     return chan0
