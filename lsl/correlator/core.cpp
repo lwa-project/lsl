@@ -527,7 +527,7 @@ Outputs:\n\
 
 static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *signals, *freqs, *delays, *window=Py_None, *signalsF;
-    PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL, *windowData=NULL;
+    PyArrayObject *data=NULL, *freq=NULL, *delay=NULL, *dataF=NULL, *validF=NULL;
     int isReal;
     int nChan = 64;
     int nTap = PFB_NTAP;
@@ -678,7 +678,6 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     Py_XDECREF(data);
     Py_XDECREF(freq);
     Py_XDECREF(delay);
-    Py_XDECREF(windowData);
     Py_XDECREF(dataF);
     Py_XDECREF(validF);
     
@@ -691,7 +690,6 @@ fail:
     Py_XDECREF(data);
     Py_XDECREF(freq);
     Py_XDECREF(delay);
-    Py_XDECREF(windowData);
     Py_XDECREF(dataF);
     Py_XDECREF(validF);
     

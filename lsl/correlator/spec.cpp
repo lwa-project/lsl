@@ -357,8 +357,8 @@ Outputs:\n\
 
 
 static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
-    PyObject *signals, *signalsF, *window=Py_None, *arglist, *windowValue;
-    PyArrayObject *data=NULL, *dataF=NULL, *windowData=NULL;
+    PyObject *signals, *signalsF, *window=Py_None;
+    PyArrayObject *data=NULL, *dataF=NULL;
     int isReal;
     int nChan = 64;
     int nTap = PFB_NTAP;
@@ -445,7 +445,6 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     signalsF = Py_BuildValue("O", PyArray_Return(dataF));
     
     Py_XDECREF(data);
-    Py_XDECREF(windowData);
     Py_XDECREF(dataF);
 
     return signalsF;
@@ -455,7 +454,6 @@ fail:
         free(pfb);
     }
     Py_XDECREF(data);
-    Py_XDECREF(windowData);
     Py_XDECREF(dataF);
     
     return NULL;
