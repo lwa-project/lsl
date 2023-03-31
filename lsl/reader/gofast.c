@@ -41,6 +41,7 @@ short int tbw4LUT[256][2];
 float tbnLUT[256];
 float drxLUT[256][2];
 float tbfLUT[256][2];
+float ovroLUT[256][2];
 
 static void initLWALUTs(void) {
     // Look-up table inialization function from the VDIFIO library
@@ -63,7 +64,7 @@ static void initLWALUTs(void) {
         tbnLUT[i] -= ((i&128)<<1);
     }
     
-    // DRX & TBF
+    // DRX & TBF & OVRO
     for(i=0; i<256; i++) {
         for(j=0; j<2; j++) {
             t = (i >> 4*(1-j)) & 15;
@@ -72,6 +73,9 @@ static void initLWALUTs(void) {
             
             tbfLUT[i][j] = t;
             tbfLUT[i][j] -= ((t&8)<<1);
+            
+            ovroLUT[i][j] = t;
+            ovroLUT[i][j] -= ((t&8)<<1);
         }
     }
 }
@@ -89,6 +93,7 @@ static PyMethodDef GoFastMethods[] = {
     {"read_vdif",   (PyCFunction) read_vdif,   METH_VARARGS|METH_KEYWORDS, read_vdif_doc  }, 
     {"read_tbf",    (PyCFunction) read_tbf,    METH_VARARGS,               read_tbf_doc   }, 
     {"read_cor",    (PyCFunction) read_cor,    METH_VARARGS,               read_cor_doc   }, 
+    {"read_ovro",   (PyCFunction) read_ovro,   METH_VARARGS,               read_ovro_doc  }, 
     {NULL,          NULL,                      0,                          NULL           }
 };
 
@@ -162,6 +167,7 @@ MOD_INIT(_gofast) {
     PyList_Append(all, PyString_FromString("read_vdif"));
     PyList_Append(all, PyString_FromString("read_tbf"));
     PyList_Append(all, PyString_FromString("read_cor"));
+    PyList_Append(all, PyString_FromString("read_ovro"));
     PyList_Append(all, PyString_FromString("SyncError"));
     PyList_Append(all, PyString_FromString("EOFError"));
     PyList_Append(all, PyString_FromString("NCHAN_COR"));
