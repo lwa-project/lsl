@@ -118,6 +118,20 @@ class Frame(FrameBase):
 
 _HEADER_CACHE = {}
 
+def _clean_header_cache():
+    """
+    Internal function to deal with housekeeping on the header cache.
+    """
+    
+    to_remove = []
+    for key in _HEADER_CACHE.keys():
+        if key.closed:
+            to_remove.append(key)
+            
+    for key in to_remove:
+        del _HEADER_CACHE[key]
+
+
 def read_frame(filehandle, verbose=False):
     """
     Function to read in a single OVRO-LWA triggered voltage buffer dump file
