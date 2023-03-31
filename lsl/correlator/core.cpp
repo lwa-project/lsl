@@ -153,7 +153,7 @@ void compute_fengine_real(long nStand,
     
     // Pre-compute the phase rotation and scaling factor
     OutType* rot;
-    rot = (OutType*) malloc(sizeof(OutType) * nStand*nChan);
+    rot = (OutType*) aligned64_malloc(sizeof(OutType) * nStand*nChan);
     compute_phase_rotator(nStand, nChan, SampleRate, 0, 2*nChan, freq, fifo, frac, rot);
     
     #ifdef _OPENMP
@@ -210,7 +210,7 @@ void compute_fengine_real(long nStand,
         fftwf_free(in);
         fftwf_free(out);
     }
-    free(rot);
+    aligned64_free(rot);
     
     fftwf_destroy_plan(p);
     fftwf_free(inP);
@@ -260,7 +260,7 @@ void compute_fengine_complex(long nStand,
     
     // Pre-compute the phase rotation and scaling factor
     OutType* rot;
-    rot = (OutType*) malloc(sizeof(OutType) * nStand*nChan);
+    rot = (OutType*) aligned64_malloc(sizeof(OutType) * nStand*nChan);
     compute_phase_rotator(nStand, nChan, SampleRate, nChan/2, nChan, freq, fifo, frac, rot);
     
     #ifdef _OPENMP
@@ -320,7 +320,7 @@ void compute_fengine_complex(long nStand,
         
         fftwf_free(in);
     }
-    free(rot);
+    aligned64_free(rot);
     
     fftwf_destroy_plan(p);
     fftwf_free(inP);
@@ -405,8 +405,8 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Compute the integer sample offset and the fractional sample delay for each stand
     long *fifo, fifoMax;
     double *frac;
-    fifo = (long *) malloc(nStand*sizeof(long));
-    frac = (double *) malloc(nStand*nChan*sizeof(double));
+    fifo = (long *) aligned64_malloc(nStand*sizeof(long));
+    frac = (double *) aligned64_malloc(nStand*nChan*sizeof(double));
     if( fifo == NULL || frac == NULL ) {
         PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
         goto fail;
@@ -423,8 +423,8 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
     if(dataF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-        free(fifo);
-        free(frac);
+        aligned64_free(fifo);
+        aligned64_free(frac);
         goto fail;
     }
     
@@ -435,8 +435,8 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
     if(validF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-        free(fifo);
-        free(frac);
+        aligned64_free(fifo);
+        aligned64_free(frac);
         goto fail;
     }
     
@@ -472,8 +472,8 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
 #undef LAUNCH_FENGINE_REAL
 #undef LAUNCH_FENGINE_COMPLEX
     
-    free(frac);
-    free(fifo);
+    aligned64_free(frac);
+    aligned64_free(fifo);
     
     signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
     
@@ -593,7 +593,7 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     isReal = 1 - PyArray_ISCOMPLEX(data);
     
     // Calculate the windowing function for the PFB
-    pfb = (double*) malloc(sizeof(double) * (1+isReal)*nChan*nTap);
+    pfb = (double*) aligned64_malloc(sizeof(double) * (1+isReal)*nChan*nTap);
     for(int i=0; i<(1+isReal)*nChan*nTap; i++) {
         *(pfb + i) = sinc((i - (1+isReal)*nChan*nTap/2.0 + 0.5)/((1+isReal)*nChan));
         *(pfb + i) *= hamming(2*NPY_PI*i/((1+isReal)*nChan*nTap));
@@ -602,8 +602,8 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Compute the integer sample offset and the fractional sample delay for each stand
     long *fifo, fifoMax;
     double *frac;
-    fifo = (long *) malloc(nStand*sizeof(long));
-    frac = (double *) malloc(nStand*nChan*sizeof(double));
+    fifo = (long *) aligned64_malloc(nStand*sizeof(long));
+    frac = (double *) aligned64_malloc(nStand*nChan*sizeof(double));
     if( fifo == NULL || frac == NULL ) {
         PyErr_Format(PyExc_MemoryError, "Cannot create fifo/fractional delay arrays");
         goto fail;
@@ -620,8 +620,8 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
     if(dataF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-        free(fifo);
-        free(frac);
+        aligned64_free(fifo);
+        aligned64_free(frac);
         goto fail;
     }
     
@@ -632,8 +632,8 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
     if(validF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-        free(fifo);
-        free(frac);
+        aligned64_free(fifo);
+        aligned64_free(frac);
         goto fail;
     }
     
@@ -669,9 +669,9 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
 #undef LAUNCH_PFBENGINE_REAL
 #undef LAUNCH_PFBENGINE_COMPLEX
     
-    free(frac);
-    free(fifo);
-    free(pfb);
+    aligned64_free(frac);
+    aligned64_free(fifo);
+    aligned64_free(pfb);
     
     signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
     
@@ -685,7 +685,7 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     
 fail:
     if( pfb != NULL ) {
-        free(pfb);
+        aligned64_free(pfb);
     }
     Py_XDECREF(data);
     Py_XDECREF(freq);

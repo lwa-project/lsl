@@ -170,7 +170,7 @@ void compute_spec_complex(long nStand,
     #endif
     {
         in = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
-        temp2 = (double*) malloc(sizeof(double) * (nChan/2+nChan%2));
+        temp2 = (double*) aligned64_malloc(sizeof(double) * (nChan/2+nChan%2));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -226,7 +226,7 @@ void compute_spec_complex(long nStand,
         }
         
         fftwf_free(in);
-        free(temp2);
+        aligned64_free(temp2);
     }
     fftwf_destroy_plan(p);
     fftwf_free(inP);
@@ -397,7 +397,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     isReal = 1 - PyArray_ISCOMPLEX(data);
     
     // Calculate the windowing function for the PFB
-    pfb = (double*) malloc(sizeof(double) * (1+isReal)*nChan*nTap);
+    pfb = (double*) aligned64_malloc(sizeof(double) * (1+isReal)*nChan*nTap);
     for(int i=0; i<(1+isReal)*nChan*nTap; i++) {
         *(pfb + i) = sinc((i - (1+isReal)*nChan*nTap/2.0 + 0.5)/((1+isReal)*nChan));
         *(pfb + i) *= hamming(2*NPY_PI*i/((1+isReal)*nChan*nTap));
@@ -440,7 +440,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
 #undef LAUNCH_PFB_REAL
 #undef LAUNCH_PFB_COMPLEX
     
-    free(pfb);
+    aligned64_free(pfb);
     
     signalsF = Py_BuildValue("O", PyArray_Return(dataF));
     
@@ -451,7 +451,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     
 fail:
     if( pfb != NULL ) {
-        free(pfb);
+        aligned64_free(pfb);
     }
     Py_XDECREF(data);
     Py_XDECREF(dataF);
