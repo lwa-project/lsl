@@ -149,7 +149,7 @@ void compute_fengine_real(long nStand,
     long secStart;
     
     // Time-domain blanking control
-    double cleanFactor;
+    typename OutType::value_type cleanFactor;
     
     // Pre-compute the phase rotation and scaling factor
     OutType* rot;
@@ -206,7 +206,7 @@ void compute_fengine_real(long nStand,
             }
             
             for(k=0; k<nChan; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor * out[k];
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = cleanFactor * out[k];
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             
@@ -262,7 +262,7 @@ void compute_fengine_complex(long nStand,
     long secStart;
     
     // Time-domain blanking control
-    double cleanFactor;
+    typename OutType::value_type cleanFactor;
     
     // Pre-compute the phase rotation and scaling factor
     OutType* rot;
@@ -313,11 +313,11 @@ void compute_fengine_complex(long nStand,
             }
             
             for(k=0; k<nChan/2; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor * in[k+nChan/2+nChan%2];
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = cleanFactor * in[k+nChan/2+nChan%2];
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             for(k=nChan/2; k<nChan; k++) {
-                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = (float) cleanFactor * in[k-nChan/2];
+                *(fdomain + nChan*nFFT*i + nFFT*k + j)  = cleanFactor * in[k-nChan/2];
                 *(fdomain + nChan*nFFT*i + nFFT*k + j) *= *(rot + nChan*i + k);
             }
             
