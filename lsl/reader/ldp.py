@@ -10,6 +10,7 @@ Data format objects included are:
   * DRSpecFile
   * TBFFile
   * CORFILE
+  * OVROFile
 
 Also included are the LWA1DataFile, LWASVDataFile, and LWADataFile functions 
 that take a filename and try to determine the correct data format object to
@@ -36,7 +37,7 @@ from collections import deque, defaultdict
 
 from lsl.common.dp import fS
 from lsl.common.adp import fC
-from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
+from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, ovro, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp
@@ -49,9 +50,9 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.4'
-__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
-           'LWASVDataFile', 'LWADataFile']
+__version__ = '0.5'
+__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'OVROFile',
+           'LWA1DataFile', 'LWASVDataFile', 'OVROLWADataFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):
@@ -2423,6 +2424,305 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
     return ldpInstance
 
 
+class OVROFile(LDPFileBase):
+    """
+    Class to make it easy to interface with a OVRO-LWA triggered voltage buffer
+    dump file.  Methods defined for this class are:
+     * get_info - Get information about the file's contents
+     * get_remaining_frame_count - Get the number of frames remaining in the file
+     * offset - Offset a specified number of seconds into the file
+     * read_frame - Read and return a single `lsl.reader.ovro.Frame` instance
+     * read - Read in the capture and return it as a numpy array
+    """
+    
+    def _ready_file(self):
+        """
+        Find the start of valid OVRO-LWA triggered voltage dump data.
+        """
+        
+        self.fh.seek(0)
+        
+        return True
+        
+    def _describe_file(self):
+        """
+        Describe the OVRO-LWA triggered voltage buffer dump file.
+        """
+        
+        with FilePositionSaver(self.fh):
+            # Read in two frames
+            junkFrame = ovro.read_frame(self.fh)
+            fmark0 = self.fh.tell()
+            junkFrame2 = ovro.read_frame(self.fh)
+            fmark1 = self.fh.tell()
+            self.fh.seek(-2*(fmark1-fmark0), 1)
+            header_size = self.fh.tell()
+            
+            # Basic file information
+            try:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+            nFramesFile = (filesize - self.fh.tell()) // (fmark1 - fmark0)
+            srate = 8192 / 196e6
+            bits = 4
+            nFramesPerObs = ovro.get_frames_per_obs(self.fh)
+            nchan = ovro.get_channel_count(self.fh)
+            firstChan = ovro.get_first_channel(self.fh)
+            
+            # Find the "real" starttime
+            start = junkFrame.time
+            startRaw = junkFrame.header.timetag
+            
+            # Antenna parameters
+            nantenna = junkFrame.payload.data.shape[-2]*junkFrame.payload.data.shape[-1]
+            
+        # Jump over the header
+        self.fh.seek(header_size, 0)
+        
+        # Calculate the frequencies
+        freq = junkFrame.channel_freqs
+        
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': fmark1-fmark0,
+                            'header_size': header_size, 'sample_rate': srate, 'data_bits': bits, 
+                            'nantenna': nantenna, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
+                            'start_time_samples': startRaw}
+        
+    def get_remaining_frame_count(self):
+        """
+        Return the number of frames left in the file.
+        """
+        
+        return (self.description['size'] - self.fh.tell()) // self.description['frame_size']
+        
+    def offset(self, offset):
+        """
+        Offset a specified number of seconds in an open OVRO-LWA triggered
+        voltage buffer dump file.  This function returns the exact offset time.
+        """
+        
+        # Find out where we really are taking into account the buffering
+        buffer_offset = 0
+        if getattr(self, "_timetag", None) is not None:
+            frame = ovro.read_frame(self.fh)
+            self.fh.seek(-self.description['frame_size'], 1)
+            curr = frame.header.time_tag
+            buffer_offset = curr - self._timetag
+            buffer_offset = buffer_offset / fS
+            
+        offset = offset - buffer_offset
+        frameOffset = int(offset * self.description['sample_rate'])
+        frameOffset = int(1.0 * frameOffse)
+        self.fh.seek(frameOffset*self.description['frame_size'], 1)
+        
+        # Update the file metadata
+        self._describe_file()
+        
+        # Reset the timetag checker
+        self._timetag = None
+        
+        return 1.0 * frameOffset / self.description['sample_rate']
+        
+    def read_frame(self):
+        """
+        Read and return a single `lsl.reader.ovro.Frame` instance.
+        """
+        
+        # Reset the timetag checker
+        self._timetag = None
+        
+        return ovro.read_frame(self.fh)
+        
+    def read(self, duration=None, time_in_samples=False):
+        """
+        Read and return the entire OVRO-LWA triggered voltage buffer dump.  This
+        function returns a three-element tuple with elements of:
+         0) the actual duration of data read in, 
+         1) the time tag for the first sample, and
+         2) a 3-D Numpy array of data.
+        
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
+        
+        The sorting order of the output data array is by 
+        digitizer number - 1.
+        """ 
+        
+        # Make sure there is file left to read
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
+            raise errors.EOFError()
+            
+        # Covert the sample rate to an expected timetag skip
+        timetagSkip = int(1.0 / self.description['sample_rate'] * fS)
+        
+        # Setup the counter variables:  frame count and time tag count
+        if getattr(self, "_timetag", None) is None:
+            self._timetag = 0
+            
+        # Find out how many frames to read in
+        if duration is None:
+            duration = self.description['nframe'] / self.description['sample_rate']
+        frame_count = int(round(1.0 * duration * self.description['sample_rate']))
+        frame_count = frame_count if frame_count else 1
+        duration = frame_count / self.description['sample_rate']
+        
+        nFrameSets = 0
+        eofFound = False
+        setTime = None
+        data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=numpy.complex64)
+        while True:
+            if eofFound or nFrameSets == frame_count:
+                break
+                
+            try:
+                cFrame = ovro.read_frame(self.fh, verbose=False)
+            except errors.EOFError:
+                eofFound = True
+                cFrame = None
+                
+            # Continue adding frames if nothing comes out.
+            if cFrame is None:
+                continue
+                
+            # If something comes out, add it to the data array
+            cTimetag = cFrame.header.timetag
+            if self._timetag == 0:
+                self._timetag = cTimetag - timetagSkip
+            if cTimetag != self._timetag+timetagSkip:
+                actStep = cTimetag - self._timetag
+                if self.ignore_timetag_errors:
+                    warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
+                else:
+                    raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+            self._timetag = cFrame.header.timetag
+            
+            if setTime is None:
+                if time_in_samples:
+                    setTime = cFrame.header.timetag
+                else:
+                    setTime = cFrame.time
+                    
+            subData = cFrame.payload.data
+            subData.shape = (self.description['nchan'], self.description['nantenna'])
+            subData = subData.T
+            
+            data[:,:,nFrameSets] = subData
+            nFrameSets += 1
+            
+        # Sanity check at the end to see if we actually read anything.  
+        # This is needed because of how TBF and DRX interact where TBF
+        # files can be padded at the end with DRX data
+        if nFrameSets == 0 and duration > 0:
+            raise errors.EOFError()
+            
+        # Adjust the duration to account for all of the things that could 
+        # have gone wrong while reading the data
+        duration = nFrameSets  / self.description['sample_rate']
+        
+        return duration, setTime, data
+
+
+def OVROLWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
+    """
+    Wrapper around the various LWA-SV-related classes defined here that takes
+    a file, determines the data type, and initializes and returns the 
+    appropriate LDP class.
+    """
+    
+    # Open the file as appropriate
+    is_splitfile = False
+    if fh is None:
+        fh = open(filename, 'rb')
+    else:
+        filename = fh.name
+        if not isinstance(fh, SplitFileWrapper):
+            if fh.mode.find('b') == -1:
+                fh.close()
+                fh = open(filename, 'rb')
+        else:
+            is_splitfile = True
+            
+    # Read a bit of data to try to find the right type
+    for mode in (drx, ovro):
+        ## Set if we find a valid frame marker
+        foundMatch = False
+        ## Set if we can read more than one valid successfully
+        foundMode = False
+        
+        ## Sort out the frame size.  This is tricky because DR spectrometer files
+        ## have frames of different sizes depending on the mode
+        if mode == drspec:
+            try:
+                mfs = drspec.get_frame_size(fh)
+            except:
+                mfs = 0
+        else:
+            mfs = mode.FRAME_SIZE
+            
+        ## Loop over the frame size to try and find what looks like valid data.  If
+        ## is is found, set 'foundMatch' to True.
+        for i in range(mfs):
+            try:
+                junkFrame = mode.read_frame(fh)
+                foundMatch = True
+                break
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                fh.seek(-mfs+1, 1)
+                
+        ## Did we strike upon a valid frame?
+        if foundMatch:
+            ### Is so, we now need to try and read more frames to make sure we have 
+            ### the correct type of file
+            fh.seek(-mfs, 1)
+            
+            try:
+                for i in range(2):
+                    junkFrame = mode.read_frame(fh)
+                foundMode = True
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                ### Reset for the next mode...
+                fh.seek(0)
+        else:
+            ### Reset for the next mode...
+            fh.seek(0)
+            
+        ## Did we read more than one valid frame?
+        if foundMode:
+            break
+            
+    fh.seek(0)
+    if not is_splitfile:
+        fh.close()
+        fh = None
+    
+    # Raise an error if nothing is found
+    if not foundMode:
+        raise RuntimeError("File '%s' does not appear to be a valid OVRO-LWA data file" % filename)
+        
+    # Otherwise, build and return the correct LDPFileBase sub-class
+    if mode == drx:
+        ldpInstance = DRXFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    else:
+        ldpInstance = OVROFile(filename=filename, fh=fh,
+                               ignore_timetag_errors=ignore_timetag_errors,
+                               buffering=buffering)
+        
+    # Done
+    return ldpInstance
+
+
 def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
     """
     Wrapper around the various classes defined here that takes a file, 
@@ -2448,6 +2748,16 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
             ldpInstance = LWASVDataFile(filename=filename, fh=fh,
                                        ignore_timetag_errors=ignore_timetag_errors,
                                        buffering=buffering)
+            found = True
+        except RuntimeError:
+            pass
+            
+    # OVRO-LWA?
+    if not found:
+        try:
+            ldpInstance = OVROLWADataFile(filename=filename, fh=fh,
+                                          ignore_timetag_errors=ignore_timetag_errors,
+                                          buffering=buffering)
             found = True
         except RuntimeError:
             pass

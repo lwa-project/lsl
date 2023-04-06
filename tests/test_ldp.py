@@ -19,7 +19,7 @@ from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
 
 
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -29,6 +29,8 @@ drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
 drspecFile = os.path.join(DATA_BUILD, 'tests', 'drspec-test.dat')
 
 tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
+
+ovroFile = os.path.join(DATA_BUILD, 'tests', 'ovro-test.dat')
 
 
 class ldp_tests(unittest.TestCase):
@@ -554,6 +556,11 @@ class ldp_tests(unittest.TestCase):
         """Test the LDP LWA1DataFile function of TBF."""
         # TBF
         self.assertRaises(RuntimeError, ldp.LWA1DataFile, tbfFile)
+        
+    def test_ldp_discover_ovro(self):
+        """Test the LDP LWA1DataFile function of OVRO-LWA triggered voltage buffer dump."""
+        # TBF
+        self.assertRaises(RuntimeError, ldp.LWA1DataFile, ovroFile)
         
     ### SplitFileWrapper ###
     
