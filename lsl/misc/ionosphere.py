@@ -50,7 +50,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = "0.6"
+__version__ = "0.7"
 __all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
            'get_tec_value', 'get_ionospheric_pierce_point']
 
@@ -622,6 +622,48 @@ def _download_jpl(mjd, type='final'):
     return status
 
 
+def _download_emr(mjd, type='final'):
+    """
+    Given an MJD value, download the corresponding EMR final data product 
+    for that day.
+    
+    .. note::
+        By default the "final" product is downloaded.  However, the "rapid" 
+        data product may be downloaded if the 'type' keyword is set to 
+        "rapid".
+    """
+    
+    # Convert the MJD to a datetime instance so that we can pull out the year
+    # and the day-of-year
+    mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
+    
+    year = dt.year
+    dayOfYear = int(dt.strftime('%j'), 10)
+    
+    # Figure out which file we need to download
+    if type == 'final':
+        ## Final
+        filename = 'emrg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'EMR0OPSFIN_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
+    elif type == 'rapid':
+        ## Rapid
+        filename = 'ehrg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'EMR0OPSRAP_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
+    else:
+        ## ???
+        raise ValueError("Unknown TEC file type '%s'" % type)
+        
+    # Attempt to download the data
+    for fname in (long_filename, filename):
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('emr_url'), year, dayOfYear, fname), filename)
+        if not status:
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('emr_mirror'), year, dayOfYear, fname), filename)
+        if status:
+            break
+    return status
+
+
 def _download_uqr(mjd, type='final'):
     """
     Given an MJD value, download the corresponding JPL final data product 
@@ -1175,6 +1217,17 @@ def _load_map(mjd, type='IGS'):
         ## Filename templates
         filenameTemplate = 'jplg%03i0.%02ii.Z'
         filenameAltTemplate = 'jprg%03i0.%02ii.Z'
+        
+    elif type.upper() == 'EMR':
+        ## Cache entry name
+        cacheName = 'TEC-EMR-%i' % mjd
+        
+        ## Download helper
+        downloader = _download_emr
+        
+        ## Filename templates
+        filenameTemplate = 'emrg%03i0.%02ii.Z'
+        filenameAltTemplate = 'ehrg%03i0.%02ii.Z'
         
     elif type.upper() == 'UQR':
         ## Cache entry name
