@@ -645,11 +645,11 @@ def _download_emr(mjd, type='final'):
     if type == 'final':
         ## Final
         filename = 'emrg%03i0.%02ii.Z' % (dayOfYear, year%100)
-        long_filename = 'EMR0OPSFIN_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
+        long_filename = 'EMR0OPSFIN_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
     elif type == 'rapid':
         ## Rapid
         filename = 'ehrg%03i0.%02ii.Z' % (dayOfYear, year%100)
-        long_filename = 'EMR0OPSRAP_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
+        long_filename = 'EMR0OPSRAP_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
     else:
         ## ???
         raise ValueError("Unknown TEC file type '%s'" % type)
