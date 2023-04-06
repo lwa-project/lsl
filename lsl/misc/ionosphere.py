@@ -577,9 +577,9 @@ def _download_igs(mjd, type='final'):
         
     # Attempt to download the data
     for fname in (long_filename, filename):
-        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, fname), fname)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, fname), filename)
         if not status:
-            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, fname), fname)
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, fname), filename)
         if status:
             break
     return status
@@ -683,9 +683,9 @@ def _download_code(mjd, type='final'):
     
     # Attempt to download the data
     for fname in (long_filename, filename):
-        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, fname), fname)
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, fname), filename)
         if not status:
-            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, fname), fname)
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, fname), filename)
         if status:
             break
     return status
