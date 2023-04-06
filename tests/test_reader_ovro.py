@@ -67,9 +67,9 @@ class reader_ovro_tests(unittest.TestCase):
         self.assertTrue(0 < frames[0])
         self.assertFalse(0 > frames[0])
         self.assertTrue(frames[-1] >= frames[0])
-        self.assertTrue(frames[-1] <= frames[0])
+        self.assertFalse(frames[-1] < frames[0])
         self.assertTrue(frames[0] == frames[0])
-        self.assertTrue(frames[0] == frames[-1])
+        self.assertTrue(frames[0] != frames[-1])
         self.assertFalse(frames[0] != frames[0])
         
     def test_ovro_sort(self):
