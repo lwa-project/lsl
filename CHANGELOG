@@ -1,3 +1,7 @@
+2.1.8
+ * Added support for triggered voltage buffer dump files from OVRO-LWA with lsl.reader.ovro
+ * Added support for triggered voltage buffer dump files from OVRO-LWA in lsl.reader.ldp
+
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
  * Updated the LWA1 SSMIF to 2022/11/15
