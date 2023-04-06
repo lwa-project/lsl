@@ -226,6 +226,63 @@ class ionosphere_tests(unittest.TestCase):
             tec, rms = ionosphere.get_tec_value(58415, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
             self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
             self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
+            
+    def test_tec_value_lpn(self):
+        """Test retrieving the TEC value at a particular location in the era of long product names"""
+        
+        with self.subTest(service='IGS'):
+            """
+            ...
+            """
+            
+            tec, rms = ionosphere.get_tec_value(60025, lat=34.0, lng=-107.0, include_rms=True, type='IGS')
+            # self.assertAlmostEqual(tec[0][0], 14.87999992, 6)
+            # self.assertAlmostEqual(rms[0][0],  0.73999999, 6)
+            
+        with self.subTest(service='JPL'):
+            """
+            ...
+            """
+            
+            tec, rms = ionosphere.get_tec_value(60025, lat=34.0, lng=-107.0, include_rms=True, type='JPL')
+            # self.assertAlmostEqual(tec[0][0], 15.66000019, 6)
+            # self.assertAlmostEqual(rms[0][0],  2.50000000, 6)
+            
+        with self.subTest(service='EMR'):
+            """
+            ...
+            """
+            
+            tec, rms = ionosphere.get_tec_value(60025, lat=34.0, lng=-107.0, include_rms=True, type='EMR')
+            # self.assertAlmostEqual(tec[0][0], 15.66000019, 6)
+            # self.assertAlmostEqual(rms[0][0],  2.50000000, 6)
+            
+        with self.subTest(service='CODE'):
+            """
+            ...
+            """
+            
+            tec, rms = ionosphere.get_tec_value(60025, lat=34.0, lng=-107.0, include_rms=True, type='CODE')
+            # self.assertAlmostEqual(tec[0][0], 14.14000015, 6)
+            # self.assertAlmostEqual(rms[0][0],  0.76000000, 6)
+            
+        with self.subTest(service='UQR'):
+            """
+            ...
+            """
+            
+            tec, rms = ionosphere.get_tec_value(60025, lat=34.0, lng=-107.0, include_rms=True, type='UQR')
+            # self.assertAlmostEqual(tec[0][0], 13.25999996, 6)
+            # self.assertAlmostEqual(rms[0][0],  6.91600008, 6)
+            
+        with self.subTest(service='USTEC'):
+            """
+            ...
+            """
+            
+            tec, rms = ionosphere.get_tec_value(60025, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
+            # self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
+            # self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
 
 
 class ionosphere_test_suite(unittest.TestSuite):
