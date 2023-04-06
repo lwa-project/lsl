@@ -47,10 +47,8 @@ __version__ = '0.1'
 class FrameHeader(FrameHeaderBase):
     _header_attrs = ['timetag', 'seq0', 'sync_time', 'pipeline_id', 'first_chan', 'nchan']
     
-    def __init__(self, timetag=None, seq0=None, sync_time=None, pipeline_id=None, first_chan=None, nchan=None):
+    def __init__(self, timetag=None, pipeline_id=None, first_chan=None, nchan=None):
         self.timetag = timetag
-        self.seq0 = seq0
-        self.sync_time = sync_time
         self.pipeline_id = pipeline_id
         self.first_chan = first_chan
         self.nchan = nchan
@@ -64,7 +62,7 @@ class FrameHeader(FrameHeaderBase):
         `lsl.reader.base.FrameTimestamp` instance.
         """
         
-        return FrameTimestamp.from_dp_timetag(self.sync_time*196000000 + self.timetag*8192)
+        return FrameTimestamp.from_dp_timetag(self.timetag)
         
     @property
     def channel_freqs(self):
@@ -161,9 +159,7 @@ def read_frame(filehandle, verbose=False):
         data = read_ovro_spec(filehandle, nchan, nstand, npol)
         
         newFrame = Frame()
-        newFrame.header.timetag = header['time_tag'] + delta_timetag
-        newFrame.header.seq0 = header['seq0']
-        newFrame.header.sync_time = header['sync_time']
+        newFrame.header.timetag = (int(header['seq']) + delta_timetag) * 8192
         newFrame.header.pipeline_id = header['pipeline_id']
         newFrame.header.first_chan = header['chan0']
         newFrame.header.nchan = nchan
@@ -180,6 +176,9 @@ def get_frames_per_obs(filehandle):
     frames per observation.
     """
     
+    # Housekeeping
+    _clean_header_cache()
+    
     return 1
 
 
@@ -188,6 +187,9 @@ def get_channel_count(filehandle):
     Find out the total number of channels that are present.  Return the number
     of channels found.
     """
+    
+    # Housekeeping
+    _clean_header_cache()
     
     # Go to the file header
     try:
@@ -216,6 +218,9 @@ def get_first_channel(filehandle, frequency=False):
     buffer dump file.  If the `frequency` keyword is True the returned value is
     in Hz.
     """
+    
+    # Housekeeping
+    _clean_header_cache()
     
     # Go to the file header
     try:
