@@ -566,17 +566,22 @@ def _download_igs(mjd, type='final'):
     if type == 'final':
         ## Final
         filename = 'igsg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'IGS0OPSFIN_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
     elif type == 'rapid':
         ## Rapid
         filename = 'igrg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'IGS0OPSRAP_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
     else:
         ## ???
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, filename), filename)
-    if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, filename), filename)
+    for fname in (long_filename, filename):
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, fname), fname)
+        if not status:
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, fname), fname)
+        if status:
+            break
     return status
 
 
@@ -674,11 +679,15 @@ def _download_code(mjd, type='final'):
     
     # Figure out which file we need to download
     filename = 'codg%03i0.%02ii.Z' % (dayOfYear, year%100)
+    long_filename = 'COD0OPSFIN_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
     
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, filename), filename)
-    if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, filename), filename)
+    for fname in (long_filename, filename):
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, fname), fname)
+        if not status:
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, fname), fname)
+        if status:
+            break
     return status
 
 
