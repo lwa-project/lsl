@@ -69,6 +69,8 @@ def main(args):
         mtype = 'IGS'
     elif args.jpl:
         mtype = 'JPL'
+    elif args.emr:
+        mtype = 'EMR'
     elif args.code:
         mtype = 'CODE'
     elif args.ustec:
@@ -165,6 +167,8 @@ if __name__ == "__main__":
                         help='use the IGS data products')               
     mgroup.add_argument('-j', '--jpl', action='store_true', 
                         help='use the JPL data products')
+    mgroup.add_argument('-e', '--emr', action='store_true', 
+                        help='use the EMR data products')
     mgroup.add_argument('-c', '--code', action='store_true', 
                         help='use the CODE data products')
     mgroup.add_argument('-u', '--ustec', action='store_true', 
