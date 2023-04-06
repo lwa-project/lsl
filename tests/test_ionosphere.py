@@ -17,7 +17,7 @@ from lsl.misc import ionosphere
 import lsl.testing
 
 
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -169,6 +169,15 @@ class ionosphere_tests(unittest.TestCase):
             tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='JPL')
             self.assertAlmostEqual(tec[0][0], 15.66000019, 6)
             self.assertAlmostEqual(rms[0][0],  2.50000000, 6)
+            
+        with self.subTest(service='EMR'):
+            """
+            ...
+            """
+            
+            tec, rms = ionosphere.get_tec_value(58215, lat=34.0, lng=-107.0, include_rms=True, type='EMR')
+            # self.assertAlmostEqual(tec[0][0], 15.66000019, 6)
+            # self.assertAlmostEqual(rms[0][0],  2.50000000, 6)
             
         with self.subTest(service='CODE'):
             """
