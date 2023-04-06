@@ -467,7 +467,7 @@ def _download_worker_cddis(url, filename):
         return False
         
     ## Further processing, if needed
-    if os.path.splitext(filename)[1] == '.Z':
+    if os.path.splitext(url)[1] == '.Z':
         ## Save it to a regular gzip'd file after uncompressing it.
         _convert_to_gzip(filename)
         
@@ -522,7 +522,7 @@ def _download_worker_standard(url, filename):
             fh.write(data)
             
         ## Further processing, if needed
-        if os.path.splitext(filename)[1] == '.Z':
+        if os.path.splitext(url)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
             _convert_to_gzip(filename)
             
