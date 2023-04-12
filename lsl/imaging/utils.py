@@ -1198,7 +1198,7 @@ def convert_to_stokes(data_set):
     return new_data_set
 
 
-def convert_linear(data_set):
+def convert_to_linear(data_set):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object that contains
     Stokes parameters, convert to linear polarization products and return a
