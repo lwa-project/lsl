@@ -1147,7 +1147,7 @@ def convert_to_stokes(data_set):
         return new_data
         
     if 'I' in data_set.pols or 'Q' in data_set.pols or 'U' in data_set.pols or 'V' in data_set.pols:
-        raise RuntimeData("Data already appear to be represented as Stokes parameters")
+        raise RuntimeError("Data already appear to be represented as Stokes parameters")
         
     pairs = 0
     if 'XX' in data_set.pols and 'YY' in data_set.pols:
@@ -1155,7 +1155,7 @@ def convert_to_stokes(data_set):
     if 'XY' in data_set.pols and 'YX' in data_set.pols:
         pairs += 1
     if pairs == 0:
-        raise RuntimeData("Too few linear polarization products to form any Stokes parameters")
+        raise RuntimeError("Too few linear polarization products to form any Stokes parameters")
         
     try:
         XX = data_set.XX
@@ -1215,7 +1215,7 @@ def convert_linear(data_set):
         return new_data
         
     if 'XX' in data_set.pols or 'YY' in data_set.pols or 'XY' in data_set.pols or 'YX' in data_set.pols:
-        raise RuntimeData("Data already appear to be represented as linear polarization products")
+        raise RuntimeError("Data already appear to be represented as linear polarization products")
         
     pairs = 0
     if 'I' in data_set.pols and 'Q' in data_set.pols:
@@ -1223,7 +1223,7 @@ def convert_linear(data_set):
     if 'U' in data_set.pols and 'V' in data_set.pols:
         pairs += 1
     if pairs == 0:
-        raise RuntimeData("Too few Stokes parameters to form any linear polarization products")
+        raise RuntimeError("Too few Stokes parameters to form any linear polarization products")
         
     try:
         I = data_set.I
