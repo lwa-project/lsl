@@ -50,7 +50,7 @@ except ImportError:
     pass
 
 
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -514,6 +514,39 @@ class imaging_tests(unittest.TestCase):
                 # Bad rephase
                 self.assertRaises(RuntimeError, ds.rephase, vis.SOURCES['vir'])
                 
+                idi.close()
+                
+    def test_convert_to_stokes(self):
+        """Test the utils.convert_to_stokes function."""
+        
+        for filename,type in zip((idiFile, idiAltFile, uvFile), ('FITS-IDI', 'Alt. FITS-IDI', 'UVFITS')):
+            with self.subTest(filetype=type):
+                # Open the file
+                idi = utils.CorrelatedData(filename)
+                
+                # Get some data to sort
+                ds = idi.get_data_set(1)
+                
+                # Convert
+                ds2 = utils.convert_to_stokes(ds)
+                
+                idi.close()
+                
+    def test_convert_to_linear(self):
+        """Test the utils.convert_to_linear function."""
+        
+        for filename,type in zip((idiFile, idiAltFile, uvFile), ('FITS-IDI', 'Alt. FITS-IDI', 'UVFITS')):
+            with self.subTest(filetype=type):
+                # Open the file
+                idi = utils.CorrelatedData(filename)
+                
+                # Get some data to sort
+                ds = idi.get_data_set(1)
+                
+                # Convert
+                with self.assertRaises(RuntimeError):
+                    ds2 = utils.convert_to_linear(ds)
+                    
                 idi.close()
                 
     def test_gridding(self):
