@@ -1,4 +1,5 @@
 2.1.8
+ * Added polarization basis conversions functions to lsl.imaging.utils
  * Added support for triggered voltage buffer dump files from OVRO-LWA with lsl.reader.ovro
  * Added support for triggered voltage buffer dump files from OVRO-LWA in lsl.reader.ldp
 
