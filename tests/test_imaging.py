@@ -526,6 +526,10 @@ class imaging_tests(unittest.TestCase):
         ds = idi.get_data_set(1)
         new_pol = PolarizationDataSet('YY', ds.XX.data, ds.XX.weight, ds.XX.mask)
         ds.append(new_pol)
+        new_pol = PolarizationDataSet('XY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('YX', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
         
         # Convert
         ds2 = utils.convert_to_stokes(ds)
@@ -533,9 +537,13 @@ class imaging_tests(unittest.TestCase):
         # Check
         self.assertTrue(getattr(ds2, 'I', None) is not None)
         self.assertTrue(getattr(ds2, 'Q', None) is not None)
+        self.assertTrue(getattr(ds2, 'U', None) is not None)
+        self.assertTrue(getattr(ds2, 'V', None) is not None)
         
         numpy.testing.assert_allclose(ds2.I.data, 2*ds.XX.data)
         numpy.testing.assert_allclose(ds2.Q.data, 0*ds.XX.data)
+        numpy.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
+        numpy.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
         
         idi.close()
         
@@ -552,6 +560,10 @@ class imaging_tests(unittest.TestCase):
         new_ds.append(new_pol)
         new_pol = PolarizationDataSet('Q', ds.XX.data, ds.XX.weight, ds.XX.mask)
         new_ds.append(new_pol)
+        new_pol = PolarizationDataSet('U', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        new_ds.append(new_pol)
+        new_pol = PolarizationDataSet('V', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        new_ds.append(new_pol)
         
         # Convert
         ds2 = utils.convert_to_linear(new_ds)
@@ -559,9 +571,13 @@ class imaging_tests(unittest.TestCase):
         # Check
         self.assertTrue(getattr(ds2, 'XX', None) is not None)
         self.assertTrue(getattr(ds2, 'YY', None) is not None)
+        self.assertTrue(getattr(ds2, 'XY', None) is not None)
+        self.assertTrue(getattr(ds2, 'YX', None) is not None)
         
         numpy.testing.assert_allclose(ds2.XX.data, 1*ds.XX.data)
         numpy.testing.assert_allclose(ds2.YY.data, 0*ds.XX.data)
+        numpy.testing.assert_allclose(ds2.XY.data, (ds.XX.data-1j*ds.XX.data)/2.0)
+        numpy.testing.assert_allclose(ds2.YX.data, (ds.XX.data+1j*ds.XX.data)/2.0)
         
         idi.close()
         

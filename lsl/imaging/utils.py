@@ -1244,11 +1244,11 @@ def convert_to_linear(data_set):
         U = data_set.U
         V = data_set.V
         
-        XY = (U.data - 1j*V.data)/2.0
+        XYd = (U.data - 1j*V.data)/2.0
         XYw = (U.weight + V.weight)/2.0
         XYm = U.mask | V.mask
         
-        YX = (U.data + 1j*V.data)/2.0
+        YXd = (U.data + 1j*V.data)/2.0
         YXw = (U.weight + V.weight)/2.0
         YXm = U.mask | V.mask
     except AttributeError:
