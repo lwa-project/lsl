@@ -1,3 +1,6 @@
+2.1.8
+ * Added polarization basis conversions functions to lsl.imaging.utils
+
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
  * Updated the LWA1 SSMIF to 2022/11/15
