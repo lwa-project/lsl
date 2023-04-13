@@ -39,7 +39,7 @@ class PolarizationDataSet(object):
         self.weight = weight
         
         if mask is None:
-            mask = numpy.zeros(self.data.shape, dtype=numpy.bool)
+            mask = numpy.zeros(self.data.shape, dtype=bool)
         self.mask = mask
             
     @property
@@ -77,7 +77,7 @@ class PolarizationDataSet(object):
             self.weight = weight
             
             if mask is None:
-                mask = numpy.zeros(data.shape, dtype=numpy.bool)
+                mask = numpy.zeros(data.shape, dtype=bool)
             if self.mask.shape != data.shape:
                 raise ValueError("mask shape does not match the data shape")
             self.mask = mask
@@ -92,7 +92,7 @@ class PolarizationDataSet(object):
             self.weight = numpy.vstack([self.weight, weight])
             
             if mask is None:
-                mask = numpy.zeros(data.shape, dtype=numpy.bool)
+                mask = numpy.zeros(data.shape, dtype=bool)
             if self.mask.shape != data.shape:
                 raise ValueError("mask shape does not match the data shape")
             self.mask = numpy.vstack([self.mask, mask])
