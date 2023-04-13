@@ -555,29 +555,29 @@ class imaging_tests(unittest.TestCase):
         
         # Get some data to sort
         ds = idi.get_data_set(1)
-        new_ds = ds.copy(include_pols=False)
-        new_pol = PolarizationDataSet('I', ds.XX.data, ds.XX.weight, ds.XX.mask)
-        new_ds.append(new_pol)
-        new_pol = PolarizationDataSet('Q', ds.XX.data, ds.XX.weight, ds.XX.mask)
-        new_ds.append(new_pol)
-        new_pol = PolarizationDataSet('U', ds.XX.data, ds.XX.weight, ds.XX.mask)
-        new_ds.append(new_pol)
-        new_pol = PolarizationDataSet('V', ds.XX.data, ds.XX.weight, ds.XX.mask)
-        new_ds.append(new_pol)
+        new_pol = PolarizationDataSet('YY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('XY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('YX', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
         
         # Convert
-        ds2 = utils.convert_to_linear(new_ds)
+        ds2 = utils.convert_to_stokes(ds)
+        
+        # Convert back
+        ds3 = utils.convert_to_linear(ds2)
         
         # Check
-        self.assertTrue(getattr(ds2, 'XX', None) is not None)
-        self.assertTrue(getattr(ds2, 'YY', None) is not None)
-        self.assertTrue(getattr(ds2, 'XY', None) is not None)
-        self.assertTrue(getattr(ds2, 'YX', None) is not None)
+        self.assertTrue(getattr(ds3, 'XX', None) is not None)
+        self.assertTrue(getattr(ds3, 'YY', None) is not None)
+        self.assertTrue(getattr(ds3, 'XY', None) is not None)
+        self.assertTrue(getattr(ds3, 'YX', None) is not None)
         
-        numpy.testing.assert_allclose(ds2.XX.data, 1*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.YY.data, 0*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.XY.data, (ds.XX.data-1j*ds.XX.data)/2.0)
-        numpy.testing.assert_allclose(ds2.YX.data, (ds.XX.data+1j*ds.XX.data)/2.0)
+        numpy.testing.assert_allclose(ds3.XX.data, ds.XX.data)
+        numpy.testing.assert_allclose(ds3.YY.data, ds.XX.data)
+        numpy.testing.assert_allclose(ds3.XY.data, ds.XX.data)
+        numpy.testing.assert_allclose(ds3.YX.data, ds.XX.data)
         
         idi.close()
         
