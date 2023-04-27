@@ -302,7 +302,7 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     samplesPerFrame = 512
     freqs = (numpy.fft.fftfreq(samplesPerFrame, d=1.0/sample_rate)) + central_freq
     freqs = numpy.fft.fftshift(freqs)
-    aa = _get_antennaarray(lwa_common.lwa1, stands, start_time, freqs)
+    aa = _get_antennaarray(kwarg['station'], stands, start_time, freqs)
     
     if verbose:
         print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
@@ -342,7 +342,7 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
             j += 1
 
 
-def point_source(fh, stands, src, nframes, mode='TBN', central_freq=49.0e6, filter=7, bits=12, start_time=0, phase_center='z', noise_strength=0.1, verbose=False):
+def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', central_freq=49.0e6, filter=7, bits=12, start_time=0, phase_center='z', noise_strength=0.1, verbose=False):
     """
     Generate a collection of frames with a point source signal for TBN.  
     The point source is specified as a aipy.src object.
@@ -363,6 +363,6 @@ def point_source(fh, stands, src, nframes, mode='TBN', central_freq=49.0e6, filt
         start_time = time.time()
 
     if mode == 'TBN':
-        _point_source_tbn(fh, stands, src, nframes, central_freq=central_freq, filter=filter, start_time=start_time, phase_center=phase_center, noise_strength=noise_strength, verbose=verbose)
+        _point_source_tbn(fh, stands, src, nframes, station=station, central_freq=central_freq, filter=filter, start_time=start_time, phase_center=phase_center, noise_strength=noise_strength, verbose=verbose)
     else:
         raise RuntimeError("Unknown observations mode: %s" % mode)
