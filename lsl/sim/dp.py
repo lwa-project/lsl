@@ -25,7 +25,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __all__ = ['basic_signal', 'point_source']
 
 
@@ -151,6 +151,8 @@ def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, start_tim
         
     .. versionchanged:: 2.1.8:
         Documentaton update
+        `stands` is now a list of :class:`lsl.common.stations.Antenna`
+        instances for TBN
     """
 
     if start_time == 0:
@@ -330,6 +332,8 @@ def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', 
         
     .. versionchanged:: 2.1.8
         Add the `station` keyword and documentation cleanup
+        `stands` is now a list of :class:`lsl.common.stations.Antenna`
+        instances
     """
 
     if start_time == 0:

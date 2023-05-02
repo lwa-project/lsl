@@ -1,6 +1,7 @@
 2.1.8
  * Added polarization basis conversions functions to lsl.imaging.utils
  * Improved TBF frame count reliability
+ * Fixed several bugs in lsl.sim.dp.point_source() that lead to data that would not image properly
 
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
