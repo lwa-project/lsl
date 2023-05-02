@@ -54,20 +54,20 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
             print(" frame %i" % (i+1))
         t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
-        for stand in stands:
-            cFrame = tbn.SimFrame(stand=stand, pol=0, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
+        
+        for j,stand in enumerate(stands):
+            ## NB:  Stand/pol labels in the TBN data are based on the digitizer not
+            ## the stand
+            stand_id = (stand.digitizer - 1) // 2 + 1
+            pol_id = (stand.digitizer - 1) % 2
+            
+            cFrame = tbn.SimFrame(stand=stand_id, pol=pol_id, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
             cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
             cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
             cFrame.data *= maxValue*noise_strength
             cFrame.data += maxValue*numpy.exp(2j*numpy.pi*upperSpike*tFrame)
             cFrame.write_raw_frame(fh)
 
-            cFrame = tbn.SimFrame(stand=stand, pol=1, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
-            cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-            cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-            cFrame.data *= maxValue*noise_strength
-            cFrame.data += maxValue*numpy.exp(2j*numpy.pi*lowerSpike*tFrame)
-            cFrame.write_raw_frame(fh)
 
 def _basic_drx(fh, stands, nframes, **kwargs):
     """
@@ -101,39 +101,27 @@ def _basic_drx(fh, stands, nframes, **kwargs):
         tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         for beam in beams:
             for tune in range(1, ntuning+1):
-                if tune == 1:
-                    # Tuning 1:
-                    cFrame = drx.SimFrame(beam=beam, tune=1, pol=0, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
+                for pol in (0, 1):
+                    if tune == 1:
+                        if pol == 0:
+                            spike = upperSpike1
+                        else:
+                            spike = lowerSpike1
+                    else:
+                        if pol == 0:
+                            spike = lowerSpike2
+                        else:
+                            spike = upperSpike2
+                            
+                    cFrame = drx.SimFrame(beam=beam, tune=tune, pol=pol, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
                     cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
                     cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
                     cFrame.data *= maxValue*noise_strength
-                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*upperSpike1*tFrame)
-                    cFrame.write_raw_frame(fh)
-            
-                    cFrame = drx.SimFrame(beam=beam, tune=1, pol=1, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-                    cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-                    cFrame.data *= maxValue*noise_strength
-                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*lowerSpike1*tFrame)
-                    cFrame.write_raw_frame(fh)
-                else:
-                    # Tuning 2:
-                    cFrame = drx.SimFrame(beam=beam, tune=2, pol=0, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-                    cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-                    cFrame.data *= maxValue*noise_strength
-                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*lowerSpike2*tFrame)
-                    cFrame.write_raw_frame(fh)
-            
-                    cFrame = drx.SimFrame(beam=beam, tune=2, pol=1, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-                    cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-                    cFrame.data *= maxValue*noise_strength
-                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*upperSpike2*tFrame)
+                    cFrame.data += maxValue*numpy.exp(2j*numpy.pi*spike*tFrame)
                     cFrame.write_raw_frame(fh)
 
 
-def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, start_time=0, noise_strength=0.1, verbose=False):
+def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, start_time=0, noise_strength=0.1, verbose=False):
     """
     Generate a collection of frames with a basic test signal for TBN and 
     DRX.  The signals for the three modes are:
@@ -148,7 +136,8 @@ def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, 
      * noise + (-sample_rate/3) kHz signal for x-pol. and noise + 
         (sample_rate/3) for y-pol. -> tuning 2
         
-    All modes need to have stands (beams in the case of DRX) and number of
+    All modes need to have stands (a list of :class:`lsl.common.stations.Antenna`
+    instances for TBN, a list of integer beams numbers for DRX) and number of
     frames to generate.  The TBN and DRX frames need the 'filter'
     keyword set to specify the filter width.  In addition, the 'stands' 
     argument is interpreted as beam numbers for DRX.
@@ -159,6 +148,9 @@ def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, bits=12, 
         
     .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
+        
+    .. versionchanged:: 2.1.8:
+        Documentaton update
     """
 
     if start_time == 0:
@@ -227,7 +219,7 @@ def _get_source_parameters(aa, timestamp, srcs):
     return {'topo': srcs_tp, 'trans': srcs_mt, 'flux': srcs_jy, 'freq': srcs_fq}
 
 
-def _build_signals(aa, stands, src_params, times, pol='x', phase_center='z'):
+def _build_signals(aa, stands, src_params, times):
     """
     Given an aipy AntennaArray, a list of stand numbers, a dictionary of source 
     parameters, and an array of times in ns, return a numpy array of the simulated 
@@ -236,53 +228,40 @@ def _build_signals(aa, stands, src_params, times, pol='x', phase_center='z'):
 
     # Find out how many stands, srcs, and samples (times) we are working with
     Nstand = len(aa.ants)
-    Nsrc = len(src_params['topo'])
     Ntime = len(times)
     
-    # Get the topocentric coorindates for the zenith
-    zen = aipycoord.azalt2top(numpy.array([[numpy.pi/4], [numpy.pi/2]]))
-    zen = numpy.squeeze(zen)
-    
-    # Update the phase center if necessary
-    if phase_center == 'z':
-        phase_centerMap = aipycoord.eq2top_m(0.0, aa.lat)
-    else:
-        phase_center.compute(aa)
-        phase_centerMap = phase_center.map
-
-    # Setup a temporary array to hold the signals per source, stand, and time.  
+    # Setup a temporary array to hold the signals per stand and time.
     # This array is complex so that it can accommidate TBN data
-    temp = numpy.zeros((Nsrc, Nstand, Ntime), dtype=numpy.complex64)
+    temp = numpy.zeros((Nstand, Ntime), dtype=numpy.complex128)
 
     # Loop over sources and stands to build up the signals
-    srcCount = 0
     for topo,trans,flux,freq in zip(src_params['topo'], src_params['trans'], src_params['flux'], src_params['freq']):
-        antCount = 0
-        for ant,std in zip(aa.ants, stands):
-            # Zeroth, get the beam response in the direction of the current source for all frequencies
-            antResponse = numpy.squeeze( ant.bm_response(topo, pol=pol) )
+        # Random Guassian noise for seeding this source
+        rv_samp = numpy.random.randn(2*freq.size).view(numpy.complex128)
+        
+        for j,(ant,std) in enumerate(zip(aa.ants, stands)):
+            ## Zeroth, get the beam response in the direction of the current source for all frequencies
+            antResponse = numpy.squeeze( ant.bm_response(topo, pol='x' if std.pol == 0 else 'y') )
 
-            # First, do the geometric delay
+            ## First, do the geometric delay
             geoDelay = ( numpy.dot(trans, ant.pos).transpose() )[2] 
-            geoDelayPC = ( numpy.dot(phase_centerMap, ant.pos).transpose() )[2]
-
-            # Second, do the cable delay
-            Delayat1MHz = std.cable.delay(frequency=1.0e6) * 1e9 # s -> ns
+            
+            ## Second, do the cable delay
+            delayAt1MHz = std.cable.delay(frequency=1.0e6) * 1e9 # s -> ns
             cblDelay = std.cable.delay(frequency=aa.get_afreqs()*1e9) * 1e9 # s -> ns
-            # NB: Replace the cable delays below 1 MHz with the 1 MHz value to keep the 
-            # delays from blowing up for small f
-            cblDelay = numpy.where( freq >= 0.001, cblDelay, Delayat1MHz )
-
-            for a,j,f,d in zip(antResponse, flux, freq, cblDelay):
-                factor = a * numpy.sqrt(j)
-                angle = 2*numpy.pi*f*(times + (d - (geoDelay-geoDelayPC)))
-                temp[srcCount,antCount,:] += factor*(numpy.cos(angle) + 1j*numpy.sin(angle))
-            antCount = antCount + 1
-        srcCount = srcCount + 1
-
-    # Sum over sources and done
-    tdSignals = temp.sum(axis=0)
-    return tdSignals
+            ## NB: Replace the cable delays below 1 MHz with the 1 MHz value to keep the 
+            ## delays from blowing up for small f
+            cblDelay = numpy.where( freq >= 0.001, cblDelay, delayAt1MHz )
+            
+            ##Finally, load the cable gain
+            cblGain = std.cable.gain(frequency=aa.get_afreqs()*1e9)
+            
+            ## Put it all together
+            factor = antResponse * numpy.sqrt(flux/2) * rv_samp * cblGain
+            temp[j,:] += numpy.fft.ifft(factor * numpy.exp(-2j*numpy.pi*freq*(cblDelay - geoDelay)))
+            
+    # Done
+    return temp
 
 
 def _point_source_tbn(fh, stands, src, nframes, **kwargs):
@@ -293,7 +272,6 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     central_freq = kwargs['central_freq']
     filter = kwargs['filter']
     start_time = kwargs['start_time']
-    phase_center = kwargs['phase_center']
     verbose = kwargs['verbose']
     noise_strength = kwargs['noise_strength']
     
@@ -301,8 +279,7 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     maxValue = 127
     samplesPerFrame = 512
     freqs = (numpy.fft.fftfreq(samplesPerFrame, d=1.0/sample_rate)) + central_freq
-    freqs = numpy.fft.fftshift(freqs)
-    aa = _get_antennaarray(kwarg['station'], stands, start_time, freqs)
+    aa = _get_antennaarray(kwargs['station'], stands, start_time, freqs)
     
     if verbose:
         print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
@@ -315,41 +292,34 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
         tFrame = t/dp_common.fS - start_time + numpy.arange(samplesPerFrame, dtype=numpy.float32) / sample_rate
         
         # Get the source parameters
-        src_params = _get_source_parameters(aa, tFrame[0], src)
+        src_params = _get_source_parameters(aa, t/dp_common.fS, src)
         
         # Generate the time series response of each signal at each frequency
-        tdSignalsX = _build_signals(aa, stands, src_params, tFrame*1e9, pol='x', phase_center=phase_center)
-        tdSignalsY = _build_signals(aa, stands, src_params, tFrame*1e9, pol='y', phase_center=phase_center)
+        tdSignals = _build_signals(aa, stands, src_params, tFrame*1e9)
         
-        j = 0
-        for stand in stands:
-            cFrame = tbn.SimFrame(stand=stand.stand.id, pol=0, central_freq=central_freq, gain=19, frame_count=i+1, obs_time=t)
+        for j,stand in enumerate(stands):
+            ## NB:  Stand/pol labels in the TBN data are based on the digitizer not
+            ## the stand
+            stand_id = (stand.digitizer - 1) // 2 + 1
+            pol_id = (stand.digitizer - 1) % 2
+            
+            cFrame = tbn.SimFrame(stand=stand_id, pol=pol_id, central_freq=central_freq, gain=19, frame_count=i+1, obs_time=t)
             cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
             cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
             cFrame.data *= maxValue*noise_strength
-            cFrame.data += maxValue*tdSignalsX[j,:].astype(numpy.singlecomplex)
+            cFrame.data += maxValue*tdSignals[j,:].astype(numpy.singlecomplex)
             
             cFrame.write_raw_frame(fh)
 
-            cFrame = tbn.SimFrame(stand=stand.stand.id, pol=1, central_freq=central_freq, gain=19, frame_count=i+1, obs_time=t)
-            cFrame.data = numpy.zeros(samplesPerFrame, dtype=numpy.singlecomplex)
-            cFrame.data += numpy.random.randn(samplesPerFrame) + 1j*numpy.random.randn(samplesPerFrame)
-            cFrame.data *= maxValue*noise_strength
-            cFrame.data += maxValue*tdSignalsY[j,:].astype(numpy.singlecomplex)
-            
-            cFrame.write_raw_frame(fh)
-            
-            j += 1
 
-
-def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', central_freq=49.0e6, filter=7, bits=12, start_time=0, phase_center='z', noise_strength=0.1, verbose=False):
+def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', central_freq=49.0e6, filter=7, start_time=0, noise_strength=0.1, verbose=False):
     """
     Generate a collection of frames with a point source signal for TBN.  
     The point source is specified as a aipy.src object.
         
-    All modes need to have stands (beams in the case of DRX) and number of
-    frames to generate.  The TBN frames need the `filter' keyword 
-    set to specify the filter width.
+    All modes need to have stands (a list of :class:`lsl.common.stations.Antenna`
+    instances), a number of frames to generate, and the `filter' keyword set to
+    specify the filter width.
     
     .. versionchanged:: 0.4.4
         Added the `noise_strength` keyword to control how much noise is added to 
@@ -357,12 +327,15 @@ def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', 
         
     .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
+        
+    .. versionchanged:: 2.1.8
+        Add the `station` keyword and documentation cleanup
     """
 
     if start_time == 0:
         start_time = time.time()
 
     if mode == 'TBN':
-        _point_source_tbn(fh, stands, src, nframes, station=station, central_freq=central_freq, filter=filter, start_time=start_time, phase_center=phase_center, noise_strength=noise_strength, verbose=verbose)
+        _point_source_tbn(fh, stands, src, nframes, station=station, central_freq=central_freq, filter=filter, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     else:
         raise RuntimeError("Unknown observations mode: %s" % mode)
