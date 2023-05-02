@@ -64,7 +64,7 @@ def main(args):
     antennas = station.antennas
     
     fh = open(args.filename, 'rb')
-    nFrames = os.path.getsize(args.filename) / tbf.FRAME_SIZE
+    nFrames = os.path.getsize(args.filename) // tbf.FRAME_SIZE
     antpols = len(antennas)
     
     # Read in the first frame and get the date/time of the first sample 
@@ -80,7 +80,7 @@ def main(args):
     nSamples = 7840
     
     # Figure out how many chunks we need to work with
-    nChunks = nFrames / nFramesPerObs
+    nChunks = nFrames // nFramesPerObs
     
     # Pre-load the channel mapper
     mapper = []

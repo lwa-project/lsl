@@ -255,7 +255,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(robust.biweight_mean(b, axis=1)[0], -0.177742, 6)
         self.assertAlmostEqual(robust.biweight_mean(b, axis=1)[1], -0.106250, 6)
         
-        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=numpy.bool))
+        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=bool))
         b.mask[:b.size//2] = False
         b.mask[b.size//2:] = True
         self.assertAlmostEqual(robust.biweight_mean(b), -0.177742, 6)
@@ -275,7 +275,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(robust.mean(b, cut=2.0, axis=1)[0], -0.217644, 6)
         self.assertAlmostEqual(robust.mean(b, cut=2.0, axis=1)[1], -0.234631, 6)
         
-        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=numpy.bool))
+        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=bool))
         b.mask[:b.size//2] = False
         b.mask[b.size//2:] = True
         self.assertAlmostEqual(robust.mean(b, cut=2.0), -0.217644, 6)
@@ -299,7 +299,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(robust.std(b, axis=1)[0], 0.923335, 6)
         self.assertAlmostEqual(robust.std(b, axis=1)[1], 1.11836, 5)
         
-        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=numpy.bool))
+        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=bool))
         b.mask[:b.size//2] = False
         b.mask[b.size//2:] = True
         self.assertAlmostEqual(robust.std(b), 0.923335, 6)
@@ -326,21 +326,21 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[0],  1.49534, 5)
         self.assertAlmostEqual(cc[1], -0.900498, 5)
         
-        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=numpy.bool))
+        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=bool))
         b.mask[:10] = False
         b.mask[10:] = True
         cc = robust.linefit(self.x, b)
         self.assertAlmostEqual(cc[0],  1.56634, 5)
         self.assertAlmostEqual(cc[1], -1.31115, 5)
         
-        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=numpy.bool))
+        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=bool))
         b.mask[:5] = False
         b.mask[5:] = True
         cc = robust.linefit(self.x, b)
         self.assertAlmostEqual(cc[0],  1.94324, 5)
         self.assertAlmostEqual(cc[1], -2.29467, 5)
         
-        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=numpy.bool))
+        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=bool))
         b.mask[:5] = False
         b.mask[5:] = True
         cc = robust.linefit(self.x, b, bisector=True)
@@ -361,7 +361,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[1], -0.269859, 5)
         self.assertAlmostEqual(cc[2], -1.49629, 5)
         
-        b = numpy.ma.array(self.y1, mask=numpy.zeros(self.y1.size, dtype=numpy.bool))
+        b = numpy.ma.array(self.y1, mask=numpy.zeros(self.y1.size, dtype=bool))
         b.mask[:10] = False
         b.mask[10:] = True
         cc = robust.polyfit(self.x, b, 2)

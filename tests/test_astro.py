@@ -14,6 +14,7 @@ import pickle
 import operator
 
 from lsl import astro
+from lsl.testing import assert_spatially_close
 
 
 __version__   = "0.1"
@@ -875,8 +876,7 @@ class astro_tests(unittest.TestCase):
     def test_get_hrz_from_equ(self):
         """Test astro.get_hrz_from_equ() function."""
         
-        ACCURACY_AZ = 0
-        ACCURACY_ALT = 0
+        ACCURACY_DIST = 3
         
         ra_aa = (\
             astro.hms( 8,  5, 38.2531).to_deg(), 
@@ -894,17 +894,14 @@ class astro_tests(unittest.TestCase):
             j = t.to_jd()
             equ = astro.equ_posn(ra, 30.0)
             hrz = astro.get_hrz_from_equ(equ, obs, j)
-            az = hrz.az
-            if az > 180:
-                    az -= 360
-            self.assertAlmostEqual(math.radians(az), 0.0, ACCURACY_AZ)
-            self.assertAlmostEqual(hrz.alt, 60.0, ACCURACY_ALT)               
+            assert_spatially_close((hrz.az,hrz.alt),
+                                   (0.0,60.0),
+                                   degrees=True, decimal=ACCURACY_DIST)              
             
     def test_get_equ_from_hrz(self):
         """Test astro.get_equ_from_hrz() function."""
         
-        ACCURACY_RA = 0
-        ACCURACY_DEC = 0
+        ACCURACY_DIST = 3
         
         ra_aa = (\
             astro.hms( 8,  5, 38.2531).to_deg(), 
@@ -922,14 +919,14 @@ class astro_tests(unittest.TestCase):
             
             j = t.to_jd()
             equ = astro.get_equ_from_hrz(hrz, obs, j)
-            self.assertAlmostEqual(math.radians(equ.ra), math.radians(ra), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, 30.0, ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (ra,30.0),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_equ_prec(self):
         """Test astro.get_equ_prec() function."""
         
-        ACCURACY_RA = 4
-        ACCURACY_DEC = 4
+        ACCURACY_DIST = 4
         
         equ_in = (\
             astro.equ_posn(  0.0,   0.0),
@@ -944,14 +941,14 @@ class astro_tests(unittest.TestCase):
             equ0 = next(iequ)
             equ = astro.get_equ_prec(equ0, j)
             chk = astro.get_precession(astro.J2000_UTC_JD, equ0, j)
-            self.assertAlmostEqual(equ.ra, chk.ra, ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, chk.dec, ACCURACY_DEC) 
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (chk.ra,chk.dec),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_equ_prec2(self):
         """Test astro.get_equ_prec2() function."""
         
-        ACCURACY_RA = 4
-        ACCURACY_DEC = 4
+        ACCURACY_DIST = 4
         
         equ_in = (\
             astro.equ_posn(  0.0,   0.0),
@@ -966,8 +963,9 @@ class astro_tests(unittest.TestCase):
             equ0 = next(iequ)
             equ = astro.get_equ_prec2(equ0, j, astro.J2000_UTC_JD)
             chk = astro.get_precession(j, equ0, astro.J2000_UTC_JD)
-            self.assertAlmostEqual(equ.ra, chk.ra, ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, chk.dec, ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (chk.ra,chk.dec),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_nutation_init(self):
         """Test astro.nutation constructor."""
@@ -1135,8 +1133,7 @@ class astro_tests(unittest.TestCase):
     def test_get_solar_equ_coords(self):
         """Test astro.get_solar_equ_coords() function."""
         
-        ACCURACY_RA  = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         ra_aa = (\
             astro.hms(20, 17,  7.63).to_deg(),
@@ -1157,8 +1154,9 @@ class astro_tests(unittest.TestCase):
         for t in self.times:
             j = t.to_jd()
             equ = astro.get_solar_equ_coords(j)
-            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (next(ira),next(idec)),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_venus_rst(self):
         """Test astro.get_venus_rst() function."""
@@ -1182,8 +1180,7 @@ class astro_tests(unittest.TestCase):
     def test_get_venus_equ_coord(self):
         """Test astro.get_venus_equ_coords() function."""
         
-        ACCURACY_RA  = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         ra_aa = (\
             astro.hms(23, 19, 17.74).to_deg(),
@@ -1204,8 +1201,9 @@ class astro_tests(unittest.TestCase):
         for t in self.times:
             j = t.to_jd()
             equ = astro.get_venus_equ_coords(j)
-            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (next(ira),next(idec)),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_mars_rst(self):
         """Test astro.get_mars_rst() function."""
@@ -1229,8 +1227,7 @@ class astro_tests(unittest.TestCase):
     def test_get_mars_equ_coord(self):
         """Test astro.get_mars_equ_coords() function."""
         
-        ACCURACY_RA  = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         ra_aa = (\
             astro.hms(14, 59, 33.45).to_deg(),
@@ -1251,8 +1248,9 @@ class astro_tests(unittest.TestCase):
         for t in self.times:
             j = t.to_jd()
             equ = astro.get_mars_equ_coords(j)
-            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (next(ira),next(idec)),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_jupiter_rst(self):
         """Test astro.get_jupiter_rst() function."""
@@ -1276,8 +1274,7 @@ class astro_tests(unittest.TestCase):
     def test_get_jupiter_equ_coord(self):
         """Test astro.get_jupiter_equ_coords() function."""
         
-        ACCURACY_RA  = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         ra_aa = (\
             astro.hms( 3, 56, 56.236).to_deg(),
@@ -1298,8 +1295,9 @@ class astro_tests(unittest.TestCase):
         for t in self.times:
             j = t.to_jd()
             equ = astro.get_jupiter_equ_coords(j)
-            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)                                                     
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (next(ira),next(idec)),
+                                   degrees=True, decimal=ACCURACY_DIST)                              
             
     def test_get_saturn_rst(self):
         """Test astro.get_saturn_rst() function."""
@@ -1323,8 +1321,7 @@ class astro_tests(unittest.TestCase):
     def test_get_saturn_equ_coord(self):
         """Test astro.get_saturn_equ_coords() function."""
         
-        ACCURACY_RA  = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         ra_aa = (\
             astro.hms( 3, 28, 56.63).to_deg(),
@@ -1345,8 +1342,9 @@ class astro_tests(unittest.TestCase):
         for t in self.times:
             j = t.to_jd()
             equ = astro.get_saturn_equ_coords(j)
-            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (next(ira),next(idec)),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_lunar_rst(self):
         """Test astro.get_lunar_rst() function."""
@@ -1370,8 +1368,7 @@ class astro_tests(unittest.TestCase):
     def test_get_lunar_equ_coords(self):
         """Test astro.get_lunar_equ_coords() function."""
         
-        ACCURACY_RA  = 1
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         ra_aa = (\
             astro.hms(18, 19, 24.98).to_deg(),
@@ -1392,14 +1389,14 @@ class astro_tests(unittest.TestCase):
         for t in self.times:
             j = t.to_jd()
             equ = astro.get_lunar_equ_coords(j)
-            self.assertAlmostEqual(equ.ra, next(ira), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, next(idec), ACCURACY_DEC) 
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (next(ira),next(idec)),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_ecl_from_equ(self):
         """Test astro.get_ecl_from_equ() function."""
         
-        ACCURACY_LNG = 4
-        ACCURACY_LAT = 4
+        ACCURACY_DIST = 4
         
         # Data set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         lng_aa = (302.1000, 26.3000, 129.5000, 196.7000, 338.9000)
@@ -1431,14 +1428,14 @@ class astro_tests(unittest.TestCase):
             j = t.to_jd()
             equ = astro.equ_posn(ra, dec)
             ecl = astro.get_ecl_from_equ(equ, j)
-            self.assertAlmostEqual(ecl.lng, lng, ACCURACY_LNG)
-            self.assertAlmostEqual(ecl.lat, lat, ACCURACY_LAT)
+            assert_spatially_close((ecl.lng,ecl.lat),
+                                   (lng,lat),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_equ_from_ecl(self):
         """Test astro.get_equ_from_ecl() function."""
         
-        ACCURACY_RA = 4
-        ACCURACY_DEC = 4
+        ACCURACY_DIST = 4
         
         # Data set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         lng_aa = (302.1000, 26.3000, 129.5000, 196.7000, 338.9000)
@@ -1471,14 +1468,14 @@ class astro_tests(unittest.TestCase):
             
             ecl = astro.ecl_posn(lng, lat)
             equ = astro.get_equ_from_ecl(ecl, j)
-            self.assertAlmostEqual(equ.ra, ra, ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, dec, ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (ra,dec),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_gal_from_equ(self):
         """Test astro.get_gal_from_equ() function."""
         
-        ACCURACY_L = 2
-        ACCURACY_B = 2
+        ACCURACY_DIST = 4
         
         # Test set generated at http://fuse.pha.jhu.edu/support/tools/eqtogal.html
         ra_4c = (\
@@ -1507,14 +1504,14 @@ class astro_tests(unittest.TestCase):
             
             equ = astro.equ_posn(ra, dec)
             gal = astro.get_gal_from_equ(equ)
-            self.assertAlmostEqual(gal.l, l, ACCURACY_L)
-            self.assertAlmostEqual(gal.b, b, ACCURACY_B)
+            assert_spatially_close((gal.l,gal.b),
+                                   (l,b),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_equ_from_gal(self):
         """Test astro.get_equ_from_gal() function."""
         
-        ACCURACY_RA = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         # Test set generated at http://fuse.pha.jhu.edu/support/tools/eqtogal.html
         ra_4c = (\
@@ -1543,14 +1540,14 @@ class astro_tests(unittest.TestCase):
             
             gal = astro.gal_posn(l, b)
             equ = astro.get_equ_from_gal(gal)
-            self.assertAlmostEqual(equ.ra, ra, ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, dec, ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (ra,dec),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_gal_from_equ2000(self):
         """Test astro.get_gal_from_equ2000() function."""
         
-        ACCURACY_L = 2
-        ACCURACY_B = 2
+        ACCURACY_DIST = 4
         
         # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         ra_4c = (\
@@ -1579,14 +1576,14 @@ class astro_tests(unittest.TestCase):
             
             equ = astro.equ_posn(ra, dec)
             gal = astro.get_gal_from_equ2000(equ)
-            self.assertAlmostEqual(gal.l, l, ACCURACY_L)
-            self.assertAlmostEqual(gal.b, b, ACCURACY_B)
+            assert_spatially_close((gal.l,gal.b),
+                                   (l,b),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_equ2000_from_gal(self):
         """Test astro.get_equ2000_from_gal() function."""
         
-        ACCURACY_RA = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 4
         
         # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         ra_4c = (\
@@ -1615,14 +1612,14 @@ class astro_tests(unittest.TestCase):
             
             gal = astro.gal_posn(l, b)
             equ = astro.get_equ2000_from_gal(gal)
-            self.assertAlmostEqual(equ.ra, ra, ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, dec, ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (ra,dec),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_get_apparent_posn(self):
         """Test astro.get_apparent_posn() function."""
         
-        ACCURACY_RA = 4
-        ACCURACY_DEC = 4
+        ACCURACY_DIST = 4
         
         ra_in  = (201.2500, 69.2517)  
         dec_in = (-43.0667,   29.6708)
@@ -1637,36 +1634,37 @@ class astro_tests(unittest.TestCase):
         for ra in ra_in:
             equ = astro.equ_posn(ra, next(idec_in))
             equ = astro.get_apparent_posn(equ, j)
-            self.assertAlmostEqual(equ.ra, next(ira_out), ACCURACY_RA)
-            self.assertAlmostEqual(equ.dec, next(idec_out), ACCURACY_DEC)
+            assert_spatially_close((equ.ra,equ.dec),
+                                   (next(ira_out),next(idec_out)),
+                                   degrees=True, decimal=ACCURACY_DIST)
             
     def test_B1950_to_J2000(self):
         """Test astro.B1950_to_J2000() function."""
         
-        ACCURACY_RA = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 3
         
         # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         pos_J2000 = astro.equ_posn(296.39687500, 78.61902778)
         pos_B1950 = astro.equ_posn(296.98456518, 78.49400140)
         
         equ = astro.B1950_to_J2000(pos_B1950)
-        self.assertAlmostEqual(equ.ra,  pos_J2000.ra,  ACCURACY_RA)
-        self.assertAlmostEqual(equ.dec, pos_J2000.dec, ACCURACY_DEC)
+        assert_spatially_close((equ.ra,equ.dec),
+                               (pos_J2000.ra,pos_J2000.dec),
+                               degrees=True, decimal=ACCURACY_DIST)
         
     def test_J2000_to_B1950(self):
         """Test astro.J2000_to_B1950() function."""
         
-        ACCURACY_RA = 2
-        ACCURACY_DEC = 2
+        ACCURACY_DIST = 3
         
         # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         pos_J2000 = astro.equ_posn(296.39687500, 78.61902778)
         pos_B1950 = astro.equ_posn(296.98456518, 78.49400140)
         
         equ = astro.J2000_to_B1950(pos_J2000)
-        self.assertAlmostEqual(equ.ra,  pos_B1950.ra,  ACCURACY_RA)
-        self.assertAlmostEqual(equ.dec, pos_B1950.dec, ACCURACY_DEC)
+        assert_spatially_close((equ.ra,equ.dec),
+                               (pos_B1950.ra,pos_B1950.dec),
+                               degrees=True, decimal=ACCURACY_DIST)
 
 
 class astro_test_suite(unittest.TestSuite):

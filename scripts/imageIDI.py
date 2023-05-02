@@ -166,7 +166,7 @@ def main(args):
             else:
                 ax.set_title("%s @ %s UTC" % (pol, utc))
                 
-            junk = img.image(center=(NPIX_SIDE//2,NPIX_SIDE//2))
+            junk = img.image(center=(img.shape[0]//2,img.shape[1]//2))
             print("%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean()))
             
             # Turn off tick marks
@@ -197,19 +197,19 @@ def main(args):
                     
                 ### Create the HDU
                 try:
-                    hdu = astrofits.ImageHDU(data=img.image(center=(NPIX_SIDE//2,NPIX_SIDE//2)), name=pol)
+                    hdu = astrofits.ImageHDU(data=img.image(center=(img.shape[0]//2,img.shape[1]//2)), name=pol)
                 except AttributeError:
                     hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
                 hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
                 hdu.header['CTYPE1'] = 'RA---SIN'
-                hdu.header['CRPIX1'] = NPIX_SIDE//2+1
-                hdu.header['CDELT1'] = -360.0/NPIX_SIDE/numpy.pi
+                hdu.header['CRPIX1'] = img.shape[0]//2+1
+                hdu.header['CDELT1'] = -360.0/img.shape[0]/numpy.pi
                 hdu.header['CRVAL1'] = lo.sidereal_time()*180/numpy.pi	# pylint:disable=no-member
                 hdu.header['CTYPE2'] = 'DEC--SIN'
-                hdu.header['CRPIX2'] = NPIX_SIDE//2+1
-                hdu.header['CDELT2'] = 360.0/NPIX_SIDE/numpy.pi
+                hdu.header['CRPIX2'] = img.shape[1]//2+1
+                hdu.header['CDELT2'] = 360.0/img.shape[1]/numpy.pi
                 hdu.header['CRVAL2'] = lo.lat*180/numpy.pi
                 hdu.header['LONPOLE'] = 180.0
                 hdu.header['LATPOLE'] = 90.0
