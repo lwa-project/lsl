@@ -121,7 +121,7 @@ def _basic_drx(fh, stands, nframes, **kwargs):
                     cFrame.write_raw_frame(fh)
 
 
-def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, start_time=0, noise_strength=0.1, verbose=False):
+def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filter=6, ntuning=2, start_time=0, noise_strength=0.1, verbose=False):
     """
     Generate a collection of frames with a basic test signal for TBN and 
     DRX.  The signals for the three modes are:
@@ -150,7 +150,7 @@ def basic_signal(fh, stands, nframes, mode='DRX', filter=6, ntuning=2, start_tim
         Removed support for generating TBW data.
         
     .. versionchanged:: 2.1.8:
-        Documentaton update
+        Add the `station` keyword and documentation cleanup
         `stands` is now a list of :class:`lsl.common.stations.Antenna`
         instances for TBN
     """
