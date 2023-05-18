@@ -164,7 +164,7 @@ class SimFrame(tbn.Frame):
 
         stand, pol = self.id
         # Is the stand number reasonable?
-        if stand == 0 or stand > 258:
+        if stand == 0 or stand > 260:
             if raise_errors:
                 raise ValueError("Invalid stand: '%s'" % stand)
             return False

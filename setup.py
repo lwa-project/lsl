@@ -140,24 +140,39 @@ def get_fftw():
         subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0].rstrip().split()
+        outVersion = p.communicate()[0]
+        try:
+            outVersion = outVersion.decode()
+        except AttributeError:
+            pass
+        outVersion = outVersion.strip().split()
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0].rstrip().split()
+        outCFLAGS = p.communicate()[0]
         try:
-            outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
+            outCFLAGS = outCFLAGS.decode()
+        except AttributeError:
+            pass
+        outCFLAGS = outCFLAGS.rstrip().split()
+        try:
+            outCFLAGS = [str(v) for v in outCFLAGS]
         except TypeError:
             pass
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0].rstrip().split()
+        outLIBS = p.communicate()[0]
         try:
-            outLIBS = [str(v, 'utf-8') for v in outLIBS]
+            outLIBS = outLIBS.decode()
+        except AttributeError:
+            pass
+        outLIBS = outLIBS.rstrip().split()
+        try:
+            outLIBS = [str(v) for v in outLIBS]
         except TypeError:
             pass
             
         if len(outVersion) > 0:
-            print("Found FFTW3, version %s" % str(outVersion[0], 'utf-8'))
+            print("Found FFTW3, version %s" % str(outVersion[0]))
             
     except (OSError, subprocess.CalledProcessError):
         print("WARNING:  single precision FFTW3 cannot be found, using defaults")
@@ -339,7 +354,7 @@ setup(
     scripts = glob.glob('scripts/*.py'), 
     python_requires='>=2.7', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = [ASTROPY_VERSION, HEALPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c', 'unlzw>=0.1.1'],
+    install_requires = [ASTROPY_VERSION, HEALPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,

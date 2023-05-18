@@ -199,14 +199,14 @@ def read_frame_ci8(filehandle, verbose=False):
 def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
-    first 1000 TBF records.  Return the number of frames per observation.
+    first 2500 TBF records.  Return the number of frames per observation.
     """
     
     with FilePositionSaver(filehandle):
         # Build up the list-of-lists that store the index of the first frequency
         # channel in each frame.
         channels = []
-        for i in range(1000):
+        for i in range(2500):
             try:
                 cFrame = read_frame(filehandle)
                 if not cFrame.is_tbf:

@@ -1,5 +1,5 @@
 name: "Build and Test"
-on: [push, pull_request]
+on: [push, pull_request, release]
 jobs:
   pre_build:
     runs-on: ubuntu-latest
@@ -18,15 +18,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-20.04, macos-latest]
         python-version: ['3.8', '3.10']
         include:
           - os: ubuntu-20.04
-            python-version: '2.7'
-          - os: ubuntu-20.04
             python-version: '3.6'
-          - os: macos-latest
-            python-version: '2.7'
           - os: macos-latest
             python-version: '3.6'
       fail-fast: false
