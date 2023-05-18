@@ -65,6 +65,7 @@ extern short int tbw4LUT[256][2];
 extern float tbnLUT[256];
 extern float drxLUT[256][2];
 extern float tbfLUT[256][2];
+extern float ovroLUT[256][2];
 extern float drx8LUT[256];
 
 
@@ -110,5 +111,9 @@ extern char read_tbf_doc[];
 // cor.c
 extern PyObject *read_cor(PyObject*, PyObject*);
 extern char read_cor_doc[];
+
+// ovro.c
+extern PyObject *read_ovro_spec(PyObject*, PyObject*);
+extern char read_ovro_spec_doc[];
 
 #endif	// __READERS_H

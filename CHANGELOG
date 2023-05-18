@@ -5,6 +5,8 @@
  * Dropped unlzw in favor of using the gzip utility
  * Made antenna inclusion/exclusion more robust in lsl.imaging.data.VisibilityDataSet.get_antenna_subset()
  * Added support for "long (ionospheric) product names"
+ * Added support for triggered voltage buffer dump files from OVRO-LWA with lsl.reader.ovro
+ * Added support for triggered voltage buffer dump files from OVRO-LWA in lsl.reader.ldp
 
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
