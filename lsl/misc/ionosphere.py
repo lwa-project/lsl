@@ -11,11 +11,11 @@ if sys.version_info < (3,):
     
 import os
 import gzip
-import unlzw
 import numpy
 import socket
 import tarfile
 import warnings
+import subprocess
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -412,8 +412,8 @@ def _convert_to_gzip(filename):
     
     # Load in the file
     with _CACHE_DIR.open(filename, 'rb') as fh:
-        compressed = fh.read()
-    uncompressed = unlzw.unlzw(compressed)
+        cached_filename = fh.name
+        uncompressed = subprocess.check_output(['gzip', '-d', '-c', cached_filename])
         
     # Write it back out
     with _CACHE_DIR.open(filename, 'wb') as fh:

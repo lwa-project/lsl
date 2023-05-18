@@ -70,8 +70,7 @@ jobs:
             jupyter_client \
             nbformat \
             nbconvert \
-            coverage \
-            unlzw
+            coverage
       - if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '2.7' }}
         run: python -m pip install python-casacore
       - name: "Build and Install"
