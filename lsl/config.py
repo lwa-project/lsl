@@ -28,7 +28,7 @@ except OSError:
 _CONFIG_FILENAME = os.path.join(os.path.expanduser('~'), '.lsl', 'lsl.cfg')
 
 
-__version__ = "0.1"
+__version__ = "0.2"
 __all__ = ['LSL_CONFIG',]
 
 
@@ -72,6 +72,10 @@ DEFAULTS_IONO['jpl_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/produ
                             'help':  'primary URL for accessing the JPL data products'}
 DEFAULTS_IONO['jpl_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
                                'help':  'mirror URL for accessing the JPL data products'}
+DEFAULTS_IONO['emr_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
+                            'help':  'primary URL for accessing the EMR data products'}
+DEFAULTS_IONO['emr_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
+                               'help':  'mirror URL for accessing the EMR data products'}
 DEFAULTS_IONO['uqr_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
                             'help':  'primary URL for accessing the UQR data products'}
 DEFAULTS_IONO['uqr_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',

@@ -11,11 +11,11 @@ if sys.version_info < (3,):
     
 import os
 import gzip
-import unlzw
 import numpy
 import socket
 import tarfile
 import warnings
+import subprocess
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -50,7 +50,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = "0.6"
+__version__ = "0.7"
 __all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
            'get_tec_value', 'get_ionospheric_pierce_point']
 
@@ -412,8 +412,8 @@ def _convert_to_gzip(filename):
     
     # Load in the file
     with _CACHE_DIR.open(filename, 'rb') as fh:
-        compressed = fh.read()
-    uncompressed = unlzw.unlzw(compressed)
+        cached_filename = fh.name
+        uncompressed = subprocess.check_output(['gzip', '-d', '-c', cached_filename])
         
     # Write it back out
     with _CACHE_DIR.open(filename, 'wb') as fh:
@@ -467,7 +467,7 @@ def _download_worker_cddis(url, filename):
         return False
         
     ## Further processing, if needed
-    if os.path.splitext(filename)[1] == '.Z':
+    if os.path.splitext(url)[1] == '.Z':
         ## Save it to a regular gzip'd file after uncompressing it.
         _convert_to_gzip(filename)
         
@@ -485,11 +485,16 @@ def _download_worker_standard(url, filename):
     print("Downloading %s" % url)
     try:
         tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        meta = tecFH.info()
+        remote_size = 1
         try:
+            remote_size = int(tecFH.headers["Content-Length"])
+        except AttributeError:
+            pass
+        try:
+            meta = tecFH.info()
             remote_size = int(meta.getheaders("Content-Length")[0])
         except AttributeError:
-            remote_size = 1
+            pass
         pbar = DownloadBar(max=remote_size)
         while True:
             new_data = tecFH.read(DOWN_CONFIG.get('block_size'))
@@ -522,7 +527,7 @@ def _download_worker_standard(url, filename):
             fh.write(data)
             
         ## Further processing, if needed
-        if os.path.splitext(filename)[1] == '.Z':
+        if os.path.splitext(url)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
             _convert_to_gzip(filename)
             
@@ -566,17 +571,22 @@ def _download_igs(mjd, type='final'):
     if type == 'final':
         ## Final
         filename = 'igsg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'IGS0OPSFIN_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
     elif type == 'rapid':
         ## Rapid
         filename = 'igrg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'IGS0OPSRAP_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
     else:
         ## ???
         raise ValueError("Unknown TEC file type '%s'" % type)
         
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, filename), filename)
-    if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, filename), filename)
+    for fname in (long_filename, filename):
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_url'), year, dayOfYear, fname), filename)
+        if not status:
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('igs_mirror'), year, dayOfYear, fname), filename)
+        if status:
+            break
     return status
 
 
@@ -614,6 +624,48 @@ def _download_jpl(mjd, type='final'):
     status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_url'), year, dayOfYear, filename), filename)
     if not status:
         status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_mirror'), year, dayOfYear, filename), filename)
+    return status
+
+
+def _download_emr(mjd, type='final'):
+    """
+    Given an MJD value, download the corresponding EMR final data product 
+    for that day.
+    
+    .. note::
+        By default the "final" product is downloaded.  However, the "rapid" 
+        data product may be downloaded if the 'type' keyword is set to 
+        "rapid".
+    """
+    
+    # Convert the MJD to a datetime instance so that we can pull out the year
+    # and the day-of-year
+    mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
+    
+    year = dt.year
+    dayOfYear = int(dt.strftime('%j'), 10)
+    
+    # Figure out which file we need to download
+    if type == 'final':
+        ## Final
+        filename = 'emrg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'EMR0OPSFIN_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
+    elif type == 'rapid':
+        ## Rapid
+        filename = 'ehrg%03i0.%02ii.Z' % (dayOfYear, year%100)
+        long_filename = 'EMR0OPSRAP_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
+    else:
+        ## ???
+        raise ValueError("Unknown TEC file type '%s'" % type)
+        
+    # Attempt to download the data
+    for fname in (long_filename, filename):
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('emr_url'), year, dayOfYear, fname), filename)
+        if not status:
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('emr_mirror'), year, dayOfYear, fname), filename)
+        if status:
+            break
     return status
 
 
@@ -674,11 +726,15 @@ def _download_code(mjd, type='final'):
     
     # Figure out which file we need to download
     filename = 'codg%03i0.%02ii.Z' % (dayOfYear, year%100)
+    long_filename = 'COD0OPSFIN_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
     
     # Attempt to download the data
-    status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, filename), filename)
-    if not status:
-        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, filename), filename)
+    for fname in (long_filename, filename):
+        status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_url'), year, dayOfYear, fname), filename)
+        if not status:
+            status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('code_mirror'), year, dayOfYear, fname), filename)
+        if status:
+            break
     return status
 
 
@@ -875,7 +931,7 @@ def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
             if line[0] in ('#', ':'):
                 ## Comments
                 continue
-            elif len(line) < 3:
+            elif len(line) < 5:
                 ## Blank lines
                 continue
                 
@@ -1166,6 +1222,17 @@ def _load_map(mjd, type='IGS'):
         ## Filename templates
         filenameTemplate = 'jplg%03i0.%02ii.Z'
         filenameAltTemplate = 'jprg%03i0.%02ii.Z'
+        
+    elif type.upper() == 'EMR':
+        ## Cache entry name
+        cacheName = 'TEC-EMR-%i' % mjd
+        
+        ## Download helper
+        downloader = _download_emr
+        
+        ## Filename templates
+        filenameTemplate = 'emrg%03i0.%02ii.Z'
+        filenameAltTemplate = 'ehrg%03i0.%02ii.Z'
         
     elif type.upper() == 'UQR':
         ## Cache entry name

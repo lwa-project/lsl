@@ -27,7 +27,6 @@ REQUIREMENTS
  * pyephem >= 3.7.5.3
  * aipy >= 3.0.1
  * pytz >= 2012c
- * unlzw >= 0.1.1
  * matplotlib >= 1.1 (required for some of the scripts)
  * BeautifulSoup (required for some of the scripts)
  * casacore (required for measurement set support)
