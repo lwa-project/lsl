@@ -1,5 +1,10 @@
 2.1.8
  * Added polarization basis conversions functions to lsl.imaging.utils
+ * Improved TBF frame count reliability
+ * Fixed several bugs in lsl.sim.dp.point_source() that lead to data that would not image properly
+ * Dropped unlzw in favor of using the gzip utility
+ * Made antenna inclusion/exclusion more robust in lsl.imaging.data.VisibilityDataSet.get_antenna_subset()
+ * Added support for "long (ionospheric) product names"
  * Added support for triggered voltage buffer dump files from OVRO-LWA with lsl.reader.ovro
  * Added support for triggered voltage buffer dump files from OVRO-LWA in lsl.reader.ldp
 
