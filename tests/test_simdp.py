@@ -43,14 +43,17 @@ class simdp_tests(unittest.TestCase):
 
         testFile = os.path.join(self.testPath, 'tbn.dat')
 
+        station = lwa_common.lwa1
+        antennas = station.antennas
+        
         fh = open(testFile, 'wb')
-        dp.basic_signal(fh, numpy.array([1,2,3,4]), 2000, mode='TBN', filter=7, start_time=1000)
+        dp.basic_signal(fh, antennas[:8], 2000, station=station, mode='TBN', filter=7, start_time=1000)
         fh.close()
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
         nSamples = fileSize // tbn.FRAME_SIZE
-        self.assertEqual(nSamples, 2000*4*2)
+        self.assertEqual(nSamples, 2000*8)
 
         # Check the time of the first frame
         fh = open(testFile, 'rb')
@@ -67,13 +70,13 @@ class simdp_tests(unittest.TestCase):
         antennas = station.antennas
 
         fh = open(testFile, 'wb')
-        dp.point_source(fh, antennas[:8:2], self.src, 4, mode='TBN', filter=7, start_time=1000)
+        dp.point_source(fh, antennas[:8], self.src, 4, station=station, mode='TBN', filter=7, start_time=1000)
         fh.close()
 
         # Check the file size
         fileSize = os.path.getsize(testFile)
         nSamples = fileSize // tbn.FRAME_SIZE
-        self.assertEqual(nSamples, 4*4*2)
+        self.assertEqual(nSamples, 4*8)
 
         # Check the time of the first frame
         fh = open(testFile, 'rb')

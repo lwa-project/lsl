@@ -11,11 +11,11 @@ if sys.version_info < (3,):
     
 import os
 import gzip
-import unlzw
 import numpy
 import socket
 import tarfile
 import warnings
+import subprocess
 try:
     from cStringIO import StringIO
 except ImportError:
@@ -412,8 +412,8 @@ def _convert_to_gzip(filename):
     
     # Load in the file
     with _CACHE_DIR.open(filename, 'rb') as fh:
-        compressed = fh.read()
-    uncompressed = unlzw.unlzw(compressed)
+        cached_filename = fh.name
+        uncompressed = subprocess.check_output(['gzip', '-d', '-c', cached_filename])
         
     # Write it back out
     with _CACHE_DIR.open(filename, 'wb') as fh:
@@ -485,11 +485,16 @@ def _download_worker_standard(url, filename):
     print("Downloading %s" % url)
     try:
         tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        meta = tecFH.info()
+        remote_size = 1
         try:
+            remote_size = int(tecFH.headers["Content-Length"])
+        except AttributeError:
+            pass
+        try:
+            meta = tecFH.info()
             remote_size = int(meta.getheaders("Content-Length")[0])
         except AttributeError:
-            remote_size = 1
+            pass
         pbar = DownloadBar(max=remote_size)
         while True:
             new_data = tecFH.read(DOWN_CONFIG.get('block_size'))

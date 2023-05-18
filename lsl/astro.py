@@ -3172,11 +3172,16 @@ def _parse_tai_file():
         
         print("Downloading %s" % url)
         lsFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        meta = lsFH.info()
+        remote_size = 1
         try:
+            remote_size = int(lsFH.headers["Content-Length"])
+        except AttributeError:
+            pass
+        try:
+            meta = lsFH.info()
             remote_size = int(meta.getheaders("Content-Length")[0])
         except AttributeError:
-            remote_size = 1
+            pass
         pbar = DownloadBar(max=remote_size)
         while True:
             new_data = lsFH.read(DOWN_CONFIG.get('block_size'))
