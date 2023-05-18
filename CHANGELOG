@@ -4,6 +4,7 @@
  * Fixed several bugs in lsl.sim.dp.point_source() that lead to data that would not image properly
  * Dropped unlzw in favor of using the gzip utility
  * Made antenna inclusion/exclusion more robust in lsl.imaging.data.VisibilityDataSet.get_antenna_subset()
+ * Added support for "long (ionospheric) product names"
 
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
