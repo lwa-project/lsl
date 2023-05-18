@@ -931,7 +931,7 @@ def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
             if line[0] in ('#', ':'):
                 ## Comments
                 continue
-            elif len(line) < 3:
+            elif len(line) < 5:
                 ## Blank lines
                 continue
                 
