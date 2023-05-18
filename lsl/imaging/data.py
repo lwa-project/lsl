@@ -350,6 +350,8 @@ class VisibilityDataSet(object):
             if not isinstance(include, (list, tuple)):
                 raise TypeError("Expected 'include' to by a list or tuple")
         if exclude is not None:
+            if isinstance(exclude, int):
+                exclude = [exclude,]
             if not isinstance(exclude, (list, tuple)):
                 raise TypeError("Expected 'exclude' to by a list or tuple")
         if not indicies:
@@ -360,9 +362,9 @@ class VisibilityDataSet(object):
         if not indicies:
             stands = list(self.antennaarray.get_stands())
             if include is not None:
-                include = [stands.index(i) for i in include]
+                include = [stands.index(i) for i in include if i in stands]
             if exclude is not None:
-                exclude = [stands.index(e) for e in exclude]
+                exclude = [stands.index(e) for e in exclude if e in stands]
                 
         # Find the baselines to keep based on what we were given
         selection = []
