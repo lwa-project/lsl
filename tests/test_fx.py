@@ -13,6 +13,7 @@ import time
 import warnings
 import unittest
 import numpy
+from scipy.signal import get_window as scipy_get_window
 
 from lsl.common.paths import DATA_BUILD
 from lsl.common import stations
@@ -77,7 +78,7 @@ def _pfb(data, start, LFFT, ntaps=4):
         if j < 0:
             continue
         sub[i*LFFT:(i+1)*LFFT] = data[j*LFFT:(j+1)*LFFT]
-    sub = sub*_pfb_filter_coeff(LFFT, ntaps)*numpy.hanning(LFFT*ntaps)
+    sub = sub*_pfb_filter_coeff(LFFT, ntaps)*scipy_get_window("hamming", LFFT*ntaps)
     pfb  = numpy.fft.fft(sub[0*LFFT:1*LFFT])
     for i in range(1, ntaps):
         pfb += numpy.fft.fft(sub[i*LFFT:(i+1)*LFFT])

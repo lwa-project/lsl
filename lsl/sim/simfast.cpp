@@ -15,23 +15,9 @@
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
+#include "../correlator/common.hpp"
 
 #include "protos.h"
-
-
-/*
-  Complex types
-*/
-
-typedef std::complex<float> Complex32;
-typedef std::complex<double> Complex64;
-
-
-/*
-  Macro for 2*pi
-*/
-
-#define TPI (2*NPY_PI*Complex64(0,1))
 
 
 template<typename FluxType, typename OutType>
@@ -75,7 +61,7 @@ void compute_visibility(long nBL,
         #pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempA0, tempA1, tempTheta, tempX, tempVis, x, y, z, u, v, w, i, j, k)
     #endif
     {
-        tempVis = (Complex64 *) malloc(nChan*sizeof(Complex64));
+        tempVis = (Complex64 *) aligned64_malloc(nChan*sizeof(Complex64));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -155,7 +141,7 @@ void compute_visibility(long nBL,
             }
         }
         
-        free(tempVis);
+        aligned64_free(tempVis);
     }
     
     Py_END_ALLOW_THREADS

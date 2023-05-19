@@ -1,9 +1,8 @@
-#ifndef CORRELATOR_BLAS_H_INCLUDE_GUARD_
-#define CORRELATOR_BLAS_H_INCLUDE_GUARD_
+#pragma once
 
 #include <complex>
 
-#include "common.h"
+#include "common.hpp"
 
 /*
   Easy BLAS for C++
@@ -45,5 +44,3 @@ inline void blas_dotc_sub(const int N,
      *  cblas_zdotc_sub(N, X, incX, Y, incY, dotc);
      */
 }
-
-#endif // CORRELATOR_BLAS_H_INCLUDE_GUARD_
