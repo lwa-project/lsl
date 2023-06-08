@@ -39,8 +39,8 @@ General Utilities
    color
    progress
 
-LWA-Specific Utilites
----------------------
+LWA-Specific Utilities
+----------------------
 .. toctree::
    :maxdepth: 2
 
