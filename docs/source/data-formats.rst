@@ -28,7 +28,7 @@ into packets that contain either 400 samples (12-bit data) or 1200 samples
 +---------+-------------------+---------------------------------+
 | 16-23   | Time tag          | Time tag [#F1]_                 |
 +---------+-------------------+---------------------------------+
-| 24-1223 | Data              | i4 or i12 data - [time,]        |
+| 24-1223 | Data              | ``i4`` or ``i12`` data - [time,]|
 +---------+-------------------+---------------------------------+
 
 The packing on the ``TBW ID`` field is:
@@ -42,6 +42,9 @@ The packing on the ``TBW ID`` field is:
 +--------+--------------+
 | 15     | Is TBW?      |
 +--------+--------------+
+
+Both the ``i4`` and ``i12`` versions of the data are stored as two's complement
+integers.
 
 TBN
 ---
@@ -68,7 +71,7 @@ samples per stand per polarization.
 +---------+-------------------+---------------------------------+
 | 16-23   | Time tag          | Time tag [#F1]_                 |
 +---------+-------------------+---------------------------------+
-| 24-1047 | Data              | ci8 data - [time,]              |
+| 24-1047 | Data              | ``ci8`` data - [time,]          |
 +---------+-------------------+---------------------------------+
 
 The packing on the ``TBN ID`` field is:
@@ -82,6 +85,8 @@ The packing on the ``TBN ID`` field is:
 +--------+--------------+
 | 15     | Is TBW?      |
 +--------+--------------+
+
+``ci8`` is also known as "8+8-bit complex integer".
 
 DRX
 ---
@@ -113,7 +118,7 @@ present.
 +---------+-------------------+---------------------------------+
 | 29-31   | Tuning Word       | Tuning frequency [#F2]_         |
 +---------+-------------------+---------------------------------+
-| 32-4127 | Data              | ci4 data - [time,]              |
+| 32-4127 | Data              | ``ci4`` data - [time,]          |
 +---------+-------------------+---------------------------------+
 
 The packing on the ``ID`` field is:
@@ -130,8 +135,8 @@ The packing on the ``ID`` field is:
 | 7      | Polarization |
 +--------+--------------+
 
-The ci4 data are stored as two-complement integers with the real part stored in
-the first four bits.
+The ``ci4`` aka "4+4-bit complex integer" data are stored as two's complement
+integers with the real part stored in the first four bits.
 
 DR Spectrometer
 ---------------
@@ -165,15 +170,15 @@ polarization products to be stored.
 +---------+-------------------+---------------------------------+
 | 47      | Flags             | Bit flags                       |
 +---------+-------------------+---------------------------------+
-| 48-51   | Nfreq             | Transform length [#F5]_         |
+| 48-51   | N\ :sub:`freq`    | Transform length [#F5]_         |
 +---------+-------------------+---------------------------------+
-| 52-53   | Nint              | Integration count [#F5]_        |
+| 52-53   | N\ :sub:`int`     | Integration count [#F5]_        |
 +---------+-------------------+---------------------------------+
 | 54-67   | Sats[4]           | Saturation counts [#F4]_        |
 +---------+-------------------+---------------------------------+
 | 68-71   | Magic Word 2      | 0xED0CED0C                      |
 +---------+-------------------+---------------------------------+
-| 72-N    | Data              | f32 data - [pol,chan]           |
+| 72-N    | Data              | ``float`` data - [pol,chan]     |
 +---------+-------------------+---------------------------------+
 
 The ``Stokes Format`` is a bit field defines what polarizations are included in
@@ -227,11 +232,11 @@ values of ``First Channel`` within a single recording.
 +---------+-------------------+---------------------------------+
 | 16-23   | Time tag          | Time tag [#F1]_                 |
 +---------+-------------------+---------------------------------+
-| 24-6167 | Data              | ci4 data - [chan,stand,pol]     |
+| 24-6167 | Data              | ``ci4`` data - [chan,stand,pol]     |
 +---------+-------------------+---------------------------------+
 
-The ci4 data are stored as two-complement integers with the real part stored in
-the first four bits.
+The ``ci4`` aka "4+4-bit complex integer" data are stored as two's complement
+integers with the real part stored in the first four bits.
 
 COR
 ---
@@ -240,37 +245,37 @@ baseline pair.
 
 .. note:: Fields are big endian
 
-+---------+-------------------+---------------------------------+
-| Byte(s) | Name              | Description                     |
-+=========+===================+=================================+
-| 0-3     | Sync Word         | 0xDECODE5C                      |
-+---------+-------------------+---------------------------------+
-| 4-6     | Frame Count       | Always zero                     |
-+---------+-------------------+---------------------------------+
-| 7       | ADP ID            | Always one                      |
-+---------+-------------------+---------------------------------+
-| 8-11    | Second Count      | Always zero                     |
-+---------+-------------------+---------------------------------+
-| 12-13   | First Channel     | First channel in packet         |
-+---------+-------------------+---------------------------------+
-| 14-15   | Gain              | COR gain used                   |
-+---------+-------------------+---------------------------------+
-| 16-23   | Time tag          | Time tag [#F1]_                 |
-+---------+-------------------+---------------------------------+
-| 24-27   | Navg              | Integration time in samples     |
-+---------+-------------------+---------------------------------+
-| 28-29   | Stand 1           | First stand in baseline         |
-+---------+-------------------+---------------------------------+
-| 30-31   | Stand 2           | Second stand in baseline        |
-+---------+-------------------+---------------------------------+
-| 32-4255 | Data              | cf32 data - [chan,pol1,pol2]    |
-+---------+-------------------+---------------------------------+
++---------+-------------------+-------------------------------------------+
+| Byte(s) | Name              | Description                               |
++=========+===================+===========================================+
+| 0-3     | Sync Word         | 0xDECODE5C                                |
++---------+-------------------+-------------------------------------------+
+| 4-6     | Frame Count       | Always zero                               |
++---------+-------------------+-------------------------------------------+
+| 7       | ADP ID            | Always one                                |
++---------+-------------------+-------------------------------------------+
+| 8-11    | Second Count      | Always zero                               |
++---------+-------------------+-------------------------------------------+
+| 12-13   | First Channel     | First channel in packet                   |
++---------+-------------------+-------------------------------------------+
+| 14-15   | Gain              | COR gain used                             |
++---------+-------------------+-------------------------------------------+
+| 16-23   | Time tag          | Time tag [#F1]_                           |
++---------+-------------------+-------------------------------------------+
+| 24-27   | Navg              | Integration time in samples               |
++---------+-------------------+-------------------------------------------+
+| 28-29   | Stand 1           | First stand in baseline                   |
++---------+-------------------+-------------------------------------------+
+| 30-31   | Stand 2           | Second stand in baseline                  |
++---------+-------------------+-------------------------------------------+
+| 32-4255 | Data              | ``Complex<float>`` data - [chan,pol1,pol2]|
++---------+-------------------+-------------------------------------------+
 
 The data are stored as little endian ``Complex<float>`` values.
 
-.. [#F1] Time tags are expressed at long long integers in units of ticks of a
+.. [#F1] Time tags are expressed as `uint64_t` integers in units of ticks of a
          clock at fS since the start of the UNIX epoch (1970 Jan 1 00:00:00 UTC)
-.. [#F2] Tunings are expressed as unsigned integers in units of fS / 2\ :sup:`32` Hz
+.. [#F2] Tunings are expressed as ``uint32_t`` integers in units of fS / 2\ :sup:`32` Hz
 .. [#F3] Ordering is [Tuning 1, Tuning 2]
 .. [#F4] Ordering is [Tuning 1/pol 0, Tuning 2/pol 0, Tuning 1/pol 1, Tuning 2/pol 1]
 .. [#F5] Valid values can be found at https://leo.phys.unm.edu/~lwa/astro/scheds/spec.html
