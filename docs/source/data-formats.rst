@@ -3,7 +3,7 @@ Data Format Descriptions
 
 TBW
 ---
-TBW consists of a time series of real valued data sampled at fS (196 MHz) from
+TBW consists of a time series of real valued data sampled at f\ :sub:`S` (196 MHz) from
 all antennas in the array.  The stand numbering is based on the input into the
 digital system rather than the stand number in the array.  The data are divided
 into packets that contain either 400 samples (12-bit data) or 1200 samples 
@@ -90,7 +90,7 @@ The packing on the ``TBN ID`` field is:
 
 DRX
 ---
-DRX data consist of a time series of complex data sampled at fS / ``Decimation Factor``.
+DRX data consist of a time series of complex data sampled at f\ :sub:`S` / ``Decimation Factor``.
 The data are divided into packets of 4096 samples per beam per tuning per
 polarization.  Data is typically recorded such that only a single beam is
 present.
@@ -108,7 +108,7 @@ present.
 +---------+-------------------+---------------------------------+
 | 8-11    | Second Count      | Always zero                     |
 +---------+-------------------+---------------------------------+
-| 12-13   | Decimation Factor | Decimation factor of fS         |
+| 12-13   | Decimation Factor | Decimation factor of f\ :sub:`S`|
 +---------+-------------------+---------------------------------+
 | 14-15   | Time Offset       | Time correction to the time tag |
 +---------+-------------------+---------------------------------+
@@ -154,7 +154,7 @@ polarization products to be stored.
 +---------+-------------------+---------------------------------+
 | 12-13   | Time offset       | Time correction to the time tag |
 +---------+-------------------+---------------------------------+
-| 14-15   | Decimation Factor | Decimation factor of fS         |
+| 14-15   | Decimation Factor | Decimation factor of f\ :sub:`S`|
 +---------+-------------------+---------------------------------+
 | 16-23   | Tuning Word[2]    | Tuning frequencies [#F2]_ [#F3]_|
 +---------+-------------------+---------------------------------+
@@ -210,8 +210,8 @@ TBF
 ---
 TBF is similar to both TBW and TBN, but is a complex frequency domain product
 that contains blocks of 12 channels from all stands and polarizations.  Each
-channel has a bandwidth of fC (25 kHz) and there may be up to 132 different
-values of ``First Channel`` within a single recording.
+channel has a bandwidth of f\ :sub:`C` (25 kHz) and there may be up to 132
+different values of ``First Channel`` within a single recording.
 
 .. note:: Fields are big endian
 
@@ -232,7 +232,7 @@ values of ``First Channel`` within a single recording.
 +---------+-------------------+---------------------------------+
 | 16-23   | Time tag          | Time tag [#F1]_                 |
 +---------+-------------------+---------------------------------+
-| 24-6167 | Data              | ``ci4`` data - [chan,stand,pol]     |
+| 24-6167 | Data              | ``ci4`` data - [chan,stand,pol] |
 +---------+-------------------+---------------------------------+
 
 The ``ci4`` aka "4+4-bit complex integer" data are stored as two's complement
@@ -273,9 +273,10 @@ baseline pair.
 
 The data are stored as little endian ``Complex<float>`` values.
 
-.. [#F1] Time tags are expressed as `uint64_t` integers in units of ticks of a
-         clock at fS since the start of the UNIX epoch (1970 Jan 1 00:00:00 UTC)
-.. [#F2] Tunings are expressed as ``uint32_t`` integers in units of fS / 2\ :sup:`32` Hz
+.. [#F1] Time tags are expressed as ``uint64_t`` integers in units of ticks of a
+         clock at f\ :sub:`S` since the start of the UNIX epoch (1970 Jan 1 00:00:00 UTC)
+.. [#F2] Tunings are expressed as ``uint32_t`` integers in units of
+         f\ :sub:`S` / 2\ :sup:`32` Hz
 .. [#F3] Ordering is [Tuning 1, Tuning 2]
 .. [#F4] Ordering is [Tuning 1/pol 0, Tuning 2/pol 0, Tuning 1/pol 1, Tuning 2/pol 1]
 .. [#F5] Valid values can be found at https://leo.phys.unm.edu/~lwa/astro/scheds/spec.html
