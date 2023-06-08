@@ -96,6 +96,7 @@ Advanced
    :maxdepth: 2
 
    c-extensions
+   data-formats
 
 Indices and Tables
 ==================
