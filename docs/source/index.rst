@@ -95,8 +95,8 @@ Advanced
 .. toctree::
    :maxdepth: 2
 
-   c-extensions
    data-formats
+   c-extensions
 
 Indices and Tables
 ==================
