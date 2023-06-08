@@ -242,9 +242,12 @@ integers with the real part stored in the first four bits.
 
 COR
 ---
-The COR format contains full polarization complex visibility data from a single
-baseline pair.  The stand numbering for the baseline pair is based on the input
-into the digital system rather than the stand number in the array.  
+The COR format contains full polarization complex visibility data for 132
+channels from a single baseline pair.  Each channel has a bandwidth of
+f\ :sub:`C` (25 kHz) and there may be up to six different contiguous values of
+``First Channel`` within a single recording.  The stand numbering for the
+baseline pair is based on the input into the digital system rather than the
+stand number in the array.
 
 .. note:: Fields are big endian
 
