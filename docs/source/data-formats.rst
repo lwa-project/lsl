@@ -211,7 +211,9 @@ TBF
 TBF is similar to both TBW and TBN, but is a complex frequency domain product
 that contains blocks of 12 channels from all stands and polarizations.  Each
 channel has a bandwidth of f\ :sub:`C` (25 kHz) and there may be up to 132
-different values of ``First Channel`` within a single recording.
+different values of ``First Channel`` within a single recording.  The stand
+ordering is based on the input into the digital system rather than the stand
+number in the array.  
 
 .. note:: Fields are big endian
 
@@ -241,7 +243,8 @@ integers with the real part stored in the first four bits.
 COR
 ---
 The COR format contains full polarization complex visibility data from a single
-baseline pair.
+baseline pair.  The stand numbering for the baseline pair is based on the input
+into the digital system rather than the stand number in the array.  
 
 .. note:: Fields are big endian
 
