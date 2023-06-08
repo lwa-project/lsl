@@ -657,7 +657,10 @@ class CorrelatedDataUV(CorrelatedDataBase):
             self.total_baseline_count = len(hdulist[0].data['BASELINE'])
             
             # Data set times and integration count
-            jd = hdulist[0].data['DATE'] + hdulist[0].data['_DATE']
+            try:
+                jd = hdulist[0].data['DATE'] + hdulist[0].data['_DATE']
+            except KeyError:
+                jd = hdulist[0].data['DATE']
             self._times = numpy.unique(jd)
             self.integration_count = len(self._times)
             
@@ -693,8 +696,11 @@ class CorrelatedDataUV(CorrelatedDataBase):
                 targetJD = targetTime
                 
                 # Figure out what rows we need
-                selection = numpy.where( uvData.data['DATE']+uvData.data['_DATE'] == targetTime )[0]
-                
+                try:
+                    selection = numpy.where( uvData.data['DATE']+uvData.data['_DATE'] == targetTime )[0]
+                except KeyError:
+                    selection = numpy.where( uvData.data['DATE'] == targetTime )[0]
+                    
                 # Figure out the source we are working on and create a phase center
                 # if there is only a single source
                 phase_center = None
@@ -712,7 +718,10 @@ class CorrelatedDataUV(CorrelatedDataBase):
                             
                 # Pull out the raw data from the table
                 bl = uvData.data['BASELINE'][selection]
-                jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
+                try:
+                    jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
+                except KeyError:
+                    jd = uvData.data['DATE'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
