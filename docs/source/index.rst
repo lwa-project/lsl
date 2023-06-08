@@ -84,10 +84,10 @@ Included Scripts
 
 Tutorials
 =========
-* `General LSL Routines <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/docs/notebooks/General%20Tutorial.ipynb>`_
-* `Building SDFs Programmatically <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/docs/notebooks/SDF%20Generation.ipynb>`_
-* `Observation Metadata <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/docs/notebooks/MCS%20Metadata%20Tutorial.ipynb>`_
-* `Working with Data <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/docs/notebooks/LDP%20Tutorial.ipynb>`_
+* `General LSL Routines <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/General%20Tutorial.ipynb>`_
+* `Building SDFs Programmatically <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/SDF%20Generation.ipynb>`_
+* `Observation Metadata <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/MCS%20Metadata%20Tutorial.ipynb>`_
+* `Working with Data <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/LDP%20Tutorial.ipynb>`_
 
 Advanced
 ========
