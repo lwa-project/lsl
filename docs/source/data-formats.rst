@@ -281,8 +281,8 @@ The data are stored as little endian ``Complex<float>`` values.
 
 .. [#F1] Time tags are expressed as ``uint64_t`` integers in units of ticks of a
          clock at f\ :sub:`S` since the start of the UNIX epoch (1970 Jan 1 00:00:00 UTC)
-.. [#F2] Tunings are expressed as ``uint32_t`` integers in units of
-         f\ :sub:`S` / 2\ :sup:`32` Hz
+.. [#F2] Tuning words are frequencies expressed as ``uint32_t`` integers in units
+         of f\ :sub:`S` / 2\ :sup:`32` Hz
 .. [#F3] Ordering is [Tuning 1, Tuning 2]
 .. [#F4] Ordering is [Tuning 1/pol 0, Tuning 2/pol 0, Tuning 1/pol 1, Tuning 2/pol 1]
 .. [#F5] Valid values can be found at https://leo.phys.unm.edu/~lwa/astro/scheds/spec.html
