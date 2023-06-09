@@ -88,7 +88,8 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
         SampleAverage keyword that calcSpectra does.
         
     .. versionchanged:: 1.2.5
-        Added the 'pfb' keyword.
+        Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
+        this overrides the 'window' keyword.
     """
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
@@ -137,7 +138,8 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     dimensions Stokes parameter (0=I, 1=Q, 2=U, 3=V) by stand by channel).
     
     .. versionchanged:: 1.2.5
-        Added the 'pfb' keyword.
+        Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
+        this overrides the 'window' keyword.
     """
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
@@ -207,7 +209,8 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
          * a two-element tuple of azimuth, elevation in degrees.
          
     .. versionchanged:: 1.2.5
-        Added the 'pfb' keyword.
+        Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
+        this overrides the 'window' keyword.
         
     .. versionchanged:: 2.0.1
         Added support for phase_center to be an astropy.coordinates.AltAz instance
@@ -360,7 +363,8 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
          * a two-element tuple of azimuth, elevation in degrees.
          
     .. versionchanged:: 1.2.5
-        Added the 'pfb' keyword.
+        Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
+        this overrides the 'window' keyword.
     """
     
     # Since we want to compute Stokes parameters, we need both pols

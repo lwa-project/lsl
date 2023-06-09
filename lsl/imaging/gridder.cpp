@@ -17,7 +17,7 @@
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
-#include "../correlator/common.h"
+#include "../correlator/common.hpp"
 
 
 // Maximum number of w-planes to project
@@ -146,7 +146,7 @@ void compute_kernel_correction(long nPixSide,
     long i, j;
     OutType temp, temp2;
     OutType *corr_full;
-    corr_full = (OutType*) malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(OutType));
+    corr_full = (OutType*) aligned64_malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(OutType));
     memset(corr_full, 0, sizeof(OutType)*nPixSide*GRID_KERNEL_OVERSAMPLE);
     
     // Copy the kernel over
@@ -186,7 +186,7 @@ void compute_kernel_correction(long nPixSide,
     }
     
     // Cleanup
-    free(corr_full);
+    aligned64_free(corr_full);
 }
 
 
@@ -217,7 +217,7 @@ void compute_gridding(long nVis,
     
     // Fill in the 1-D gridding kernel
     double *kernel1D;
-    kernel1D = (double *) malloc((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1)*sizeof(double));
+    kernel1D = (double *) aligned64_malloc((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1)*sizeof(double));
     kaiser_bessel_1d_kernel_filler(kernel1D);
     
     long secStart, secStop;
@@ -358,7 +358,7 @@ void compute_gridding(long nVis,
     fftwf_destroy_plan(pR);
     fftwf_free(inP);
     
-    free(kernel1D);
+    aligned64_free(kernel1D);
     
     free(planeStart);
     free(planeStop);

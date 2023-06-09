@@ -1,11 +1,29 @@
-#ifndef CORRELATOR_COMMON_H_INCLUDE_GUARD_
-#define CORRELATOR_COMMON_H_INCLUDE_GUARD_
+#pragma once
 
 #include "Python.h"
 #include <cmath>
 #include <complex>
+#include <cstdlib>
+#include <fftw3.h>
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
+
+/*
+ 64-byte aligned memory allocator/deallocator
+*/
+
+inline void* aligned64_malloc(size_t size) {
+  void *ptr = NULL;
+  int err = posix_memalign(&ptr, 64, size);
+  if( err != 0 ) {
+    return NULL;
+  }
+  return ptr;
+}
+
+inline void aligned64_free(void* ptr) {
+  free(ptr);
+}
 
 
 /*
@@ -72,12 +90,12 @@ inline float hanning(float x) {
 */
 
 inline double hamming(double x) {
-    return 0.53836 - 0.46164*cos(x);
+    return 0.54 - 0.46*cos(x);
     
 }
 
 inline float hamming(float x) {
-    return 0.53836 - 0.46164*cos(x);
+    return 0.54 - 0.46*cos(x);
 }
 
 
@@ -113,5 +131,3 @@ inline float abs2(Complex32 z) {
 inline double abs2(Complex64 z) {
     return z.real()*z.real() + z.imag()*z.imag();
 }
-
-#endif // CORRELATOR_COMMON_H_INCLUDE_GUARD_

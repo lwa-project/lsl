@@ -75,10 +75,10 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.9'
-__all__ = ['CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS', 
-           'ImgWPlus', 'build_gridded_image', 'plot_gridded_image', 'get_image_radec', 
-           'get_image_azalt']
+__version__ = '1.0'
+__all__ = ['CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS',
+           'convert_to_stokes', 'convert_to_linear', 'ImgWPlus', 'build_gridded_image',
+           'plot_gridded_image', 'get_image_radec', 'get_image_azalt']
 
 
 
@@ -657,7 +657,10 @@ class CorrelatedDataUV(CorrelatedDataBase):
             self.total_baseline_count = len(hdulist[0].data['BASELINE'])
             
             # Data set times and integration count
-            jd = hdulist[0].data['DATE'] + hdulist[0].data['_DATE']
+            try:
+                jd = hdulist[0].data['DATE'] + hdulist[0].data['_DATE']
+            except KeyError:
+                jd = hdulist[0].data['DATE']
             self._times = numpy.unique(jd)
             self.integration_count = len(self._times)
             
@@ -693,8 +696,11 @@ class CorrelatedDataUV(CorrelatedDataBase):
                 targetJD = targetTime
                 
                 # Figure out what rows we need
-                selection = numpy.where( uvData.data['DATE']+uvData.data['_DATE'] == targetTime )[0]
-                
+                try:
+                    selection = numpy.where( uvData.data['DATE']+uvData.data['_DATE'] == targetTime )[0]
+                except KeyError:
+                    selection = numpy.where( uvData.data['DATE'] == targetTime )[0]
+                    
                 # Figure out the source we are working on and create a phase center
                 # if there is only a single source
                 phase_center = None
@@ -712,7 +718,10 @@ class CorrelatedDataUV(CorrelatedDataBase):
                             
                 # Pull out the raw data from the table
                 bl = uvData.data['BASELINE'][selection]
-                jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
+                try:
+                    jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
+                except KeyError:
+                    jd = uvData.data['DATE'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
@@ -1128,6 +1137,142 @@ except ImportError:
         
         def __init__(self, filename):
             raise RuntimeError("Cannot import casacore.tables, MS support disabled")
+
+
+def convert_to_stokes(data_set):
+    """
+    Given a :class:`lsl.imaging.data.VisibilityDataSet` object that contains
+    linear polarization products, convert to Stokes parameters and return a
+    new :class:`lsl.imaging.data.VisibilityDataSet` containing them.
+    """
+    
+    # Catch VisibilityData objects before we go any further so we can iterate 
+    # over them
+    if isinstance(data_set, VisibilityData):
+        new_data = data_set.copy(include_pols=False)
+        for ds in data_set:
+            new_data_set = convert_to_stokes(ds)
+            new_data.append(new_data_set)
+        return new_data
+        
+    if 'I' in data_set.pols or 'Q' in data_set.pols or 'U' in data_set.pols or 'V' in data_set.pols:
+        raise RuntimeError("Data already appear to be represented as Stokes parameters")
+        
+    pairs = 0
+    if 'XX' in data_set.pols and 'YY' in data_set.pols:
+        pairs += 1
+    if 'XY' in data_set.pols and 'YX' in data_set.pols:
+        pairs += 1
+    if pairs == 0:
+        raise RuntimeError("Too few linear polarization products to form any Stokes parameters")
+        
+    try:
+        XX = data_set.XX
+        YY = data_set.YY
+        
+        Id = XX.data + YY.data
+        Iw = (XX.weight + YY.weight)/2.0
+        Im = XX.mask | YY.mask
+        
+        Qd = XX.data - YY.data
+        Qw = (XX.weight + YY.weight)/2.0
+        Qm = XX.mask | YY.mask
+    except AttributeError:
+        Id = Iw = Im = None
+        Qd = Qw = Qm = None
+        
+    try:
+        XY = data_set.XY
+        YX = data_set.YX
+        
+        Ud = XY.data + YX.data
+        Uw = (XY.weight + YX.weight)/2.0
+        Um = XY.mask | YX.mask
+        
+        Vd = 1j*(XY.data - YX.data)
+        Vw = (XY.weight + YX.weight)/2.0
+        Vm = XY.mask | YX.mask
+    except AttributeError:
+        Ud = Uw = Um = None
+        Vd = Vw = Vm = None
+        
+    new_data_set = data_set.copy(include_pols=False)
+    for p,d,w,m in zip(('I','Q','U','V'), (Id,Qd,Ud,Vd), (Iw,Qw,Uw,Vw), (Im,Qm,Um,Vm)):
+        if d is None:
+            continue
+            
+        pol = PolarizationDataSet(p, data=d, weight=w, mask=m)
+        new_data_set.append(pol)
+        
+    return new_data_set
+
+
+def convert_to_linear(data_set):
+    """
+    Given a :class:`lsl.imaging.data.VisibilityDataSet` object that contains
+    Stokes parameters, convert to linear polarization products and return a
+    new :class:`lsl.imaging.data.VisibilityDataSet` containing them.
+    """
+    
+    # Catch VisibilityData objects before we go any further so we can iterate 
+    # over them
+    if isinstance(data_set, VisibilityData):
+        new_data = data_set.copy(include_pols=False)
+        for ds in data_set:
+            new_data_set = convert_to_linear(ds)
+            new_data.append(new_data_set)
+        return new_data
+        
+    if 'XX' in data_set.pols or 'YY' in data_set.pols or 'XY' in data_set.pols or 'YX' in data_set.pols:
+        raise RuntimeError("Data already appear to be represented as linear polarization products")
+        
+    pairs = 0
+    if 'I' in data_set.pols and 'Q' in data_set.pols:
+        pairs += 1
+    if 'U' in data_set.pols and 'V' in data_set.pols:
+        pairs += 1
+    if pairs == 0:
+        raise RuntimeError("Too few Stokes parameters to form any linear polarization products")
+        
+    try:
+        I = data_set.I
+        Q = data_set.Q
+        
+        XXd = (I.data + Q.data)/2.0
+        XXw = (I.weight + Q.weight)/2.0
+        XXm = I.mask | Q.mask
+        
+        YYd = (I.data - Q.data)/2.0
+        YYw = (I.weight + Q.weight)/2.0
+        YYm = I.mask | Q.mask
+    except AttributeError:
+        XXd = XXw = XXm = None
+        YYd = YYw = YYm = None
+    
+    try:
+        U = data_set.U
+        V = data_set.V
+        
+        XYd = (U.data - 1j*V.data)/2.0
+        XYw = (U.weight + V.weight)/2.0
+        XYm = U.mask | V.mask
+        
+        YXd = (U.data + 1j*V.data)/2.0
+        YXw = (U.weight + V.weight)/2.0
+        YXm = U.mask | V.mask
+    except AttributeError:
+        XYd = XYw = XYm = None
+        YXd = YXw = YXm = None
+        
+    new_data_set = data_set.copy(include_pols=False)
+    for p,d,w,m in zip(('XX','YY','XY','YX'), (XXd,YYd,XYd,YXd), (XXw,YYw,XYw,YXw), (XXm,YYm,XYm,YXm)):
+        if d is None:
+            continue
+            
+        pol = PolarizationDataSet(p, data=d, weight=w, mask=m)
+        new_data_set.append(pol)
+        
+    return new_data_set
 
 
 class ImgWPlus(aipy.img.ImgW):

@@ -1,3 +1,15 @@
+2.1.8
+ * Added polarization basis conversions functions to lsl.imaging.utils
+ * Improved TBF frame count reliability
+ * Fixed several bugs in lsl.sim.dp.point_source() that lead to data that would not image properly
+ * Dropped unlzw in favor of using the gzip utility
+ * Made antenna inclusion/exclusion more robust in lsl.imaging.data.VisibilityDataSet.get_antenna_subset()
+ * Added support for "long (ionospheric) product names"
+ * Updated the Hamming window coefficients
+ * Switched the PFB in lsl.correlator.fx to a Hamming window
+ * Updated the documentation in lsl.correlator.fx to clarify that 'pfb' enables a 4-tap Hamming windowed PFB
+ * Updated the documentation in lsl.correlator.fx to clarify that 'pfb' overrides the 'window' keyword
+
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
  * Updated the LWA1 SSMIF to 2022/11/15
