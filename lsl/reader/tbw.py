@@ -1,6 +1,6 @@
 """
 Python module to reading in data from both 12-bit and 4-bit TBW files.  TBW data
-consists of a time series of real valued data sampled at f\ :sub:`S` (196 MHz)
+consist of a time series of real valued data sampled at f\ :sub:`S` (196 MHz)
 from all antennas in the array.  The stand numbering is based on the input into
 the digital system rather than the stand number in the array.  The data are
 divided into packets that contain either 400 samples (12-bit data) or 1200

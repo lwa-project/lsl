@@ -1,5 +1,5 @@
 """
-Python module to reading in data from COR files.  COR data contains full
+Python module to reading in data from COR files.  COR data contain full
 polarization complex visibility data for 132 channels from each baseline pair
 in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and there
 may be up to six different contiguous blocks of channels within a single

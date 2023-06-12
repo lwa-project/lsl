@@ -4,7 +4,7 @@ frequency-domain product that contains blocks of 12 channels from all antennas
 in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and there
 may be up to 132 different blocks of channels within a single recording.  The
 stand ordering is based on the input into the digital system rather than the
-stand number in the array.  
+stand number in the array.
 
 This module defines the following classes for storing the TBF data found in a
 file:

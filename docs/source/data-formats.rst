@@ -3,7 +3,7 @@ Data Format Descriptions
 
 TBW
 ---
-TBW consists of a time series of real valued data sampled at f\ :sub:`S` (196 MHz) from
+TBW consist of a time series of real valued data sampled at f\ :sub:`S` (196 MHz) from
 all antennas in the array.  The stand numbering is based on the input into the
 digital system rather than the stand number in the array.  The data are divided
 into packets that contain either 400 samples (12-bit data) or 1200 samples 
@@ -90,10 +90,10 @@ The packing on the ``TBN ID`` field is:
 
 DRX
 ---
-DRX data consist of a time series of complex data sampled at f\ :sub:`S` / ``Decimation Factor``.
-The data are divided into packets of 4096 samples per beam per tuning per
-polarization.  Data is typically recorded such that only a single beam is
-present.
+DRX data consist of a time series of complex data sampled at f\ :sub:`S` / ``Decimation Factor``
+from the beamformer.  The data are divided into packets of 4096 samples per beam
+per tuning per polarization.  Data is typically recorded such that only a single
+beam is present.
 
 .. note:: Fields are big endian
 
