@@ -33,15 +33,15 @@ into packets that contain either 400 samples (12-bit data) or 1200 samples
 
 The packing on the ``TBW ID`` field is:
 
-+--------+--------------+
-| Bit(s) | Description  |
-+========+==============+
-| 0-13   | Stand        |
-+--------+--------------+
-| 14     | Bits (0 = 12)|
-+--------+--------------+
-| 15     | Is TBW?      |
-+--------+--------------+
++--------+-------------------------+
+| Bit(s) | Description             |
++========+=========================+
+| 0-13   | Stand                   |
++--------+-------------------------+
+| 14     | Sample Size (0 = 12-bit)|
++--------+-------------------------+
+| 15     | Is TBW? (1 = Yes)       |
++--------+-------------------------+
 
 Both the ``i4`` and ``i12`` versions of the data are stored as two's complement
 integers.
@@ -49,8 +49,8 @@ integers.
 TBN
 ---
 TBN data is similar to TBW data, except that the data are complex and have a
-variable sample rate of up to 100 kHz. The data is divided into packets with 512
-samples per stand per polarization.
+variable sample rate of up to 100 kHz. The data are divided into packets with
+512 samples per stand per polarization.
 
 .. note:: Fields are big endian
 
@@ -76,15 +76,15 @@ samples per stand per polarization.
 
 The packing on the ``TBN ID`` field is:
 
-+--------+--------------+
-| Bit(s) | Description  |
-+========+==============+
-| 0-13   | Stand        |
-+--------+--------------+
-| 14     | Reserved     |
-+--------+--------------+
-| 15     | Is TBW?      |
-+--------+--------------+
++--------+------------------+
+| Bit(s) | Description      |
++========+==================+
+| 0-13   | Stand            |
++--------+------------------+
+| 14     | Reserved         |
++--------+------------------+
+| 15     | Is TBW? (1 = Yes)|
++--------+------------------+
 
 ``ci8`` is also known as "8+8-bit complex integer".
 
@@ -136,12 +136,12 @@ The packing on the ``ID`` field is:
 +--------+--------------+
 
 The ``ci4`` aka "4+4-bit complex integer" data are stored as two's complement
-integers with the real part stored in the first four bits.
+integers with the real part stored in the first four bits of the byte.
 
 DR Spectrometer
 ---------------
 DR Spectrometer data contain DRX data that has been transformed to the Fourier
-domain, converted to power, and integrated on-the-fly from the data recorder.  
+domain, converted to power, and integrated on-the-fly by the data recorder.  
 The format allows for variable integration times, channel counts, and
 polarization products to be stored.
 
@@ -181,8 +181,8 @@ polarization products to be stored.
 | 72-N    | Data              | ``float`` data - [pol,chan]     |
 +---------+-------------------+---------------------------------+
 
-The ``Stokes Format`` is a bit field defines what polarizations are included in
-the packet data.  The fields are:
+The ``Stokes Format`` is a bit field that defines what polarizations are
+included in the packet data.  The fields are:
 
 +-------+--------------+
 | Value | Pol. Product |
@@ -238,7 +238,7 @@ number in the array.
 +---------+-------------------+---------------------------------+
 
 The ``ci4`` aka "4+4-bit complex integer" data are stored as two's complement
-integers with the real part stored in the first four bits.
+integers with the real part stored in the first four bits of the byte.
 
 COR
 ---
