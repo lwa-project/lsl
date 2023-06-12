@@ -92,8 +92,7 @@ DRX
 ---
 DRX data consist of a time series of complex data sampled at f\ :sub:`S` / ``Decimation Factor``
 from the beamformer.  The data are divided into packets of 4096 samples per beam
-per tuning per polarization.  Data is typically recorded such that only a single
-beam is present.
+per tuning per polarization.
 
 .. note:: Fields are big endian
 
