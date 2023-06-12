@@ -1,6 +1,11 @@
 """
-Python module to read in DR spectrometer data.  This module defines the following 
-classes for storing the spectra found in a file:
+Python module to read in DR spectrometer data.  DR Spectrometer data contain DRX
+data that has been transformed to the Fourier domain, converted to power, and
+integrated on-the-fly by the data recorder.  These data can have various
+integration times, channel counts, and polarization products stored.
+
+This module defines the following classes for storing the spectra found in a
+file:
 
 Frame
   object that contains all data associated with a particular spectrometer frame.  

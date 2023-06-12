@@ -1,6 +1,13 @@
 """
-Python module to reading in data from COR files.  This module defines the 
-following classes for storing the COR data found in a file:
+Python module to reading in data from COR files.  COR data contains full
+polarization complex visibility data for 132 channels from each baseline pair
+in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and there
+may be up to six different contiguous blocks of channels within a single
+recording.  The stand numbering for the baseline pair is based on the input into
+the digital system rather than the stand number in the array.
+
+This module defines the following classes for storing the COR data found in a
+file:
 
 Frame
   object that contains all data associated with a particular COR frame.  The 
