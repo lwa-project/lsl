@@ -911,22 +911,22 @@ class sdf_ndp_tests(unittest.TestCase):
         self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
         
         # Bad beam gain
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, beam_gain=1.1)
         
         # Bad dipole gain
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, dipole_gain=1.1)
         
         # Bad polarization
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, pol='R')
         
     def test_stepped_beamdipole_update(self):
         """Test updating STEPPED beam/dipole mode values."""
         
         project = sdfNDP.parse_sdf(stpFile)
-        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        project.sessions[0].observations[1].set_beamdipole_mode(37)
         
         self.assertTrue(project.sessions[0].observations[0].beamDipole is     None)
         self.assertTrue(project.sessions[0].observations[1].beamDipole is not None)
@@ -939,30 +939,30 @@ class sdf_ndp_tests(unittest.TestCase):
         """Test writing a STEPPED beam/dipole mode SDF file."""
         
         project = sdfNDP.parse_sdf(stpFile)
-        project.sessions[0].observations[1].set_beamdipole_mode(73)
+        project.sessions[0].observations[1].set_beamdipole_mode(37)
         out = project.render()
         
     def test_stepped_beamdipole_errors(self):
         """Test various STEPPED beam/dipole mode SDF errors."""
         
         project = sdfNDP.parse_sdf(stpFile)
-        project.sessions[0].observations[0].set_beamdipole_mode(73)
+        project.sessions[0].observations[0].set_beamdipole_mode(37)
         
         # Bad dipole
         self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, -1)
         self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 3000)
         
         # Bad beam gain
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=-0.1)
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, beam_gain=1.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, beam_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, beam_gain=1.1)
         
         # Bad dipole gain
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=-0.1)
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, dipole_gain=1.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, dipole_gain=-0.1)
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, dipole_gain=1.1)
         
         # Bad polarization
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
-        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, pol='L')
+        self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 37, pol='R')
         
     ### TBF ###
     
