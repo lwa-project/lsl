@@ -20,7 +20,7 @@ from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
 import lsl.testing
 
 
-__version__  = "0.5"
+__version__  = "0.6"
 __author__    = "Jayce Dowell"
 
 
@@ -31,7 +31,7 @@ class stations_tests(unittest.TestCase):
     def test_station(self):
         """Test retrieving stations from the stations module."""
 
-        for station in (stations.lwa1, stations.lwasv):
+        for station in (stations.lwa1, stations.lwasv, stations.lwana):
             with self.subTest(station=station.name):
                 self.assertTrue(isinstance(station, stations.LWAStation))
                 
@@ -55,7 +55,7 @@ class stations_tests(unittest.TestCase):
     def test_pickle(self):
         """Test pickling of LWAStation instances."""
         
-        for station in (stations.lwa1, stations.lwasv):
+        for station in (stations.lwa1, stations.lwasv, stations.lwana):
             with self.subTest(station=station.name):
                 # Pickle and re-load
                 out  = pickle.dumps(station)
@@ -128,11 +128,11 @@ class stations_tests(unittest.TestCase):
         self.assertEqual(lwasv.interface.sdm, 'lsl.common.sdmADP')
         
         lwana = stations.lwana
-        self.assertEqual(lwana.interface.backend, None)
-        self.assertEqual(lwana.interface.mcs, None)
-        self.assertEqual(lwana.interface.sdf, None)
-        self.assertEqual(lwana.interface.metabundle, None)
-        self.assertEqual(lwana.interface.sdm, None)
+        self.assertEqual(lwana.interface.backend, 'lsl.common.ndp')
+        self.assertEqual(lwana.interface.mcs, 'lsl.common.mcsNDP')
+        self.assertEqual(lwana.interface.sdf, 'lsl.common.sdfNDP')
+        self.assertEqual(lwana.interface.metabundle, 'lsl.common.metabundleNDP')
+        self.assertEqual(lwana.interface.sdm, 'lsl.common.sdmNDP')
         
     def test_interface_modules(self):
         """Test retrieving LSL interface modules."""
@@ -151,15 +151,24 @@ class stations_tests(unittest.TestCase):
         self.assertFalse(lwasv.interface.get_module('metabundle') == metabundle)
         self.assertFalse(lwasv.interface.get_module('sdm') == sdm)
         
+        lwana = stations.lwana
+        self.assertFalse(lwana.interface.get_module('backend') == dp)
+        self.assertFalse(lwana.interface.get_module('mcs') == mcs)
+        self.assertFalse(lwana.interface.get_module('sdf') == sdf)
+        self.assertFalse(lwana.interface.get_module('metabundle') == metabundle)
+        self.assertFalse(lwana.interface.get_module('sdm') == sdm)
+        
     def test_ssmif(self):
         """Test the SSMIF parser."""
         
         filenames = [os.path.join(DATA_BUILD, 'lwa1-ssmif.txt'),
                      os.path.join(DATA_BUILD, 'lwasv-ssmif.txt'),
+                     os.path.join(DATA_BUILD, 'lwana-ssmif.txt'),
                      os.path.join(DATA_BUILD, 'tests', 'ssmif.dat'),
-                     os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat')]
-        sites = ['LWA1', 'LWA-SV', 'LWA1', 'LWA-SV']
-        types = ['text', 'text', 'binary', 'binary']
+                     os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat'),
+                     os.path.join(DATA_BUILD, 'tests', 'ssmif-ndp.dat')]
+        sites = ['LWA1', 'LWA-SV', 'LWA-NA', 'LWA1', 'LWA-SV', 'LWA-NA']
+        types = ['text', 'text', 'text', 'binary', 'binary', 'binary']
         for filename,site,type in zip(filenames, sites, types):
             with self.subTest(station=site, type=type):
                 out = stations.parse_ssmif(filename)
@@ -167,7 +176,7 @@ class stations_tests(unittest.TestCase):
     def test_responses(self):
         """Test the various frequency responses."""
         
-        for station in (stations.lwa1, stations.lwasv):
+        for station in (stations.lwa1, stations.lwasv, stations.lwana):
             with self.subTest(station=station.name):
                 station[0].fee.response()
                 station[0].cable.response()
