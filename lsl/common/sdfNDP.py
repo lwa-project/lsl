@@ -60,20 +60,20 @@ from lsl.common.color import colorfy
 
 from lsl.common.mcsNDP import LWA_MAX_NSTD
 from lsl.common.ndp import word_to_freq, fC
-from lsl.common.stations import lwasv
+from lsl.common.stations import lwana
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_SIZE as TBFSize
 
 from lsl.common.sdf import Observer, ProjectOffice
 from lsl.common.sdf import Project as _Project, Session as _Session
-from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, DRX, Solar, Jovian, Stepped, BeamStep
+from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
 __version__ = '0.1'
-__all__ = ['UCF_USERNAME_RE', 'parse_time', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'DRX', 'Solar', 'Jovian', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__all__ = ['UCF_USERNAME_RE', 'parse_time', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _UTC = pytz.utc
@@ -217,6 +217,14 @@ class Project(_Project):
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_JOV':
+                output += "OBS_B            %s\n" % (obs.beam,)
+                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
+                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
+                output += "OBS_FREQ2        %i\n" % (obs.freq2,)
+                output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
+                output += "OBS_BW           %i\n" % (obs.filter,)
+                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+            elif obs.mode == 'TRK_LUN':
                 output += "OBS_B            %s\n" % (obs.beam,)
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
                 output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
@@ -390,7 +398,7 @@ class TBF(Observation):
         
         self.update()
         
-        station = lwasv
+        station = lwana
         if self._parent is not None:
             station = self._parent.station
         backend = station.interface.get_module('backend')
@@ -438,7 +446,7 @@ class Session(_Session):
     
     _allowed_modes = (TBF, DRX, Stepped)
     
-    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwasv):
+    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwana):
         _Session.__init__(self, name, id, 
                           observations=observations, data_return_method=data_return_method, 
                           comments=comments, station=station)
@@ -533,6 +541,8 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
         obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+    elif mode == 'TRK_LUN':
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             print("[%i] -> found %i steps" % (os.getpid(), len(beam_temps)))
