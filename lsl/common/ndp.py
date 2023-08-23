@@ -37,7 +37,7 @@ __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX',
 fS = 196.0e6	# Hz
 
 #: F-engine channel width in Hz
-fC = 25e3		# Hz
+fC = fS / 8192		# Hz
 
 T = 1.0		# seconds
 T2 = 0.010	# seconds
@@ -50,7 +50,7 @@ DRX_TUNING_WORD_MIN = 222417950        # Tuning word
 DRX_TUNING_WORD_MAX = 1928352663       # Tuning word
 
 #: Maximum number of beams
-DRX_BEAMS_MAX = 3
+DRX_BEAMS_MAX = 4
 
 # FIR Filters
 ## DRX
