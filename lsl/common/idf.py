@@ -345,11 +345,11 @@ class Project(object):
         for i,station in enumerate(ses.stations):
             ### Session
             if station.interface.sdf == 'lsl.common.sdfADP':
-                sdfmode = sdfADP
+                sdfmod = sdfADP
             elif station.interface.sdf == 'lsl.common.sdfNDP':
-                sdfmode = sdfNDP
+                sdfmod = sdfNDP
             else:
-                sdfmode = sdf
+                sdfmod = sdf
                 
             session = sdfmod.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
                                      starting_session_id, observations=[], station=station)
