@@ -64,10 +64,10 @@ class mcs_adp_tests(unittest.TestCase):
     def test_sid_limits(self):
         """Test valid subsystem ID values"""
         
-        for i in range(1, 19+1):
+        for i in range(1, 20+1):
             mcsADP.sid_to_string(i)
         self.assertRaises(ValueError, mcsADP.sid_to_string, 0)
-        self.assertRaises(ValueError, mcsADP.sid_to_string, 20)
+        self.assertRaises(ValueError, mcsADP.sid_to_string, 21)
         
     def test_cid_limits(self):
         """Test valid command ID values"""
