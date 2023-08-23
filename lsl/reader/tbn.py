@@ -1,6 +1,12 @@
 """
-Python module for reading data in from TBN files.This module defines the 
-following classes for storing the TBN data found in a file:
+Python module for reading data in from TBN files.  TBN data consit of a time
+series of complex data with a variable sample rate of up to 100 kHz from all
+antennas in the array.  The stand numbering is based on the input into the
+digital system rather than the stand number in the array.  The data are divided
+into packets with 512 samples per stand per polarization.
+
+This module defines the following classes for storing the TBN data found in a
+file:
 
 Frame
   object that contains all data associated with a particular TBN frame.  

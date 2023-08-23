@@ -1,16 +1,34 @@
 name: "Build and Test"
-on: [push, pull_request]
+on: [push, pull_request, release]
 jobs:
+  pre_build:
+    runs-on: ubuntu-latest
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: 'never'
+          skip_after_successful_duplicate: 'true'
+          do_not_skip: '["pull_request", "release", "workflow_dispatch", "schedule"]'
   build:
+    needs: pre_build
+    if: ${{ needs.pre_build.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ['2.7', '3.6', '3.8']
+        os: [ubuntu-20.04, macos-latest]
+        python-version: ['3.8', '3.10']
+        include:
+          - os: ubuntu-20.04
+            python-version: '3.6'
+          - os: macos-latest
+            python-version: '3.6'
       fail-fast: false
     steps:
       - name: "Software Install - Ubuntu"
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04' }}
         run: |
           sudo apt-get install -y \
             build-essential \
@@ -27,7 +45,7 @@ jobs:
             libgdbm-dev \
             pkg-config \
             software-properties-common
-          sudo add-apt-repository -y ppa:kernsuite/kern-7
+          sudo add-apt-repository -y ppa:kernsuite/kern-8
           sudo apt-get -q update
           sudo apt-get -y install casacore-dev wcslib-dev
       - name: "Software Install - MacOS"
@@ -36,10 +54,10 @@ jobs:
           brew install \
             fftw \
             pkg-config
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: "Software Install - Python" 
         run: |
           python -m pip install \
@@ -53,12 +71,8 @@ jobs:
             nbformat \
             nbconvert \
             coverage
-      - if: ${{ matrix.python-version == '2.7' }}
-        run: python -m pip install "healpy<1.14.0"
       - if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version != '2.7' }}
         run: python -m pip install python-casacore
-      - name: "Software Install - Python, Part 2"
-        run: python -m pip install aipy
       - name: "Build and Install"
         run: python -m pip install .
       - name: Test
@@ -73,3 +87,13 @@ jobs:
           directory: ./tests/
           fail_ci_if_error: false
           verbose: true
+      - name: Build Package
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+        run: |
+          python setup.py sdist
+      - name: Publish Package
+        if: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' && github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: __token__
+          password: ${{ secrets.PYPI_TOKEN }}

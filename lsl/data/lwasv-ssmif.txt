@@ -1,55 +1,59 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2022 Nov 15 by J. Dowell
+#  -- Updated for FEE swaps on 11/10
+#  -- Bad count: 11; Suspect count: 8
+#  -- Cleaned up some typos
 # 2019 Dec 16 by J. Dowell
-#  Initial update for three beams
+#  -- Initial update for three beams
 # 2019 Oct 11 by J. Dowell
-#  Updated the list of bad stands after monsoon season 2019
+#  -- Updated the list of bad stands after monsoon season 2019
 # 2018 Jul 26 by J. Dowell
-#  Updated the list of bad stands after the 7/20 and 7/26 site trips
-#  Bad count: 7; Suspect count: 10
+#  -- Updated the list of bad stands after the 7/20 and 7/26 site trips
+#  -- Bad count: 7; Suspect count: 10
 # 2018 Mar 3 by J. Dowell
-#  Updated the information on the new DR2
+#  -- Updated the information on the new DR2
 # 2018 Feb 13 by J. Dowell
-#  Added support for a second beam and third data recorder
-#  Marked DR2 as bad since it is not installed
+#  -- Added support for a second beam and third data recorder
+#  -- Marked DR2 as bad since it is not installed
 # 2017 Oct 27 by J. Dowell
-#  Re-calibrated using the latest antenna positions
+#  -- Re-calibrated using the latest antenna positions
 # 2017 Oct 19 by J. Dowell
-#  Revisted the pointing correction by applying a station rotation of 0.2 degrees
-#  Turned off the PC_ keywords since they are no longer needed
-#  Moved LASI-SV into agreement with the beamformer by fixing some hardcoded values
+#  -- Revisted the pointing correction by applying a station rotation of 0.2 degrees
+#  -- Turned off the PC_ keywords since they are no longer needed
+#  -- Moved LASI-SV into agreement with the beamformer by fixing some hardcoded values
 # 2017 Oct 3 by J. Dowell
-#  Applied a new pointing correction derived from RA/dec cuts
+#  -- Applied a new pointing correction derived from RA/dec cuts
 # 2017 Sep 28 by J. Dowell
-#  Turned off the pointing correction for another round of tests
+#  -- Turned off the pointing correction for another round of tests
 # 2017 Sep 14 by J. Dowell
-#  Small tweak to the rotation for the pointing correction
+#  -- Small tweak to the rotation for the pointing correction
 # 2017 Sep 11 by J. Dowell
-#  Added in a rotation to correct the pointing error
+#  -- Added in a rotation to correct the pointing error
 # 2017 Aug 11 by J. Dowell
-#  Updated the stand positions and calibration using Google Maps
+#  -- Updated the stand positions and calibration using Google Maps
 # 2017 Jun 29 by J. Dowell
-#  Updated the list of bad stands using recent health checks
+#  -- Updated the list of bad stands using recent health checks
 # 2017 Jun 13 by J. Dowell
-#  New calibration based off TBF captures from 2017 May 1
+#  -- New calibration based off TBF captures from 2017 May 1
 # 2016 Nov 9 by J. Dowell
-#  Updated the ARB_IN, ARB_OUT, ROACH_INR, and ROACH_INC sections
-#  Updated to rotate the stand positions by 6.533 degrees based on 2016 Oct 6 re-survey
-#  Shifted the position of the outrigger by 0.3 m based on 2016 Oct 6 re-survey
+#  -- Updated the ARB_IN, ARB_OUT, ROACH_INR, and ROACH_INC sections
+#  -- Updated to rotate the stand positions by 6.533 degrees based on 2016 Oct 6 re-survey
+#  -- Shifted the position of the outrigger by 0.3 m based on 2016 Oct 6 re-survey
 # 2016 Sep 16 by J. Dowell
-#  Added a second data recorder
+#  -- Added a second data recorder
 # 2015 Dec 21 by J. Dowell
-#  Updated to reflect stand #256 being replaced by the outrigger
+#  -- Updated to reflect stand #256 being replaced by the outrigger
 # 2015 Dec 8 by J. Dowell
-#  Update the stand positions using the survey information
+#  -- Update the stand positions using the survey information
 # 2015 Oct 7 by J. Dowell
-#  Updated the listing of ARX and ROACH boards
+#  -- Updated the listing of ARX and ROACH boards
 # 2015 Sep 22 by J. Dowell
-#  Updated for various labeling conventions being used
-#  Updated for 16 ROACH boards and seven servers.
+#  -- Updated for various labeling conventions being used
+#  -- Updated for 16 ROACH boards and seven servers.
 # 2015 Jul 13 by J. Dowell
-#  Initial version based on what currently exists at LWA-SV.
+#  -- Initial version based on what currently exists at LWA-SV.
 #
 # See MCS0031 for format info 
 #
@@ -866,26 +870,25 @@ STD_LZ[256]   +10.244
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-ANT_STAT[82]      1     # 41Y - dead on 10/10
-ANT_STAT[184]     1     # 92Y - dead on 10/10
-ANT_STAT[215]     1     # 108X - wonky at high frequencies on 10/10
+ANT_STAT[61]      1     # 31X - dead on 2022/11/10; ARX or ADP implicated
+ANT_STAT[184]     1     # 92Y - dead on 2019/10/10
+ANT_STAT[205]     1     # 103X - low on 2022/11/10
+ANT_STAT[215]     1     # 108X - wonky at high frequencies on 2019/10/10
 ANT_STAT[219]     2     # 110X
 ANT_STAT[240]     2     # 120Y
 ANT_STAT[265]     1     # 133X - low; ARX or ADP implicated
-ANT_STAT[268]     1     # 134Y - dead on 10/10
 ANT_STAT[272]     1     # 136Y - low; ARX or ADP implicated
 ANT_STAT[283]     2     # 142X
-ANT_STAT[300]     1     # 150Y - low on 10/10
 ANT_STAT[325]     2     # 163X
 ANT_STAT[390]     2     # 195Y
 ANT_STAT[405]     2     # 203X
 ANT_STAT[407]     2     # 204X
-ANT_STAT[425]     2     # 213X - wonky at high frequencies on 10/10
+ANT_STAT[425]     2     # 213X - wonky at high frequencies on 2019/10/10
 ANT_STAT[426]     1     # 213Y - low; ARX or ADP implicated
-ANT_STAT[434]     1     # 217Y - high; ARX or ADP implicated - junky at high frequencies on 10/10
-ANT_STAT[436]     1     # 218Y - really low on 10/10
+ANT_STAT[434]     1     # 217Y - high; ARX or ADP implicated - junky at high frequencies on 2019/10/10
+ANT_STAT[436]     1     # 218Y - really low on 2019/10/10
 ANT_STAT[457]     1     # 229X - low; ARX or ADP implicated
-ANT_STAT[458]     1     # 229Y - dead on 10/10
+ANT_STAT[458]     1     # 229Y - dead on 2019/10/10; ARX or ADP implicated
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -906,7 +909,7 @@ ANT_STAT[458]     1     # 229Y - dead on 10/10
 # -------------------------------------------------------
 N_FEE 256
 
-# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identifiedf
+# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identified
 # *** FEE_ID[fee_id] goes here:
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)

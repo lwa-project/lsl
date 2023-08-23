@@ -1,6 +1,13 @@
 """
-Python module to reading in data from TBF files.  This module defines the 
-following classes for storing the TBF data found in a file:
+Python module to reading in data from TBF files.  TBF data are a complex
+frequency-domain product that contains blocks of 12 channels from all antennas
+in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and there
+may be up to 132 different blocks of channels within a single recording.  The
+stand ordering is based on the input into the digital system rather than the
+stand number in the array.
+
+This module defines the following classes for storing the TBF data found in a
+file:
 
 Frame
   object that contains all data associated with a particular TBF frame.  The 
@@ -167,14 +174,14 @@ def read_frame(filehandle, verbose=False):
 def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
-    first 1000 TBF records.  Return the number of frames per observation.
+    first 2500 TBF records.  Return the number of frames per observation.
     """
     
     with FilePositionSaver(filehandle):
         # Build up the list-of-lists that store the index of the first frequency
         # channel in each frame.
         channels = []
-        for i in range(1000):
+        for i in range(2500):
             try:
                 cFrame = read_frame(filehandle)
                 if not cFrame.is_tbf:

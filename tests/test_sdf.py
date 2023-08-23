@@ -39,6 +39,7 @@ tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-sdf.txt')
 drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
 solFile = os.path.join(DATA_BUILD, 'tests', 'sol-sdf.txt')
 jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-sdf.txt')
+lunFile = os.path.join(DATA_BUILD, 'tests', 'lun-sdf.txt')
 stpFile = os.path.join(DATA_BUILD, 'tests', 'stp-sdf.txt')
 spcFile = os.path.join(DATA_BUILD, 'tests', 'spc-sdf.txt')
 tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
@@ -732,6 +733,90 @@ class sdf_tests(unittest.TestCase):
         """Test various TRK_JOV SDF errors."""
         
         project = sdf.parse_sdf(jovFile)
+        
+        # Bad beam
+        project.sessions[0].drx_beam = 6
+        self.assertFalse(project.validate())
+        
+        # No beam (this is allowed now)
+        project.sessions[0].drx_beam = -1
+        self.assertTrue(project.validate())
+        
+        # Bad filter
+        project.sessions[0].observations[0].filter = 10
+        self.assertFalse(project.validate())
+        
+        # Bad frequency
+        project.sessions[0].observations[0].filter = 7
+        project.sessions[0].observations[0].frequency1 = 90.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        project.sessions[0].observations[0].frequency1 = 38.0e6
+        project.sessions[0].observations[0].frequency2 = 90.0e6
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+        # Bad duration
+        project.sessions[0].observations[0].frequency2 = 38.0e6
+        project.sessions[0].observations[0].duration = '96:00:00.000'
+        project.sessions[0].observations[0].update()
+        self.assertFalse(project.validate())
+        
+    ### DRX - TRK_LUN ###
+    
+    def test_lun_parse(self):
+        """Test reading in a TRK_LUN SDF file."""
+        
+        project = sdf.parse_sdf(lunFile)
+        
+        # Basic file structure
+        self.assertEqual(len(project.sessions), 1)
+        self.assertEqual(len(project.sessions[0].observations), 2)
+        
+        # Observational setup - 1
+        self.assertEqual(project.sessions[0].observations[0].mode, 'TRK_LUN')
+        self.assertEqual(project.sessions[0].observations[0].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[0].mpm,  43200000)
+        self.assertEqual(project.sessions[0].observations[0].dur,  10000)
+        self.assertEqual(project.sessions[0].observations[0].freq1,  438261968)
+        self.assertEqual(project.sessions[0].observations[0].freq2, 1928352663)
+        self.assertEqual(project.sessions[0].observations[0].filter,   7)
+        
+        # Observational setup - 2
+        self.assertEqual(project.sessions[0].observations[1].mode, 'TRK_LUN')
+        self.assertEqual(project.sessions[0].observations[1].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[1].mpm,  43210000)
+        self.assertEqual(project.sessions[0].observations[1].dur,  10000)
+        self.assertEqual(project.sessions[0].observations[1].freq1,  832697741)
+        self.assertEqual(project.sessions[0].observations[1].freq2, 1621569285)
+        self.assertEqual(project.sessions[0].observations[1].filter,   7)
+        
+    def test_lun_update(self):
+        """Test updating TRK_LUN values."""
+        
+        project = sdf.parse_sdf(lunFile)
+        project.sessions[0].observations[1].start = "MST 2011 Feb 23 5:00:15"
+        project.sessions[0].observations[1].duration = timedelta(seconds=15)
+        project.sessions[0].observations[1].frequency1 = 75e6
+        project.sessions[0].observations[1].frequency2 = 76e6
+        
+        self.assertEqual(project.sessions[0].observations[1].mjd,  55615)
+        self.assertEqual(project.sessions[0].observations[1].mpm,  43215000)
+        self.assertEqual(project.sessions[0].observations[1].dur,  15000)
+        self.assertEqual(project.sessions[0].observations[1].freq1, 1643482384)
+        self.assertEqual(project.sessions[0].observations[1].freq2, 1665395482)
+        
+    def test_lun_write(self):
+        """Test writing a TRK_LUN SDF file."""
+        
+        project = sdf.parse_sdf(lunFile)
+        out = project.render()
+        
+    def test_lun_errors(self):
+        """Test various TRK_LUN SDF errors."""
+        
+        project = sdf.parse_sdf(lunFile)
         
         # Bad beam
         project.sessions[0].drx_beam = 6

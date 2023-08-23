@@ -39,8 +39,8 @@ General Utilities
    color
    progress
 
-LWA-Specific Utilites
----------------------
+LWA-Specific Utilities
+----------------------
 .. toctree::
    :maxdepth: 2
 
@@ -84,10 +84,10 @@ Included Scripts
 
 Tutorials
 =========
-* `General LSL Routines <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20General%20Tutorial.ipynb>`_
-* `Building SDFs Programmatically <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20SDF%20Generation.ipynb>`_
-* `Observation Metadata <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20MCS%20Metadata%20Tutorial.ipynb>`_
-* `Working with Data <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/master/doc/notebooks/LSL%20LDP%20Tutorial.ipynb>`_
+* `General LSL Routines <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/General%20Tutorial.ipynb>`_
+* `Building SDFs Programmatically <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/SDF%20Generation.ipynb>`_
+* `Observation Metadata <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/MCS%20Metadata%20Tutorial.ipynb>`_
+* `Working with Data <https://nbviewer.jupyter.org/github/lwa-project/lsl/blob/main/docs/notebooks/LDP%20Tutorial.ipynb>`_
 
 Advanced
 ========
@@ -95,6 +95,7 @@ Advanced
 .. toctree::
    :maxdepth: 2
 
+   data-formats
    c-extensions
 
 Indices and Tables
@@ -103,4 +104,3 @@ Indices and Tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

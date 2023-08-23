@@ -298,7 +298,12 @@ class LDPFileBase(object):
 
 class TBWFile(LDPFileBase):
     """
-    Class to make it easy to interface with a TBW file.  Methods defined for this class are:
+    Class to make it easy to interface with a TBW file.  TBW data consist of a
+    time series of real valued data sampled at f\ :sub:`S` (196 MHz) from all
+    antennas in the array.  The stand numbering is based on the input into the
+    digital system rather than the stand number in the array.
+    
+    Methods defined for this class are:
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * read_frame - Read and return a single `lsl.reader.tbw.Frame` instance
@@ -521,7 +526,12 @@ class TBWFile(LDPFileBase):
 
 class TBNFile(LDPFileBase):
     """
-    Class to make it easy to interface with a TBN file.  Methods defined for this class are:
+    Class to make it easy to interface with a TBN file.  TBN data consit of a
+    time series of complex data with a variable sample rate of up to 100 kHz
+    from all antennas in the array.  The stand numbering is based on the input
+    into the digital system rather than the stand number in the array.
+    
+    Methods defined for this class are:
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * offset - Offset a specified number of seconds into the file
@@ -868,7 +878,11 @@ class TBNFile(LDPFileBase):
 
 class DRXFile(LDPFileBase):
     """
-    Class to make it easy to interface with a DRX file.  Methods defined for this class are:
+    Class to make it easy to interface with a DRX file.  DRX data consist of a
+    time series of complex data a variable sample rate of up to 19.6 MHz from
+    the beamformer.
+    
+    Methods defined for this class are:
       * get_info - Get information about the file's contents
       * get_remaining_frame_count - Get the number of frames remaining in the file
       * offset - Offset a specified number of seconds into the file
@@ -938,24 +952,29 @@ class DRXFile(LDPFileBase):
             tuning1 = 0.0
             tuning2 = 0.0
             for i in range(32):
-                junkFrame = self.read_frame()
-                b,t,p = junkFrame.id
-                srate = junkFrame.sample_rate
-                if b not in beams:
-                    beams.append(b)
-                if t not in tunes:
-                    tunes.append(t)
-                if p not in pols:
-                    pols.append(p)
-                    
-                if t == 1:
-                    tuning1 = junkFrame.central_freq
-                else:
-                    tuning2 = junkFrame.central_freq
-                    
+                try:
+                    junkFrame0 = self.read_frame()
+                    junkFrame1 = self.read_frame()
+                except (errors.SyncError, errors.EOFError):
+                    break
+                for junkFrame in (junkFrame0, junkFrame1):
+                    b,t,p = junkFrame.id
+                    srate = junkFrame.sample_rate
+                    if b not in beams:
+                        beams.append(b)
+                    if t not in tunes:
+                        tunes.append(t)
+                    if p not in pols:
+                        pols.append(p)
+                        
+                    if t == 1:
+                        tuning1 = junkFrame.central_freq
+                    else:
+                        tuning2 = junkFrame.central_freq
+                        
                 if i == 0:
-                    start = junkFrame.time
-                    startRaw = junkFrame.payload.timetag - junkFrame.header.time_offset
+                    start = junkFrame0.time
+                    startRaw = junkFrame0.payload.timetag - junkFrame0.header.time_offset
                     
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': drx.FRAME_SIZE,
                             'nbeampol': beampols, 'beam': b, 
@@ -1271,7 +1290,12 @@ class DRXFile(LDPFileBase):
 
 class DRSpecFile(LDPFileBase):
     """
-    Class to make it easy to interface with a DR Spectrometer file.  
+    Class to make it easy to interface with a DR Spectrometer file.  DR
+    Spectrometer data contain DRX data that has been transformed to the Fourier
+    domain, converted to power, and integrated on-the-fly by the data recorder. 
+    These data can have various integration times, channel counts, and
+    polarization products stored.
+    
     Methods defined for this class are:
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
@@ -1651,7 +1675,14 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=
 
 class TBFFile(LDPFileBase):
     """
-    Class to make it easy to interface with a TBF file.  Methods defined for this class are:
+    Class to make it easy to interface with a TBF file.  TBF data are a complex
+    frequency-domain product that contains blocks of channels from all antennas
+    in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and
+    there may be up to 1584 channels within a single recording.  The stand
+    ordering is based on the input into the digital system rather than the stand
+    number in the array.  
+    
+    Methods defined for this class are:
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * offset - Offset a specified number of seconds into the file
@@ -1947,7 +1978,14 @@ class TBFFile(LDPFileBase):
 
 class CORFile(LDPFileBase):
     """
-    Class to make it easy to interface with a COR file.  Methods defined for this class are:
+    Class to make it easy to interface with a COR file.  COR data contain full
+    polarization complex visibility data from each baseline pair in the array.  
+    Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and there may be up to
+    792 channels within a single recording.  The stand numbering for the
+    baseline pair is based on the input into the digital system rather than the
+    stand number in the array.
+    
+    Methods defined for this class are:
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * offset - Offset a specified number of seconds into the file

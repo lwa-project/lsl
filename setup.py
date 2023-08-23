@@ -10,7 +10,11 @@ import glob
 import tempfile
 import subprocess
 
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
+try:
+    from setuptools import find_namespace_packages
+except ImportError:
+    from setuptools import find_packages as find_namespace_packages
 from distutils import log
 from distutils.command.build import build
 try:
@@ -30,8 +34,10 @@ except Exception as e:
 PY2 = sys.version_info.major < 3
 if PY2:
     ASTROPY_VERSION = 'astropy<3.0'
+    HEALPY_VERSION = 'healpy<1.14.0'
 else:
     ASTROPY_VERSION = 'astropy>=3.0'
+    HEALPY_VERSION = 'healpy'
 
 
 def get_version():
@@ -104,7 +110,8 @@ return 0;
     elif os.path.basename(cc[0]).find('clang') != -1:
         ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
     try:
-        output = subprocess.check_call(ccmd)
+        with open('/dev/null', 'wb') as devnull:
+            output = subprocess.check_call(ccmd, stderr=devnull)
         outCFLAGS = ['-fopenmp',]
         outLIBS = []
         if os.path.basename(cc[0]).find('gcc') != -1:
@@ -133,24 +140,39 @@ def get_fftw():
         subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0].rstrip().split()
+        outVersion = p.communicate()[0]
+        try:
+            outVersion = outVersion.decode()
+        except AttributeError:
+            pass
+        outVersion = outVersion.strip().split()
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0].rstrip().split()
+        outCFLAGS = p.communicate()[0]
         try:
-            outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
+            outCFLAGS = outCFLAGS.decode()
+        except AttributeError:
+            pass
+        outCFLAGS = outCFLAGS.rstrip().split()
+        try:
+            outCFLAGS = [str(v) for v in outCFLAGS]
         except TypeError:
             pass
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0].rstrip().split()
+        outLIBS = p.communicate()[0]
         try:
-            outLIBS = [str(v, 'utf-8') for v in outLIBS]
+            outLIBS = outLIBS.decode()
+        except AttributeError:
+            pass
+        outLIBS = outLIBS.rstrip().split()
+        try:
+            outLIBS = [str(v) for v in outLIBS]
         except TypeError:
             pass
             
         if len(outVersion) > 0:
-            print("Found FFTW3, version %s" % outVersion[0])
+            print("Found FFTW3, version %s" % str(outVersion[0]))
             
     except (OSError, subprocess.CalledProcessError):
         print("WARNING:  single precision FFTW3 cannot be found, using defaults")
@@ -208,10 +230,9 @@ short_version = '%s'
 
 """ % (lslVersion, lslVersion, shortVersion)
     
-    fh = open('lsl/version/__init__.py', 'w')
-    fh.write(contents)
-    fh.close()
-    
+    with open('lsl/version/__init__.py', 'w') as fh:
+        fh.write(contents)
+        
     return True
 
 
@@ -281,7 +302,10 @@ class lsl_build_ext(build_ext):
                     
         ## HACK: Update the log verbosity - for some reason this gets set to 
         ##       WARN when I replace build_ext
-        log.set_threshold(min([log.INFO, log._global_log.threshold]))
+        try:
+            log.set_threshold(min([log.INFO, log._global_log.threshold]))
+        except AttributeError:
+            pass
 
 
 coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
@@ -296,7 +320,7 @@ ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/rea
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._core', ['lsl/correlator/core.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('imaging._gridder', ['lsl/imaging/gridder.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
-            Extension('sim._simfast', ['lsl/sim/simfast.c', 'lsl/sim/const.c', 'lsl/sim/j1.c', 'lsl/sim/polevl.c', 'lsl/sim/mtherr.c', 'lsl/sim/sf_error.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
+            Extension('sim._simfast', ['lsl/sim/simfast.cpp', 'lsl/sim/const.c', 'lsl/sim/j1.c', 'lsl/sim/polevl.c', 'lsl/sim/mtherr.c', 'lsl/sim/sf_error.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('misc._wisdom', ['lsl/misc/wisdom.cpp'],include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), ]
 
 # Update the version information
@@ -326,11 +350,11 @@ setup(
                    'Programming Language :: Python :: 3.8',
                    'Operating System :: MacOS :: MacOS X',
                    'Operating System :: POSIX :: Linux'],
-    packages = find_packages(), 
+    packages = find_namespace_packages(), 
     scripts = glob.glob('scripts/*.py'), 
     python_requires='>=2.7', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = [ASTROPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c', 'unlzw>=0.1.1'], 
+    install_requires = [ASTROPY_VERSION, HEALPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,
