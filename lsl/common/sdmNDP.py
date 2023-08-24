@@ -125,7 +125,7 @@ class StationSettings(object):
     """
     
     def __init__(self, report=None, update=None, fee_power=None, asp_filter=None, asp_atten_1=None, asp_atten_2=None, asp_atten_split=None, 
-                tbn_gain=-1, drx_gain=-1, tbf_gain=-1):
+                drx_gain=-1, tbf_gain=-1):
         if report is None:
             self.report = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         else:
@@ -161,7 +161,6 @@ class StationSettings(object):
         else:
             self.asp_atten_split = asp_atten_split
             
-        self.tbn_gain = tbn_gain
         self.drx_gain = drx_gain
         self.tbf_gain = tbf_gain
         
@@ -204,7 +203,6 @@ class StationSettings(object):
         self.asp_atten_2 = list(ssStruct.asp_at2)
         self.asp_atten_split = list(ssStruct.asp_ats)
         
-        self.tbn_gain = ssStruct.tbn_gain
         self.drx_gain = ssStruct.drx_gain
         self.tbf_gain = ssStruct.tbf_gain
 

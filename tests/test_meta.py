@@ -15,13 +15,14 @@ from lsl.common import metabundle
 from lsl.common.paths import DATA_BUILD
 
 
-__version__  = "0.5"
+__version__  = "0.6"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(DATA_BUILD, 'tests', 'metadata.tgz')
 mdbFileOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-0.tgz')
 mdbFileOld1 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-1.tgz')
 mdbFileADP = os.path.join(DATA_BUILD, 'tests', 'metadata-adp.tgz')
+mdbFileNDP = os.path.join(DATA_BUILD, 'tests', 'metadata-ndp.tgz')
 mdbFileGDB = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb.tgz')
 mdbFileGDBOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb-old-0.tgz')
 
@@ -97,7 +98,7 @@ class metabundle_tests(unittest.TestCase):
     def test_station(self):
         """Test building a station from a tarball."""
         
-        station = metabundle.get_station(mdbFileADP)
+        station = metabundle.get_station(mdbFile)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
@@ -142,9 +143,10 @@ class metabundle_tests(unittest.TestCase):
         self.assertTrue(metabundle.is_valid(mdbFile))
         
     def test_is_not_valid(self):
-        """Test whether or not is_valid works on LWA-SV files."""
+        """Test whether or not is_valid works on LWA-SV and LWA-NA files."""
         
         self.assertFalse(metabundle.is_valid(mdbFileADP))
+        self.assertFalse(metabundle.is_valid(mdbFileNDP))
         self.assertFalse(metabundle.is_valid(mdbFileGDB))
         self.assertFalse(metabundle.is_valid(mdbFileGDBOld0))
 
