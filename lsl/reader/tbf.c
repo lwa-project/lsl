@@ -81,7 +81,8 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     memcpy(&cFrame, PyString_AS_STRING(buffer), sizeof(cFrame));
     Py_XDECREF(buffer);
     
-    // Determine the number of stands in the frame
+    // Determine the number of stands in the frame - default to 256 for
+    // legacy LWA-SV data
     nstand = 256;
     if( cFrame.header.nstand != 0 ) {
       nstand = __bswap_16(cFrame.header.nstand);
@@ -128,7 +129,6 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     cFrame.header.frame_count_word = __bswap_32(cFrame.header.frame_count_word);
     cFrame.header.second_count = __bswap_32(cFrame.header.second_count);
     cFrame.header.first_chan = __bswap_16(cFrame.header.first_chan);
-    cFrame.header.nstand = __bswap_16(cFrame.header.nstand);
     cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
     
     // Fill the data array
@@ -172,7 +172,7 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     PyObject_SetAttrString(fHeader, "first_chan", temp);
     Py_XDECREF(temp);
     
-    temp = Py_BuildValue("h", cFrame.header.nstand);
+    temp = Py_BuildValue("h", nstand);
     PyObject_SetAttrString(fHeader, "nstand", temp);
     Py_XDECREF(temp);
     
