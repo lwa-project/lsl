@@ -63,7 +63,7 @@ PyObject *read_drx8(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data;
     int i;
-    DRXFrame cFrame;
+    DRX8Frame cFrame;
     
     if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
