@@ -39,6 +39,7 @@ from collections import deque, defaultdict
 
 from lsl.common.dp import fS
 from lsl.common.adp import fC
+from lsl.common.ndp import fC as ndp_fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
@@ -1702,20 +1703,22 @@ class TBFFile(LDPFileBase):
                 tbf.read_frame(self.fh)
                 break
             except errors.SyncError:
-                self.fh.seek(-tbf.FRAME_SIZE+1, 1)
+                self.fh.seek(1, 1)
                 
         # Skip over any DRX frames the start of the file
         i = 0
         while True:
             try:
+                mark = self.fh.tell()
                 tbf.read_frame(self.fh)
+                frame_size = self.fh.tell() - mark
                 break
             except errors.SyncError:
                 i += 1
-                self.fh.seek(-tbf.FRAME_SIZE+drx.FRAME_SIZE, 1)
+                self.fh.seek(drx.FRAME_SIZE, 1)
         if i == 0:
-            self.fh.seek(-tbf.FRAME_SIZE, 1)
-        self.fh.seek(-tbf.FRAME_SIZE, 1)
+            self.fh.seek(-frame_size, 1)
+        self.fh.seek(-frame_size, 1)
         
         return True
         
@@ -1726,16 +1729,22 @@ class TBFFile(LDPFileBase):
         
         with FilePositionSaver(self.fh):
             # Read in frame
+            
+            mark = self.fh.tell()
             junkFrame = tbf.read_frame(self.fh)
-            self.fh.seek(-tbf.FRAME_SIZE, 1)
+            frame_size = self.fh.tell() - mark
             
             # Basic file information
             try:
                 filesize = os.fstat(self.fh.fileno()).st_size
             except AttributeError:
                 filesize = self.fh.size
-            nFramesFile = (filesize - self.fh.tell()) // tbf.FRAME_SIZE
+            nFramesFile = (filesize - self.fh.tell()) // frame_size
+            adp_id = junkFrame.adp_id
+            nstand = junkFrame.nstand
             srate = fC
+            if adp_id == 0x04:
+                srate = ndp_fC
             bits = 4
             nFramesPerObs = tbf.get_frames_per_obs(self.fh)
             nchan = tbf.get_channel_count(self.fh)
@@ -1757,9 +1766,9 @@ class TBFFile(LDPFileBase):
             freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + numpy.arange(tbf.FRAME_CHANNEL_COUNT)
         freq *= fC
         
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbf.FRAME_SIZE,
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
                             'sample_rate': srate, 'data_bits': bits, 
-                            'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
+                            'nantenna': nstand*2, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
                             'start_time_samples': startRaw}
                         
         # Initialize the buffer as part of the description process
@@ -1779,13 +1788,15 @@ class TBFFile(LDPFileBase):
             than to the start of the file
         """
         
+        frame_size = self.description['frame_size']
+        
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
             if curr is None:
                 frame = tbf.read_frame(self.fh)
-                self.fh.seek(-tbf.FRAME_SIZE, 1)
+                self.fh.seek(-frame_size, 1)
                 curr = frame.payload.time_tag
             buffer_offset = curr - self._timetag
             buffer_offset = buffer_offset / fS
@@ -1794,7 +1805,7 @@ class TBFFile(LDPFileBase):
         framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frameOffset = int(offset * self.description['sample_rate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
-        self.fh.seek(frameOffset*tbf.FRAME_SIZE, 1)
+        self.fh.seek(frameOffset*frame_size, 1)
         
         # Update the file metadata
         self._describe_file()

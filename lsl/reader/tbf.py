@@ -36,6 +36,7 @@ if sys.version_info < (3,):
 import numpy
 
 from lsl.common import adp as adp_common
+from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbf
 from lsl.reader._gofast import SyncError as gSyncError
@@ -47,12 +48,10 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT',
-           'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count', 'get_first_channel']
-
-#: TBF packet size (header + payload)
-FRAME_SIZE = 6168
+__version__ = '0.2'
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_CHANNEL_COUNT',
+           'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count',
+           'get_first_channel']
 
 #: Number of frequency channels in a TBF packet
 FRAME_CHANNEL_COUNT = 12
@@ -67,11 +66,12 @@ class FrameHeader(FrameHeaderBase):
     
     _header_attrs = ['adp_id', 'frame_count', 'second_count', 'first_chan']
     
-    def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None):
+    def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None):
         self.adp_id = adp_id
         self.frame_count = frame_count
         self.second_count = second_count
         self.first_chan = first_chan
+        self.nstand = nstand
         FrameHeaderBase.__init__(self)
         
     @property
@@ -93,7 +93,11 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        return (numpy.arange(FRAME_CHANNEL_COUNT, dtype=numpy.float32)+self.first_chan) * adp_common.fC
+        fC = adp_common.fC
+        if self.adp_id == 0x04:
+            fC = ndp_common.fC
+        
+        return (numpy.arange(FRAME_CHANNEL_COUNT, dtype=numpy.float32)+self.first_chan) * fC
 
 
 class FramePayload(FramePayloadBase):
@@ -129,6 +133,22 @@ class Frame(FrameBase):
     _payload_class = FramePayload
     
     @property
+    def adp_id(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.adp_id property.
+        """
+        
+        return self.header.adp_id
+        
+    @property
+    def nstand(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.nstand property.
+        """
+        
+        return self.header.nstand
+        
+    @property
     def is_tbf(self):
         """
         Convenience wrapper for the Frame.FrameHeader.is_tbf property.
@@ -163,7 +183,7 @@ def read_frame(filehandle, verbose=False):
     try:
         newFrame = read_tbf(filehandle, Frame())
     except gSyncError:
-        mark = filehandle.tell() - FRAME_SIZE
+        mark = filehandle.tell()
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
