@@ -1930,7 +1930,7 @@ class TBFFile(LDPFileBase):
                         setTime = cFrame.time
                         
                 subData = cFrame.payload.data
-                subData.shape = (tbf.FRAME_CHANNEL_COUNT,subData.size//tbf.FRAME_CHANNEL_COUNT)
+                subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
                 subData = subData.T
                 
                 aStand = self.mapper.index(first_chan)
@@ -1963,7 +1963,7 @@ class TBFFile(LDPFileBase):
                             setTime = cFrame.time
                         
                     subData = cFrame.payload.data
-                    subData.shape = (tbf.FRAME_CHANNEL_COUNT,subData.size//tbf.FRAME_CHANNEL_COUNT)
+                    subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
                     subData = subData.T
                     
                     aStand = self.mapper.index(first_chan)
