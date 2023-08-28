@@ -50,8 +50,8 @@ telemetry.track_module()
 
 __version__ = '0.2'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_CHANNEL_COUNT',
-           'get_frames_per_obs', 'get_first_frame_count', 'get_channel_count',
-           'get_first_channel']
+           'get_frame_size', 'get_frames_per_obs', 'get_first_frame_count',
+           'get_channel_count', 'get_first_channel']
 
 #: Number of frequency channels in a TBF packet
 FRAME_CHANNEL_COUNT = 12
@@ -189,6 +189,27 @@ def read_frame(filehandle, verbose=False):
         raise EOFError
         
     return newFrame
+
+
+def get_frame_size(filehandle):
+    """
+    Find out what the frame size in a file is at the current file location.
+    Returns the frame size in bytes.
+    """
+    
+    with FilePositionSaver(filehandle):
+        for i in range(2500):
+            try:
+                cPos = filehandle.tell()
+                read_frame(filehandle)
+                nPos = filehandle.tell()
+                break
+            except EOFError:
+                break
+            except SyncError:
+                filehandle.seek(1, 1)
+                
+    return nPos - cPos
 
 
 def get_frames_per_obs(filehandle):

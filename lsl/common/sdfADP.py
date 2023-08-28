@@ -63,7 +63,6 @@ from lsl.common.mcsADP import LWA_MAX_NSTD
 from lsl.common.adp import word_to_freq, fC
 from lsl.common.stations import lwasv
 from lsl.reader.drx import FILTER_CODES as DRXFilters
-from lsl.reader.tbf import FRAME_SIZE as TBFSize
 
 from lsl.common.sdf import Observer, ProjectOffice
 from lsl.common.sdf import Project as _Project, Session as _Session
@@ -399,7 +398,7 @@ class TBF(Observation):
             sample_rate = 0.0
         nFramesTime = self.samples / (196e6 / fC)
         nFramesChan = math.ceil(sample_rate / fC / 12)
-        nBytes = nFramesTime * nFramesChan * TBFSize
+        nBytes = nFramesTime * nFramesChan * (12*256*2*1)
         return nBytes
         
     def validate(self, verbose=False):

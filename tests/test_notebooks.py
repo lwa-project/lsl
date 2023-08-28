@@ -115,14 +115,15 @@ def _test_generator(notebook):
     return test
 
 
-_NOTEBOOKS = glob.glob(os.path.join(MODULE_BUILD, '*.ipynb'))
-_NOTEBOOKS.sort()
-for notebook in _NOTEBOOKS:
-    test = _test_generator(notebook)
-    name = 'test_%s' % os.path.splitext(os.path.basename(notebook))[0].replace(' ', '_')
-    doc = """Execution of the '%s' notebook.""" % os.path.basename(notebook)
-    setattr(test, '__doc__', doc)
-    setattr(notebooks_tests, name, test)
+if MODULE_BUILD is not None:
+    _NOTEBOOKS = glob.glob(os.path.join(MODULE_BUILD, '*.ipynb'))
+    _NOTEBOOKS.sort()
+    for notebook in _NOTEBOOKS:
+        test = _test_generator(notebook)
+        name = 'test_%s' % os.path.splitext(os.path.basename(notebook))[0].replace(' ', '_')
+        doc = """Execution of the '%s' notebook.""" % os.path.basename(notebook)
+        setattr(test, '__doc__', doc)
+        setattr(notebooks_tests, name, test)
 
 
 class notebooks_test_suite(unittest.TestSuite):
