@@ -1729,10 +1729,10 @@ class TBFFile(LDPFileBase):
         
         with FilePositionSaver(self.fh):
             # Read in frame
-            
             mark = self.fh.tell()
             junkFrame = tbf.read_frame(self.fh)
             frame_size = self.fh.tell() - mark
+            self.fh.seek(-frame_size, 1)
             
             # Basic file information
             try:
@@ -1930,7 +1930,7 @@ class TBFFile(LDPFileBase):
                         setTime = cFrame.time
                         
                 subData = cFrame.payload.data
-                subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
+                subData.shape = (tbf.FRAME_CHANNEL_COUNT,subData.size//tbf.FRAME_CHANNEL_COUNT)
                 subData = subData.T
                 
                 aStand = self.mapper.index(first_chan)
@@ -1963,7 +1963,7 @@ class TBFFile(LDPFileBase):
                             setTime = cFrame.time
                         
                     subData = cFrame.payload.data
-                    subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
+                    subData.shape = (tbf.FRAME_CHANNEL_COUNT,subData.size//tbf.FRAME_CHANNEL_COUNT)
                     subData = subData.T
                     
                     aStand = self.mapper.index(first_chan)
@@ -2334,7 +2334,12 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         
         ## Sort out the frame size.  This is tricky because DR spectrometer files
         ## have frames of different sizes depending on the mode
-        if mode == drspec:
+        if mode == tbf:
+            try:
+                mfs = tbf.get_frame_size(fh)
+            except:
+                mfs = 0
+        elif mode == drspec:
             try:
                 mfs = drspec.get_frame_size(fh)
             except:
@@ -2400,8 +2405,11 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             foundMode = False
             
             ### Sort out the frame size.
-            mfs = mode.FRAME_SIZE
-            
+            try:
+                mfs = mode.FRAME_SIZE
+            except AttributeError:
+                mfs = 0
+                
             ### Loop over the frame size to try and find what looks like valid data.  If
             ### is is found, set 'foundMatch' to True.
             for i in range(mfs):
@@ -2499,7 +2507,12 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         
         ## Sort out the frame size.  This is tricky because DR spectrometer files
         ## have frames of different sizes depending on the mode
-        if mode == drspec:
+        if mode == tbf:
+            try:
+                mfs = tbf.get_frame_size(fh)
+            except:
+                mfs = 0
+        elif mode == drspec:
             try:
                 mfs = drspec.get_frame_size(fh)
             except:
@@ -2564,8 +2577,11 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             foundMode = False
             
             ### Sort out the frame size.
-            mfs = mode.FRAME_SIZE
-            
+            try:
+                mfs = mode.FRAME_SIZE
+            except AttributeError:
+                mfs = 0
+                
             ### Loop over the frame size to try and find what looks like valid data.  If
             ### is is found, set 'foundMatch' to True.
             for i in range(mfs):
