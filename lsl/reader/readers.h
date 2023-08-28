@@ -63,9 +63,9 @@ extern PyObject *EOFError;
 // gofast.c
 extern short int tbw4LUT[256][2];
 extern float tbnLUT[256];
+extern float drx8LUT[256];
 extern float drxLUT[256][2];
 extern float tbfLUT[256][2];
-extern float drx8LUT[256];
 
 
 /* 
@@ -96,6 +96,9 @@ extern char read_tbn_doc[];
 // drx.c
 extern PyObject *read_drx(PyObject*, PyObject*);
 extern char read_drx_doc[];
+// drx8.c
+extern PyObject *read_drx8(PyObject*, PyObject*);
+extern char read_drx8_doc[];
 // drspec.c
 extern PyObject *read_drspec(PyObject*, PyObject*);
 extern char read_drspec_doc[];

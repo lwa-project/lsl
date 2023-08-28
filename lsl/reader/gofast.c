@@ -39,6 +39,7 @@ int validSync5C(unsigned int syncWord) {
 */
 short int tbw4LUT[256][2];
 float tbnLUT[256];
+float drx8LUT[256];
 float drxLUT[256][2];
 float tbfLUT[256][2];
 
@@ -57,10 +58,13 @@ static void initLWALUTs(void) {
         }
     }
     
-    // TBN
+    // TBN & DRX8
     for(i=0; i<256; i++) {
         tbnLUT[i] = i;
         tbnLUT[i] -= ((i&128)<<1);
+        
+        drx8LUT[i] = i;
+        drx8LUT[i] -= ((i&128)<<1);
     }
     
     // DRX & TBF
@@ -85,6 +89,7 @@ static PyMethodDef GoFastMethods[] = {
     {"read_tbw",    (PyCFunction) read_tbw,    METH_VARARGS,               read_tbw_doc   }, 
     {"read_tbn",    (PyCFunction) read_tbn,    METH_VARARGS,               read_tbn_doc   }, 
     {"read_drx",    (PyCFunction) read_drx,    METH_VARARGS,               read_drx_doc   }, 
+    {"read_drx8",   (PyCFunction) read_drx8,   METH_VARARGS,               read_drx8_doc  }, 
     {"read_drspec", (PyCFunction) read_drspec, METH_VARARGS,               read_drspec_doc},
     {"read_vdif",   (PyCFunction) read_vdif,   METH_VARARGS|METH_KEYWORDS, read_vdif_doc  }, 
     {"read_tbf",    (PyCFunction) read_tbf,    METH_VARARGS,               read_tbf_doc   }, 
@@ -92,7 +97,7 @@ static PyMethodDef GoFastMethods[] = {
     {NULL,          NULL,                      0,                          NULL           }
 };
 
-PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VDIF readers written in C");
+PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DRX8, DR Spectrometer, and VDIF readers written in C");
 
 
 /*
@@ -158,6 +163,7 @@ MOD_INIT(_gofast) {
     PyList_Append(all, PyString_FromString("read_tbw"));
     PyList_Append(all, PyString_FromString("read_tbn"));
     PyList_Append(all, PyString_FromString("read_drx"));
+    PyList_Append(all, PyString_FromString("read_drx8"));
     PyList_Append(all, PyString_FromString("read_drspec"));
     PyList_Append(all, PyString_FromString("read_vdif"));
     PyList_Append(all, PyString_FromString("read_tbf"));
