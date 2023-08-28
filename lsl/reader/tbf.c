@@ -27,7 +27,7 @@ typedef struct {
     };
     unsigned int second_count;
     signed short int first_chan;
-    signed short int unassigned;
+    signed short int nstand;
 } TBFHeader;
 
 
