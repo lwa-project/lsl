@@ -144,7 +144,7 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     
     // Validate
     if( !validSync5C(cFrame.header.syncWord) ) {
-        buffer = PyObject_CallMethod(ph, "seek", "ii", -size(cFrame)-12*nstand*2*1, 1);
+        buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(cFrame)-12*nstand*2*1, 1);
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
         Py_XDECREF(buffer);
         Py_XDECREF(data);
