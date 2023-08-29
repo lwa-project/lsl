@@ -86,6 +86,10 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     nstand = 256;
     if( cFrame.header.nstand != 0 ) {
       nstand = __bswap_16(cFrame.header.nstand);
+      if( nstand > 256 || nstand < 0 ) {
+        cFrame.header.syncWord = 0;
+        nstand = 256;
+      }
     }
     tbf_dsize = Py_BuildValue("i", 12*nstand*2*1);
     raw_data = (unsigned char*) malloc(12*nstand*2*1);
