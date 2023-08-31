@@ -438,8 +438,135 @@ FEE_PORT[64] 8
 N_RPD 128
 
 # RPD_ID[] will be set to "UNK" (no identification) for any cables #'s <= N_RPD not identified
-# *** RPD_ID[cable#] goes here:
-# FIXME JD: CT to provide this
+# *** RPD_ID[cable#] <label> goes here:
+RPD_ID[1]  Stand 1-XX
+RPD_ID[2]  Stand 1-YY
+RPD_ID[3]  Stand 2-XX
+RPD_ID[4]  Stand 2-YY
+RPD_ID[5]  Stand 3-XX
+RPD_ID[6]  Stand 3-YY
+RPD_ID[7]  Stand 4-XX
+RPD_ID[8]  Stand 4-YY
+RPD_ID[9]  Stand 5-XX
+RPD_ID[10]  Stand 5-YY
+RPD_ID[11]  Stand 6-XX
+RPD_ID[12]  Stand 6-YY
+RPD_ID[13]  Stand 7-XX
+RPD_ID[14]  Stand 7-YY
+RPD_ID[15]  Stand 8-XX
+RPD_ID[16]  Stand 8-YY
+RPD_ID[17]  Stand 9-XX
+RPD_ID[18]  Stand 9-YY
+RPD_ID[19]  Stand 10-XX
+RPD_ID[20]  Stand 10-YY
+RPD_ID[21]  Stand 11-XX
+RPD_ID[22]  Stand 11-YY
+RPD_ID[23]  Stand 12-XX
+RPD_ID[24]  Stand 12-YY
+RPD_ID[25]  Stand 13-XX
+RPD_ID[26]  Stand 13-YY
+RPD_ID[27]  Stand 14-XX
+RPD_ID[28]  Stand 14-YY
+RPD_ID[29]  Stand 15-XX
+RPD_ID[30]  Stand 15-YY
+RPD_ID[31]  Stand 16-XX
+RPD_ID[32]  Stand 16-YY
+RPD_ID[33]  Stand 17-XX
+RPD_ID[34]  Stand 17-YY
+RPD_ID[35]  Stand 18-XX
+RPD_ID[36]  Stand 18-YY
+RPD_ID[37]  Stand 19-XX
+RPD_ID[38]  Stand 19-YY
+RPD_ID[39]  Stand 20-XX
+RPD_ID[40]  Stand 20-YY
+RPD_ID[41]  Stand 21-XX
+RPD_ID[42]  Stand 21-YY
+RPD_ID[43]  Stand 22-XX
+RPD_ID[44]  Stand 22-YY
+RPD_ID[45]  Stand 23-XX
+RPD_ID[46]  Stand 23-YY
+RPD_ID[47]  Stand 24-XX
+RPD_ID[48]  Stand 24-YY
+RPD_ID[49]  Stand 25-XX
+RPD_ID[50]  Stand 25-YY
+RPD_ID[51]  Stand 26-XX
+RPD_ID[52]  Stand 26-YY
+RPD_ID[53]  Stand 27-XX
+RPD_ID[54]  Stand 27-YY
+RPD_ID[55]  Stand 28-XX
+RPD_ID[56]  Stand 28-YY
+RPD_ID[57]  Stand 29-XX
+RPD_ID[58]  Stand 29-YY
+RPD_ID[59]  Stand 30-XX
+RPD_ID[60]  Stand 30-YY
+RPD_ID[61]  Stand 31-XX
+RPD_ID[62]  Stand 31-YY
+RPD_ID[63]  Stand 32-XX
+RPD_ID[64]  Stand 32-YY
+RPD_ID[65]  Stand 33-XX
+RPD_ID[66]  Stand 33-YY
+RPD_ID[67]  Stand 34-XX
+RPD_ID[68]  Stand 34-YY
+RPD_ID[69]  Stand 35-XX
+RPD_ID[70]  Stand 35-YY
+RPD_ID[71]  Stand 36-XX
+RPD_ID[72]  Stand 36-YY
+RPD_ID[73]  Stand 37-XX
+RPD_ID[74]  Stand 37-YY
+RPD_ID[75]  Stand 38-XX
+RPD_ID[76]  Stand 38-YY
+RPD_ID[77]  Stand 39-XX
+RPD_ID[78]  Stand 39-YY
+RPD_ID[79]  Stand 40-XX
+RPD_ID[80]  Stand 40-YY
+RPD_ID[81]  Stand 41-XX
+RPD_ID[82]  Stand 41-YY
+RPD_ID[83]  Stand 42-XX
+RPD_ID[84]  Stand 42-YY
+RPD_ID[85]  Stand 43-XX
+RPD_ID[86]  Stand 43-YY
+RPD_ID[87]  Stand 44-XX
+RPD_ID[88]  Stand 44-YY
+RPD_ID[89]  Stand 45-XX
+RPD_ID[90]  Stand 45-YY
+RPD_ID[91]  Stand 46-XX
+RPD_ID[92]  Stand 46-YY
+RPD_ID[93]  Stand 47-XX
+RPD_ID[94]  Stand 47-YY
+RPD_ID[95]  Stand 48-XX
+RPD_ID[96]  Stand 48-YY
+RPD_ID[97]  Stand 49-XX
+RPD_ID[98]  Stand 49-YY
+RPD_ID[99]  Stand 50-XX
+RPD_ID[100]  Stand 50-YY
+RPD_ID[101]  Stand 51-XX
+RPD_ID[102]  Stand 51-YY
+RPD_ID[103]  Stand 52-XX
+RPD_ID[104]  Stand 52-YY
+RPD_ID[105]  Stand 53-XX
+RPD_ID[106]  Stand 53-YY
+RPD_ID[107]  Stand 54-XX
+RPD_ID[108]  Stand 54-YY
+RPD_ID[109]  Stand 55-XX
+RPD_ID[110]  Stand 55-YY
+RPD_ID[111]  Stand 56-XX
+RPD_ID[112]  Stand 56-YY
+RPD_ID[113]  Stand 57-XX
+RPD_ID[114]  Stand 57-YY
+RPD_ID[115]  Stand 58-XX
+RPD_ID[116]  Stand 58-YY
+RPD_ID[117]  Stand 59-XX
+RPD_ID[118]  Stand 59-YY
+RPD_ID[119]  Stand 60-XX
+RPD_ID[120]  Stand 60-YY
+RPD_ID[121]  Stand 61-XX
+RPD_ID[122]  Stand 61-YY
+RPD_ID[123]  Stand 62-XX
+RPD_ID[124]  Stand 62-YY
+RPD_ID[125]  Stand 63-XX
+RPD_ID[126]  Stand 63-YY
+RPD_ID[127]  Stand 64-XX
+RPD_ID[128]  Stand 64-YY
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
@@ -852,53 +979,269 @@ ARB_PORT[8] 8
 # ARB_OUT[][] will be set to "UNK" ("unknown") for any boards/channels not identified
 # *** ARB_IN[][] goes here:
 # Format is <column>_<row>
-# FIXME JD: CT to provide this
 
-ARB_IN[1][1]   1_1
-ARB_IN[1][2]   1_2
-ARB_IN[1][3]   1_3
-ARB_IN[1][4]   1_4
-ARB_IN[1][5]   1_5
-ARB_IN[1][6]   1_6
-ARB_IN[1][7]   1_7
-ARB_IN[1][8]   1_8
-ARB_IN[1][9]   1_9
-ARB_IN[1][10] 1_10
-ARB_IN[1][11] 1_11
-ARB_IN[1][12] 1_12
-ARB_IN[1][13] 1_13
-ARB_IN[1][14] 1_14
-ARB_IN[1][15] 1_15
-ARB_IN[1][16] 1_16
-ARB_IN[2][1]  2_1
-ARB_IN[2][2]  2_2
-ARB_IN[2][3]  2_3
-ARB_IN[2][4]  2_4
+ARB_IN[1][1]  8_1
+ARB_IN[1][2]  8_2
+ARB_IN[1][3]  8_3
+ARB_IN[1][4]  8_4
+ARB_IN[1][5]  8_5
+ARB_IN[1][6]  8_6
+ARB_IN[1][7]  8_7
+ARB_IN[1][8]  8_8
+ARB_IN[1][9]  8_9
+ARB_IN[1][10]  8_10
+ARB_IN[1][11]  8_11
+ARB_IN[1][12]  8_12
+ARB_IN[1][13]  8_13
+ARB_IN[1][14]  8_14
+ARB_IN[1][15]  8_15
+ARB_IN[1][16]  8_16
+ARB_IN[2][1]  7_1
+ARB_IN[2][2]  7_2
+ARB_IN[2][3]  7_3
+ARB_IN[2][4]  7_4
+ARB_IN[2][5]  7_5
+ARB_IN[2][6]  7_6
+ARB_IN[2][7]  7_7
+ARB_IN[2][8]  7_8
+ARB_IN[2][9]  7_9
+ARB_IN[2][10]  7_10
+ARB_IN[2][11]  7_11
+ARB_IN[2][12]  7_12
+ARB_IN[2][13]  7_13
+ARB_IN[2][14]  7_14
+ARB_IN[2][15]  7_15
+ARB_IN[2][16]  7_16
+ARB_IN[3][1]  6_1
+ARB_IN[3][2]  6_2
+ARB_IN[3][3]  6_3
+ARB_IN[3][4]  6_4
+ARB_IN[3][5]  6_5
+ARB_IN[3][6]  6_6
+ARB_IN[3][7]  6_7
+ARB_IN[3][8]  6_8
+ARB_IN[3][9]  6_9
+ARB_IN[3][10]  6_10
+ARB_IN[3][11]  6_11
+ARB_IN[3][12]  6_12
+ARB_IN[3][13]  6_13
+ARB_IN[3][14]  6_14
+ARB_IN[3][15]  6_15
+ARB_IN[3][16]  6_16
+ARB_IN[4][1]  5_1
+ARB_IN[4][2]  5_2
+ARB_IN[4][3]  5_3
+ARB_IN[4][4]  5_4
+ARB_IN[4][5]  5_5
+ARB_IN[4][6]  5_6
+ARB_IN[4][7]  5_7
+ARB_IN[4][8]  5_8
+ARB_IN[4][9]  5_9
+ARB_IN[4][10]  5_10
+ARB_IN[4][11]  5_11
+ARB_IN[4][12]  5_12
+ARB_IN[4][13]  5_13
+ARB_IN[4][14]  5_14
+ARB_IN[4][15]  5_15
+ARB_IN[4][16]  5_16
+ARB_IN[5][1]  4_1
+ARB_IN[5][2]  4_2
+ARB_IN[5][3]  4_3
+ARB_IN[5][4]  4_4
+ARB_IN[5][5]  4_5
+ARB_IN[5][6]  4_6
+ARB_IN[5][7]  4_7
+ARB_IN[5][8]  4_8
+ARB_IN[5][9]  4_9
+ARB_IN[5][10]  4_10
+ARB_IN[5][11]  4_11
+ARB_IN[5][12]  4_12
+ARB_IN[5][13]  4_13
+ARB_IN[5][14]  4_14
+ARB_IN[5][15]  4_15
+ARB_IN[5][16]  4_16
+ARB_IN[6][1]  3_1
+ARB_IN[6][2]  3_2
+ARB_IN[6][3]  3_3
+ARB_IN[6][4]  3_4
+ARB_IN[6][5]  3_5
+ARB_IN[6][6]  3_6
+ARB_IN[6][7]  3_7
+ARB_IN[6][8]  3_8
+ARB_IN[6][9]  3_9
+ARB_IN[6][10]  3_10
+ARB_IN[6][11]  3_11
+ARB_IN[6][12]  3_12
+ARB_IN[6][13]  3_13
+ARB_IN[6][14]  3_14
+ARB_IN[6][15]  3_15
+ARB_IN[6][16]  3_16
+ARB_IN[7][1]  2_1
+ARB_IN[7][2]  2_2
+ARB_IN[7][3]  2_3
+ARB_IN[7][4]  2_4
+ARB_IN[7][5]  2_5
+ARB_IN[7][6]  2_6
+ARB_IN[7][7]  2_7
+ARB_IN[7][8]  2_8
+ARB_IN[7][9]  2_9
+ARB_IN[7][10]  2_10
+ARB_IN[7][11]  2_11
+ARB_IN[7][12]  2_12
+ARB_IN[7][13]  2_13
+ARB_IN[7][14]  2_14
+ARB_IN[7][15]  2_15
+ARB_IN[7][16]  2_16
+ARB_IN[8][1]  1_1
+ARB_IN[8][2]  1_2
+ARB_IN[8][3]  1_3
+ARB_IN[8][4]  1_4
+ARB_IN[8][5]  1_5
+ARB_IN[8][6]  1_6
+ARB_IN[8][7]  1_7
+ARB_IN[8][8]  1_8
+ARB_IN[8][9]  1_9
+ARB_IN[8][10]  1_10
+ARB_IN[8][11]  1_11
+ARB_IN[8][12]  1_12
+ARB_IN[8][13]  1_13
+ARB_IN[8][14]  1_14
+ARB_IN[8][15]  1_15
+ARB_IN[8][16]  1_16
 
 # *** ARB_OUT[][] goes here:
 # Format is <column-from-left>_<row-from-top>
-# FIXME JD: CT to provide this
 
-ARB_OUT[1][1]  8_1
-ARB_OUT[1][2]  8_2
-ARB_OUT[1][3]  8_3
-ARB_OUT[1][4]  8_4
-ARB_OUT[1][5]  8_5
-ARB_OUT[1][6]  8_6
-ARB_OUT[1][7]  8_7
-ARB_OUT[1][8]  8_8
-ARB_OUT[1][9]  8_9
-ARB_OUT[1][10] 8_10
-ARB_OUT[1][11] 8_11
-ARB_OUT[1][12] 8_12
-ARB_OUT[1][13] 8_13
-ARB_OUT[1][14] 8_14
-ARB_OUT[1][15] 8_15
-ARB_OUT[1][16] 8_16
-ARB_OUT[2][1]  7_1
-ARB_OUT[2][2]  7_2
-ARB_OUT[2][3]  7_3
-ARB_OUT[2][4]  7_4
+ARB_OUT[1][1]  1_1
+ARB_OUT[1][2]  1_2
+ARB_OUT[1][3]  1_3
+ARB_OUT[1][4]  1_4
+ARB_OUT[1][5]  1_5
+ARB_OUT[1][6]  1_6
+ARB_OUT[1][7]  1_7
+ARB_OUT[1][8]  1_8
+ARB_OUT[1][9]  1_9
+ARB_OUT[1][10]  1_10
+ARB_OUT[1][11]  1_11
+ARB_OUT[1][12]  1_12
+ARB_OUT[1][13]  1_13
+ARB_OUT[1][14]  1_14
+ARB_OUT[1][15]  1_15
+ARB_OUT[1][16]  1_16
+ARB_OUT[2][1]  2_1
+ARB_OUT[2][2]  2_2
+ARB_OUT[2][3]  2_3
+ARB_OUT[2][4]  2_4
+ARB_OUT[2][5]  2_5
+ARB_OUT[2][6]  2_6
+ARB_OUT[2][7]  2_7
+ARB_OUT[2][8]  2_8
+ARB_OUT[2][9]  2_9
+ARB_OUT[2][10]  2_10
+ARB_OUT[2][11]  2_11
+ARB_OUT[2][12]  2_12
+ARB_OUT[2][13]  2_13
+ARB_OUT[2][14]  2_14
+ARB_OUT[2][15]  2_15
+ARB_OUT[2][16]  2_16
+ARB_OUT[3][1]  3_1
+ARB_OUT[3][2]  3_2
+ARB_OUT[3][3]  3_3
+ARB_OUT[3][4]  3_4
+ARB_OUT[3][5]  3_5
+ARB_OUT[3][6]  3_6
+ARB_OUT[3][7]  3_7
+ARB_OUT[3][8]  3_8
+ARB_OUT[3][9]  3_9
+ARB_OUT[3][10]  3_10
+ARB_OUT[3][11]  3_11
+ARB_OUT[3][12]  3_12
+ARB_OUT[3][13]  3_13
+ARB_OUT[3][14]  3_14
+ARB_OUT[3][15]  3_15
+ARB_OUT[3][16]  3_16
+ARB_OUT[4][1]  4_1
+ARB_OUT[4][2]  4_2
+ARB_OUT[4][3]  4_3
+ARB_OUT[4][4]  4_4
+ARB_OUT[4][5]  4_5
+ARB_OUT[4][6]  4_6
+ARB_OUT[4][7]  4_7
+ARB_OUT[4][8]  4_8
+ARB_OUT[4][9]  4_9
+ARB_OUT[4][10]  4_10
+ARB_OUT[4][11]  4_11
+ARB_OUT[4][12]  4_12
+ARB_OUT[4][13]  4_13
+ARB_OUT[4][14]  4_14
+ARB_OUT[4][15]  4_15
+ARB_OUT[4][16]  4_16
+ARB_OUT[5][1]  5_1
+ARB_OUT[5][2]  5_2
+ARB_OUT[5][3]  5_3
+ARB_OUT[5][4]  5_4
+ARB_OUT[5][5]  5_5
+ARB_OUT[5][6]  5_6
+ARB_OUT[5][7]  5_7
+ARB_OUT[5][8]  5_8
+ARB_OUT[5][9]  5_9
+ARB_OUT[5][10]  5_10
+ARB_OUT[5][11]  5_11
+ARB_OUT[5][12]  5_12
+ARB_OUT[5][13]  5_13
+ARB_OUT[5][14]  5_14
+ARB_OUT[5][15]  5_15
+ARB_OUT[5][16]  5_16
+ARB_OUT[6][1]  6_1
+ARB_OUT[6][2]  6_2
+ARB_OUT[6][3]  6_3
+ARB_OUT[6][4]  6_4
+ARB_OUT[6][5]  6_5
+ARB_OUT[6][6]  6_6
+ARB_OUT[6][7]  6_7
+ARB_OUT[6][8]  6_8
+ARB_OUT[6][9]  6_9
+ARB_OUT[6][10]  6_10
+ARB_OUT[6][11]  6_11
+ARB_OUT[6][12]  6_12
+ARB_OUT[6][13]  6_13
+ARB_OUT[6][14]  6_14
+ARB_OUT[6][15]  6_15
+ARB_OUT[6][16]  6_16
+ARB_OUT[7][1]  7_1
+ARB_OUT[7][2]  7_2
+ARB_OUT[7][3]  7_3
+ARB_OUT[7][4]  7_4
+ARB_OUT[7][5]  7_5
+ARB_OUT[7][6]  7_6
+ARB_OUT[7][7]  7_7
+ARB_OUT[7][8]  7_8
+ARB_OUT[7][9]  7_9
+ARB_OUT[7][10]  7_10
+ARB_OUT[7][11]  7_11
+ARB_OUT[7][12]  7_12
+ARB_OUT[7][13]  7_13
+ARB_OUT[7][14]  7_14
+ARB_OUT[7][15]  7_15
+ARB_OUT[7][16]  7_16
+ARB_OUT[8][1]  8_1
+ARB_OUT[8][2]  8_2
+ARB_OUT[8][3]  8_3
+ARB_OUT[8][4]  8_4
+ARB_OUT[8][5]  8_5
+ARB_OUT[8][6]  8_6
+ARB_OUT[8][7]  8_7
+ARB_OUT[8][8]  8_8
+ARB_OUT[8][9]  8_9
+ARB_OUT[8][10]  8_10
+ARB_OUT[8][11]  8_11
+ARB_OUT[8][12]  8_12
+ARB_OUT[8][13]  8_13
+ARB_OUT[8][14]  8_14
+ARB_OUT[8][15]  8_15
+ARB_OUT[8][16]  8_16
+
+
 
 # ----------------------
 # --- SNAP2 ------------
