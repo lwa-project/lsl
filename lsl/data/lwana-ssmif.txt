@@ -439,6 +439,7 @@ N_RPD 128
 
 # RPD_ID[] will be set to "UNK" (no identification) for any cables #'s <= N_RPD not identified
 # *** RPD_ID[cable#] <label> goes here:
+
 RPD_ID[1]  Stand 1-XX
 RPD_ID[2]  Stand 1-YY
 RPD_ID[3]  Stand 2-XX
