@@ -263,4 +263,8 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--fits', type=str, 
                         help='save the images to the specified FITS image file')
     args = parser.parse_args()
+    if args.include == 'all':
+        args.include = None
+    if args.exclude == 'none':
+        args.exclude = None
     main(args)
