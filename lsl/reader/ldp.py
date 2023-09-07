@@ -1743,7 +1743,7 @@ class TBFFile(LDPFileBase):
             adp_id = junkFrame.adp_id
             nstand = junkFrame.nstand
             srate = fC
-            if adp_id == 0x04:
+            if adp_id & 0x04:
                 srate = ndp_fC
             bits = 4
             nFramesPerObs = tbf.get_frames_per_obs(self.fh)
@@ -2050,6 +2050,8 @@ class CORFile(LDPFileBase):
                 filesize = self.fh.size
             nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
             srate = fC
+            if adp_id & 0x04:
+                srate = ndp_fC
             bits = 32
             nFramesPerObs = cor.get_frames_per_obs(self.fh)
             nchan = cor.get_channel_count(self.fh)
