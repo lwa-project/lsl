@@ -20,7 +20,7 @@ import argparse
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
-from lsl.reader.ldp import LWASVDataFile, TBFFile
+from lsl.reader.ldp import LWASVDataFile, LWANADataFile, TBFFile
 from lsl.common import stations, metabundleADP, metabundleNDP
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
@@ -175,7 +175,10 @@ def main(args):
         station = stations.lwasv
     antennas = station.antennas
     
-    idf = LWASVDataFile(filename)
+    try:
+        idf = LWASVDataFile(filename)
+    except RuntimeError:
+        idf = LWANADataFile(filename)
     if not isinstance(idf, TBFFile):
         raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
         

@@ -17,7 +17,9 @@ import numpy
 import argparse
 
 from lsl.reader import tbf, errors
-from lsl.common import stations, metabundleADP
+from lsl.common import stations, metabundleADP, metabundleNDP
+from lsl.common import adp as adp_common
+from lsl.common import ndp as ndp_common
 from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
@@ -58,13 +60,19 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            try:
+                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            except:
+                station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwasv
     antennas = station.antennas
     
     fh = open(args.filename, 'rb')
-    nFrames = os.path.getsize(args.filename) // tbf.FRAME_SIZE
+    tbf.FRAME_SIZE = tbf.get_frame_size(fh)
+    nFrames = os.path.getsize(args.filename)
     antpols = len(antennas)
     
     # Read in the first frame and get the date/time of the first sample 
@@ -106,7 +114,7 @@ def main(args):
     print("===")
     print("Chunks: %i" % nChunks)
     
-    spec = numpy.zeros((nchannels,256,2))
+    spec = numpy.zeros((nchannels,antpols//2,2))
     norm = numpy.zeros_like(spec)
     for i in range(nChunks):
         # Inner loop that actually reads the frames into the data array
@@ -215,6 +223,8 @@ if __name__ == "__main__":
                         help='filename to process')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA-SV')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
                         help='run %(prog)s in silent mode')
     parser.add_argument('-g', '--gain-correct', action='store_true',
