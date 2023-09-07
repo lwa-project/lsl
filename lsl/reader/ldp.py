@@ -1764,7 +1764,7 @@ class TBFFile(LDPFileBase):
         freq = numpy.zeros(nchan)
         for i,c in enumerate(self.mapper):
             freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + numpy.arange(tbf.FRAME_CHANNEL_COUNT)
-        freq *= fC
+        freq *= srate
         
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
                             'sample_rate': srate, 'data_bits': bits, 
@@ -2090,7 +2090,7 @@ class CORFile(LDPFileBase):
         freq = numpy.zeros(nchan)
         for i,c in enumerate(self.cmapper):
             freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + numpy.arange(cor.FRAME_CHANNEL_COUNT)
-        freq *= fC
+        freq *= srate
         
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': cor.FRAME_SIZE,
                             'sample_rate': srate, 'data_bits': bits, 
