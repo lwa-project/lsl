@@ -89,7 +89,7 @@ def main(args):
         print("    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6))
         
         # Prune out what needs to go
-        if args.include != 'all' or args.exclude != 'none':
+        if args.include is not None or args.exclude is not None:
             print("    Processing include/exclude lists")
             dataDict = dataDict.get_antenna_subset(include=args.include, 
                                                    exclude=args.exclude, 
