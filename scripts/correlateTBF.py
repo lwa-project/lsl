@@ -228,7 +228,7 @@ def main(args):
     
     print("Data type:  %s" % type(idf))
     print("Samples per observations: %i" % nFpO)
-    print("Sampling rate: %i Hz" % sample_rate)
+    print("Sampling rate: %.1f Hz" % sample_rate)
     print("Tuning frequency: %.3f Hz" % central_freq)
     print("Captures in file: %i (%.3f s)" % (nInts, nInts / sample_rate))
     print("==")
