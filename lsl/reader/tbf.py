@@ -81,7 +81,7 @@ class FrameHeader(FrameHeaderBase):
         data is TBF, false otherwise.
         """
         
-        if self.adp_id == 0x01 or self.adp_id == 0x04:
+        if self.adp_id & 0x01 or self.adp_id == 0x04:
             return True
         else:
             return False
@@ -94,7 +94,7 @@ class FrameHeader(FrameHeaderBase):
         """
         
         fC = adp_common.fC
-        if self.adp_id == 0x04:
+        if self.adp_id & 0x04:
             fC = ndp_common.fC
         
         return (numpy.arange(FRAME_CHANNEL_COUNT, dtype=numpy.float32)+self.first_chan) * fC
