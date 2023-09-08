@@ -114,8 +114,7 @@ def _test_generator(notebook):
         
     return test
 
-
-if MODULE_BUILD is not None:
+if run_notebooks_tests:
     _NOTEBOOKS = glob.glob(os.path.join(MODULE_BUILD, '*.ipynb'))
     _NOTEBOOKS.sort()
     for notebook in _NOTEBOOKS:
