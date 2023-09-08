@@ -354,6 +354,8 @@ class VisibilityDataSet(object):
                 exclude = [exclude,]
             if not isinstance(exclude, (list, tuple)):
                 raise TypeError("Expected 'exclude' to by a list or tuple")
+        else:
+            exclude = []
         if not indicies:
             if self.antennaarray is None:
                 raise AttributeError("No anntennaarray defined for this data set")
