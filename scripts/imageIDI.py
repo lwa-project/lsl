@@ -89,7 +89,7 @@ def main(args):
         print("    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6))
         
         # Prune out what needs to go
-        if args.include is not None or args.exclude is not None:
+        if args.include != 'any' or args.exclude != 'none':
             print("    Processing include/exclude lists")
             dataDict = dataDict.get_antenna_subset(include=args.include, 
                                                    exclude=args.exclude, 
@@ -268,8 +268,4 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--fits', type=str, 
                         help='save the images to the specified FITS image file')
     args = parser.parse_args()
-    if args.include == 'all':
-        args.include = None
-    if args.exclude == 'none':
-        args.exclude = None
     main(args)
