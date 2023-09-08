@@ -89,7 +89,7 @@ def main(args):
         print("    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6))
         
         # Prune out what needs to go
-        if args.include != 'all' or args.exclude != 'none':
+        if args.include != 'any' or args.exclude != 'none':
             print("    Processing include/exclude lists")
             dataDict = dataDict.get_antenna_subset(include=args.include, 
                                                    exclude=args.exclude, 
@@ -158,8 +158,10 @@ def main(args):
                     ax.set_title("%s @ %s UTC" % (pol, utc))
                 continue
                 
-            # Display the image and label with the polarization/LST
+            # Display the image, save the limits, and label with the polarization/LST
             cb = utils.plot_gridded_image(ax, img)
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()
             fig.colorbar(cb, ax=ax)
             if not args.utc:
                 ax.set_title("%s @ %s LST" % (pol, lst))
@@ -185,7 +187,10 @@ def main(args):
                     overlay.graticule_radec(ax, aa)
                 else:
                     overlay.graticule_azalt(ax, aa)
-                    
+
+            # Reset the axes
+            ax.set_xlim(xlim)
+            ax.set_ylim(ylim)
         plt.show()
         
         if args.fits is not None:
@@ -263,8 +268,4 @@ if __name__ == "__main__":
     parser.add_argument('-f', '--fits', type=str, 
                         help='save the images to the specified FITS image file')
     args = parser.parse_args()
-    if args.include == 'all':
-        args.include = None
-    if args.exclude == 'none':
-        args.exclude = None
     main(args)
