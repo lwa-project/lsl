@@ -64,7 +64,7 @@ def _test_generator(script):
     return test
 
 
-if run_scripts_tests
+if run_scripts_tests:
     _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
     _SCRIPTS.sort()
     for script in _SCRIPTS:

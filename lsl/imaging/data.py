@@ -378,9 +378,10 @@ class VisibilityDataSet(object):
             to_keep = include
         for e in exclude:
             ## Don't exclude things in the include list
-            if e in include:
-                continue
-                
+            if include is not None:
+                if e in include:
+                    continue
+                    
             ## Remove excluded values
             try:
                 del to_keep[to_keep.index(e)]
