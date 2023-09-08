@@ -158,8 +158,10 @@ def main(args):
                     ax.set_title("%s @ %s UTC" % (pol, utc))
                 continue
                 
-            # Display the image and label with the polarization/LST
+            # Display the image, save the limits, and label with the polarization/LST
             cb = utils.plot_gridded_image(ax, img)
+            xlim = ax.get_xlim()
+            ylim = ax.get_ylim()
             fig.colorbar(cb, ax=ax)
             if not args.utc:
                 ax.set_title("%s @ %s LST" % (pol, lst))
@@ -185,7 +187,10 @@ def main(args):
                     overlay.graticule_radec(ax, aa)
                 else:
                     overlay.graticule_azalt(ax, aa)
-                    
+
+            # Reset the axes
+            ax.set_xlim(xlim)
+            ax.set_ylim(ylim)
         plt.show()
         
         if args.fits is not None:
