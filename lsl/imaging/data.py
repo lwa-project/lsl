@@ -346,15 +346,15 @@ class VisibilityDataSet(object):
         """
         
         # Validate
+        if include == 'any':
+            include = None
         if include is not None:
-            if include == 'any':
-                include = None
-            if include is not None and not isinstance(include, (list, tuple)):
+            if not isinstance(include, (list, tuple)):
                 raise TypeError("Expected 'include' to by a list or tuple")
+        if exclude == 'none':
+            exclude = None
         if exclude is not None:
-            if exclude == 'none':
-                exclude = []
-            elif isinstance(exclude, int):
+            if isinstance(exclude, int):
                 exclude = [exclude,]
             if not isinstance(exclude, (list, tuple)):
                 raise TypeError("Expected 'exclude' to by a list or tuple")
