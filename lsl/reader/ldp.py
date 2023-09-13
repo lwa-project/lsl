@@ -2049,6 +2049,7 @@ class CORFile(LDPFileBase):
             except AttributeError:
                 filesize = self.fh.size
             nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
+            adp_id = junkFrame.adp_id
             srate = fC
             if adp_id & 0x04:
                 srate = ndp_fC
