@@ -123,14 +123,6 @@ class FramePayload(FramePayloadBase):
         FramePayloadBase.__init__(self, vis)
         
     @property
-    def adp_id(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.adp_id property.
-        """
-        
-        return self.header.adp_id
-        
-    @property
     def id(self):
         """
         Return a tuple of the two stands that contribute the this frame.
@@ -166,6 +158,14 @@ class Frame(FrameBase):
     _header_class = FrameHeader
     _payload_class = FramePayload
     
+    @property
+    def adp_id(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.adp_id property.
+        """
+        
+        return self.header.adp_id
+        
     @property
     def is_cor(self):
         """
