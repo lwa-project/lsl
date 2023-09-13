@@ -336,7 +336,7 @@ class VisibilityDataSet(object):
         """
         Return a copy of the data containing baselines that meet the specified
         antenna selection criteria.  The selection is governed by the 'include', 
-        'exclude', and 'indicies' keywords.  If 'include' is not 'any' or None,
+        'exclude', and 'indicies' keywords.  If 'include' is not 'all' or None,
         only baselines containing antennas in the list are selected.  If
         'exclude' is not 'none' or None, only baselines not containing antennas
         in the list are selected.  If both 'include' and 'exclude' are provided,
@@ -346,7 +346,7 @@ class VisibilityDataSet(object):
         """
         
         # Validate
-        if include == 'any':
+        if include == 'all':
             include = None
         if include is not None:
             if not isinstance(include, (list, tuple)):
