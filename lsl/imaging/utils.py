@@ -1544,7 +1544,7 @@ class ImgWPlus(aipy.img.ImgW):
             return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
 
 
-def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', uv_size=-1.0, chan=None, im=None, verbose=True):
+def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', uv_size=None, chan=None, im=None, verbose=True):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
@@ -1552,7 +1552,7 @@ def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', uv_siz
     """
     # Catch UV resolution setting for specific calculation of projection to override default 'size'
     # Assumes user has properly calculated uvres such that round(uvres/res) results in a usable final image size.
-    if uv_size != 1.0:
+    if uv_size:
         size = uv_size
         
     # Catch VisibilityData objects before we go any further so we can iterate 
