@@ -1750,11 +1750,11 @@ class TBFFile(LDPFileBase):
             self.fh.seek(-mlc*tbf.FRAME_SIZE, 1)
             
             # Check for contiguous frequency coverage
-            for i in range(1, nFramesPerObs):
-                if self.mapper[i] - self.mapper[i-1] != tbf.FRAME_CHANNEL_COUNT:
-                    warnings.warn(colorfy("{{%%yellow File appears to contain at least one frequency gap %i channels wide}}" % (self.mapper[i] - self.mapper[i-1])), RuntimeWarning)
-                    break
-                    
+            chan_steps = numpy.diff(self.mapper)
+            if not all(chan_steps == tbf.FRAME_CHANNEL_COUNT):
+                bad_steps = numpy.where(chan_steps != tbf.FRAME_CHANNEL_COUNT)[0]
+                warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
+                
             # Find the "real" starttime
             while junkFrame.header.frame_count != firstFrameCount:
                 junkFrame = tbf.read_frame(self.fh)
