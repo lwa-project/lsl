@@ -239,10 +239,12 @@ def get_channel_count(filehandle):
     return nChannels
 
 
-def get_first_channel(filehandle, frequency=False):
+def get_first_channel(filehandle, frequency=False, all_frames=False):
     """
     Find and return the lowest frequency channel in a TBF file.  If the 
-    `frequency` keyword is True the returned value is in Hz.
+    `frequency` keyword is True the returned value is in Hz.  If `all` is
+    True then the lowest frequency in each unique TBF frame is returned as
+    a list.
     """
     
     # Find out how many frames there are per observation
@@ -261,5 +263,10 @@ def get_first_channel(filehandle, frequency=False):
             if freq not in freqs:
                 freqs.append(freq)
                 
-    # Return the lowest frequency channel
-    return min(freqs)
+    freqs.sort()
+    if all_frames:
+        # Return all unique first frequency channels
+        return freqs
+    else:
+        # Return the lowest frequency channel
+        return freqs[0]
