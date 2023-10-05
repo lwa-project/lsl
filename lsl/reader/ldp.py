@@ -1739,15 +1739,7 @@ class TBFFile(LDPFileBase):
             firstFrameCount = tbf.get_first_frame_count(self.fh)
             
             # Pre-load the channel mapper
-            mlc = 0
-            self.mapper = []
-            while len(self.mapper) < nFramesPerObs:
-                junkFrame = tbf.read_frame(self.fh)
-                mlc += 1
-                if junkFrame.header.first_chan not in self.mapper:
-                    self.mapper.append(junkFrame.header.first_chan)
-            self.mapper.sort()
-            self.fh.seek(-mlc*tbf.FRAME_SIZE, 1)
+            self.mapper = tbf.get_first_channel(self.fh, all_frames=True)
             
             # Check for contiguous frequency coverage
             chan_steps = numpy.diff(self.mapper)
