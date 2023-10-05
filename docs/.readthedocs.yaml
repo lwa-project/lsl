@@ -1,4 +1,4 @@
 conda:
-  file: .rtd_environment.yml
+  file: .rtd_environment.yaml
 python:
   setup_py_install: true
