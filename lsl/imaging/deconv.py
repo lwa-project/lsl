@@ -170,7 +170,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
     psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+    psf = utils.build_gridded_image(psfDict, uv_size=size, uv_res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
     psf = psf.image(center=(size,size))
     psf /= psf.max()
     
@@ -260,7 +260,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
                 
             beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
             beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-            beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+            beam = utils.build_gridded_image(beamDict, uv_size=size, uv_res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
             beam = beam.image(center=(size,size))
             beam /= beam.max()
             if verbose:
@@ -410,7 +410,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
     psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+    psf = utils.build_gridded_image(psfDict, uv_size=size, uv_res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
     psf = psf.image(center=(size,size))
     psf /= psf.max()
     
@@ -538,7 +538,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
                     
                 beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
                 beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-                beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+                beam = utils.build_gridded_image(beamDict, uv_size=size, uv_res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
                 beam = beam.image(center=(size,size))
                 beam /= beam.max()
                 if verbose:
@@ -699,7 +699,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
     psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+    psf = utils.build_gridded_image(psfDict, uv_size=size, uv_res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
     psf = psf.image(center=(size,size))
     psf /= psf.max()
     
@@ -732,7 +732,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     rChan = [chan[0], chan[-1]]
     bSrcs['zenith'] = RadioFixedBody(aa.sidereal_time(), aa.lat, name='zenith', jys=1, index=0)
     simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
-    simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
+    simImg = utils.build_gridded_image(simDict, uv_size=size, uv_res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
     simImg = simImg.image(center=(size,size))
     
     simToModel = 1.0 / simImg.max()
@@ -776,7 +776,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
         
         ## Form the simulated image
-        simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
+        simImg = utils.build_gridded_image(simDict, uv_size=size, uv_res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
         simImg = simImg.image(center=(size,size))
         
         ## Difference the image and the simulated image and scale it to the 
