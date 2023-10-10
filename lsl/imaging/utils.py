@@ -1544,7 +1544,7 @@ class ImgWPlus(aipy.img.ImgW):
             return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
 
 
-def build_gridded_image(data_set, uv_size=80, uv_res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None, verbose=True):
+def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None, verbose=True):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
@@ -1559,7 +1559,7 @@ def build_gridded_image(data_set, uv_size=80, uv_res=0.50, im_size=None, im_res=
     # over them
     if isinstance(data_set, VisibilityData):
         for ds in data_set:
-            im = build_gridded_image(ds, uv_size=uv_size, uv_res=uv_res, wres=wres, 
+            im = build_gridded_image(ds, size=size, res=res, im_size=im_size, im_res=im_res, wres=wres, 
                                      pol=pol, chan=chan, im=im, verbose=verbose)
         return im
 
