@@ -1549,7 +1549,7 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
     itself is returned by this function to make it more versatile.
-      * uv_size and uv_res are the aperture plane size and resolution.
+      * size and res are the aperture plane size and resolution.
       
       * im_size and im_res are the image plane size and resolution.
     
