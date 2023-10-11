@@ -1567,10 +1567,7 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
     if (im_size is not None) and (im_res is not None): # Case: User provides Image plane inputs
         res = (2 * im_size * numpy.sin(numpy.pi * im_res / 360))**-1
         size = im_size * res
-    else: 
-        size = uv_size
-        res = uv_res
-        
+       
         
     
     # Make sure we have the right kinds of objects
