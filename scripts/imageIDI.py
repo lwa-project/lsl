@@ -49,8 +49,6 @@ def main(args):
 
     NPIX_SIDE = args.npix_side
     image_resolution = args.image_res
-    res = (2 * NPIX_SIDE * numpy.sin(numpy.pi * image_resolution / 360 ))**-1
-    uv_size = NPIX_SIDE * res
     
     print("Raw Stand Count: %i" % nStand)
     print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
@@ -108,7 +106,7 @@ def main(args):
         lbl1 = 'XX'
         for p in ('XX', 'RR', 'I'):
             try:
-                img1 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=res, pol=p, uv_size=uv_size, chan=toWork)
+                img1 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
                 lbl1 = p.upper()
             except:
                 pass
@@ -117,7 +115,7 @@ def main(args):
         lbl2 = 'YY'
         for p in ('YY', 'LL', 'Q'):
             try:
-                img2 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=res, pol=p, uv_size=uv_size, chan=toWork)
+                img2 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
                 lbl2 = p.upper()
             except:
                 pass
@@ -126,7 +124,7 @@ def main(args):
         lbl3 = 'XY'
         for p in ('XY', 'RL', 'U'):
             try:
-                img3 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=res, pol=p, uv_size=uv_size, chan=toWork)
+                img3 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
                 lbl3 = p.upper()
             except:
                 pass
@@ -135,7 +133,7 @@ def main(args):
         lbl4 = 'YX'
         for p in ('YX', 'LR', 'V'):
             try:
-                img4 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=res, pol=p, uv_size=uv_size, chan=toWork)
+                img4 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
                 lbl4 = p.upper()
             except:
                 pass
@@ -198,21 +196,11 @@ def main(args):
         
         if args.fits is not None:
             ## Make Zenith PC so SV can overwrite it
-            zra = lo.sidereal_time()*180/numpy.pi
-            zdec = lo.lat*180/numpy.pi
-
-            ## Create Phase Pointing in RA/DEC for LWA-SV if requested
-            if args.lwasv:
-                obstime = astropy.time.Time(jdList[0], format='jd')
-                loc = EarthLocation(lat=34.3484, lon=-106.8858, height=1477.8*u.m) #Approximates LWA-SV location
-                z_skycoord = SkyCoord(AltAz(az = 90.9743763*u.deg, alt = 88.0666283*u.deg, obstime = obstime, location = loc))
-                zra, zdec = z_skycoord.transform_to('icrs').ra, z_skycoord.transform_to('icrs').dec
-                zra = zra.deg
-                zdec = zdec.deg
-
+            zra = np.degrees(dataDict.phase_center._ra)
+            zdec = np.degrees(dataDict.phase_center._dec)
             
-            ### Make ImgWPlus object for proper pixel scale
-            fits_imgwp = utils.ImgWPlus(size=uv_size,res=res)
+            ### Make ImgWPlus object for proper pixel scale, Need to Fix. Dont need to recalculate this should be somewhere in headers.
+            pixel_size = img1.pixel_size
         
             ## Loop over the images to build up the FITS file
             hdulist = [astrofits.PrimaryHDU(),]
@@ -230,11 +218,11 @@ def main(args):
                 hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
                 hdu.header['CTYPE1'] = 'RA---SIN'
                 hdu.header['CRPIX1'] = img.shape[0]//2+1
-                hdu.header['CDELT1'] = -1 * np.degrees(fits_imgwp.pixel_size)
+                hdu.header['CDELT1'] = -1 * np.degrees(pixel_size)
                 hdu.header['CRVAL1'] = zra
                 hdu.header['CTYPE2'] = 'DEC--SIN'
                 hdu.header['CRPIX2'] = img.shape[1]//2+1
-                hdu.header['CDELT2'] = np.degrees(fits_imgwp.pixel_size)
+                hdu.header['CDELT2'] = np.degrees(pixel_size)
                 hdu.header['CRVAL2'] = zdec
                 hdu.header['LONPOLE'] = 180.0
                 hdu.header['LATPOLE'] = 90.0
@@ -289,8 +277,6 @@ if __name__ == "__main__":
                         help='disable source and grid labels')
     parser.add_argument('-g', '--no-grid', action='store_true', 
                         help='disable the coordinate grid')
-    parser.add_argument('-v', '--lwasv', action='store_true',
-                        help='set phase center to report correctly for LWA-SV')
     parser.add_argument('-f', '--fits', type=str, 
                         help='save the images to the specified FITS image file')
     args = parser.parse_args()
