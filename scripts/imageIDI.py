@@ -196,8 +196,8 @@ def main(args):
         
         if args.fits is not None:
             ## Make Zenith PC so SV can overwrite it
-            zra = np.degrees(dataDict.phase_center._ra)
-            zdec = np.degrees(dataDict.phase_center._dec)
+            zra = numpy.degrees(dataDict.phase_center._ra)
+            zdec = numpy.degrees(dataDict.phase_center._dec)
             
             ### Make ImgWPlus object for proper pixel scale, Need to Fix. Dont need to recalculate this should be somewhere in headers.
             pixel_size = img1.pixel_size
@@ -218,11 +218,11 @@ def main(args):
                 hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
                 hdu.header['CTYPE1'] = 'RA---SIN'
                 hdu.header['CRPIX1'] = img.shape[0]//2+1
-                hdu.header['CDELT1'] = -1 * np.degrees(pixel_size)
+                hdu.header['CDELT1'] = -1 * numpy.degrees(pixel_size)
                 hdu.header['CRVAL1'] = zra
                 hdu.header['CTYPE2'] = 'DEC--SIN'
                 hdu.header['CRPIX2'] = img.shape[1]//2+1
-                hdu.header['CDELT2'] = np.degrees(pixel_size)
+                hdu.header['CDELT2'] = numpy.degrees(pixel_size)
                 hdu.header['CRVAL2'] = zdec
                 hdu.header['LONPOLE'] = 180.0
                 hdu.header['LATPOLE'] = 90.0
