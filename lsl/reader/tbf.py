@@ -239,7 +239,7 @@ def get_channel_count(filehandle):
     return nChannels
 
 
-def get_first_channel(filehandle, frequency=False, all_chans=False):
+def get_first_channel(filehandle, frequency=False):
     """
     Find and return the lowest frequency channel in a TBF file.  If the 
     `frequency` keyword is True the returned value is in Hz.
@@ -260,8 +260,6 @@ def get_first_channel(filehandle, frequency=False, all_chans=False):
                 
             if freq not in freqs:
                 freqs.append(freq)
-    if all_chans:
-        return min(freqs), freqs
                 
     # Return the lowest frequency channel
     return min(freqs)
