@@ -106,7 +106,7 @@ def main(args):
         lbl1 = 'XX'
         for p in ('XX', 'RR', 'I'):
             try:
-                img1 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
+                img1 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=image_resolution, pol=p, chan=toWork)
                 lbl1 = p.upper()
             except:
                 pass
@@ -115,7 +115,7 @@ def main(args):
         lbl2 = 'YY'
         for p in ('YY', 'LL', 'Q'):
             try:
-                img2 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
+                img2 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=image_resolution, pol=p, chan=toWork)
                 lbl2 = p.upper()
             except:
                 pass
@@ -124,7 +124,7 @@ def main(args):
         lbl3 = 'XY'
         for p in ('XY', 'RL', 'U'):
             try:
-                img3 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
+                img3 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=image_resolution, pol=p, chan=toWork)
                 lbl3 = p.upper()
             except:
                 pass
@@ -133,7 +133,7 @@ def main(args):
         lbl4 = 'YX'
         for p in ('YX', 'LR', 'V'):
             try:
-                img4 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=res, pol=p, chan=toWork)
+                img4 = utils.build_gridded_image(dataDict, im_size=NPIX_SIDE, im_res=image_resolution, pol=p, chan=toWork)
                 lbl4 = p.upper()
             except:
                 pass
