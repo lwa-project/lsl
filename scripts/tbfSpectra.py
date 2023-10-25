@@ -103,9 +103,9 @@ def main(args):
     freq = numpy.zeros(nchannels)
     for i,c in enumerate(mapper):
         freq[i*12:i*12+12] = c + numpy.arange(12)
-    srate = adp_common.fC
+    srate = fC = adp_common.fC
     if cFrame.header.adp_id & 0x04:
-        srate= ndp_common.fC
+        srate = fC = ndp_common.fC
     freq *= fC
     
     # File summary
