@@ -128,7 +128,7 @@ def horizon(ax, antennaarray, phase_center='z', color='white'):
         eq = aipy.coord.radec2eq((ra-pcRA,dec))
         top = numpy.dot(rot, eq)
         junk,alt = aipy.coord.top2azalt(top)
-        if alt >= -1e-5:
+        if alt >= -0.01:
             x[i] = top[0]
             y[i] = top[1]
     ax.plot(x, y, color=color)

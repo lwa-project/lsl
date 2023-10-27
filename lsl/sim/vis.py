@@ -491,6 +491,7 @@ class Antenna(aipy.amp.Antenna):
             produces, and computes the beam response at all points.
         """
         top = numpy.array(top)
+        pol = pol.lower()
         
         def _robust_dot(a, b):
             """
@@ -1076,7 +1077,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         ## Unpack the data and add it to the data set
         if p == 0:
             UVData.uvw = uvw1
-        pds = PolarizationDataSet(pol, data=vis1)
+        pds = PolarizationDataSet(pol.upper(), data=vis1)
         UVData.append( pds )
         
     # Cleanup

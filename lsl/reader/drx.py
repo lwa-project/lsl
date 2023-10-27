@@ -1,6 +1,10 @@
 """
-Python module to read in DRX data.  This module defines the following 
-classes for storing the DRX data found in a file:
+Python module to read in DRX data.  DRX data consist of a time series of complex
+data a variable sample rate of up to 19.6 MHz from the beamformer.  The data are divided into
+packets of 4096 samples per beam per tuning per polarization.
+
+This module defines the following classes for storing the DRX data found in a
+file:
 
 Frame
   object that contains all data associated with a particular DRX frame.  

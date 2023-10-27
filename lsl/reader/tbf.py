@@ -1,6 +1,13 @@
 """
-Python module to reading in data from TBF files.  This module defines the 
-following classes for storing the TBF data found in a file:
+Python module to reading in data from TBF files.  TBF data are a complex
+frequency-domain product that contains blocks of 12 channels from all antennas
+in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and there
+may be up to 132 different blocks of channels within a single recording.  The
+stand ordering is based on the input into the digital system rather than the
+stand number in the array.
+
+This module defines the following classes for storing the TBF data found in a
+file:
 
 Frame
   object that contains all data associated with a particular TBF frame.  The 
@@ -232,10 +239,12 @@ def get_channel_count(filehandle):
     return nChannels
 
 
-def get_first_channel(filehandle, frequency=False):
+def get_first_channel(filehandle, frequency=False, all_frames=False):
     """
     Find and return the lowest frequency channel in a TBF file.  If the 
-    `frequency` keyword is True the returned value is in Hz.
+    `frequency` keyword is True the returned value is in Hz.  If `all` is
+    True then the lowest frequency in each unique TBF frame is returned as
+    a list.
     """
     
     # Find out how many frames there are per observation
@@ -254,5 +263,10 @@ def get_first_channel(filehandle, frequency=False):
             if freq not in freqs:
                 freqs.append(freq)
                 
-    # Return the lowest frequency channel
-    return min(freqs)
+    freqs.sort()
+    if all_frames:
+        # Return all unique first frequency channels
+        return freqs
+    else:
+        # Return the lowest frequency channel
+        return freqs[0]

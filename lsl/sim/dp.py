@@ -11,6 +11,7 @@ if sys.version_info < (3,):
 import time
 import numpy
 from aipy import coord as aipycoord
+from astropy.constants import c as speedOfLight
 
 from lsl import astro
 from lsl.common import dp as dp_common
@@ -23,6 +24,7 @@ from lsl.reader.drx import FILTER_CODES as DRXFilters
 
 from lsl.misc import telemetry
 telemetry.track_module()
+speedOfLight = speedOfLight.to('m/s').value
 
 
 __version__ = '0.5'
@@ -244,9 +246,11 @@ def _build_signals(aa, stands, src_params, times):
         for j,(ant,std) in enumerate(zip(aa.ants, stands)):
             ## Zeroth, get the beam response in the direction of the current source for all frequencies
             antResponse = numpy.squeeze( ant.bm_response(topo, pol='x' if std.pol == 0 else 'y') )
+            ## Create array of stand position for geometric delay calculations
+            xyz = numpy.array([std.stand.x, std.stand.y, std.stand.z])
 
             ## First, do the geometric delay
-            geoDelay = ( numpy.dot(trans, ant.pos).transpose() )[2] 
+            geoDelay = numpy.dot(topo, xyz) / speedOfLight * 1e9 # s -> ns 
             
             ## Second, do the cable delay
             delayAt1MHz = std.cable.delay(frequency=1.0e6) * 1e9 # s -> ns
@@ -259,9 +263,12 @@ def _build_signals(aa, stands, src_params, times):
             cblGain = std.cable.gain(frequency=aa.get_afreqs()*1e9)
             
             ## Put it all together
-            factor = antResponse * numpy.sqrt(flux/2) * rv_samp * cblGain
+            factor = numpy.sqrt(antResponse * cblGain * flux / 2) * rv_samp
             temp[j,:] += numpy.fft.ifft(factor * numpy.exp(-2j*numpy.pi*freq*(cblDelay - geoDelay)))
             
+    # Scale temp to sqrt of the FFT-Length
+    temp /= numpy.sqrt(freq.size)
+    
     # Done
     return temp
 
@@ -273,12 +280,13 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     
     central_freq = kwargs['central_freq']
     filter = kwargs['filter']
+    gain = kwargs['gain']
     start_time = kwargs['start_time']
     verbose = kwargs['verbose']
     noise_strength = kwargs['noise_strength']
     
     sample_rate = TBNFilters[filter]
-    maxValue = 127
+    maxValue = 127 * 2**(20-gain)
     samplesPerFrame = 512
     freqs = (numpy.fft.fftfreq(samplesPerFrame, d=1.0/sample_rate)) + central_freq
     aa = _get_antennaarray(kwargs['station'], stands, start_time, freqs)
@@ -314,7 +322,7 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
             cFrame.write_raw_frame(fh)
 
 
-def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', central_freq=49.0e6, filter=7, start_time=0, noise_strength=0.1, verbose=False):
+def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', central_freq=49.0e6, filter=7, gain=20, start_time=0, noise_strength=0.1, verbose=False):
     """
     Generate a collection of frames with a point source signal for TBN.  
     The point source is specified as a aipy.src object.
@@ -340,6 +348,6 @@ def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', 
         start_time = time.time()
 
     if mode == 'TBN':
-        _point_source_tbn(fh, stands, src, nframes, station=station, central_freq=central_freq, filter=filter, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
+        _point_source_tbn(fh, stands, src, nframes, station=station, central_freq=central_freq, filter=filter, gain=gain, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     else:
         raise RuntimeError("Unknown observations mode: %s" % mode)

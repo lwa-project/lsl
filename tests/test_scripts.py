@@ -64,14 +64,15 @@ def _test_generator(script):
     return test
 
 
-_SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
-_SCRIPTS.sort()
-for script in _SCRIPTS:
-    test = _test_generator(script)
-    name = 'test_%s' % os.path.splitext(os.path.basename(script))[0]
-    doc = """Static analysis of the '%s' script.""" % os.path.basename(script)
-    setattr(test, '__doc__', doc)
-    setattr(scripts_tests, name, test)
+if run_scripts_tests:
+    _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
+    _SCRIPTS.sort()
+    for script in _SCRIPTS:
+        test = _test_generator(script)
+        name = 'test_%s' % os.path.splitext(os.path.basename(script))[0]
+        doc = """Static analysis of the '%s' script.""" % os.path.basename(script)
+        setattr(test, '__doc__', doc)
+        setattr(scripts_tests, name, test)
 
 
 class scripts_test_suite(unittest.TestSuite):
