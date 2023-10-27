@@ -31,7 +31,7 @@ __version__ = '0.2'
 __all__ = ['MODULE', 'DATA', 'WISDOM', 'MODULE_BUILD', 'DATA_BUILD', 'WISDOM_BUILD']
 
 
-modInfo = imp.find_module('lsl')
+modInfo = find_spec('lsl')
 
 #: Absolute path to the LSL intall location
 MODULE = os.path.abspath(modInfo[1])
