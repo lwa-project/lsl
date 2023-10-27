@@ -192,11 +192,11 @@ def main(args):
         plt.show()
         
         if args.fits is not None:
-            ## Make Zenith PC so SV can overwrite it
-            zra = numpy.degrees(dataDict.phase_center._ra)
-            zdec = numpy.degrees(dataDict.phase_center._dec)
+            ## Load in the coordinates for the phase center
+            pc_ra = numpy.degrees(dataDict.phase_center._ra)
+            pc_dec = numpy.degrees(dataDict.phase_center._dec)
             
-            ### Make ImgWPlus object for proper pixel scale, Need to Fix. Dont need to recalculate this should be somewhere in headers.
+            ### Poll the ImgWPlus object for the proper pixel scale
             pixel_size = img1.pixel_size
         
             ## Loop over the images to build up the FITS file
@@ -216,11 +216,11 @@ def main(args):
                 hdu.header['CTYPE1'] = 'RA---SIN'
                 hdu.header['CRPIX1'] = img.shape[0]//2+1
                 hdu.header['CDELT1'] = -1 * numpy.degrees(pixel_size)
-                hdu.header['CRVAL1'] = zra
+                hdu.header['CRVAL1'] = pc_ra
                 hdu.header['CTYPE2'] = 'DEC--SIN'
                 hdu.header['CRPIX2'] = img.shape[1]//2+1
                 hdu.header['CDELT2'] = numpy.degrees(pixel_size)
-                hdu.header['CRVAL2'] = zdec
+                hdu.header['CRVAL2'] = pc_dec
                 hdu.header['LONPOLE'] = 180.0
                 hdu.header['LATPOLE'] = 90.0
                 
