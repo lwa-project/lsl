@@ -34,7 +34,10 @@ __all__ = ['MODULE', 'DATA', 'WISDOM', 'MODULE_BUILD', 'DATA_BUILD', 'WISDOM_BUI
 modInfo = find_spec('lsl')
 
 #: Absolute path to the LSL intall location
-MODULE = os.path.abspath(modInfo[1])
+try:
+    MODULE = os.path.abspath(modInfo[1])
+except TypeError:
+    MODULE = os.path.abspath(modInfo.origin)
 
 #: Absolute path to the data directory where data files for LSL are stored
 DATA = os.path.join(MODULE, 'data')
@@ -55,7 +58,10 @@ WISDOM = os.path.join(os.path.expanduser('~'), '.lsl')
 currentDir = os.path.abspath(os.getcwd())
 if os.path.exists(os.path.join(currentDir, 'setup.py')) and os.path.exists(os.path.join(currentDir, 'lsl')):
     modInfoBuild = find_spec('lsl', [currentDir])
-    MODULE_BUILD =  os.path.abspath(modInfoBuild[1])
+    try:
+        MODULE_BUILD =  os.path.abspath(modInfoBuild[1])
+    except TypeError:
+        MODULE_BUILD =  os.path.abspath(modInfoBuild.origin)
     DATA_BUILD = os.path.join(MODULE_BUILD, 'data')
 else:
     MODULE_BUILD = MODULE
