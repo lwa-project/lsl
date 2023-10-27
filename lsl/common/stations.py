@@ -1024,9 +1024,10 @@ class LSLInterface(object):
             if value is None:
                 raise RuntimeError("Unknown module for interface type '%s'" % which)
             try:
-                modSpec = importlib.util.find_spec(value.split('.')[-1], [os.path.dirname(__file__)])
+                modSpec = importlib.util.find_spec(value, [os.path.dirname(__file__)])
                 modInfo = importlib.util.module_from_spec(modSpec)
-                self._cache[which] = modSpec.loader.exec_module(modInfo)
+                modSpec.loader.exec_module(modInfo)
+                self._cache[which] = modInfo
                 if hasattr(modSpec.loader, 'file'):
                     modSpec.loader.file.close()
             except NameError:
