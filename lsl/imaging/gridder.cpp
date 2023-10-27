@@ -370,12 +370,12 @@ void compute_gridding(long nVis,
 static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *uVec, *vVec, *wVec, *visVec, *wgtVec, *output;
     PyArrayObject *uu=NULL, *vv=NULL, *ww=NULL, *vd=NULL, *wd=NULL, *uvPlane=NULL, *bmPlane=NULL, *kernCorr=NULL;
-    long uvSize = 80;
+    double uvSize = 80;
     double uvRes = 0.5;
     double wRes = 0.1;
     
     char const* kwlist[] = {"u", "v", "w", "data", "wgt", "uvSize", "uvRes", "wRes", NULL};
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOOOO|ldd", const_cast<char **>(kwlist), &uVec, &vVec, &wVec, &visVec, &wgtVec, &uvSize, &uvRes, &wRes)) {
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOOOO|ddd", const_cast<char **>(kwlist), &uVec, &vVec, &wVec, &visVec, &wgtVec, &uvSize, &uvRes, &wRes)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         goto fail;
     }
