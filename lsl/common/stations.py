@@ -11,10 +11,9 @@ if sys.version_info < (3,):
 import os
 import re
 try:
-    from imp import find_module as find_spec, load_module as import_module
+    import importlib.util
 except ImportError:
-    from importlib.util import find_spec
-    from importlib import import_module
+    import imp
 import numpy
 import ephem
 import struct
@@ -1024,12 +1023,16 @@ class LSLInterface(object):
             value = getattr(self, which)
             if value is None:
                 raise RuntimeError("Unknown module for interface type '%s'" % which)
-            modInfo = find_spec(value.split('.')[-1], [os.path.dirname(__file__)])
-            self._cache[which] = import_module(value, modInfo)
             try:
+                modSpec = importlib.util.find_spec(value.split('.')[-1], [os.path.dirname(__file__)])
+                self._cache[which] = modSpec.loader.exec_module(modSpec)
+                if hasattr(modSpec.loader, 'file'):
+                    modSpec.loader.file.close()
+            except NameError:
+                modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
+                self._cache[which] = imp.load_module(value, modInfo)
                 modInfo[0].close()
-            except TypeError:
-                pass
+                
         return self._cache[which]
 
 

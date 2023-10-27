@@ -19,9 +19,9 @@ if sys.version_info < (3,):
     
 import os
 try:
-    from imp import find_module as find_spec
+    import importlib.util
 except ImportError:
-    from importlib.util import find_spec
+    import imp
     
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -31,14 +31,18 @@ __version__ = '0.2'
 __all__ = ['MODULE', 'DATA', 'WISDOM', 'MODULE_BUILD', 'DATA_BUILD', 'WISDOM_BUILD']
 
 
-modInfo = find_spec('lsl')
-
+try:
+    modInfo = importlib.util.find_spec('lsl')
+except NameError:
+    modInfo = imp.find_module('lsl')
+    
 #: Absolute path to the LSL intall location
 try:
-    MODULE = os.path.abspath(modInfo[1])
-except TypeError:
     MODULE = os.path.abspath(modInfo.origin)
-
+    MODULE = os.path.dirname(MODULE)
+except AttributeError:
+    MODULE = os.path.abspath(modInfo[1])
+    
 #: Absolute path to the data directory where data files for LSL are stored
 DATA = os.path.join(MODULE, 'data')
 
@@ -57,11 +61,14 @@ WISDOM = os.path.join(os.path.expanduser('~'), '.lsl')
 # points to data.
 currentDir = os.path.abspath(os.getcwd())
 if os.path.exists(os.path.join(currentDir, 'setup.py')) and os.path.exists(os.path.join(currentDir, 'lsl')):
-    modInfoBuild = find_spec('lsl', [currentDir])
+    
     try:
-        MODULE_BUILD =  os.path.abspath(modInfoBuild[1])
-    except TypeError:
+        modInfoBuild = importlib.util.find_spec('lsl', [currentDir])
         MODULE_BUILD =  os.path.abspath(modInfoBuild.origin)
+        MODULE_BUILD =  os.path.dirname(MODULE_BUILD)
+    except AttributeError:
+        modInfoBuild = imp.find_module('lsl', [currentDir])
+        MODULE_BUILD =  os.path.abspath(modInfoBuild[1])
     DATA_BUILD = os.path.join(MODULE_BUILD, 'data')
 else:
     MODULE_BUILD = MODULE
