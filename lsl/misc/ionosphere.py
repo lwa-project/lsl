@@ -3,12 +3,6 @@ A collection of utilities for retrieving parameters that may be relevant
 for ionospheric corrections.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import gzip
 import numpy
@@ -16,22 +10,12 @@ import socket
 import tarfile
 import warnings
 import subprocess
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from io import StringIO
+from urllib.request import urlopen
 from datetime import datetime, timedelta
 from ftplib import FTP_TLS, error_perm as FTP_ERROR
 
-from scipy.special import lpmv
-try:
-    from scipy.misc import factorial
-except ImportError:
-    from scipy.special import factorial
+from scipy.special import lpmv, factorial
 from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
 
@@ -796,11 +780,8 @@ def _parse_tec_map(filename_or_fh):
         
     try:
         for line in fh:
-            try:
-                line = line.decode('ascii', errors='ignore')
-            except AttributeError:
-                pass
-                
+            line = line.decode('ascii', errors='ignore')
+            
             ## Are we beginning a map?
             line = line.replace('\n', '')
             if line.find('START OF TEC MAP') != -1 or line.find('START OF RMS MAP') != -1:
@@ -1125,12 +1106,7 @@ def _parse_ustec_map(filename_or_fh):
                 continue
                 
             contents = tf.extractfile(entry.name).read()
-            try:
-                contents = contents.decode()
-            except AttributeError:
-                # Python2 catch
-                pass
-            contents = StringIO(contents)
+            contents = StringIO(contents.decode())
             
             if entry.name.find('_TEC.txt') != -1:
                 tecFiles[entry.name] = contents

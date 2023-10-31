@@ -9,10 +9,7 @@ import glob
 import time
 import contextlib
 from threading import Lock
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO, BytesIO
+from io import StringIO, BytesIO
     
 from lsl.misc.file_lock import FileLock, MemoryLock
 

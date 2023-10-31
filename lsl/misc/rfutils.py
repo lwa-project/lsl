@@ -7,12 +7,6 @@ K/Jy and then using those to get a system equivalent flux density.
 .. versionadded:: 1.0.3
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 from astropy import units
 from astropy.constants import c as speedOfLight, k_B as kB
