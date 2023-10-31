@@ -10,12 +10,6 @@ Classes and methods to model sky brightness and visibility.
 ### This module handles the skymaps from the 74 MHz skymap.
 ### David Munton, ARL:UT Jan 2007
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import abc
 from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
