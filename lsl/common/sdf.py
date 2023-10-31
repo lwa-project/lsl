@@ -43,12 +43,6 @@ this module also includes a simple parser for SD files.
     ephem.degrees instances
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
 import copy

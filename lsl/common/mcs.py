@@ -38,16 +38,8 @@ The other functions:
  * Parse the binary packed metadata, 
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    import anydbm as dbm
-else:
-    import dbm
-    
 import re
+import dbm
 import aipy
 import math
 import pytz

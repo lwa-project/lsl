@@ -38,9 +38,6 @@ The other functions:
  * Parse the binary packed metadata, 
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-
 import re
 import ctypes
 from datetime import datetime
