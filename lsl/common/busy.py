@@ -2,7 +2,6 @@
 Module to make a blinking ASCII busy indicator.
 """
 
-import sys
 import time
 import threading
 

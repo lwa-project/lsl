@@ -4,6 +4,7 @@ for ionospheric corrections.
 """
 
 import os
+import sys
 import gzip
 import numpy
 import socket

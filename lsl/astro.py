@@ -3,6 +3,7 @@ Astronomical utility functions and classes based on libnova library.
 """
 
 import os
+import sys
 import time
 import math
 import ephem
