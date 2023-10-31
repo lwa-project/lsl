@@ -15,12 +15,6 @@ is used for plotting.
     Added support for overlaying on images with non-zenith phase centers
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import aipy
 import ephem
 import numpy

@@ -14,12 +14,6 @@ supported self-calibration methods are:
 ..versionadded:: 0.5.5
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import numpy
 
 from lsl.statistics import robust

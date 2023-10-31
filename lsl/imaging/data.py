@@ -2,12 +2,6 @@
 Classes to hold visibility data that are used internally with LSL.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import aipy
 import copy
 import numpy

@@ -6,12 +6,6 @@ Module for analyzing images.  Currently, this module supports:
 .. versionadded:: 1.1.0
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 import numpy
 from scipy.signal import convolve, medfilt

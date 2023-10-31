@@ -25,20 +25,12 @@ read FITS IDI files into :class:`lsl.imaging.data.VisibilityDataSet` or
     Fixed a conjugation problem in the visibilities read from a FITS-IDI file
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    def strip_letters(s):
-        return s.translate(None, 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
-else:
-    t = {}
-    for c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
-        t[ord(c)] = None
-    def strip_letters(s, t=t):
-        return s.translate(t)
-        
+t = {}
+for c in 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ':
+    t[ord(c)] = None
+def strip_letters(s, t=t):
+    return s.translate(t)
+    
 import os
 import re
 import sys
