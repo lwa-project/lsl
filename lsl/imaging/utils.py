@@ -92,9 +92,9 @@ def CorrelatedData(filename, verbose=False):
     
     # Basic filesystem validation
     if not os.path.exists(filename):
-        raise IOError("File '%s' does not exists" % filename)
+        raise IOError(f"File '{filename}' does not exists")
     if not os.access(filename, os.R_OK):
-        raise IOError("File '%s' cannot be read" % filename)
+        raise IOError(f"File '{filename}' cannot be read")
         
     if os.path.isdir(filename):
         # Only a MS can be a directory
@@ -102,8 +102,8 @@ def CorrelatedData(filename, verbose=False):
             return CorrelatedDataMS(filename)
         except Exception as e:
             if verbose:
-                print("MS - ERROR: %s" % str(e))
-            raise RuntimeError("Directory '%s' does not appear to be a MeasurmentSet" % filename)
+                print(f"MS - ERROR: {str(e)}")
+            raise RuntimeError(f"Directory '{filename}' does not appear to be a MeasurmentSet")
             
     else:
         # Standard files
@@ -112,24 +112,24 @@ def CorrelatedData(filename, verbose=False):
             return CorrelatedDataIDI(filename)
         except Exception as e:
             if verbose:
-                print("FITSIDI - ERROR: %s" % str(e))
+                print(f"FITSIDI - ERROR: {str(e)}")
                 
         ## UVFITS
         try:
             return CorrelatedDataUV(filename)
         except Exception as e:
             if verbose:
-                print("UVFITS - ERROR: %s" % str(e))
+                print(f"UVFITS - ERROR: {str(e)}")
                 
         ## Measurment Set as a compressed entity
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
             if verbose:
-                print("MS - ERROR: %s" % str(e))
+                print(f"MS - ERROR: {str(e)}")
                 
     if not valid:
-        raise RuntimeError("File '%s' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet" % filename)
+        raise RuntimeError(f"File '{filename}' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet")
 
 
 class CorrelatedDataBase(object):
@@ -141,7 +141,7 @@ class CorrelatedDataBase(object):
         self.filename = filename
         
     def __str__(self):
-        return "%s @ %s" % (self.__name__, self.filename)
+        return f"{self.__name__} @ {self.filename}"
         
     def __enter__(self):
         return self
@@ -251,7 +251,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
             tbls = [i.header['EXTNAME'] for i in hdulist[1:]]
             for tbl in ('ARRAY_GEOMETRY', 'FREQUENCY', 'ANTENNA', 'SOURCE', 'UV_DATA'):
                 if tbl not in tbls:
-                    raise RuntimeError("Cannot find table '%s' in '%s'" % (tbl, self.filename))
+                    raise RuntimeError(f"Cannot find table '{tbl}' in '{self.filename}'")
             
             self.extended = False
             self.conjugate = True
@@ -864,15 +864,15 @@ try:
             try:
                 ants = table(os.path.join(self.filename, 'ANTENNA'), ack=False)
             except:
-                raise RuntimeError("Cannot find table 'ANTENNA' in '%s'" % self.filename)
+                raise RuntimeError(f"Cannot find table 'ANTENNA' in '{self.filename}'")
             try:
                 pols = table(os.path.join(self.filename, 'POLARIZATION'), ack=False)
             except:
-                raise RuntimeError("Cannot find table 'POLARIZATION' in '%s'" % self.filename)
+                raise RuntimeError(f"Cannot find table 'POLARIZATION' in '{self.filename}'")
             try:
                 obs = table(os.path.join(self.filename, 'OBSERVATION'), ack=False)
             except:
-                raise RuntimeError("Cannot find table 'OBSERVATION' in '%s'" % self.filename)
+                raise RuntimeError(f"Cannot find table 'OBSERVATION' in '{self.filename}'")
             try:
                 src = table(os.path.join(self.filename, 'SOURCE'), ack=False)
             except:
@@ -881,15 +881,15 @@ try:
             try:
                 fld = table(os.path.join(self.filename, 'FIELD'), ack=False)
             except:
-                raise RuntimeError("Cannot find table 'FIELD' in '%s'" % self.filename)
+                raise RuntimeError(f"Cannot find table 'FIELD' in '{self.filename}'")
             try:
                 spw = table(os.path.join(self.filename, 'SPECTRAL_WINDOW'), ack=False)
             except:
-                raise RuntimeError("Cannot find table 'SPECTRAL_WINDOW' in '%s'" % self.filename)
+                raise RuntimeError(f"Cannot find table 'SPECTRAL_WINDOW' in '{self.filename}'")
             try:
                 dsc = table(os.path.join(self.filename, 'DATA_DESCRIPTION'), ack=False)
             except:
-                raise RuntimeError("Cannot find table 'DATA_DESCRIPTION' in '%s'" % self.filename)
+                raise RuntimeError(f"Cannot find table 'DATA_DESCRIPTION' in '{self.filename}'")
                 
             # Station/telescope information
             self.telescope = obs.col('TELESCOPE_NAME')[0]
@@ -1016,7 +1016,7 @@ try:
                 targetJD = targetTime / 3600.0 / 24.0 + astro.MJD_OFFSET
                 
                 # Pull out the data
-                targetData = data.query('TIME == %.16f AND FLAG_ROW == false' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
+                targetData = data.query(f"TIME == {targetTime:.16f} AND FLAG_ROW == false", sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
                 uvw  = targetData.getcol('UVW')
                 try:
                     wgt  = None
@@ -1277,9 +1277,9 @@ class ImgWPlus(aipy.img.ImgW):
     def __iadd__(self, uv, bm=None):
         if isinstance(uv, ImgWPlus):
             if self.shape != uv.shape:
-                raise ValueError("Shape mis-match: %s != %s" % (self.shape, uv.shape))
+                raise ValueError(f"Shape mis-match: {self.shape} != {uv.shape}")
             if len(self.bm) != len(uv.bm):
-                raise ValueError("Order mis-match: %i != %i" % (len(self.bm), len(uv.bm)))
+                raise ValueError(f"Order mis-match: {len(self.bm)} != {len(uv.bm)}")
                 
             self.uv += uv.uv
             for i in range(len(self.bm)):
@@ -1289,9 +1289,9 @@ class ImgWPlus(aipy.img.ImgW):
             if not isinstance(bm, (list, tuple)):
                 raise ValueError("Expected bm to be a list or tuple")
             if self.uv.shape != uv.shape:
-                raise ValueError("Shape mis-match: %s != %s" % (self.uv.shape, uv.shape))
+                raise ValueError(f"Shape mis-match: {self.uv.shape} != {uv.shape}")
             if len(self.bm) != len(bm):
-                raise ValueError("Order mis-match: %i != %i" % (len(self.bm), len(bm)))
+                raise ValueError(f"Order mis-match: {len(self.bm)} != {len(bm)}")
                 
             self.uv += uv
             for i in range(len(self.bm)):
@@ -1331,7 +1331,7 @@ class ImgWPlus(aipy.img.ImgW):
             # Grab a chunk of uvw's that grid w to same point.
             j = sqrt_w.searchsorted(sqrt_w[i]+self.wres)
             if verbose:
-                print('%d/%d datums' % (j, len(w)))
+                print(f"{j}/{len(w)} datums")
             avg_w = numpy.average(w[i:j])
             # Put all uv's down on plane for this gridded w point
             wgtsij = [wgt[i:j] for wgt in wgts]
@@ -1429,7 +1429,7 @@ class ImgWPlus(aipy.img.ImgW):
         
         # Make sure that we have a valid weighting scheme to use
         if weighting not in ('natural', 'uniform', 'briggs'):
-            raise ValueError("Unknown weighting scheme '%s'" % weighting)
+            raise ValueError(f"Unknown weighting scheme '{weighting}'")
             
         # Make sure that we have a valid local_fraction value
         if local_fraction <= 0 or local_fraction > 1:
@@ -1580,7 +1580,7 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
         
     # Make sure we have the right polarization
     if pol not in data_set.pols:
-        raise RuntimeError("Data dictionary does not have data for polarization '%s'" % pol)
+        raise RuntimeError(f"Data dictionary does not have data for polarization '{pol}'")
     pds = getattr(data_set, pol)
         
     if chan is not None:

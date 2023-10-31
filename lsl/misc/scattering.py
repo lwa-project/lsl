@@ -225,9 +225,9 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     # Report on the findings
     if verbose:
         print("Multi-path Scattering Results:")
-        print("  Iterations Used: %i of %i" % (i, max_iter))
-        print("  Best-fit Scattering time: %.3f ms" % (tScat*1000.0,))
-        print("  Figure-of-merit:  %.5f" % merit)
+        print(f"  Iterations Used: {i} of {max_iter}")
+        print(f"  Best-fit Scattering time: {tScat*1000.0:.3f} ms")
+        print(f"  Figure-of-merit:  {merit:.5f}")
         
     # Restore the profile using a Gaussian with a sigma value of 5 time steps
     sigmaRestore = 5*(t[1]-t[0])

@@ -412,7 +412,7 @@ def _download_worker_cddis(url, filename):
     """
     
     # Attempt to download the data
-    print("Downloading %s" % url)
+    print(f"Downloading {url}")
     ## Login
     ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))
     status = ftps.login("anonymous", "lwa@unm.edu")
@@ -467,7 +467,7 @@ def _download_worker_standard(url, filename):
     """
     
     # Attempt to download the data
-    print("Downloading %s" % url)
+    print(f"Downloading {url}")
     try:
         tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
         remote_size = 1

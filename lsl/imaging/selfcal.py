@@ -334,9 +334,9 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
 
     # Make sure we have the right polarization
     if pol not in dataSet.pols:
-        raise RuntimeError("Data set does not have data for polarization '%s'" % pol)
+        raise RuntimeError(f"Data set does not have data for polarization '{pol}'")
     if pol not in simSet.pols:
-        raise RuntimeError("Simulation set does not have data for polarization '%s'" % pol)
+        raise RuntimeError(f"Simulation set does not have data for polarization '{pol}'")
 
     # Make sure that `chan' is an array by trying to find its length
     try:
@@ -355,14 +355,14 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 ref_ant = i
                 found = True
             else:
-                tauNames.append('tau%i' % ant.stand)
-                phsNames.append('phs%i' % ant.stand)
+                tauNames.append(f"tau{ant.stand}")
+                phsNames.append(f"phs{ant.stand}")
     else:
         found = True
     if not found:
-        raise RuntimeError("Stand #%i not found in the array provided" % ref_ant)
+        raise RuntimeError(f"Stand #{ref_ant} not found in the array provided")
     if verbose:
-        print("Using antenna #%i as a reference (Stand #%i)" % (ref_ant, aa.ants[ref_ant].stand))
+        print(f"Using antenna #{ref_ant} as a reference (Stand #{aa.ants[ref_ant].stand})")
         
     # Frequency in GHz so that the delays can be in ns
     fq = dataSet.freq[chan] / 1e9
@@ -376,7 +376,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         #
         if amplitude:
             if verbose:
-                print('  %iA' % (i+1,))
+                print(f"  {i+1}A")
                 
             A = _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -405,7 +405,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         #
         if phase_only:
             if verbose:
-                print('  %iP' % (i+1,))
+                print(f"  {i+1}P")
                 
             A = _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_phaseonly_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -434,7 +434,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             
         elif delay_only:
             if verbose:
-                print('  %iD' % (i+1,))
+                print(f"  {i+1}D")
                 
             A = _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delayonly_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -463,7 +463,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             
         elif delay_and_phase:
             if verbose:
-                print('  %iD+P' % (i+1,))
+                print(f"  {i+1}D+P")
                 
             A = _build_delayandphase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delayandphase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)

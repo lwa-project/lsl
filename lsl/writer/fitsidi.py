@@ -501,7 +501,7 @@ class Idi(WriterBase):
             print("FITS IDI: stand ID mapping enabled")
             for key in mapper.keys():
                 value = mapper[key]
-                print("FITS IDI:  stand #%i -> mapped #%i" % (key, value))
+                print(f"FITS IDI:  stand #{key} -> mapped {value}")
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

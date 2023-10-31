@@ -260,7 +260,7 @@ class PSR_Catalog(Catalog):
                         raSeconds = 0.0
                     else:
                         if debug:
-                            print('Bad format for RAJ line : '+line)
+                            print(f"Bad format for RAJ line: {line}")
                         bad = True
                     raHours = int(raHours)
                     raMinutes = int(raMinutes)
@@ -269,7 +269,7 @@ class PSR_Catalog(Catalog):
                         ra = astro.hms(raHours, raMinutes, raSeconds)
                     except:
                         if debug:
-                            print('PSRCAT: Bad RA for ', psrj, " : ", rastr)
+                            print(f"PSRCAT: Bad RA for {psrj}: {rastr}")
                         bad = True
                 if line.startswith('DECJ'):
                     decstr = line.split()[1]
@@ -281,7 +281,7 @@ class PSR_Catalog(Catalog):
                         decSeconds = 0.0
                     else:
                         if debug:
-                            print('PSRCAT: Bad format for DECJ line : '+line)
+                            print(f"PSRCAT: Bad format for DECJ line: {line}")
                         bad = True
                         continue
                     if decDegrees.startswith('-'):
@@ -296,7 +296,7 @@ class PSR_Catalog(Catalog):
                         dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
                     except:
                         if debug:
-                            print('PSRCAT: Bad DEC for ', psrj, " : ", decstr)
+                            print(f"PSRCAT: Bad DEC for {psrj}: {decstr}")
                         bad = True
                         
                 if line.startswith('@-'):
@@ -313,7 +313,7 @@ class PSR_Catalog(Catalog):
                         # I think they may all have ecliptic positions
                         # which should be converted to ra,dec but I'm
                         # going to ignore them for now. -- paulr
-                        #print "PSRCAT: No position for pulsar ",name
+                        #print(f"PSRCAT: No position for pulsar {name}")
                         bad = True
                         
                     # Add source to list if good.
@@ -322,14 +322,14 @@ class PSR_Catalog(Catalog):
                         entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
                         self.source_map[name] = entry
                         if debug:
-                            print('Added ', name)
+                            print(f"Added {name}")
                         
                         if alias is not None:
                             alias = alias.rstrip()
                             self.alias_map[alias] = entry
                             entry.alias_list.append(alias)
                             if debug:
-                                print('Alias : ', alias.rstrip())
+                                print(f"Alias: {alias.rstrip()}")
                                 
                     # Clear out vars for next source
                     psrb = None
