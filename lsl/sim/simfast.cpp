@@ -224,10 +224,13 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     pcEl *= NPY_PI / 180.0;
     if( pcEl == NPY_PI/2 ) {
         pcEl -= 1e-8;
+    } else if( pcEl == -NPY_PI/2 ) {
+        pcEl += 1e-8;
     }
     /** Conversion to hour angle and declination **/
-    pcHA = atan2(sin(pcAz-NPY_PI), (cos(pcAz-NPY_PI)*sin(lat) + tan(pcEl)*cos(lat)));
-    pcDec = asin(sin(lat)*sin(pcEl) - cos(lat)*cos(pcEl)*cos(pcAz-NPY_PI));
+    pcDec = asin(sin(lat)*sin(pcEl) + cos(lat)*cos(pcEl)*cos(pcAz));
+    pcHA = atan2(-sin(pcAz)*cos(pcEl)/cos(pcDec),
+                 (sin(pcEl) - sin(pcDec)*sin(lat))/(cos(pcDec)*cos(lat)));
     
     // Check data dimensions
     if(PyArray_DIM(ha, 0) != PyArray_DIM(dec, 0)) {
