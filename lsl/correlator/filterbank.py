@@ -4,12 +4,6 @@ spectra as an alternative to a simple FFT.  The implementation here is based
 on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import numpy
 
 from lsl.correlator.fx import null_window

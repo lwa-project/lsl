@@ -24,12 +24,6 @@ of the data, including various window functions and time averaging.
     All of the functions here now return all 'LFFT' channels.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import ephem
 import numpy
 from astropy.constants import c as speedOfLight

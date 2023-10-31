@@ -20,12 +20,6 @@ coverage and time delays.  The functions in the module:
     compute_uv_track() functions.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import ephem
 import numpy
 from astropy.constants import c as speedOfLight
