@@ -25,9 +25,6 @@ try:
     import numpy
 except Exception as e:
     raise RuntimeError("numpy is required to run setup.py: %s" % str(e))
-    
-ASTROPY_VERSION = 'astropy>=3.0'
-HEALPY_VERSION = 'healpy'
 
 
 def get_version():
@@ -328,7 +325,7 @@ setup(
                    'Operating System :: POSIX :: Linux'],
     packages = find_namespace_packages(), 
     scripts = glob.glob('scripts/*.py'), 
-    python_requires='>=3.5', 
+    python_requires='>=3.6', 
     setup_requires = ['numpy>=1.7'], 
     install_requires = ['astropy>=3.0', 'healpy', 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
     include_package_data = True,  
