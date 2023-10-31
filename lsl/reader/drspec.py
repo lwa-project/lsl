@@ -38,12 +38,6 @@ For describing the format of data in the file, three function are provided:
     spectrometer file.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import copy
 import numpy
 

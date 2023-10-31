@@ -26,12 +26,6 @@ get_thread_count
   threads are present in the file.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import warnings
 from datetime import datetime
 
@@ -346,11 +340,8 @@ def has_guppi_header(filehandle):
     with FilePositionSaver(filehandle):
         # Read in the first 16kB
         block = filehandle.read(16384)
-        try:
-            block = block.decode(encoding='ascii', errors='ignore')
-        except AttributeError:
-            pass
-            
+        block = block.decode(encoding='ascii', errors='ignore')
+        
         if block.find('TELESCOP') != -1 \
            or block.find('END') != -1 \
            or block.find('CONTINUE') != -1:
@@ -374,11 +365,8 @@ def read_guppi_header(filehandle):
     # Read in the GUPPI header
     while True:
         line = filehandle.read(80)
-        try:
-            line = line.decode(encoding='ascii', errors='ignore')
-        except AttributeError:
-            pass
-            
+        line = line.decode(encoding='ascii', errors='ignore')
+        
         if line[:3] == 'END':
             break
         elif line[:8] == 'CONTINUE':
