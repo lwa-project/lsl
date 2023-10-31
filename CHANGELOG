@@ -11,6 +11,7 @@
  * Updated the documentation in lsl.correlator.fx to clarify that 'pfb' overrides the 'window' keyword
  * Added better documentation on the LWA data formats
  * Fixed a bug in lsl.reader.ldp.TBFFile that caused it to die on files with gaps in the frequency coverage
+ * Added support for Python 3.12
 
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
