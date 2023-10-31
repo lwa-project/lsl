@@ -1125,7 +1125,6 @@ try:
             return dataSets
             
 except ImportError:
-    print('here')
     warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), RuntimeWarning)
     
     class CorrelatedDataMS(object):
