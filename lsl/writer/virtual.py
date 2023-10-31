@@ -5,12 +5,6 @@ directly worked with in the :mod:`lsl.imaging.utils` module.
 .. versionadded:: 2.1.3
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import sys
 import numpy
 from datetime import datetime

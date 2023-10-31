@@ -15,12 +15,6 @@ functions defined in this module are based heavily off the lwda_fits library.
     Added support for writing multiple IFs to the same FITS-IDI file
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
 import math
