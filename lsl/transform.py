@@ -98,10 +98,10 @@ class Time(object):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format)
+            raise ValueError(f"unknown format {format}")
             
         if timesys not in self.known_timesys:
-            raise ValueError("unknown timesys %s" % timesys)
+            raise ValueError(f"unknown timesys {timesys}")
         
         # parse init value base on format type
         # time value is held internally as UTC JD float
@@ -167,7 +167,7 @@ class Time(object):
         Return low-level string representation of Time instance.
         """
         
-        return "%s.%s(%s)" % (type(self).__module__, type(self).__name__, repr(self.utc_mjd))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.utc_mjd)})"
         
     def __str__(self):
         """
@@ -455,10 +455,10 @@ class CelestialPosition(SkyPosition):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format)
+            raise ValueError(f"unknown format {format}")
             
         if epoch not in self.known_epochs:
-            raise ValueError("unknown epoch %s" % epoch)
+            raise ValueError(f"unknown epoch {epoch}")
             
         self.name = name
         
@@ -475,15 +475,15 @@ class CelestialPosition(SkyPosition):
             if epoch == self.EPOCH_J2000:
                 self.j2000_gal = value
             else:
-                raise ValueError("epoch %s not supported for GAL format" % epoch)
+                raise ValueError(f"epoch {epoch} not supported for GAL format")
         elif format == self.FORMAT_ECL:
             if epoch == self.EPOCH_J2000:
                 self.j2000_ecl = value
             else:
-                raise ValueError("epoch %s not supported for ECL format" % epoch)
+                raise ValueError(f"epoch {epoch} not supported for ECL format")
                 
     def __repr__(self):
-        return "%s.%s(%s, name=%s)" % (type(self).__module__, type(self).__name__, repr(self._posn), repr(self.name))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self._posn)}, name={repr(self.name)})"
         
     @property
     def j2000_equ(self):
@@ -621,7 +621,7 @@ class PlanetaryPosition(SkyPosition):
         
         # check parameters
         if name not in self.known_names:
-            raise ValueError("unknown name %s" % name)
+            raise ValueError(f"unknown name {name}")
             
         self.name = name
         
@@ -640,7 +640,7 @@ class PlanetaryPosition(SkyPosition):
             self._posn_func = astro.get_saturn_equ_coords
             
     def __repr__(self):
-        return "%s.%s(%s)" % (type(self).__module__, type(self).__name__, repr(self.name))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.name)})"
         
     def apparent_equ(self, time_):
         """
@@ -702,7 +702,7 @@ class GeographicalPosition(object):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format) 
+            raise ValueError(f"unknown format {format}") 
             
         self.name = name
         
@@ -715,7 +715,7 @@ class GeographicalPosition(object):
             self.ecef = value
             
     def __repr__(self):
-        return "%s.%s(%s, name=%s)" % (type(self).__module__, type(self).__name__, repr(self._posn), repr(self.name))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self._posn)}, name={repr(self.name)})"
         
     @property
     def geo(self):
@@ -802,7 +802,7 @@ class PointingDirection(object):
         self.site = site
         
     def __repr__(self):
-        return "%s.%s(source=%s, site=%s)" % (type(self).__module__, type(self).__name__, repr(self.source), repr(self.site))
+        return f"{type(self).__module__}.{type(self).__name__}(source={repr(self.source)}, site={repr(self.site)})"
         
     def __setattr__(self, name, value):
         # make surce 'source' and 'site' member are correct type

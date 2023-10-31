@@ -78,7 +78,7 @@ class SkyMapBase(object):
         """
         
         if len(self._power) == 0:
-            raise RuntimeError("%s contains no data" % type(self).__name__)
+            raise RuntimeError(f"{type(self).__name__} contains no data")
         return self.normalize_power().sum()
 
 
@@ -228,8 +228,8 @@ class ProjectedSkyMap(object):
         
         self.skymap_object = skymap_object
         
-        assert  -90 <= lat <=  90, ValueError('lat = %g not in [-90,90]' % lat)
-        assert -360 <= lon <= 360, ValueError('lon = %g not in [-360,360]' % lon)
+        assert  -90 <= lat <=  90, ValueError(f'lat = {lat:g} not in [-90,90]')
+        assert -360 <= lon <= 360, ValueError(f'lon = {lon:g} not in [-360,360]')
         self.lat  = lat
         self.lon  = lon
         self.time = utc_jd
@@ -299,6 +299,6 @@ class ProjectedSkyMap(object):
         """
         
         if len(self.visibleNormalizedPower) == 0:
-            raise RuntimeError("%s contains no data" % type(self).__name__)
+            raise RuntimeError(f"{type(self).__name__} contains no data")
         totalVisiblePower = sum(self.visibleNormalizedPower)
         return totalVisiblePower

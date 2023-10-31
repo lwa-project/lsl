@@ -87,17 +87,17 @@ class dms(object):
             
         if degrees is not None:
             if degrees < 0 or degrees > 359:
-                raise ValueError("degrees parameter range is [0, 359], is set to %d" % degrees)
+                raise ValueError(f"degrees parameter range is [0, 359], is set to {degrees}")
             self.degrees = degrees
             
         if minutes is not None:
             if minutes < 0 or minutes > 59:
-                raise ValueError("minutes parameter range is [0, 59], is set to %d" % minutes)
+                raise ValueError(f"minutes parameter range is [0, 59], is set to {minutes}")
             self.minutes = minutes
             
         if seconds is not None:
             if seconds < 0.0 or seconds >= 60.0:
-                raise ValueError("seconds parameter range is [0.0, 60.0), is set to %0.3f" % seconds)
+                raise ValueError(f"seconds parameter range is [0.0, 60.0), is set to {seconds:.3f}")
             self.seconds = seconds
             
     def __neg__(self):
@@ -122,7 +122,7 @@ class dms(object):
         else:
             sign = '+' 
             
-        sec = "%02.2f" % self.seconds   	
+        sec = f"{self.seconds:02.2f}"
         
         return "%s%02d %02d %s" % (sign, self.degrees, self.minutes, sec.zfill(5))
         
@@ -131,7 +131,7 @@ class dms(object):
         dms object repr string method
         """
             
-        return "%s.%s(%s,%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.neg), repr(self.degrees), repr(self.minutes), repr(self.seconds))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.neg)},{repr(self.degrees)},{repr(self.minutes)},{repr(self.seconds)})"
         
     def __reduce__(self):
         """
@@ -150,7 +150,7 @@ class dms(object):
         elif isinstance(other, (dms, hms)):
             o = other.to_deg()
         else:
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
                 
         if self.to_deg() < o:
             return -1
@@ -214,7 +214,7 @@ class hms(object):
             
         if seconds is not None:
             if seconds < 0.0 or seconds >= 60.0:
-                raise ValueError("seconds paramerer range is [0.0, 60.0), is set to %0.3f" % seconds)
+                raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
             self.seconds = seconds
             
     def __iadd__(self, other):
@@ -229,14 +229,14 @@ class hms(object):
         hms object repr string method
         """
         
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.hours), repr(self.minutes), repr(self.seconds))           
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.hours)},{repr(self.minutes)},{repr(self.seconds)})"           
         
     def __str__(self):	
         """
         hms object print/str method.
         """
         
-        sec = "%02.2f" % self.seconds
+        sec = f"{self.seconds:02.2f}"
         
         return "%02d %02d %s" % (self.hours, self.minutes, sec.zfill(5))
         
@@ -257,7 +257,7 @@ class hms(object):
         elif isinstance(other, (hms, dms)):
             o = other.to_deg()
         else:
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         if self.to_deg() < o:
             return -1
@@ -328,27 +328,27 @@ class date(object):
             
         if months is not None:
             if months < 1 or months > 12:
-                raise ValueError("months paramerer range is [1, 12], is set to %d" % months)
+                raise ValueError(f"months paramerer range is [1, 12], is set to {months}")
             self.months = months
             
         if days is not None:
             if days < 1 or days > 31:
-                raise ValueError("days paramerer range is [1, 31], is set to %d" % days)
+                raise ValueError(f"days paramerer range is [1, 31], is set to {days}")
             self.days = days
             
         if hours is not None:
             if hours < 0 or hours > 23:
-                raise ValueError("hours paramerer range is [0, 23], is set to %d" % hours)
+                raise ValueError(f"hours paramerer range is [0, 23], is set to {hours}")
             self.hours = hours
             
         if minutes is not None:
             if minutes < 0 or minutes > 59:
-                raise ValueError("minutes paramerer range is [0, 59], is set to %d" % minutes)
+                raise ValueError(f"minutes paramerer range is [0, 59], is set to {minutes}")
             self.minutes = minutes
             
         if seconds is not None:
             if seconds < 0.0 or seconds >= 60.0:
-                raise ValueError("degrees paramerer range is [0.0, 60.0), is set to %0.3f" % seconds)
+                raise ValueError(f"degrees paramerer range is [0.0, 60.0), is set to {seconds:.3f}")
             self.seconds = seconds
             
     def __str__(self):
@@ -356,7 +356,7 @@ class date(object):
         date object print/str method.
         """
         
-        sec = "%02.3f" % self.seconds
+        sec = f"{self.seconds:02.3f}"
         
         return "%04d-%02d-%02d %02d:%02d:%s" % (self.years, self.months, self.days, self.hours, self.minutes, sec.zfill(6))
         
@@ -365,7 +365,7 @@ class date(object):
         date object repr string method
         """
         
-        return "%s.%s(%s,%s,%s,%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.years), repr(self.months), repr(self.days), repr(self.hours), repr(self.minutes), repr(self.seconds))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.years)},{repr(self.months)},{repr(self.days)},{repr(self.hours)},{repr(self.minutes)},{repr(self.seconds)})"
         
     def __reduce__(self):
         """
@@ -380,7 +380,7 @@ class date(object):
         """
         
         if not isinstance(other, (date, zonedate)):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         if self.to_jd() < other.to_jd():
             return -1
@@ -431,24 +431,24 @@ class date(object):
         try:
             (yearStr, monthStr, dayStr) = dateStr.split('-')
         except ValueError:
-            raise ValueError("date incorrectly formated: %s" % dateStr) 
+            raise ValueError(f"date incorrectly formated: {dateStr}") 
             
         try:
             year = int(yearStr)
         except ValueError:
-            raise ValueError("year incorrectly formated: %s" % yearStr)
+            raise ValueError(f"year incorrectly formated: {yearStr}")
             
         try:
             month = int(monthStr)
         except ValueError:
-            raise ValueError("month incorrectly formated: %s" % monthStr)
+            raise ValueError(f"month incorrectly formated: {monthStr}")
         if month < 1 or month > 12:
             raise ValueError("months paramerer range is [1, 12], is set to %d" % month)
             
         try:
             day = int(dayStr)
         except ValueError:
-            raise ValueError("day incorrectly formated: %s" % dayStr)
+            raise ValueError(f"day incorrectly formated: {dayStr}")
         if day < 1 or day > 31:
             raise ValueError("days paramerer range is [1, 31], is set to %d" % day)
             
@@ -456,28 +456,28 @@ class date(object):
         try:    
             (hourStr, minuteStr, secondStr) = timeStr.split(':') 
         except ValueError:
-            raise ValueError("time incorrectly formated: %s" % timeStr)         
+            raise ValueError(f"time incorrectly formated: {timeStr}")         
             
         try:
             hour = int(hourStr)
         except ValueError:
-            raise ValueError("hour incorrectly formated: %s" % hourStr)
+            raise ValueError(f"hour incorrectly formated: {hourStr}")
         if hour < 0 or hour > 23:
             raise ValueError("hours paramerer range is [0, 23], is set to %d" % hour)
             
         try:
             minute = int(minuteStr)
         except ValueError:
-            raise ValueError("minutes incorrectly formated: %s" % minuteStr)
+            raise ValueError(f"minutes incorrectly formated: {minuteStr}")
         if minute < 0 or minute > 59:
             raise ValueError("minutes paramerer range is [0, 59], is set to %d" % minute)
             
         try:
             second = float(secondStr)
         except ValueError:
-            raise ValueError("seconds incorrectly formated: %s" % secondStr)
+            raise ValueError(f"seconds incorrectly formated: {secondStr}")
         if second < 0.0 or second >= 60.0:
-            raise ValueError("degrees paramerer range is [0.0, 60.0), is set to %0.3f" % second)
+            raise ValueError(f"degrees paramerer range is [0.0, 60.0), is set to {second:0.3f}")
             
         # set attributes
         self.years = year
@@ -541,7 +541,7 @@ class zonedate(object):
             
         if seconds is not None:
             if seconds < 0.0 or seconds >= 60.0:
-                raise ValueError("degrees paramerer range is [0.0, 60.0), is set to %0.3f" % seconds)
+                raise ValueError(f"degrees paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
             self.seconds = seconds
             
         if gmtoff is None:
@@ -553,7 +553,7 @@ class zonedate(object):
         zonedate object str/print method.
         """
         
-        sec = "%02.3f" % self.seconds 
+        sec = f"{self.seconds:02.3f}" 
         
         return "%04d-%02d-%02d %02d:%02d:%s [%d]" % (self.years, self.months, self.days, self.hours, self.minutes, sec.zfill(6), self.gmtoff)
         
@@ -562,7 +562,7 @@ class zonedate(object):
         zonedate object repr string method
         """
         
-        return "%s.%s(%s,%s,%s,%s,%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.years), repr(self.months), repr(self.days), repr(self.hours), repr(self.minutes), repr(self.seconds), repr(self.gmtoff))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.years)},{repr(self.months)},{repr(self.days)},{repr(self.hours)},{repr(self.minutes)},{repr(self.seconds)},{repr(self.gmtoff)})"
         
     def __reduce__(self):
         """
@@ -577,7 +577,7 @@ class zonedate(object):
         """
         
         if not isinstance(other, (zonedate, date)):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         if self.to_jd() < other.to_jd():
             return -1
@@ -651,14 +651,14 @@ class rst_time(object):
         rst_time object str/print method.
         """
         
-        return "%0.3f %0.3f %0.3f" % (self.rise, self.set, self.transit)
+        return f"{self.rise:0.3f} {self.set:0.3f} {self.transit:0.3f}"
         
     def __repr__(self):
         """
         rst_time object repr string method
         """
         
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.rise), repr(self.set), repr(self.transit))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.rise)},{repr(self.set)},{repr(self.transit)})"
         
     def __reduce__(self):
         """
@@ -701,12 +701,12 @@ class hrz_posn(object):
 
         if az is not None:
             if az < 0.0 or az >= 360.0:
-                raise ValueError("az paramerer range is [0.0, 360.0), is set to %0.3f" % az)
+                raise ValueError(f"az paramerer range is [0.0, 360.0), is set to {az:0.3f}")
             self.az = az
             
         if alt is not None:
             if alt < -90.0 or alt > 90.0:
-                raise ValueError("alt paramerer range is [-90.0, 90.0], is set to %0.3f" % alt)
+                raise ValueError(f"alt paramerer range is [-90.0, 90.0], is set to {alt:0.3f}")
             self.alt = alt
             
     def zen(self, value = None):
@@ -719,7 +719,7 @@ class hrz_posn(object):
         if value is None:
             return 90.0 - self.alt
         if value <  0.0 or value > 180.0:
-            raise ValueError("value paramerer range is [0.0, 180.0], is set to %0.3f" % value)
+            raise ValueError(f"value paramerer range is [0.0, 180.0], is set to {value:0.3f}")
         self.alt = 90.0 - value 
         
     def __str__(self):
@@ -727,14 +727,14 @@ class hrz_posn(object):
         hrz_posn object print/str method.
         """
         
-        return "%0.3f %0.3f" % (self.az, self.alt)
+        return f"{self.az:0.3f} {self.alt:0.3f}"
         
     def __repr__(self):
         """
         hrz_posn object repr string method
         """
         
-        return "%s.%s(%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.az), repr(self.alt))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.az)},{repr(self.alt)})"
         
     def __reduce__(self):
         """
@@ -773,7 +773,7 @@ class hrz_posn(object):
         """
         
         if not isinstance(other, hrz_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.az == other.az) and (self.alt == other.alt)
         
@@ -783,7 +783,7 @@ class hrz_posn(object):
         """
         
         if not isinstance(other, hrz_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.az != other.az) or (self.alt != other.alt)
         
@@ -839,14 +839,14 @@ class equ_posn(object):
             if isinstance(ra, hms):
                 ra = ra.to_deg()
             if ra < 0.0 or ra >= 360.0:
-                raise ValueError("ra paramerer range is [0.0, 360.0), is set to %0.3f" % ra)
+                raise ValueError(f"ra paramerer range is [0.0, 360.0), is set to {ra:0.3f}")
             self.ra = ra
             
         if dec is not None:
             if isinstance(dec, dms):
                 dec = dec.to_deg()
             if dec < -90.0 or dec > 90.0:
-                raise ValueError("dec paramerer range is [-90.0, 90.0], is set to %0.3f" % dec)
+                raise ValueError(f"dec paramerer range is [-90.0, 90.0], is set to {dec:0.3f}")
             self.dec = dec
             
     def __str__(self):
@@ -854,14 +854,14 @@ class equ_posn(object):
         equ_posn object str/print method.
         """
         
-        return "%0.3f %0.3f" % (self.ra, self.dec)
+        return f"{self.ra:0.3f} {self.dec:0.3f}"
         
     def __repr__(self):
         """
         equ_posn object repr string method
         """
         
-        return "%s.%s(%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.ra), repr(self.dec))   
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.ra)},{repr(self.dec)})"   
         
     def __getitem__(self, key):
         """
@@ -873,7 +873,7 @@ class equ_posn(object):
         elif key == 1:
             return self.dec
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __setitem__(self, key, value):
         """
@@ -885,7 +885,7 @@ class equ_posn(object):
         elif key == 1:
             self.dec = value
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __eq__(self, other):
         """
@@ -893,7 +893,7 @@ class equ_posn(object):
         """
         
         if not isinstance(other, equ_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.ra == other.ra) and (self.dec == other.dec)
         
@@ -903,7 +903,7 @@ class equ_posn(object):
         """
         
         if not isinstance(other, equ_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.ra != other.ra) or (self.dec != other.dec)
         
@@ -1009,14 +1009,14 @@ class gal_posn(object):
             if isinstance(l, dms):
                 l = l.to_deg()
             if l < -360.0 or l >= 360.0:
-                raise ValueError("l parameter range is [-360.0, 360.0), is set to %0.3f" % l)
+                raise ValueError(f"l parameter range is [-360.0, 360.0), is set to {l:0.3f}")
             self.l = l
             
         if b is not None:
             if isinstance(b, dms):
                 b = b.to_deg()
             if b < -90.0 or b > 90.0:
-                raise ValueError("b paramerer range is [-90.0, 90.0], is set to %0.3f" % b)
+                raise ValueError(f"b paramerer range is [-90.0, 90.0], is set to {b:0.3f}")
             self.b = b
             
     def __str__(self):
@@ -1024,14 +1024,14 @@ class gal_posn(object):
         gal_posn object print/str method.
         """
         
-        return "%0.3f %0.3f" % (self.l, self.b)
+        return f"{self.l:0.3f} {self.b:0.3f}"
         
     def __repr__(self):
         """
         gal_posn object repr string method
         """
         
-        return "%s.%s(%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.l), repr(self.b))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.l)},{repr(self.b)})"
         
     def __reduce__(self):
         """
@@ -1050,7 +1050,7 @@ class gal_posn(object):
         elif key == 1:
             return self.b
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __setitem__(self, key, value):
         """
@@ -1062,7 +1062,7 @@ class gal_posn(object):
         elif key == 1:
             self.b = value
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __eq__(self, other):
         """
@@ -1070,7 +1070,7 @@ class gal_posn(object):
         """
         
         if not isinstance(other, gal_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)        
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")        
             
         return (self.l == other.l) and (self.b == other.b)
         
@@ -1080,7 +1080,7 @@ class gal_posn(object):
         """
         
         if not isinstance(other, gal_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.l != other.l) or (self.b != other.b)
         
@@ -1142,14 +1142,14 @@ class rect_posn(object):
         rect_posn object str/print method.
         """
         
-        return "%0.3f %0.3f %0.3f" % (self.X, self.Y, self.Z)
+        return f"{self.X:0.3f} {self.Y:0.3f} {self.Z:0.3f}"
         
     def __repr__(self):
         """
         rect_posn object repr string method
         """
         
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.X), repr(self.Y), repr(self.Z))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.X)},{repr(self.Y)},{repr(self.Z)})"
         
     def __reduce__(self):
         """
@@ -1170,7 +1170,7 @@ class rect_posn(object):
         elif key == 2:
             return self.Z
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __setitem__(self, key, value):
         """
@@ -1184,7 +1184,7 @@ class rect_posn(object):
         elif key == 2:
             self.Z = value
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __eq__(self, other):
         """
@@ -1192,7 +1192,7 @@ class rect_posn(object):
         """
         
         if not isinstance(other, rect_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.X == other.X) and (self.Y == other.Y) and (self.Z == other.Z)
         
@@ -1203,7 +1203,7 @@ class rect_posn(object):
         """
         
         if not isinstance(other, rect_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.X != other.X) or (self.Y != other.Y) or (self.Z != other.Z)
 
@@ -1237,14 +1237,14 @@ class lnlat_posn(object):
             if isinstance(lng, dms):
                 lng = lng.to_deg()
             if lng <= -360.0 or lng >= 360.0:
-                raise ValueError("lng parameter range is (-360.0, 360.0), is set to %0.3f" % lng)
+                raise ValueError(f"lng parameter range is (-360.0, 360.0), is set to {lng:0.3f}")
             self.lng = lng
             
         if lat is not None:
             if isinstance(lat, dms):
                 lat = lat.to_deg()
             if lat < -90.0 or lat > 90.0:
-                raise ValueError("lat paramerer range is [-90.0, 90.0], is set to %0.3f" % lat)
+                raise ValueError(f"lat paramerer range is [-90.0, 90.0], is set to {lat:0.3f}")
             self.lat = lat
             
     def __str__(self):
@@ -1252,14 +1252,14 @@ class lnlat_posn(object):
         lnlat_posn object print/str method.
         """
         
-        return "%0.3f %0.3f" % (self.lng, self.lat)
+        return f"{self.lng:0.3f} {self.lat:0.3f}"
         
     def __repr__(self):
         """
         lnlat_posn object repr string method
         """
         
-        return "%s.%s(%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.lng)},{repr(self.lat)})"
         
     def __reduce__(self):
         """
@@ -1278,7 +1278,7 @@ class lnlat_posn(object):
         elif key == 1:
             return self.lat
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __setitem__(self, key, value):
         """
@@ -1290,7 +1290,7 @@ class lnlat_posn(object):
         elif key == 1:
             self.lat = value
         else:
-            raise ValueError("subscript %s out of range" % key)
+            raise ValueError(f"subscript {key} out of range")
             
     def __eq__(self, other):
         """
@@ -1298,7 +1298,7 @@ class lnlat_posn(object):
         """
         
         if not isinstance(other, lnlat_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.lng == other.lng) and (self.lat == other.lat)
         
@@ -1308,7 +1308,7 @@ class lnlat_posn(object):
         """
         
         if not isinstance(other, lnlat_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return (self.lng != other.lng) or (self.lat != other.lat)
         
@@ -1393,21 +1393,21 @@ class nutation(object):
             if isinstance(longitude, dms):
                 longitude = longitude.to_deg()
             if longitude <= -360.0 or longitude >= 360.0:
-                raise ValueError("longitude parameter range is (-360.0, 360.0), is set to %0.3f" % longitude)
+                raise ValueError(f"longitude parameter range is (-360.0, 360.0), is set to {longitude:0.3f}")
             self.longitude = longitude
             
         if obliquity is not None:
             if isinstance(obliquity, dms):
                 obliquity = obliquity.to_deg()
             if obliquity < -90.0 or obliquity > 90.0:
-                raise ValueError("obliquity paramerer range is [-90.0, 90.0], is set to %0.3f" % obliquity)
+                raise ValueError(f"obliquity paramerer range is [-90.0, 90.0], is set to {obliquity:0.3f}")
             self.obliquity = obliquity
             
         if ecliptic is not None:
             if isinstance(ecliptic, dms):
                 ecliptic = ecliptic.to_deg()
             if ecliptic < -90.0 or ecliptic > 90.0:
-                raise ValueError("ecliptic paramerer range is [-90.0, 90.0], is set to %0.3f" % ecliptic)
+                raise ValueError(f"ecliptic paramerer range is [-90.0, 90.0], is set to {ecliptic:0.3f}")
             self.ecliptic = ecliptic  
             
     def __str__(self):
@@ -1415,14 +1415,14 @@ class nutation(object):
         nutation object print/str method.
         """
         
-        return "%0.3f %0.3f %0.3f" % (self.longitude, self.obliquity, self.ecliptic) 
+        return f"{self.longitude:0.3f} {self.obliquity:0.3f} {self.ecliptic:0.3f}" 
         
     def __repr__(self):
         """
         nutation object repr string method
         """
         
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.longitude), repr(self.obliquity), repr(self.ecliptic))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.longitude)},{repr(self.obliquity)},{repr(self.ecliptic)})"
         
     def __reduce__(self):
         """
@@ -3162,7 +3162,7 @@ def _parse_tai_file():
     if download:
         url = ASTRO_CONFIG.get('leapsec_url')
         
-        print("Downloading %s" % url)
+        print(f"Downloading {url}")
         lsFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
         remote_size = 1
         try:
@@ -3260,7 +3260,7 @@ def jd_to_mjd(jd):
     """
     
     if jd < MJD_OFFSET:
-        raise ValueError("jd must be >= %f" % MJD_OFFSET)
+        raise ValueError(f"jd must be >= {MJD_OFFSET:f}")
         
     return (jd - MJD_OFFSET)
 
@@ -3297,7 +3297,7 @@ def leap_secs(utcJD):
         return p[1]
         
     if utcJD < FIRST_LEAP_UTC:
-        raise ValueError("utcJD must be greater than %f" % FIRST_LEAP_UTC)
+        raise ValueError(f"utcJD must be greater than {FIRST_LEAP_UTC:f}")
         
     # search the conversion list for the UTC JD range
     p = _LEAP_SEC_LIST[0]
@@ -3328,7 +3328,7 @@ def utc_to_tai(utcJD):
         return utcJD + p[2]
         
     if utcJD < FIRST_LEAP_UTC:
-        raise ValueError("utcJD must be greater than %f" % FIRST_LEAP_UTC)
+        raise ValueError(f"utcJD must be greater than {FIRST_LEAP_UTC:f}")
         
     # search the conversion list for the UTC JD range
     p = _LEAP_SEC_LIST[0]
@@ -3362,7 +3362,7 @@ def tai_to_utc(taiJD):
     p = _LEAP_SEC_LIST[0]
     firstTai = p[0] + p[2]
     if taiJD < firstTai:
-        raise ValueError("taiJD must be greater than %f" % firstTai)
+        raise ValueError(f"taiJD must be greater than {firstTai:f}")
         
     # search the conversion list for the TAI JD range
     p = _LEAP_SEC_LIST[0]
@@ -3606,7 +3606,7 @@ class geo_posn(lnlat_posn):
         Get string representation of geo_posn object.
         """
         
-        return lnlat_posn.__str__(self) + " %0.3f" % self.elv
+        return lnlat_posn.__str__(self) + f" {self.elv:0.3f}"
         
     def __reduce__(self):
         """
@@ -3620,7 +3620,7 @@ class geo_posn(lnlat_posn):
         geo_posn object repr string method.
         """
         
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat), repr(self.elv))
+        return f"{type(self).__module__}.{type(self).__name__}({repr(self.lng)},{repr(self.lat)},{repr(self.elv)})"
         
     def __getitem__(self, key):
         """
@@ -3648,7 +3648,7 @@ class geo_posn(lnlat_posn):
         """
         
         if not isinstance(other, geo_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return lnlat_posn.__eq__(self, other) and (self.elv == other.elv)
         
@@ -3658,7 +3658,7 @@ class geo_posn(lnlat_posn):
         """
         
         if not isinstance(other, geo_posn):
-            raise TypeError("comparison not supported for type %s" % type(other).__name__)
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
         return lnlat_posn.__ne__(self, other) or (self.elv != other.elv)
 
