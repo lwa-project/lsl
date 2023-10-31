@@ -14,7 +14,7 @@
  * Updated lsl.imaging.util.build_gridded_image to allow for the image size and pixel size to be used instead of the (u,v) grid size and resolution
  * Added image size and pixel scale options to imageIDI.py
  * Added a -d/--decimation option to correlateTBF.py to allow on-the-fly channel decimation
- * Fixed a bug in lsl.sim.vis.build_sim_data when computing the hour angle and decliantion for non-zenith phase centers 
+ * Fixed a bug in lsl.sim.vis.build_sim_data when computing the hour angle and declination for non-zenith phase centers
 
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
