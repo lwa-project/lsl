@@ -65,7 +65,7 @@ jobs:
             numpy \
             matplotlib \
             scipy \
-            "ephem<4.1.1" \
+            ephem \
             jupyterlab \
             jupyter_client \
             nbformat \
