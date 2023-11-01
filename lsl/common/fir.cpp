@@ -17,8 +17,6 @@
 
 #include "numpy/arrayobject.h"
 
-#include "py3_compat.h"
-
 
 /*
 applyFIR - Given a pointer to a 16-bit integer data stream, the number of data samples to 
@@ -503,27 +501,30 @@ provided in this module are:\n\
 Module Setup - Initialization
 */
 
-MOD_INIT(_fir) {
+PyMODINIT_FUNC PyInit__fir(void)) {
     PyObject *m, *all;
     
     Py_Initialize();
     
     // Module definitions and functions
-    MOD_DEF(m, "_fir", FIRMethods, FIRMethods_doc);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT, "_fir", FIRMethods_doc, -1, FIRMethods
+    };
+    m = PyModule_Create(&moduledef);
     if( m == NULL ) {
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.2"));
     
     // Function listings
     all = PyList_New(0);
-    PyList_Append(all, PyString_FromString("integer16"));
-    PyList_Append(all, PyString_FromString("integer16Delayed"));
-    PyList_Append(all, PyString_FromString("integerBeamformer"));
+    PyList_Append(all, PyUnicode_FromString("integer16"));
+    PyList_Append(all, PyUnicode_FromString("integer16Delayed"));
+    PyList_Append(all, PyUnicode_FromString("integerBeamformer"));
     PyModule_AddObject(m, "__all__", all);
     
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }
