@@ -1417,7 +1417,7 @@ class Aips(Idi):
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
         def get_name(self):
-            return f"L{self.id:03i}"
+            return f"L{self.id:03d}"
             
     def _write_primary_hdu(self):
         """
