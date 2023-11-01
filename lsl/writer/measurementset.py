@@ -128,7 +128,7 @@ try:
                 if overwrite:
                     shutil.rmtree(filename, ignore_errors=False)
                 else:
-                    raise IOError("File '%s' already exists" % filename)
+                    raise IOError(f"File '{filename}' already exists")
             self.basename = filename
             
         def set_geometry(self, site, antennas, bits=8):
@@ -220,14 +220,14 @@ try:
             self._write_misc_required_tables()
             
             # Fixup the info and keywords for the main table
-            tb = table("%s" % self.basename, readonly=False, ack=False)
+            tb = table(self.basename, readonly=False, ack=False)
             tb.putinfo({'type':'Measurement Set', 
                         'readme':'This is a MeasurementSet Table holding measurements from a Telescope'})
             tb.putkeyword('MS_VERSION', numpy.float32(2.0))
-            for filename in sorted(glob.glob('%s/*' % self.basename)):
+            for filename in sorted(glob.glob(f"{self.basename}/*"")):
                 if os.path.isdir(filename):
                     tname = os.path.basename(filename)
-                    stb = table("%s/%s" % (self.basename, tname), ack=False)
+                    stb = table(f"{self.basename}/{tname}", ack=False)
                     tb.putkeyword(tname, stb)
                     stb.close()
             tb.flush()
@@ -274,7 +274,7 @@ try:
                                             comment='Station (antenna pad) name')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8])
-            tb = table("%s/ANTENNA" % self.basename, desc, nrow=self.nAnt, ack=False)
+            tb = table(f"{self.basename}/ANTENNA", desc, nrow=self.nAnt, ack=False)
             
             tb.putcol('OFFSET', numpy.zeros((self.nAnt,3)), 0, self.nAnt)
             tb.putcol('TYPE', ['GROUND-BASED,']*self.nAnt, 0, self.nAnt)
@@ -327,7 +327,7 @@ try:
                                             comment='Number of correlation products')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4])
-            tb = table("%s/POLARIZATION" % self.basename, desc, nrow=1, ack=False)
+            tb = table(f"{self.basename}/POLARIZATION", desc, nrow=1, ack=False)
             
             tb.putcell('CORR_TYPE', 0, self.stokes)
             tb.putcell('CORR_PRODUCT', 0, prds.T)
@@ -378,7 +378,7 @@ try:
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, 
                                           col9, col10, col11, col12])
-            tb = table("%s/FEED" % self.basename, desc, nrow=self.nAnt, ack=False)
+            tb = table(f"{self.basename}/FEED", desc, nrow=self.nAnt, ack=False)
             
             presp = numpy.zeros((self.nAnt,2,2), dtype=numpy.complex64)
             if self.stokes[0] > 8:
@@ -449,7 +449,7 @@ try:
                                             comment='Telescope Name (e.g. WSRT, VLBA)')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
-            tb = table("%s/OBSERVATION" % self.basename, desc, nrow=1, ack=False)
+            tb = table(f"{self.basename}/OBSERVATION", desc, nrow=1, ack=False)
             
             tStart = astro.taimjd_to_utcjd(self.data[ 0].obsTime) - astro.MJD_OFFSET
             tStop  = astro.taimjd_to_utcjd(self.data[-1].obsTime) - astro.MJD_OFFSET
@@ -573,7 +573,7 @@ try:
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
                                           col10, col11, col12, col13])
-            tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
+            tb = table(f"{self.basename}/SOURCE", desc, nrow=nSource, ack=False)
             
             for i in range(nSource):
                 tb.putcell('DIRECTION', i, numpy.array(posList[i]))
@@ -627,7 +627,7 @@ try:
                                                       })
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
-            tb = table("%s/FIELD" % self.basename, desc, nrow=nSource, ack=False)
+            tb = table(f"{self.basename}/FIELD", desc, nrow=nSource, ack=False)
             
             for i in range(nSource):
                 tb.putcell('DELAY_DIR', i, numpy.array(posList[i]))
@@ -699,7 +699,7 @@ try:
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
                                           col10, col11, col12, col13, col14])
-            tb = table("%s/SPECTRAL_WINDOW" % self.basename, desc, nrow=nBand, ack=False)
+            tb = table(f"{self.basename}/SPECTRAL_WINDOW", desc, nrow=nBand, ack=False)
             
             for i,freq in enumerate(self.freq):
                 tb.putcell('MEAS_FREQ_REF', i, 0)
@@ -803,7 +803,7 @@ try:
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9, 
                                           col10, col11, col12, col13, col14, col15, col16, 
                                           col17, col18, col19, col20, col21, col22])
-            tb = table("%s" % self.basename, desc, nrow=0, ack=False)
+            tb = table(self.basename, desc, nrow=0, ack=False)
             
             i = 0
             s = 1
@@ -950,7 +950,7 @@ try:
                                             comment='Pointer to spectralwindow table')
             
             desc = tableutil.maketabdesc([col1, col2, col3])
-            tb = table("%s/DATA_DESCRIPTION" % self.basename, desc, nrow=nBand, ack=False)
+            tb = table(f"{self.basename}/DATA_DESCRIPTION", desc, nrow=nBand, ack=False)
             
             for i in range(nBand):
                 tb.putcell('FLAG_ROW', i, False)
@@ -990,7 +990,7 @@ try:
                                             comment='Flagging command')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8])
-            tb = table("%s/FLAG_CMD" % self.basename, desc, nrow=0, ack=False)
+            tb = table(f"{self.basename}/FLAG_CMD", desc, nrow=0, ack=False)
             
             tb.flush()
             tb.close()
@@ -1020,7 +1020,7 @@ try:
                                             comment='Application parameters')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
-            tb = table("%s/HISTORY" % self.basename, desc, nrow=0, ack=False)
+            tb = table(f"{self.basename}/HISTORY", desc, nrow=0, ack=False)
             
             tb.flush()
             tb.close()
@@ -1060,7 +1060,7 @@ try:
                                             comment='Tracking flag - True if on position')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8, col9])
-            tb = table("%s/POINTING" % self.basename, desc, nrow=0, ack=False)
+            tb = table(f"{self.basename}/POINTING", desc, nrow=0, ack=False)
             
             tb.flush()
             tb.close()
@@ -1079,7 +1079,7 @@ try:
                                             comment='flag')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5])
-            tb = table("%s/PROCESSOR" % self.basename, desc, nrow=0, ack=False)
+            tb = table(f"{self.basename}/PROCESSOR", desc, nrow=0, ack=False)
             
             tb.flush()
             tb.close()
@@ -1104,7 +1104,7 @@ try:
                                             comment='Row flag')
             
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7])
-            tb = table("%s/STATE" % self.basename, desc, nrow=0, ack=False)
+            tb = table(f"{self.basename}/STATE", desc, nrow=0, ack=False)
             
             tb.flush()
             tb.close()

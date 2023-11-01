@@ -130,7 +130,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID == oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def __ne__(self, other):
             if isinstance(other, WriterBase._UVData):
@@ -138,7 +138,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID != oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def __gt__(self, other):
             if isinstance(other, WriterBase._UVData):
@@ -146,7 +146,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID > oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def __ge__(self, other):
             if isinstance(other, WriterBase._UVData):
@@ -154,7 +154,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID >= oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def __lt__(self, other):
             if isinstance(other, WriterBase._UVData):
@@ -162,7 +162,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID < oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def __le__(self, other):
             if isinstance(other, WriterBase._UVData):
@@ -170,7 +170,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID <= oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def time(self):
             return self.obsTime
@@ -240,7 +240,7 @@ class WriterBase(object):
         elif isinstance(ref_time, str):
             # Make sure that the string times are of the correct format
             if re.match(timeRE, ref_time) is None:
-                raise RuntimeError("Malformed date/time provided: %s" % ref_time)
+                raise RuntimeError(f"Malformed date/time provided: {ref_time}")
             else:
                 ref_time = ref_time.replace(' ', 'T', 1)
         else:
@@ -364,7 +364,7 @@ class WriterBase(object):
                     'TELESCOP', 'OBSERVER', 'PROJECT', 'ORIGIN', 'CORRELAT', 'FXCORVER', 
                     'LWATYPE', 'LWAMAJV', 'LWAMINV', 'DATE-OBS', 'DATE-MAP', 
                     'COMMENT', 'HISTORY'):
-            raise ValueError("Cannot set a value for '%s'" % name)
+            raise ValueError(f"Cannot set a value for '{name}'")
         if len(name) > 8:
             raise ValueError("Keyword name cannot be more than eight characters long")
             
@@ -444,7 +444,7 @@ class Idi(WriterBase):
             if overwrite:
                 os.unlink(filename)
             else:
-                raise IOError("File '%s' already exists" % filename)
+                raise IOError(f"File '{filename}' already exists")
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
         
     def set_geometry(self, site, antennas, bits=8):
@@ -460,7 +460,7 @@ class Idi(WriterBase):
         
         # Make sure that we have been passed 255 or fewer stands
         if len(antennas) > self._MAX_ANTS:
-            raise RuntimeError("FITS IDI supports up to %s antennas only, given %i" % (self._MAX_ANTS, len(antennas)))
+            raise RuntimeError(f"FITS IDI supports up to {self._MAX_ANTS} antennas only, given {len(antennas)}")
             
         # Update the observatory-specific information
         self.siteName = site.name
@@ -582,7 +582,7 @@ class Idi(WriterBase):
         hdr['REF_PIXL'] = (float(self.refPix), 'reference frequency bin')
         
         date = self.ref_time.split('-')
-        name = "ZA%s%s%s" % (date[0][2:], date[1], date[2])
+        name = f"ZA{date[0][2:]}{date[1]}{date[2]}"
         hdr['OBSCODE'] = (name, 'zenith all-sky image')
         
         hdr['ARRNAM'] = self.siteName      
@@ -1439,7 +1439,7 @@ class Aips(Idi):
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('AIPS-%s' % self.mode, 'LWA FITS file type')
+        primary.header['LWATYPE'] = (f'AIPS-{self.mode}', 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
@@ -1520,7 +1520,7 @@ class ExtendedIdi(Idi):
         primary.header['ORIGIN'] = 'LSL'
         primary.header['CORRELAT'] = ('LWASWC', 'Correlator used')
         primary.header['FXCORVER'] = ('1', 'Correlator version')
-        primary.header['LWATYPE'] = ('EXTENDED-%s' % self.mode, 'LWA FITS file type')
+        primary.header['LWATYPE'] = (f'EXTENDED-{self.mode}', 'LWA FITS file type')
         primary.header['LWAMAJV'] = (IDI_VERSION[0], 'LWA FITS file format major version')
         primary.header['LWAMINV'] = (IDI_VERSION[1], 'LWA FITS file format minor version')
         primary.header['DATE-OBS'] = (self.ref_time, 'IDI file data collection date')
