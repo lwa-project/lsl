@@ -42,6 +42,12 @@ get_sample_rate
 get_frames_per_obs
   read in the first several frames to see how many stands are found in the data.
 
+..versionchanged:: 2.1.3
+    Added a new read_frame_ci8 function that returns 8-bit+8-bit complex integers
+    instead of numpy.complex64
+    Added a new data_ci8 field to the FramePayload to store data more
+    efficiently.
+
 ..versionchanged:: 1.2.0
     Dropped support for ObservingBlock since the lsl.reader.buffer modules does
     a better job.
@@ -59,9 +65,11 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
+import numpy
+
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_tbn
+from lsl.reader._gofast import read_tbn, read_tbn_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -71,8 +79,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.8'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
+__version__ = '0.9'
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
            'get_sample_rate', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 #: TBN packet size (header + payload)
@@ -279,6 +287,35 @@ def read_frame(filehandle, sample_rate=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_tbn(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+    
+    if sample_rate is not None:
+        newFrame.setsample_rate(sample_rate)
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, sample_rate=None, verbose=False):
+    """
+    Function to read in a single TBN frame (header+data) and store the 
+    contents as a Frame object.
+    
+    .. note::
+        This function differs from `read_frame` in that it returns a
+        `lsl.reader.tbn.FramePayload` that contains a 2-D numpy.int8 array
+        (samples by real/complex) rather than a 1-D numpy.complex64 array.
+    
+    .. versionadded:: 2.1.3
+    """
+
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_tbn_ci8(filehandle, Frame())
+        newFrame.payload._data = newFrame.payload.data.view(CI8)
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)

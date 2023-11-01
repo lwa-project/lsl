@@ -13,6 +13,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import tbn
+from lsl.reader.base import CI8
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -63,14 +64,18 @@ def frame_to_frame(tbn_frame):
     rawFrame[22] = (tbn_frame.payload.timetag>>8) & 255
     rawFrame[23] = tbn_frame.payload.timetag & 255
     ## Data
-    iq = tbn_frame.payload.data
-    ### Round and convert to unsigned integers
-    iq = numpy.round(iq)
-    if iq.dtype == numpy.complex128:
-        iq = iq.astype(numpy.complex64)
-    iq = iq.view(numpy.float32)
-    iq = iq.astype(numpy.int8)
-    
+    if tbn_frame.payload.data.dtype == CI8:
+        iq = tbn_frame.payload.data.view(numpy.int8).ravel().copy()
+    else:
+        iq = tbn_frame.payload.data
+        iq.real
+        ### Round and convert to unsigned integers
+        iq = numpy.round(iq)
+        if iq.dtype == numpy.complex128:
+            iq = iq.astype(numpy.complex64)
+        iq = iq.view(numpy.float32)
+        iq = iq.astype(numpy.int8)
+        
     rawFrame[24:] = iq
     
     return rawFrame
@@ -183,11 +188,11 @@ class SimFrame(tbn.Frame):
             return False
 
         # Does the data type make sense?
-        if self.payload.data.dtype.kind != 'c':
+        if self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c':
             if raise_errors:
                 raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
-
+            
         # If we made it this far, it's valid
         return True
 

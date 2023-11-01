@@ -13,6 +13,7 @@ import numpy
 
 from lsl.common.dp import fS
 from lsl.reader import drx
+from lsl.reader.base import CI8
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -74,16 +75,20 @@ def frame_to_frame(drx_frame):
     rawFrame[30] = (drx_frame.payload.flags>>8) & 255
     rawFrame[31] = drx_frame.payload.flags & 255
     ## Data
-    i = drx_frame.payload.data.real
-    q = drx_frame.payload.data.imag
-    ### Round, clip, and convert to unsigned integers
-    i = i.round()
-    i = i.clip(-8, 7)
-    i = i.astype(numpy.int8)
+    if drx_frame.payload.data.dtype == CI8:
+        i = drx_frame.payload.data['re'].copy()
+        q = drx_frame.payload.data['im'].copy()
+    else:
+        i = drx_frame.payload.data.real
+        q = drx_frame.payload.data.imag
+        ### Round, clip, and convert to unsigned integers
+        i = i.round()
+        i = i.clip(-8, 7)
+        i = i.astype(numpy.int8)
+        q = q.round()
+        q = q.clip(-8, 7)
+        q = q.astype(numpy.int8)
     i += ((i & 8) << 1)
-    q = q.round()
-    q = q.clip(-8, 7)
-    q = q.astype(numpy.int8)
     q += ((q & 8) << 1)
     
     rawFrame[32:] = (((i &  0xF) << 4) | (q & 0xF))
@@ -219,11 +224,11 @@ class SimFrame(drx.Frame):
             return False
 
         # Does the data type make sense?
-        if self.payload.data.dtype.kind != 'c':
+        if self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c':
             if raise_errors:
                 raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
             return False
-
+            
         # If we made it this far, it's valid
         return True
 

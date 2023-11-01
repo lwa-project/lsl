@@ -23,8 +23,8 @@ from lsl.common import dp as dp_common
 from lsl.astro import unix_to_utcjd, MJD_OFFSET, unix_to_taimjd
 
 
-__version__ = '0.2'
-__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase', 'FrameTimestamp']
+__version__ = '0.3'
+__all__ = ['FrameHeaderBase', 'FramePayloadBase', 'FrameBase', 'FrameTimestamp', 'CI8']
 
 
 def _build_repr(name, attrs=[]):
@@ -194,7 +194,7 @@ class FrameBase(object):
         newFrame = copy.deepcopy(self)
         newFrame *= y
         return newFrame
-            
+        
     def __imul__(self, y):
         """
         In-place multiple the data sections of two frames together or 
@@ -717,3 +717,6 @@ class FrameTimestamp(object):
         """
         
         return AstroTime(self._int, self._frac, format='unix', scale='utc')
+
+
+CI8 = numpy.dtype([('re', 'i1'), ('im', 'i1')])
