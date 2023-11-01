@@ -99,7 +99,7 @@ PyDoc_STRVAR(GoFast_doc, "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, and VD
   Module Setup - Initialization
 */
 
-MOD_INIT(_gofast) {
+PyMODINIT_FUNC PyInit__gofast(void) {
     PyObject *m, *all, *dict1, *dict2;
     
     Py_Initialize();
@@ -109,9 +109,12 @@ MOD_INIT(_gofast) {
     initVDIFLUTs();
     
     // Module definitions and functions
-    MOD_DEF(m, "_gofast", GoFastMethods, GoFast_doc);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT, "_gofast", GoFast_doc, -1, GoFastMethods
+    };
+    m = PyModule_Create(&moduledef);
     if( m == NULL ) {
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     import_array();
     
@@ -123,10 +126,10 @@ MOD_INIT(_gofast) {
         PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
         Py_XDECREF(dict1);
         Py_XDECREF(m);
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     PyDict_SetItemString(dict1, "__doc__", \
-        PyString_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
+        PyUnicode_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
     SyncError = PyErr_NewException("_gofast.SyncError", PyExc_IOError, dict1);
     Py_INCREF(SyncError);
     PyModule_AddObject(m, "SyncError", SyncError);
@@ -139,33 +142,33 @@ MOD_INIT(_gofast) {
         Py_XDECREF(SyncError);
         Py_XDECREF(dict2);
         Py_XDECREF(m);
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     PyDict_SetItemString(dict2, "__doc__", \
-        PyString_FromString("Exception raised when a reader encounters the end-of-file while reading."));
+        PyUnicode_FromString("Exception raised when a reader encounters the end-of-file while reading."));
     EOFError = PyErr_NewException("_gofast.EOFError", PyExc_IOError, dict2);
     Py_INCREF(EOFError);
     PyModule_AddObject(m, "EOFError", EOFError);
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.8"));
     
     // Correlator channel count
-    PyModule_AddObject(m, "NCHAN_COR", PyInt_FromLong(COR_NCHAN));
+    PyModule_AddObject(m, "NCHAN_COR", PyLong_FromLong(COR_NCHAN));
     
     // Function listings
     all = PyList_New(0);
-    PyList_Append(all, PyString_FromString("read_tbw"));
-    PyList_Append(all, PyString_FromString("read_tbn"));
-    PyList_Append(all, PyString_FromString("read_drx"));
-    PyList_Append(all, PyString_FromString("read_drspec"));
-    PyList_Append(all, PyString_FromString("read_vdif"));
-    PyList_Append(all, PyString_FromString("read_tbf"));
-    PyList_Append(all, PyString_FromString("read_cor"));
-    PyList_Append(all, PyString_FromString("SyncError"));
-    PyList_Append(all, PyString_FromString("EOFError"));
-    PyList_Append(all, PyString_FromString("NCHAN_COR"));
+    PyList_Append(all, PyUnicode_FromString("read_tbw"));
+    PyList_Append(all, PyUnicode_FromString("read_tbn"));
+    PyList_Append(all, PyUnicode_FromString("read_drx"));
+    PyList_Append(all, PyUnicode_FromString("read_drspec"));
+    PyList_Append(all, PyUnicode_FromString("read_vdif"));
+    PyList_Append(all, PyUnicode_FromString("read_tbf"));
+    PyList_Append(all, PyUnicode_FromString("read_cor"));
+    PyList_Append(all, PyUnicode_FromString("SyncError"));
+    PyList_Append(all, PyUnicode_FromString("EOFError"));
+    PyList_Append(all, PyUnicode_FromString("NCHAN_COR"));
     PyModule_AddObject(m, "__all__", all);
     
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }

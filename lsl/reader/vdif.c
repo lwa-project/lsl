@@ -275,11 +275,11 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
         }
         goto fail;
-    } else if( PyString_GET_SIZE(buffer) != sizeof(bHeader) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != sizeof(bHeader) ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         goto fail;
     }
-    memcpy(&bHeader, PyString_AS_STRING(buffer), sizeof(bHeader));
+    memcpy(&bHeader, PyBytes_AS_STRING(buffer), sizeof(bHeader));
     Py_XDECREF(buffer);
     
     // Fix up various bits in the basic header
@@ -309,11 +309,11 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
                 PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
             }
             goto fail;
-        } else if( PyString_GET_SIZE(buffer) != sizeof(eHeader) ) {
+        } else if( PyBytes_GET_SIZE(buffer) != sizeof(eHeader) ) {
             PyErr_Format(EOFError, "End of file encountered during filehandle read");
             goto fail;
         }
-        memcpy(&eHeader, PyString_AS_STRING(buffer), sizeof(eHeader));
+        memcpy(&eHeader, PyBytes_AS_STRING(buffer), sizeof(eHeader));
         Py_XDECREF(buffer);
         
     } else {
@@ -336,7 +336,7 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     rawData = (unsigned char *) malloc(dataLength);
     if( vdif_size_dat == NULL ) {
         vdif_size_dat = Py_BuildValue("i", dataLength);
-    } else if( PyInt_AsLong(vdif_size_dat) != dataLength ) {
+    } else if( PyLong_AsLong(vdif_size_dat) != dataLength ) {
         Py_XDECREF(vdif_size_dat);
         vdif_size_dat = Py_BuildValue("i", dataLength);
     }
@@ -349,12 +349,12 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
         }
         free(rawData);
         goto fail;
-    } else if( PyString_GET_SIZE(buffer) != dataLength ) {
+    } else if( PyBytes_GET_SIZE(buffer) != dataLength ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         free(rawData);
         goto fail;
     }
-    memcpy(rawData, PyString_AS_STRING(buffer), sizeof(unsigned char)*dataLength);
+    memcpy(rawData, PyBytes_AS_STRING(buffer), sizeof(unsigned char)*dataLength);
     Py_XDECREF(buffer);
     
     // Parse it out
