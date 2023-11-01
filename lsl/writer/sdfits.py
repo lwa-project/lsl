@@ -349,7 +349,7 @@ class Sd(WriterBase):
                         #array=numpy.array([[1,1],]*len(scanList)))
         
         # Data
-        c23 = astrofits.Column(name='DATA', format='%iE' % (self.nStokes*self.nChan), unit='UNCALIB', 
+        c23 = astrofits.Column(name='DATA', format=f"{self.nStokes*self.nChan}E", unit='UNCALIB', 
                         array=numpy.array(mList))
                         
         #
@@ -451,8 +451,8 @@ class Sd(WriterBase):
         sd.header['RADESYS'] = ('FK5', 'Equatorial coordinate system frame')
         
         ## Data and flag table dimensionality
-        sd.header['TDIM%i' % dataIndex] = ('(%i,%i,1,1)' % (self.nChan, self.nStokes))
-        #sd.header.set('TDIM%i' % flagIndex, '(%i,%i,1,1)' % (self.nChan, self.nStokes), after='TFORM%i' % flagIndex)
+        sd.header[f"TDIM{dataIndex}"] = f"({self.nChan},{self.nStokes},1,1)"
+        #sd.header.set(f"TDIM{flagIndex}", f"({self.nChan},{self.nStokes},1,1)", after=f"TFORM{flagIndex}")
         
         ## Data and flag table axis descriptions
         ### Frequency

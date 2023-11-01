@@ -631,25 +631,25 @@ class Uv(WriterBase):
         c9 = astrofits.Column(name='REFANT 1', format='1J',
                         array=numpy.ones((self.nAnt,), dtype=numpy.int32))
         # Solution weight (pol. 1)
-        c10 = astrofits.Column(name='WEIGHT 1', format='%dE' % self.nChan,
+        c10 = astrofits.Column(name='WEIGHT 1', format=f"{self.nChan}E",
                         array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
         # Real part of the bandpass (pol. 1)
-        c11 = astrofits.Column(name='REAL 1', format='%dE' % self.nChan,
+        c11 = astrofits.Column(name='REAL 1', format=f"{self.nChan}E",
                         array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
         # Imaginary part of the bandpass (pol. 1)
-        c12 = astrofits.Column(name='IMAG 1', format='%dE' % self.nChan,
+        c12 = astrofits.Column(name='IMAG 1', format=f"{self.nChan}E",
                         array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
         # Reference antenna number (pol. 2)
         c13 = astrofits.Column(name='REFANT 2', format='1J',
                         array=numpy.ones((self.nAnt,), dtype=numpy.int32))
         # Solution weight (pol. 2)
-        c14 = astrofits.Column(name='WEIGHT 2', format='%dE' % self.nChan,
+        c14 = astrofits.Column(name='WEIGHT 2', format=f"{self.nChan}E",
                         array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
         # Real part of the bandpass (pol. 2)
-        c15 = astrofits.Column(name='REAL 2', format='%dE' % self.nChan,
+        c15 = astrofits.Column(name='REAL 2', format=f"{self.nChan}E",
                         array=numpy.ones((self.nAnt,self.nChan), dtype=numpy.float32))
         # Imaginary part of the bandpass (pol. 2)
-        c16 = astrofits.Column(name='IMAG 2', format='%dE' % self.nChan,
+        c16 = astrofits.Column(name='IMAG 2', format=f"{self.nChan}E",
                         array=numpy.zeros((self.nAnt,self.nChan), dtype=numpy.float32))
                         
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 

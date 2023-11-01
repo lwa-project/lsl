@@ -687,7 +687,7 @@ try:
                                              comment='Frequency group name')
             col10 = tableutil.makescacoldesc('IF_CONV_CHAIN', 0, 
                                              comment='The IF conversion chain number')
-            col11 = tableutil.makescacoldesc('NAME', "%i channels" % self.nChan, 
+            col11 = tableutil.makescacoldesc('NAME', f"{self.nChan} channels", 
                                              comment='Spectral window name')
             col12 = tableutil.makescacoldesc('NET_SIDEBAND', 0, 
                                              comment='Net sideband')
@@ -710,9 +710,9 @@ try:
                 tb.putcell('RESOLUTION', i, [freq.chWidth for j in range(self.nChan)])
                 tb.putcell('FLAG_ROW', i, False)
                 tb.putcell('FREQ_GROUP', i, i+1)
-                tb.putcell('FREQ_GROUP_NAME', i, 'group%i' % (i+1))
+                tb.putcell('FREQ_GROUP_NAME', i, f"group{i+1}")
                 tb.putcell('IF_CONV_CHAIN', i, i)
-                tb.putcell('NAME', i, "IF %i, %i channels" % (i+1, self.nChan))
+                tb.putcell('NAME', i, f"IF {i+1}, {self.nChan} channels")
                 tb.putcell('NET_SIDEBAND', i, 0)
                 tb.putcell('NUM_CHAN', i, self.nChan)
                 tb.putcell('TOTAL_BANDWIDTH', i, freq.totalBW)

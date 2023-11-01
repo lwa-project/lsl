@@ -95,7 +95,7 @@ class WriterBase(object):
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
         def get_name(self):
-            return "LWA%03i" % self.id
+            return f"LWA{self.id:03i}"
             
     class _Frequency:
         """
@@ -744,19 +744,19 @@ class Idi(WriterBase):
         c1 = astrofits.Column(name='FREQID', format='1J', 
                         array=numpy.array([self.freq[0].id,], dtype=numpy.int32))
         # Frequency offsets in Hz
-        c2 = astrofits.Column(name='BANDFREQ', format='%iD' % nBand, unit='HZ', 
+        c2 = astrofits.Column(name='BANDFREQ', format=f"{nBand}D", unit='HZ', 
                         array=numpy.array([f.bandFreq for f in self.freq], dtype=numpy.float64).reshape(1,nBand))
         # Channel width in Hz
-        c3 = astrofits.Column(name='CH_WIDTH', format='%iE' % nBand, unit='HZ', 
+        c3 = astrofits.Column(name='CH_WIDTH', format=f"{nBand}E", unit='HZ', 
                         array=numpy.array([f.chWidth for f in self.freq], dtype=numpy.float32).reshape(1,nBand))
         # Total bandwidths of bands
-        c4 = astrofits.Column(name='TOTAL_BANDWIDTH', format='%iE' % nBand, unit='HZ', 
+        c4 = astrofits.Column(name='TOTAL_BANDWIDTH', format=f"{nBand}E", unit='HZ', 
                         array=numpy.array([f.totalBW for f in self.freq], dtype=numpy.float32).reshape(1,nBand))
         # Sideband flag
-        c5 = astrofits.Column(name='SIDEBAND', format='%iJ' % nBand, 
+        c5 = astrofits.Column(name='SIDEBAND', format=f"{nBand}J", 
                         array=numpy.array([f.sideBand for f in self.freq], dtype=numpy.int32).reshape(1,nBand))
         # Baseband channel
-        c6 = astrofits.Column(name='BB_CHAN', format='%iJ' % nBand, 
+        c6 = astrofits.Column(name='BB_CHAN', format=f"{nBand}J", 
                         array=numpy.array([f.baseBand for f in self.freq], dtype=numpy.int32).reshape(1,nBand))
                         
         # Define the collection of columns
@@ -803,19 +803,19 @@ class Idi(WriterBase):
         c8 = astrofits.Column(name='POLTYA', format='A1', 
                         array=numpy.array([ant.polA['Type'] for ant in self.array[0]['ants']]))
         # Feed A orientation in degrees
-        c9 = astrofits.Column(name='POLAA', format='%iE' % nBand,  unit='DEGREES', 
+        c9 = astrofits.Column(name='POLAA', format=f"{nBand}E",  unit='DEGREES', 
                         array=numpy.array([[ant.polA['Angle'],]*nBand for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed A polarization parameters
-        c10 = astrofits.Column(name='POLCALA', format='%iE' % (2*nBand), 
+        c10 = astrofits.Column(name='POLCALA', format=f"{2*nBand}E", 
                         array=numpy.concatenate([[ant.polA['Cal'],]*nBand for ant in self.array[0]['ants']]).astype(numpy.float32))
         # Feed B polarization label
         c11 = astrofits.Column(name='POLTYB', format='A1', 
                         array=numpy.array([ant.polB['Type'] for ant in self.array[0]['ants']]))
         # Feed B orientation in degrees
-        c12 = astrofits.Column(name='POLAB', format='%iE' % nBand,  unit='DEGREES', 
+        c12 = astrofits.Column(name='POLAB', format=f"{nBand}E",  unit='DEGREES', 
                         array=numpy.array([[ant.polB['Angle'],]*nBand for ant in self.array[0]['ants']], dtype=numpy.float32))
         # Feed B polarization parameters
-        c13 = astrofits.Column(name='POLCALB', format='%iE' % (2*nBand), 
+        c13 = astrofits.Column(name='POLCALB', format=f"{2*nBand}E", 
                         array=numpy.concatenate([[ant.polB['Cal'],]*nBand for ant in self.array[0]['ants']]).astype(numpy.float32))
                         
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
@@ -861,25 +861,25 @@ class Idi(WriterBase):
         c7 = astrofits.Column(name='BANDWIDTH', unit='HZ', format='1E',
                         array=(numpy.zeros((self.nAnt,), dtype=numpy.float32)+self.freq[0].totalBW))
         # Band frequency in Hz
-        c8 = astrofits.Column(name='BAND_FREQ', unit='HZ', format='%iD' % nBand,
+        c8 = astrofits.Column(name='BAND_FREQ', unit='HZ', format=f"{nBand}D",
                         array=(numpy.zeros((self.nAnt,nBand,), dtype=numpy.float64)+[f.bandFreq for f in self.freq]))
         # Reference antenna number (pol. 1)
         c9 = astrofits.Column(name='REFANT_1', format='1J',
                         array=numpy.ones((self.nAnt,), dtype=numpy.int32))
         # Real part of the bandpass (pol. 1)
-        c10 = astrofits.Column(name='BREAL_1', format='%iE' % (self.nChan*nBand),
+        c10 = astrofits.Column(name='BREAL_1', format=f"{self.nChan*nBand}E",
                         array=numpy.ones((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
         # Imaginary part of the bandpass (pol. 1)
-        c11 = astrofits.Column(name='BIMAG_1', format='%iE' % (self.nChan*nBand),
+        c11 = astrofits.Column(name='BIMAG_1', format=f"{self.nChan*nBand}E",
                         array=numpy.zeros((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
         # Reference antenna number (pol. 2)
         c12 = astrofits.Column(name='REFANT_2', format='1J',
                         array=numpy.ones((self.nAnt,), dtype=numpy.int32))
         # Real part of the bandpass (pol. 2)
-        c13 = astrofits.Column(name='BREAL_2', format='%iE' % (self.nChan*nBand),
+        c13 = astrofits.Column(name='BREAL_2', format=f"{self.nChan*nBand}E",
                         array=numpy.ones((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
         # Imaginary part of the bandpass (pol. 2)
-        c14 = astrofits.Column(name='BIMAG_2', format='%iE' % (self.nChan*nBand),
+        c14 = astrofits.Column(name='BIMAG_2', format=f"{self.nChan*nBand}E",
                         array=numpy.zeros((self.nAnt,nBand*self.nChan), dtype=numpy.float32))
                         
         colDefs = astrofits.ColDefs([c1, c2, c3, c4, c5, c6, c7, c8, c9, c10, 
@@ -1002,22 +1002,22 @@ class Idi(WriterBase):
         c5 = astrofits.Column(name='FREQID', format='1J', 
                         array=(numpy.zeros((nSource,), dtype=numpy.int32)+self.freq[0].id))
         # Stokes I flux density in Jy
-        c6 = astrofits.Column(name='IFLUX', format='%iE' % nBand, unit='JY', 
+        c6 = astrofits.Column(name='IFLUX', format=f"{nBand}E", unit='JY', 
                         array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Stokes I flux density in Jy
-        c7 = astrofits.Column(name='QFLUX', format='%iE' % nBand, unit='JY', 
+        c7 = astrofits.Column(name='QFLUX', format=f"{nBand}E", unit='JY', 
                         array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Stokes I flux density in Jy
-        c8 = astrofits.Column(name='UFLUX', format='%iE' % nBand, unit='JY', 
+        c8 = astrofits.Column(name='UFLUX', format=f"{nBand}E", unit='JY', 
                         array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Stokes I flux density in Jy
-        c9 = astrofits.Column(name='VFLUX', format='%iE' % nBand, unit='JY', 
+        c9 = astrofits.Column(name='VFLUX', format=f"{nBand}E", unit='JY', 
                         array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Spectral index
-        c10 = astrofits.Column(name='ALPHA', format='%iE' % nBand, 
+        c10 = astrofits.Column(name='ALPHA', format=f"{nBand}E", 
                         array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Frequency offset in Hz
-        c11 = astrofits.Column(name='FREQOFF', format='%iE' % nBand, unit='HZ', 
+        c11 = astrofits.Column(name='FREQOFF', format=f"{nBand}E", unit='HZ', 
                         array=numpy.zeros((nSource,nBand), dtype=numpy.float32))
         # Mean equinox and epoch
         c12 = astrofits.Column(name='EQUINOX', format='A8',
@@ -1037,7 +1037,7 @@ class Idi(WriterBase):
         c17 = astrofits.Column(name='DECEPO', format='1D', unit='DEGREES', 
                         array=numpy.array(decPoList))
         # Systemic velocity in m/s
-        c18 = astrofits.Column(name='SYSVEL', format='%iD' % nBand, unit='M/SEC', 
+        c18 = astrofits.Column(name='SYSVEL', format=f"{nBand}D", unit='M/SEC', 
                         array=numpy.zeros((nSource,nBand), dtype=numpy.float64))
         # Velocity type
         c19 = astrofits.Column(name='VELTYP', format='A8', 
@@ -1046,7 +1046,7 @@ class Idi(WriterBase):
         c20 = astrofits.Column(name='VELDEF', format='A8', 
                         array=numpy.array(('OPTICAL',)).repeat(nSource))
         # Line rest frequency in Hz
-        c21 = astrofits.Column(name='RESTFREQ', format='%iD' % nBand, unit='HZ', 
+        c21 = astrofits.Column(name='RESTFREQ', format=f"{nBand}D", unit='HZ', 
                         array=(numpy.zeros((nSource,nBand), dtype=numpy.float64) + [f.bandFreq+self.refVal for f in self.freq]))
         # Proper motion in RA in degrees/day
         c22 = astrofits.Column(name='PMRA', format='1D', unit='DEG/DAY', 
@@ -1215,7 +1215,7 @@ class Idi(WriterBase):
         nSource = len(nameList)
         
         # Visibility Data
-        c1 = astrofits.Column(name='FLUX', format='%iE' % (2*self.nStokes*self.nChan*nBand), unit='UNCALIB', 
+        c1 = astrofits.Column(name='FLUX', format=f"{2*self.nStokes*self.nChan*nBand}E", unit='UNCALIB', 
                         array=numpy.concatenate(mList))
         # Baseline number (first*256+second)
         c2 = astrofits.Column(name='BASELINE', format='1J', 
@@ -1251,7 +1251,7 @@ class Idi(WriterBase):
         c12 = astrofits.Column(name='GATEID', format='1J', 
                         array=numpy.zeros((nBaseline,), dtype=numpy.int32))
         # Weights
-        c13 = astrofits.Column(name='WEIGHT', format='%iE' % (self.nStokes*self.nChan*nBand), 
+        c13 = astrofits.Column(name='WEIGHT', format=f"{self.nStokes*self.nChan*nBand}E", 
                         array=numpy.concatenate(fList))
                         
         colDefs = astrofits.ColDefs([c6, c7, c8, c3, c4, c2, c11, c9, c10, c5, 
@@ -1417,7 +1417,7 @@ class Aips(Idi):
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
         def get_name(self):
-            return "L%03i" % self.id
+            return f"L{self.id:03i}"
             
     def _write_primary_hdu(self):
         """
@@ -1498,7 +1498,7 @@ class ExtendedIdi(Idi):
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
         def get_name(self):
-            return "LWA%05i" % self.id
+            return f"LWA{self.id:05i}"
             
     def _write_primary_hdu(self):
         """
