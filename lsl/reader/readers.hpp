@@ -1,5 +1,4 @@
-#ifndef __READERS_H
-#define __READERS_H
+#pragma once
 
 #include "Python.h"
 
@@ -117,5 +116,3 @@ extern char read_tbf_ci8_doc[];
 // cor.cpp
 extern PyObject *read_cor(PyObject*, PyObject*);
 extern char read_cor_doc[];
-
-#endif	// __READERS_H
