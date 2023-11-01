@@ -95,7 +95,7 @@ class WriterBase(object):
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
         def get_name(self):
-            return f"LWA{self.id:03i}"
+            return f"LWA{self.id:03d}"
             
     class _Frequency:
         """
@@ -1498,7 +1498,7 @@ class ExtendedIdi(Idi):
             self.polB = {'Type': 'Y', 'Angle': 90.0, 'Cal': [0.0, 0.0]}
             
         def get_name(self):
-            return f"LWA{self.id:05i}"
+            return f"LWA{self.id:05d}"
             
     def _write_primary_hdu(self):
         """

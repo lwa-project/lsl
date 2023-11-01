@@ -224,7 +224,7 @@ try:
             tb.putinfo({'type':'Measurement Set', 
                         'readme':'This is a MeasurementSet Table holding measurements from a Telescope'})
             tb.putkeyword('MS_VERSION', numpy.float32(2.0))
-            for filename in sorted(glob.glob(f"{self.basename}/*"")):
+            for filename in sorted(glob.glob(f"{self.basename}/*")):
                 if os.path.isdir(filename):
                     tname = os.path.basename(filename)
                     stb = table(f"{self.basename}/{tname}", ack=False)
