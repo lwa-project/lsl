@@ -5,7 +5,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
 #include "numpy/arrayobject.h"
 
-#include "readers.h"
+#include "readers.hpp"
 
 // The Mac OSX 10.15 SDK has CR0 and CR1 macros
 #if defined(__APPLE__)
