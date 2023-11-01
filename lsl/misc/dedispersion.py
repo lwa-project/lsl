@@ -72,7 +72,7 @@ def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=numpy.nan)
     
     # Validate the boundary mode
     if boundary not in ('wrap', 'fill'):
-        raise ValueError("Unknown boundary handling type '%s'" % boundary)
+        raise ValueError(f"Unknown boundary handling type '{boundary}'")
         
     # Compute the dispersive delay for the given frequency range
     tDelay = delay(freq, dm)

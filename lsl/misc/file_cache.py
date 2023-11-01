@@ -169,7 +169,7 @@ class MemoryFile(object):
         """
         
         if not self._closed:
-            raise IOError("MemoryFile:%s is already open" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is already open")
             
         self._lock.acquire(True)
         
@@ -190,7 +190,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         self._buffer.seek(pos, whence)
         
@@ -200,7 +200,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         return self._buffer.tell()
         
@@ -221,7 +221,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         contents = self._buffer.read(n)
         if not self._is_binary:
@@ -239,7 +239,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         contents = self._buffer.readline(size)
         if not self._is_binary:
@@ -257,7 +257,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         if self._is_binary:
             try:
@@ -273,7 +273,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         self._buffer.flush()
         
