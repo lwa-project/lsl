@@ -14,7 +14,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "../common/py3_compat.h"
 #include "../correlator/common.hpp"
 
 #include "protos.h"
@@ -259,9 +258,9 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Dimensions
     temp = PyObject_CallMethod(antarray, "__len__", NULL);
-    nAnt = (long int) PyInt_AsLong(temp);
+    nAnt = (long int) PyLong_AsLong(temp);
     temp2 = PyObject_CallMethod(bls, "__len__", NULL);
-    nBL = (long int) PyInt_AsLong(temp2);
+    nBL = (long int) PyLong_AsLong(temp2);
     nFreq = (long int) PyArray_DIM(freq, 0);
     nSrc = (long int) PyArray_DIM(ha, 0);
     Py_DECREF(temp);
@@ -300,7 +299,7 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     double *pos, *t;
     pos = (double *) malloc(nAnt*3*sizeof(double));
     for(i=0; i<nAnt; i++) {
-        temp = PyInt_FromLong(i);
+        temp = PyLong_FromLong(i);
         temp2 = PyObject_GetItem(antarray, temp);
         temp3 = PyObject_GetAttrString(temp2, "pos");
         Py_DECREF(temp);
@@ -321,14 +320,14 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     int *bll;
     bll = (int *) malloc(nBL*2*sizeof(int));
     for(i=0; i<nBL; i++) {
-        temp = PyInt_FromLong(i);
+        temp = PyLong_FromLong(i);
         temp2 = PyObject_GetItem(bls, temp);
         Py_DECREF(temp);
         
         for(j=0; j<2; j++) {
-            temp = PyInt_FromLong(j);
+            temp = PyLong_FromLong(j);
             temp3 = PyObject_GetItem(temp2, temp);
-            *(bll + 2*i + j) = (int) PyInt_AsLong(temp3);
+            *(bll + 2*i + j) = (int) PyLong_AsLong(temp3);
             Py_DECREF(temp);
             Py_DECREF(temp3);
         }
@@ -440,25 +439,28 @@ See the inidividual functions for more details.\n\
 Module Setup - Initialization
 */
 
-MOD_INIT(_simfast) {
+PyMODINIT_FUNC PyInit__simfast(void) {
     PyObject *m, *all;
     
     Py_Initialize();
     
     // Module definitions and functions
-    MOD_DEF(m, "_simfast", SimMethods, sim_doc);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT, "_simfast", sim_doc, -1, SimMethods
+    };
+    m = PyModule_Create(&moduledef);
     if( m == NULL ) {
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.1"));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.1"));
     
     // Function listings
     all = PyList_New(0);
-    PyList_Append(all, PyString_FromString("FastVis"));
+    PyList_Append(all, PyUnicode_FromString("FastVis"));
     PyModule_AddObject(m, "__all__", all);
     
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }

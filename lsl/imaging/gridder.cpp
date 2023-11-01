@@ -16,7 +16,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "../common/py3_compat.h"
 #include "../correlator/common.hpp"
 
 
@@ -548,21 +547,24 @@ See the inidividual functions for more details.");
   Module Setup - Initialization
 */
 
-MOD_INIT(_gridder) {
+PyMODINIT_FUNC PyInit__gridder(void) {
     char filename[256];
     PyObject *m, *pModule, *pDataPath=NULL;
     
     Py_Initialize();
     
     // Module definitions and functions
-    MOD_DEF(m, "_gridder", GridderMethods, gridder_doc);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT, "_gridder", gridder_doc, -1, GridderMethods
+    };
+    m = PyModule_Create(&moduledef);
     if( m == NULL ) {
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     import_array();
     
     // Version information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.3"));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.3"));
     
     // LSL FFTW Wisdom
     pModule = PyImport_ImportModule("lsl.common.paths");
@@ -578,5 +580,5 @@ MOD_INIT(_gridder) {
     Py_XDECREF(pDataPath);
     Py_XDECREF(pModule);
     
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }

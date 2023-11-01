@@ -15,7 +15,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "../common/py3_compat.h"
 #include "common.hpp"
 #include "blas.hpp"
 
@@ -1122,28 +1121,31 @@ See the inidividual functions for more details.");
 Module Setup - Initialization
 */
 
-MOD_INIT(_core) {
+PyMODINIT_FUNC PyInit__core(void) {
     char filename[256];
     PyObject *m, *all, *pModule, *pDataPath=NULL;
     
     Py_Initialize();
     
     // Module definitions and functions
-    MOD_DEF(m, "_core", CorrelatorMethods, correlator_doc);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT, "_core", correlator_doc, -1, CorrelatorMethods
+    };
+    m = PyModule_Create(&moduledef);
     if( m == NULL ) {
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.8"));
     
     // Function listings
     all = PyList_New(0);
-    PyList_Append(all, PyString_FromString("FEngine"));
-    PyList_Append(all, PyString_FromString("PFBEngine"));
-    PyList_Append(all, PyString_FromString("XEngine2"));
-    PyList_Append(all, PyString_FromString("XEngine3"));
+    PyList_Append(all, PyUnicode_FromString("FEngine"));
+    PyList_Append(all, PyUnicode_FromString("PFBEngine"));
+    PyList_Append(all, PyUnicode_FromString("XEngine2"));
+    PyList_Append(all, PyUnicode_FromString("XEngine3"));
     PyModule_AddObject(m, "__all__", all);
     
     // LSL FFTW Wisdom
@@ -1160,5 +1162,5 @@ MOD_INIT(_core) {
     Py_XDECREF(pDataPath);
     Py_XDECREF(pModule);
     
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }

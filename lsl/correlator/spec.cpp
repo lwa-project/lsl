@@ -15,7 +15,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "../common/py3_compat.h"
 #include "common.hpp"
 #include "blas.hpp"
 
@@ -520,26 +519,29 @@ See the inidividual functions for more details.\n\
   Module Setup - Initialization
 */
 
-MOD_INIT(_spec) {
+PyMODINIT_FUNC PyInit__spec(void) {
     char filename[256];
     PyObject *m, *all, *pModule, *pDataPath=NULL;
     
     Py_Initialize();
     
     // Module definitions and functions
-    MOD_DEF(m, "_spec", SpecMethods, spec_doc);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT, "_spec", spec_doc, -1, SpecMethods
+    };
+    m = PyModule_Create(&moduledef);
     if( m == NULL ) {
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.7"));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.7"));
     
     // Function listings
     all = PyList_New(0);
-    PyList_Append(all, PyString_FromString("FPSD"));
-    PyList_Append(all, PyString_FromString("PFBPSD"));
+    PyList_Append(all, PyUnicode_FromString("FPSD"));
+    PyList_Append(all, PyUnicode_FromString("PFBPSD"));
     PyModule_AddObject(m, "__all__", all);
     
     // LSL FFTW Wisdom
@@ -556,5 +558,5 @@ MOD_INIT(_spec) {
     Py_XDECREF(pDataPath);
     Py_XDECREF(pModule);
     
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }

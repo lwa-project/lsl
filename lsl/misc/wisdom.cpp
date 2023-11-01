@@ -16,7 +16,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "../common/py3_compat.h"
 #include "../correlator/common.hpp"
 
 
@@ -191,20 +190,23 @@ See the individual functions for more details.");
   Module Setup - Initialization
 */
 
-MOD_INIT(_wisdom) {
+PyMODINIT_FUNC PyInit__wisdom(void) {
     PyObject *m;
     
     Py_Initialize();
     
     // Module definitions and functions
-    MOD_DEF(m, "_wisdom", WisdomMethods, wisdom_doc);
+    static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT, "_wisdom", wisdom_doc, -1, WisdomMethods
+    };
+    m = PyModule_Create(&moduledef);
     if( m == NULL ) {
-        return MOD_ERROR_VAL;
+        return NULL;
     }
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.4"));
+    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.4"));
     
-    return MOD_SUCCESS_VAL(m);
+    return m;
 }

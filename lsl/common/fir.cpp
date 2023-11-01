@@ -487,7 +487,7 @@ static PyMethodDef FIRMethods[] = {
     {NULL,                NULL,              0,            NULL                 }
 };
 
-PyDoc_STRVAR(FIRMethods_doc, \
+PyDoc_STRVAR(fir_doc, \
 "This module contains a collection of function to speed up FIR filtering of TBW\n\
 data (represented as numpy.int16 arrays) and the SoftwareDP class.  The funtions\n\
 provided in this module are:\n\
@@ -501,14 +501,14 @@ provided in this module are:\n\
 Module Setup - Initialization
 */
 
-PyMODINIT_FUNC PyInit__fir(void)) {
+PyMODINIT_FUNC PyInit__fir(void) {
     PyObject *m, *all;
     
     Py_Initialize();
     
     // Module definitions and functions
     static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT, "_fir", FIRMethods_doc, -1, FIRMethods
+        PyModuleDef_HEAD_INIT, "_fir", fir_doc, -1, FIRMethods
     };
     m = PyModule_Create(&moduledef);
     if( m == NULL ) {
