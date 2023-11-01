@@ -317,6 +317,26 @@ class reader_tests(unittest.TestCase):
         repr(frame2)
         fh.close()
         
+    def test_tbn_read_ci8(self):
+        """Test reading in a frame from a TBN file, ci8 style."""
+        
+        fh = open(tbnFile, 'rb')
+        frame1 = tbn.read_frame(fh)
+        frame2 = tbn.read_frame(fh)
+        fh.close()
+        
+        fh = open(tbnFile, 'rb')
+        frame3 = tbn.read_frame_ci8(fh)
+        frame4 = tbn.read_frame_ci8(fh)
+        fh.close()
+        
+        # Compare
+        data1 = frame3.payload.data['re'] + 1j*frame3.payload.data['im']
+        data2 = frame4.payload.data['re'] + 1j*frame4.payload.data['im']
+        for i in range(512):
+            self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
+            
     def test_tbn_errors(self):
         """Test reading in all frames from a truncated TBN file."""
         
@@ -450,6 +470,26 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(pol,  0)
         fh.close()
         
+    def test_drx_read_ci8(self):
+        """Test reading in a frame from a DRX file, ci8 style."""
+        
+        fh = open(drxFile, 'rb')
+        frame1 = drx.read_frame(fh)
+        frame2 = drx.read_frame(fh)
+        fh.close()
+        
+        fh = open(drxFile, 'rb')
+        frame3 = drx.read_frame_ci8(fh)
+        frame4 = drx.read_frame_ci8(fh)
+        fh.close()
+        
+        # Compare
+        data1 = frame3.payload.data['re'] + 1j*frame3.payload.data['im']
+        data2 = frame4.payload.data['re'] + 1j*frame4.payload.data['im']
+        for i in range(512):
+            self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
+            
     def test_drx_errors(self):
         """Test reading in all frames from a truncated DRX file."""
         
@@ -756,6 +796,25 @@ class reader_tests(unittest.TestCase):
             
         fh.close()
         
+    def test_vdif_read_i8(self):
+        """Test reading in a frame from a VDIF file, i8 style."""
+        
+        fh = open(vdifFile, 'rb')
+        frame1 = vdif.read_frame(fh)
+        frame2 = vdif.read_frame(fh)
+        fh.close()
+        
+        fh = open(vdifFile, 'rb')
+        frame3 = vdif.read_frame_i8(fh)
+        frame4 = vdif.read_frame_i8(fh)
+        fh.close()
+        
+        # Validate the data
+        for i in range(frame1.payload.data.shape[0]):
+            for j in range(frame1.payload.data.shape[1]):
+                self.assertAlmostEqual(round(frame1.payload.data[i,j]), frame3.payload.data[i,j], 5)
+                self.assertAlmostEqual(round(frame2.payload.data[i,j]), frame4.payload.data[i,j], 5)
+                
     def test_vdif_errors(self):
         """Test reading in all frames from a truncated VDIF file."""
         

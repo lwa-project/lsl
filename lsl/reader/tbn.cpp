@@ -1,8 +1,5 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <complex.h>
+#include <cmath>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
@@ -14,47 +11,45 @@
   TBN Reader
 */
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct {
-    unsigned int sync_word;
+typedef struct __attribute__((packed)) {
+    uint32_t sync_word;
     union {
         struct {
-            unsigned int frame_count:24;
-            unsigned char id:8;
+            uint32_t frame_count:24;
+            uint8_t  id:8;
         };
-        unsigned int frame_count_word;
+        uint32_t frame_count_word;
     };
-    unsigned int tuning_word;
+    uint32_t tuning_word;
     union {
-        unsigned short int tbn_id;
+        uint16_t tbn_id;
         struct {
-            unsigned short int stand:14;
-            unsigned char reserved:1;
-            unsigned char is_tbw:1;
+            uint16_t stand:14;
+            uint8_t  reserved:1;
+            uint8_t  is_tbw:1;
         };
     };
-    unsigned short int gain;
+    uint16_t gain;
 } TBNHeader;
 
 
-typedef struct {
-    unsigned long long timetag;
-    unsigned char bytes[1024];
+typedef struct __attribute__((packed)) {
+    uint64_t timetag;
+    uint8_t  bytes[1024];
 } TBNPayload;
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     TBNHeader header;
     TBNPayload payload;
 } TBNFrame;
-#pragma pack(pop)
 
 
 PyObject *tbn_method = NULL;
 PyObject *tbn_size   = NULL;
 
 
+template<typename T, NPY_TYPES N>
 PyObject *read_tbn(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data;
@@ -69,7 +64,8 @@ PyObject *read_tbn(PyObject *self, PyObject *args) {
     // Create the output data array
     npy_intp dims[1];
     dims[0] = (npy_intp) 512;
-    data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_COMPLEX64, 0);
+    if( N == NPY_INT8) dims[0] *= 2;
+    data = (PyArrayObject*) PyArray_ZEROS(1, dims, N, 0);
     if(data == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
         Py_XDECREF(data);
@@ -109,10 +105,11 @@ PyObject *read_tbn(PyObject *self, PyObject *args) {
     cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
     
     // Fill the data array
-    float complex *a;
-    a = (float complex *) PyArray_DATA(data);
+    T *a;
+    a = (T *) PyArray_DATA(data);
     for(i=0; i<512; i++) {
-        *(a + i) = tbnLUT[ cFrame.payload.bytes[2*i+0] ] + _Complex_I * tbnLUT[ cFrame.payload.bytes[2*i+1] ];
+        *(a + 2*i + 0) = tbnLUT[ cFrame.payload.bytes[2*i+0] ];
+        *(a + 2*i + 1) = tbnLUT[ cFrame.payload.bytes[2*i+1] ];
     }
     
     Py_END_ALLOW_THREADS
@@ -165,7 +162,29 @@ PyObject *read_tbn(PyObject *self, PyObject *args) {
     return output;
 }
 
-char read_tbn_doc[] = PyDoc_STR(\
+
+PyObject *read_tbn_cf32(PyObject *self, PyObject *args) {
+    return read_tbn<float,NPY_COMPLEX64>(self, args);
+}
+
+char read_tbn_cf32_doc[] = PyDoc_STR(\
 "Function to read in a single TBN frame (header+payload) and store the contents\n\
 as a Frame object.\n\
+");
+
+
+PyObject *read_tbn_ci8(PyObject *self, PyObject *args) {
+    return read_tbn<int8_t,NPY_INT8>(self, args);
+}
+
+char read_tbn_ci8_doc[] = PyDoc_STR(\
+"Function to read in a single TBN frame (header+payload) and store the contents\n\
+as a Frame object.\n\
+\n\
+.. note::\n\
+    This function differs from `read_tbn` in that it returns a\n\
+    `lsl.tbn.FramePayload` containing a 2-D numpy.int8 array (samples by real/\n\
+    complex) rather than a 1-D numpy.complex64 array.\n\
+\n\
+.. versionadded:: 2.1.3\n\
 ");
