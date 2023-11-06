@@ -480,7 +480,7 @@ Outputs:\n\
 ");
 
 
-static PyMethodDef FIRMethods[] = {
+static PyMethodDef fir_methods[] = {
     {"integer16",         (PyCFunction) integerFIR,        METH_VARARGS, integerFIR_doc       }, 
     {"integer16Delayed",  (PyCFunction) integerFIRDelayed, METH_VARARGS, integerFIRDelayed_doc}, 
     {"integerBeamformer", (PyCFunction) integerBeamformer, METH_VARARGS, integerBeamformer_doc}, 
@@ -501,30 +501,40 @@ provided in this module are:\n\
 Module Setup - Initialization
 */
 
-PyMODINIT_FUNC PyInit__fir(void) {
-    PyObject *m, *all;
+static int fir_exec(PyObject *module) {
+    PyObject *all;
     
-    Py_Initialize();
-    
-    // Module definitions and functions
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT, "_fir", fir_doc, -1, FIRMethods
-    };
-    m = PyModule_Create(&moduledef);
-    if( m == NULL ) {
-        return NULL;
-    }
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.2"));
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.2"));
     
     // Function listings
     all = PyList_New(0);
     PyList_Append(all, PyUnicode_FromString("integer16"));
     PyList_Append(all, PyUnicode_FromString("integer16Delayed"));
     PyList_Append(all, PyUnicode_FromString("integerBeamformer"));
-    PyModule_AddObject(m, "__all__", all);
-    
-    return m;
+    PyModule_AddObject(module, "__all__", all);
+    return 0;
+}
+
+static PyModuleDef_Slot fir_slots[] = {
+    {Py_mod_exec, (void *)&fir_exec},
+    {0,           NULL}
+};
+
+static PyModuleDef fir_def = {
+    PyModuleDef_HEAD_INIT,    /* m_base */
+    "_fir",                   /* m_name */
+    fir_doc,                  /* m_doc */
+    0,                        /* m_size */
+    fir_methods,              /* m_methods */
+    fir_slots,                /* m_slots */
+    NULL,                     /* m_traverse */
+    NULL,                     /* m_clear */
+    NULL,                     /* m_free */
+};
+
+PyMODINIT_FUNC PyInit__fir(void) {
+    return PyModuleDef_Init(&fir_def);
 }
