@@ -416,12 +416,12 @@ Outputs:\n\
 Module Setup - Function Definitions and Documentation
 */
 
-static PyMethodDef SimMethods[] = {
+static PyMethodDef simfast_methods[] = {
     {"FastVis", (PyCFunction) FastVis, METH_VARARGS|METH_KEYWORDS, FastVis_doc}, 
     {NULL,      NULL,                  0,                          NULL       }
 };
 
-PyDoc_STRVAR(sim_doc, \
+PyDoc_STRVAR(simfast_doc, \
 "C-based visibility simulation engine.  These functions are meant to provide\n\
 an alternative to the AIPY simulation methods and a much-needed speed boost\n\
 to simulation-heavy tasks.\n\
@@ -439,28 +439,36 @@ See the inidividual functions for more details.\n\
 Module Setup - Initialization
 */
 
-PyMODINIT_FUNC PyInit__simfast(void) {
-    PyObject *m, *all;
-    
-    Py_Initialize();
-    
-    // Module definitions and functions
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT, "_simfast", sim_doc, -1, SimMethods
-    };
-    m = PyModule_Create(&moduledef);
-    if( m == NULL ) {
-        return NULL;
-    }
+static int simfast_exec(PyObject *module) {
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.1"));
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.1"));
     
     // Function listings
-    all = PyList_New(0);
+    PyObject* all = PyList_New(0);
     PyList_Append(all, PyUnicode_FromString("FastVis"));
-    PyModule_AddObject(m, "__all__", all);
-    
-    return m;
+    PyModule_AddObject(module, "__all__", all);
+    return 0;
+}
+
+static PyModuleDef_Slot simfast_slots[] = {
+    {Py_mod_exec, (void *)&simfast_exec},
+    {0,           NULL}
+};
+
+static PyModuleDef simfast_def = {
+    PyModuleDef_HEAD_INIT,    /* m_base */
+    "_simfast",               /* m_name */
+    simfast_doc,              /* m_doc */
+    0,                        /* m_size */
+    simfast_methods,          /* m_methods */
+    simfast_slots,            /* m_slots */
+    NULL,                     /* m_traverse */
+    NULL,                     /* m_clear */
+    NULL,                     /* m_free */
+};
+
+PyMODINIT_FUNC PyInit__simfast(void) {
+    return PyModuleDef_Init(&simfast_def);
 }

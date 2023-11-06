@@ -499,7 +499,7 @@ Outputs:\n\
   Module Setup - Function Definitions and Documentation
 */
 
-static PyMethodDef SpecMethods[] = {
+static PyMethodDef spec_methods[] = {
     {"FPSD",   (PyCFunction) FPSD,   METH_VARARGS|METH_KEYWORDS, FPSD_doc },
     {"PFBPSD", (PyCFunction) PFBPSD, METH_VARARGS|METH_KEYWORDS, PFBPSD_doc},
     {NULL,      NULL,                0,                          NULL     }
@@ -529,44 +529,52 @@ See the inidividual functions for more details.\n\
   Module Setup - Initialization
 */
 
-PyMODINIT_FUNC PyInit__spec(void) {
-    char filename[256];
-    PyObject *m, *all, *pModule, *pDataPath=NULL;
-    
-    Py_Initialize();
-    
-    // Module definitions and functions
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT, "_spec", spec_doc, -1, SpecMethods
-    };
-    m = PyModule_Create(&moduledef);
-    if( m == NULL ) {
-        return NULL;
-    }
+static int spec_exec(PyObject *module) {
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.7"));
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.7"));
     
     // Function listings
-    all = PyList_New(0);
+    PyObject* all = PyList_New(0);
     PyList_Append(all, PyUnicode_FromString("FPSD"));
     PyList_Append(all, PyUnicode_FromString("PFBPSD"));
-    PyModule_AddObject(m, "__all__", all);
+    PyModule_AddObject(module, "__all__", all);
     
     // LSL FFTW Wisdom
-    pModule = PyImport_ImportModule("lsl.common.paths");
+    PyObject* pModule = PyImport_ImportModule("lsl.common.paths");
     if( pModule != NULL ) {
-        pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
+        PyObject* pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
+            char filename[256];
             sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
-            read_wisdom(filename, m);
+            read_wisdom(filename, module);
         }
+        Py_XDECREF(pDataPath);
     } else {
         PyErr_Warn(PyExc_RuntimeWarning, "Cannot load the LSL FFTWF wisdom");
     }
-    Py_XDECREF(pDataPath);
     Py_XDECREF(pModule);
-    
-    return m;
+    return 0;
+}
+
+static PyModuleDef_Slot spec_slots[] = {
+    {Py_mod_exec, (void *)&spec_exec},
+    {0,           NULL}
+};
+
+static PyModuleDef spec_def = {
+    PyModuleDef_HEAD_INIT,    /* m_base */
+    "_spec",                  /* m_name */
+    spec_doc,                 /* m_doc */
+    0,                        /* m_size */
+    spec_methods,             /* m_methods */
+    spec_slots,               /* m_slots */
+    NULL,                     /* m_traverse */
+    NULL,                     /* m_clear */
+    NULL,                     /* m_free */
+};
+
+PyMODINIT_FUNC PyInit__spec(void) {
+    return PyModuleDef_Init(&spec_def);
 }

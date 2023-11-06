@@ -172,7 +172,7 @@ Outputs are:\n\
 ");
 
 
-static PyMethodDef WisdomMethods[] = {
+static PyMethodDef wisdom_methods[] = {
     {"buildWisdom", (PyCFunction) buildWisdom, METH_VARARGS, buildWisdom_doc }, 
     {NULL,          NULL,                      0,            NULL            }
 };
@@ -190,23 +190,31 @@ See the individual functions for more details.");
   Module Setup - Initialization
 */
 
-PyMODINIT_FUNC PyInit__wisdom(void) {
-    PyObject *m;
-    
-    Py_Initialize();
-    
-    // Module definitions and functions
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT, "_wisdom", wisdom_doc, -1, WisdomMethods
-    };
-    m = PyModule_Create(&moduledef);
-    if( m == NULL ) {
-        return NULL;
-    }
+static int wisdom_exec(PyObject *module) {
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.4"));
-    
-    return m;
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.4"));
+    return 0;
+}
+
+static PyModuleDef_Slot wisdom_slots[] = {
+    {Py_mod_exec, (void *)&wisdom_exec},
+    {0,           NULL}
+};
+
+static PyModuleDef wisdom_def = {
+    PyModuleDef_HEAD_INIT,    /* m_base */
+    "_wisdom",                /* m_name */
+    wisdom_doc,               /* m_doc */
+    0,                        /* m_size */
+    wisdom_methods,           /* m_methods */
+    wisdom_slots,             /* m_slots */
+    NULL,                     /* m_traverse */
+    NULL,                     /* m_clear */
+    NULL,                     /* m_free */
+};
+
+PyMODINIT_FUNC PyInit__wisdom(void) {
+    return PyModuleDef_Init(&wisdom_def);
 }
