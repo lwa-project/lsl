@@ -502,15 +502,13 @@ Module Setup - Initialization
 */
 
 static int fir_exec(PyObject *module) {
-    PyObject *all;
-    
     import_array();
     
     // Version and revision information
     PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.2"));
     
     // Function listings
-    all = PyList_New(0);
+    PyObject *all = PyList_New(0);
     PyList_Append(all, PyUnicode_FromString("integer16"));
     PyList_Append(all, PyUnicode_FromString("integer16Delayed"));
     PyList_Append(all, PyUnicode_FromString("integerBeamformer"));
