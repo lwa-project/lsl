@@ -9,7 +9,6 @@
 
 #include "readers.hpp"
 
-
 /*
   Exceptions for the Go Fast! Readers
 */
@@ -41,6 +40,8 @@ int16_t tbw4LUT[256][2];
 int8_t  tbnLUT[256];
 int8_t  drxLUT[256][2];
 int8_t  tbfLUT[256][2];
+
+static int luts_loaded = 0;
 
 static void initLWALUTs(void) {
     // Look-up table inialization function from the VDIFIO library
@@ -81,7 +82,7 @@ static void initLWALUTs(void) {
   Module Setup - Function Definitions and Documentation
 */
 
-static PyMethodDef GoFastMethods[] = {
+static PyMethodDef gofast_methods[] = {
     {"read_tbw",     (PyCFunction) read_tbw,      METH_VARARGS,               read_tbw_doc     }, 
     {"read_tbn",     (PyCFunction) read_tbn_cf32, METH_VARARGS,               read_tbn_cf32_doc}, 
     {"read_tbn_ci8", (PyCFunction) read_tbn_ci8,  METH_VARARGS,               read_tbn_ci8_doc }, 
@@ -96,7 +97,7 @@ static PyMethodDef GoFastMethods[] = {
     {NULL,           NULL,                        0,                          NULL             }
 };
 
-PyDoc_STRVAR(GoFast_doc, \
+PyDoc_STRVAR(gofast_doc, \
 "Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, VDIF, TBF, and COR readers\n\
 written in C++");
 
@@ -105,65 +106,56 @@ written in C++");
   Module Setup - Initialization
 */
 
-PyMODINIT_FUNC PyInit__gofast(void) {
-    PyObject *m, *all, *dict1, *dict2;
-    
-    Py_Initialize();
-    
-    // Initialize the look-up tables
-    initLWALUTs();
-    initVDIFLUTs();
-    
-    // Module definitions and functions
-    static struct PyModuleDef moduledef = {
-        PyModuleDef_HEAD_INIT, "_gofast", GoFast_doc, -1, GoFastMethods
-    };
-    m = PyModule_Create(&moduledef);
-    if( m == NULL ) {
-        return NULL;
-    }
+static int gofast_exec(PyObject *module) {
     import_array();
     
-    // Exceptions
+    if( !luts_loaded ) {
+        // Initialize the look-up tables
+        initLWALUTs();
+        initVDIFLUTs();
+        luts_loaded = 1;
+    } else {
+        PyErr_SetString(PyExc_ImportError, "cannot load module more than once per process");
+        return -1;
+    }
     
+    // Exceptions
     //   1.  SyncError -> similar to lsl.reader.errors.SyncError
-    dict1 = (PyObject *) PyDict_New();
+    PyObject* dict1 = PyDict_New();
     if(dict1 == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
         Py_XDECREF(dict1);
-        Py_XDECREF(m);
-        return NULL;
+        return -1;
     }
     PyDict_SetItemString(dict1, "__doc__", \
         PyUnicode_FromString("Exception raised when a reader encounters an error with one or more of the four sync. words."));
     SyncError = PyErr_NewException("_gofast.SyncError", PyExc_IOError, dict1);
     Py_INCREF(SyncError);
-    PyModule_AddObject(m, "SyncError", SyncError);
+    PyModule_AddObject(module, "SyncError", SyncError);
     
     //    2. EOFError -> similar to lsl.reader.errors.EOFError
-    dict2 = (PyObject *) PyDict_New();
+    PyObject* dict2 = PyDict_New();
     if(dict2 == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create exception dictionary");
         Py_XDECREF(dict1);
         Py_XDECREF(SyncError);
         Py_XDECREF(dict2);
-        Py_XDECREF(m);
-        return NULL;
+        return -1;
     }
     PyDict_SetItemString(dict2, "__doc__", \
         PyUnicode_FromString("Exception raised when a reader encounters the end-of-file while reading."));
     EOFError = PyErr_NewException("_gofast.EOFError", PyExc_IOError, dict2);
     Py_INCREF(EOFError);
-    PyModule_AddObject(m, "EOFError", EOFError);
+    PyModule_AddObject(module, "EOFError", EOFError);
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyUnicode_FromString("0.9"));
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.9"));
     
     // Correlator channel count
-    PyModule_AddObject(m, "NCHAN_COR", PyLong_FromLong(COR_NCHAN));
+    PyModule_AddObject(module, "NCHAN_COR", PyLong_FromLong(COR_NCHAN));
     
     // Function listings
-    all = PyList_New(0);
+    PyObject* all = PyList_New(0);
     PyList_Append(all, PyUnicode_FromString("read_tbw"));
     PyList_Append(all, PyUnicode_FromString("read_tbn"));
     PyList_Append(all, PyUnicode_FromString("read_tbn_ci8"));
@@ -177,7 +169,27 @@ PyMODINIT_FUNC PyInit__gofast(void) {
     PyList_Append(all, PyUnicode_FromString("SyncError"));
     PyList_Append(all, PyUnicode_FromString("EOFError"));
     PyList_Append(all, PyUnicode_FromString("NCHAN_COR"));
-    PyModule_AddObject(m, "__all__", all);
-    
-    return m;
+    PyModule_AddObject(module, "__all__", all);
+    return 0;
+}
+
+static PyModuleDef_Slot gofast_slots[] = {
+    {Py_mod_exec, (void *)&gofast_exec},
+    {0,           NULL}
+};
+
+static PyModuleDef gofast_def = {
+    PyModuleDef_HEAD_INIT,    /* m_base */
+    "_gofast",                /* m_name */
+    gofast_doc,               /* m_doc */
+    0,                        /* m_size */
+    gofast_methods,           /* m_methods */
+    gofast_slots,             /* m_slots */
+    NULL,                     /* m_traverse */
+    NULL,                     /* m_clear */
+    NULL,                     /* m_free */
+};
+
+PyMODINIT_FUNC PyInit__gofast(void) {
+    return PyModuleDef_Init(&gofast_def);
 }
