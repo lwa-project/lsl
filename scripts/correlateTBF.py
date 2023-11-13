@@ -85,7 +85,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply frequency decimation
         if freq_decim > 1:
-            data = data.reshape(-1, freq.size, freq_decim)
+            data = data.reshape(data.shape[0], -1, freq_decim, data.shape[2])
             data = data.mean(axis=2)
             
         ## Split the polarizations
@@ -269,7 +269,7 @@ def main(args):
             chunk = leftToDo
             
         process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
-                     freq_decim=args.decim, pols=args.products, chunk_size=chunk)
+                     freq_decim=args.decimate, pols=args.products, chunk_size=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk
