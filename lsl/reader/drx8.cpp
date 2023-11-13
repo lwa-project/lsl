@@ -8,7 +8,7 @@
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
 #include "numpy/arrayobject.h"
 
-#include "readers.h"
+#include "readers.hpp"
 
 /*
   DRX8 Reader
