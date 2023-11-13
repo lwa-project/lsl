@@ -1125,7 +1125,6 @@ try:
             return dataSets
             
 except ImportError:
-    print('here')
     warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), RuntimeWarning)
     
     class CorrelatedDataMS(object):
@@ -1544,21 +1543,32 @@ class ImgWPlus(aipy.img.ImgW):
             return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
 
 
-def build_gridded_image(data_set, size=80, res=0.50, wres=0.10, pol='XX', chan=None, im=None, verbose=True):
+def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None, verbose=True):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
     itself is returned by this function to make it more versatile.
-    """
+      * size and res are the aperture plane size and resolution.
+      
+      * im_size and im_res are the image plane size and resolution.
     
+    """
+            
     # Catch VisibilityData objects before we go any further so we can iterate 
     # over them
     if isinstance(data_set, VisibilityData):
         for ds in data_set:
-            im = build_gridded_image(ds, size=size, res=res, wres=wres, 
+            im = build_gridded_image(ds, size=size, res=res, im_size=im_size, im_res=im_res, wres=wres, 
                                      pol=pol, chan=chan, im=im, verbose=verbose)
         return im
+
+    # Catch Input Shapes
+    if (im_size is not None) and (im_res is not None): # Case: User provides Image plane inputs
+        res = (2 * im_size * numpy.sin(numpy.pi * im_res / 360))**-1
+        size = im_size * res
+       
         
+    
     # Make sure we have the right kinds of objects
     ## im
     if im is None:

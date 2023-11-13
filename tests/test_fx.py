@@ -18,12 +18,43 @@ from scipy.signal import get_window as scipy_get_window
 from lsl.common.paths import DATA_BUILD
 from lsl.common import stations
 from lsl.correlator import fx
+from lsl.reader.base import CI8
 import lsl.testing
 
 _SSMIF = os.path.join(DATA_BUILD, 'lwa1-ssmif.txt')
 
 __version__  = "0.7"
 __author__    = "Jayce Dowell"
+
+
+def _make_complex_data(shape, scale=1.0, offset=0.0, dtype=numpy.complex64):
+    """
+    Private function to make a complex data set and return it along with a
+    version that is suitable for numpy.  This is useful for testing LSL's
+    ci8 return data.
+    """
+    
+    i = numpy.random.rand(*shape)*scale + offset
+    q = numpy.random.rand(*shape)*scale + offset
+    data = i + 1j*q
+    if dtype == CI8:
+        data = data.astype(numpy.complex64)
+        data = data.view(numpy.float32)
+        new_shape = list(data.shape)
+        new_shape[-1] = new_shape[-1] // 2
+        new_shape.append(2)
+        data.shape = tuple(new_shape)
+        data = numpy.round(data)
+        data = data.astype(numpy.int8)
+        data_comp = data[...,0] + 1j*data[...,1]
+        data_comp = data_comp.astype(numpy.complex64)
+        
+        data = data.view(CI8)
+        data.shape = data.shape[:-1]
+    else:
+        data = data.astype(dtype)
+        data_comp = data.copy()
+    return data, data_comp
 
 
 def _pfb_filter_coeff(LFFT, ntaps):
@@ -84,8 +115,7 @@ class SpecMaster_tests(unittest.TestCase):
         lsl.testing.assert_allclose(spectra, spectra2)
         
     def run_specmaster_test_complex(self, dtype, nchan=256, window=fx.null_window):
-        fakeData = numpy.random.rand(self.nAnt,nchan*4) + 1j*numpy.random.rand(self.nAnt,nchan*4) + 3.0 + 3.0j
-        fakeData = fakeData.astype(dtype)
+        fakeData, fakeData_np = _make_complex_data((self.nAnt,nchan*4), scale=16, offset=3+3j, dtype=dtype)
         freq, spectra = fx.SpecMaster(fakeData, LFFT=nchan, window=window)
         
         # Numpy comparison
@@ -95,7 +125,7 @@ class SpecMaster_tests(unittest.TestCase):
         wndw = window(LFFT)
         for i in range(self.nAnt):
             for j in range(nFFT):
-                spectra2[i,:] += numpy.fft.fftshift( numpy.abs( numpy.fft.fft(fakeData[i,j*LFFT:(j+1)*LFFT]*wndw) )**2 )
+                spectra2[i,:] += numpy.fft.fftshift( numpy.abs( numpy.fft.fft(fakeData_np[i,j*LFFT:(j+1)*LFFT]*wndw) )**2 )
         spectra2 /= (LFFT * nFFT)
         lsl.testing.assert_allclose(spectra, spectra2)
         
@@ -109,7 +139,7 @@ class SpecMaster_tests(unittest.TestCase):
     def test_spectra_complex(self):
         """Test the SpecMaster function on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_specmaster_test_complex(dtype)
                 
@@ -126,7 +156,7 @@ class SpecMaster_tests(unittest.TestCase):
         #
         # Complex
         #
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_specmaster_test_complex(dtype, window=numpy.hamming)
             
@@ -149,7 +179,7 @@ class SpecMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_specmaster_test_complex(dtype, window=wndw2)
                 
@@ -159,7 +189,7 @@ class SpecMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_specmaster_test_complex(dtype, nchan=259)
             
@@ -188,8 +218,7 @@ class SpecMaster_tests(unittest.TestCase):
         """Test the PFB version of the SpecMaster function on complex-valued data."""
         
         for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024*4) + 1j*numpy.random.rand(self.nAnt,1024*4) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+            fakeData, fakeData_np = _make_complex_data((self.nAnt,1024*4), scale=16, offset=3+3j, dtype=dtype)
             freq, spectra = fx.SpecMaster(fakeData, pfb=True, sample_rate=1e5, central_freq=38e6)
         
             # Numpy comparison
@@ -198,7 +227,7 @@ class SpecMaster_tests(unittest.TestCase):
             nFFT = fakeData.shape[1]//LFFT
             for i in range(self.nAnt):
                 for j in range(nFFT): 
-                    spectra2[i,:] += numpy.fft.fftshift( numpy.abs( _pfb(fakeData[i,:], j*LFFT, LFFT) )**2 )
+                    spectra2[i,:] += numpy.fft.fftshift( numpy.abs( _pfb(fakeData_np[i,:], j*LFFT, LFFT) )**2 )
             spectra2 /= (LFFT * nFFT)
             lsl.testing.assert_allclose(spectra, spectra2)
 
@@ -245,8 +274,7 @@ class StokesMaster_tests(unittest.TestCase):
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
         
-        fakeData = numpy.random.rand(self.nAnt,nchan*4) + 1j*numpy.random.rand(self.nAnt,nchan*4) + 3.0 + 3.0j
-        fakeData = fakeData.astype(dtype)
+        fakeData, fakeData_np = _make_complex_data((self.nAnt,nchan*4), scale=16, offset=3+3j, dtype=dtype)
         freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], LFFT=nchan, window=window)
         
         # Numpy comparison
@@ -256,8 +284,8 @@ class StokesMaster_tests(unittest.TestCase):
         wndw = window(LFFT)
         for i in range(self.nAnt//2):
             for j in range(nFFT):
-                xF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+0,j*LFFT:(j+1)*LFFT]*wndw) )
-                yF = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+1,j*LFFT:(j+1)*LFFT]*wndw) )
+                xF = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[2*i+0,j*LFFT:(j+1)*LFFT]*wndw) )
+                yF = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[2*i+1,j*LFFT:(j+1)*LFFT]*wndw) )
                 
                 spectra2[0,i,:] += numpy.abs(xF)**2 + numpy.abs(yF)**2
                 spectra2[1,i,:] += numpy.abs(xF)**2 - numpy.abs(yF)**2
@@ -276,7 +304,7 @@ class StokesMaster_tests(unittest.TestCase):
     def test_spectra_complex(self):
         """Test the StokesMaster function on complex-valued data."""
 
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_stokesmaster_test_complex(dtype)
                 
@@ -293,7 +321,7 @@ class StokesMaster_tests(unittest.TestCase):
         #
         # Complex
         #
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_stokesmaster_test_complex(dtype, window=numpy.hamming)
                 
@@ -317,7 +345,7 @@ class StokesMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_stokesmaster_test_complex(dtype, window=wndw2)
                 
@@ -327,10 +355,10 @@ class StokesMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_stokesmaster_test_complex(dtype, nchan=259)
-            
+                
             with self.subTest(dtype=dtype, window='custom'):
                 self.run_stokesmaster_test_complex(dtype, nchan=259, window=wndw2)
                 
@@ -367,9 +395,8 @@ class StokesMaster_tests(unittest.TestCase):
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024*4) + 1j*numpy.random.rand(self.nAnt,1024*4) + 3.0 + 3.0j
-            fakeData = fakeData.astype(dtype)
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
+            fakeData, fakeData_np = _make_complex_data((self.nAnt,1024*4), scale=16, offset=3+3j, dtype=dtype)
             freq, spectra = fx.StokesMaster(fakeData, antennas[:self.nAnt], pfb=True, sample_rate=1e5, central_freq=38e6)
         
             # Numpy comparison
@@ -378,8 +405,8 @@ class StokesMaster_tests(unittest.TestCase):
             nFFT = fakeData.shape[1]//LFFT
             for i in range(self.nAnt//2):
                 for j in range(nFFT):
-                    xF = numpy.fft.fftshift( _pfb(fakeData[2*i+0,:], j*LFFT, LFFT) )
-                    yF = numpy.fft.fftshift( _pfb(fakeData[2*i+1,:], j*LFFT, LFFT) )
+                    xF = numpy.fft.fftshift( _pfb(fakeData_np[2*i+0,:], j*LFFT, LFFT) )
+                    yF = numpy.fft.fftshift( _pfb(fakeData_np[2*i+1,:], j*LFFT, LFFT) )
                 
                     spectra2[0,i,:] += numpy.abs(xF)**2 + numpy.abs(yF)**2
                     spectra2[1,i,:] += numpy.abs(xF)**2 - numpy.abs(yF)**2
@@ -442,8 +469,7 @@ class FXMaster_tests(unittest.TestCase):
         lsl.testing.assert_allclose(cps, cps2)
         
     def run_correlator_test_complex(self, dtype, nchan=256, window=fx.null_window):
-        fakeData = numpy.random.rand(self.nAnt,nchan*4) + 1j*numpy.random.rand(self.nAnt,nchan*4)
-        fakeData = fakeData.astype(dtype)
+        fakeData, fakeData_np = _make_complex_data((self.nAnt,1024), scale=16, offset=3+3j, dtype=dtype)
         
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
@@ -476,8 +502,8 @@ class FXMaster_tests(unittest.TestCase):
                     continue
                     
                 for k in range(nFFT):
-                    f1 = numpy.fft.fftshift( numpy.fft.fft(fakeData[i,k*LFFT:(k+1)*LFFT]*wndw) )
-                    f2 = numpy.fft.fftshift( numpy.fft.fft(fakeData[j,k*LFFT:(k+1)*LFFT]*wndw) )
+                    f1 = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[i,k*LFFT:(k+1)*LFFT]*wndw) )
+                    f2 = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[j,k*LFFT:(k+1)*LFFT]*wndw) )
                     
                     cps2[blc,:] += f1*f2.conj()
                 blc += 1
@@ -494,7 +520,7 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex(self):
         """Test the C-based correlator on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype)
                 
@@ -508,7 +534,7 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex_window(self):
         """Test the C-based correlator on complex-valued data window."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype, window=numpy.hamming)
                 
@@ -556,10 +582,9 @@ class FXMaster_tests(unittest.TestCase):
     def test_correlator_complex_pfb(self):
         """Test the C-based PFB version of the correlator on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
-            fakeData = numpy.random.rand(self.nAnt,1024*4) + 1j*numpy.random.rand(self.nAnt,1024*4)
-            fakeData = fakeData.astype(dtype)
-        
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
+            fakeData, fakeData_np = _make_complex_data((self.nAnt,1024*4), scale=16, offset=3+3j, dtype=dtype)
+            
             station = stations.parse_ssmif(_SSMIF)
             antennas = station.antennas
         
@@ -586,8 +611,8 @@ class FXMaster_tests(unittest.TestCase):
                         continue
                     
                     for k in range(nFFT):
-                        f1 = numpy.fft.fftshift( _pfb(fakeData[i,:], LFFT*k, LFFT) )
-                        f2 = numpy.fft.fftshift( _pfb(fakeData[j,:], LFFT*k, LFFT) )
+                        f1 = numpy.fft.fftshift( _pfb(fakeData_np[i,:], LFFT*k, LFFT) )
+                        f2 = numpy.fft.fftshift( _pfb(fakeData_np[j,:], LFFT*k, LFFT) )
                     
                         cps2[blc,:] += f1*f2.conj()
                     blc += 1
@@ -661,7 +686,7 @@ class FXMaster_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_correlator_test_complex(dtype, nchan=259)
             
@@ -722,8 +747,7 @@ class FXStokes_tests(unittest.TestCase):
         lsl.testing.assert_allclose(cps, cps2)
         
     def run_correlator_test_complex(self, dtype, nchan=256, window=fx.null_window):
-        fakeData = numpy.random.rand(self.nAnt,nchan*4) + 1j*numpy.random.rand(self.nAnt,nchan*4)
-        fakeData = fakeData.astype(dtype)
+        fakeData, fakeData_np = _make_complex_data((self.nAnt,1024), scale=16, offset=3+3j, dtype=dtype)
         
         station = stations.parse_ssmif(_SSMIF)
         antennas = station.antennas
@@ -751,10 +775,10 @@ class FXStokes_tests(unittest.TestCase):
         for i in range(0, self.nAnt//2):
             for j in range(i+1, self.nAnt//2):
                 for k in range(nFFT):
-                    f1X = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+0,k*LFFT:(k+1)*LFFT]*wndw) )
-                    f1Y = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*i+1,k*LFFT:(k+1)*LFFT]*wndw) )
-                    f2X = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*j+0,k*LFFT:(k+1)*LFFT]*wndw) )
-                    f2Y = numpy.fft.fftshift( numpy.fft.fft(fakeData[2*j+1,k*LFFT:(k+1)*LFFT]*wndw) )
+                    f1X = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[2*i+0,k*LFFT:(k+1)*LFFT]*wndw) )
+                    f1Y = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[2*i+1,k*LFFT:(k+1)*LFFT]*wndw) )
+                    f2X = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[2*j+0,k*LFFT:(k+1)*LFFT]*wndw) )
+                    f2Y = numpy.fft.fftshift( numpy.fft.fft(fakeData_np[2*j+1,k*LFFT:(k+1)*LFFT]*wndw) )
                     
                     cps2[0,blc,:] += f1X*f2X.conj() + f1Y*f2Y.conj()
                     cps2[1,blc,:] += f1X*f2X.conj() - f1Y*f2Y.conj()
@@ -774,7 +798,7 @@ class FXStokes_tests(unittest.TestCase):
     def test_correlator_complex(self):
         """Test the C-based correlator on complex-valued data."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype)
                 
@@ -788,7 +812,7 @@ class FXStokes_tests(unittest.TestCase):
     def test_correlator_complex_window(self):
         """Test the C-based correlator on complex-valued data window."""
         
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype):
                 self.run_correlator_test_complex(dtype, window=numpy.hamming)
             
@@ -903,7 +927,7 @@ class FXStokes_tests(unittest.TestCase):
         def wndw2(L):
             return numpy.kaiser(L, 1)
             
-        for dtype in (numpy.complex64, numpy.complex128):
+        for dtype in (CI8, numpy.complex64, numpy.complex128):
             with self.subTest(dtype=dtype, window='none'):
                 self.run_correlator_test_complex(dtype, nchan=259)
             

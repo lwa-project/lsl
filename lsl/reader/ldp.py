@@ -43,7 +43,7 @@ from lsl.common.ndp import fC as ndp_fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
-from lsl.reader.base import FrameTimestamp
+from lsl.reader.base import FrameTimestamp, CI8
 from lsl.common.color import colorfy
 
 from lsl.config import LSL_CONFIG
@@ -674,9 +674,11 @@ class TBNFile(LDPFileBase):
         
         return t1 - t0
         
-    def read_frame(self):
+    def read_frame(self, return_ci8=False):
         """
-        Read and return a single `lsl.reader.tbn.Frame` instance.
+        Read and return a single `lsl.reader.tbn.Frame` instance.  If
+        `return_ci8` is True then the frame will contain `lsl.reader.base.CI8`
+        data instead of numpy.complex64 data.
         """
         
         # Reset the buffer
@@ -686,20 +688,25 @@ class TBNFile(LDPFileBase):
         # Reset the timetag checker
         self._timetag = None
         
-        return tbn.read_frame(self.fh)
+        tbn_rf = tbn.read_frame_ci8 if return_ci8 else tbn.read_frame
+        return tbn_rf(self.fh)
         
-    def read(self, duration, time_in_samples=False):
+    def read(self, duration, time_in_samples=False, return_ci8=False):
         """
         Read in a chunk (in seconds) of TBN data.  This function returns 
         a three-element tuple with elements of:
          0) the actual duration of data read in, 
          1) the time tag for the first sample, and
-         2) a 2-D Numpy array of data.
+         2) a 2-D array of data (see below).
         
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
+        
+        If `return_ci8` is True then the data are returned will contain 
+        `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
+        dimensions are input by samples.
         
         The sorting order of the output data array is by 
         digitizer number - 1.
@@ -720,10 +727,13 @@ class TBNFile(LDPFileBase):
         # Covert the sample rate to an expected timetag skip
         timetagSkip = int(512 / self.description['sample_rate'] * fS)
         
+        # Setup the read_frame version to use
+        tbn_rf = tbn.read_frame_ci8 if return_ci8 else tbn.read_frame
+        
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
-            junkFrame = tbn.read_frame(self.fh)
+            junkFrame = tbn_rf(self.fh)
             self._timetag = junkFrame.payload.timetag - timetagSkip
             self.fh.seek(-tbn.FRAME_SIZE, 1)
             
@@ -735,7 +745,10 @@ class TBNFile(LDPFileBase):
         eofFound = False
         setTime = None
         count = [0 for i in range(self.description['nantenna'])]
-        data = numpy.zeros((self.description['nantenna'], frame_count*512), dtype=numpy.complex64)
+        if return_ci8:
+            data = numpy.zeros((self.description['nantenna'], frame_count*512), dtype=CI8)
+        else:
+            data = numpy.zeros((self.description['nantenna'], frame_count*512), dtype=numpy.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -743,7 +756,7 @@ class TBNFile(LDPFileBase):
             cFrames = deque()
             for i in range(self.description['nantenna']//2):
                 try:
-                    cFrames.append( tbn.read_frame(self.fh, verbose=False) )
+                    cFrames.append( tbn_rf(self.fh, verbose=False) )
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
@@ -1059,9 +1072,11 @@ class DRXFile(LDPFileBase):
         
         return t1 - t0
         
-    def read_frame(self):
+    def read_frame(self, return_ci8=False):
         """
-        Read and return a single `lsl.reader.drx.Frame` instance.
+        Read and return a single `lsl.reader.drx.Frame` instance.  If
+        `return_ci8` is True then the frame will contain `lsl.reader.base.CI8`
+        data instead of numpy.complex64 data.
         """
         
         # Reset the buffer
@@ -1072,9 +1087,10 @@ class DRXFile(LDPFileBase):
         self._timetagSkip = None
         self._timetag = None
         
-        return drx.read_frame(self.fh)
+        drx_rf = drx.read_frame_ci8 if return_ci8 else drx.read_frame
+        return drx_rf(self.fh)
         
-    def read(self, duration, time_in_samples=False):
+    def read(self, duration, time_in_samples=False, return_ci8=False):
         """
         Given an open DRX file and an amount of data to read in in seconds, read 
         in the data and return a three-element tuple of the actual duration read 
@@ -1086,8 +1102,12 @@ class DRXFile(LDPFileBase):
         tags can be returns as samples at `lsl.common.dp.fS` if the 
         `time_in_samples' keyword is set.
         
+        If `return_ci8` is True then the data are returned will contain 
+        `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
+        dimensions are input by samples.
+        
         ..note::
-            This function always returns a 2-D array with the first dimension
+            This function always returns an array with the first dimension
             holding four elements.  These elements contain, in order:
              * Tuning 1, polarization X
              * Tuning 1, polarization Y
@@ -1110,6 +1130,9 @@ class DRXFile(LDPFileBase):
         # Covert the sample rate to an expected timetag skip
         if getattr(self, "_timetagSkip", None) is None:
             self._timetagSkip = int(4096 / self.description['sample_rate'] * fS)
+            
+        # Setup the read_frame version to use
+        drx_rf = drx.read_frame_ci8 if return_ci8 else drx.read_frame
         
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
@@ -1121,8 +1144,11 @@ class DRXFile(LDPFileBase):
         
         # Setup the output arrays
         setTime = None
-        data = numpy.zeros((4,frame_count*4096), dtype=numpy.complex64)
-        
+        if return_ci8:
+            data = numpy.zeros((4,frame_count*4096), dtype=CI8)
+        else:
+            data = numpy.zeros((4,frame_count*4096), dtype=numpy.complex64)
+            
         # Go!
         nFrameSets = 0
         eofFound = False
@@ -1135,7 +1161,7 @@ class DRXFile(LDPFileBase):
                 cFrames = deque()
                 for i in range(self.description['nbeampol']):
                     try:
-                        cFrames.append( drx.read_frame(self.fh, verbose=False) )
+                        cFrames.append( drx_rf(self.fh, verbose=False) )
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
@@ -1749,11 +1775,16 @@ class TBFFile(LDPFileBase):
             nFramesPerObs = tbf.get_frames_per_obs(self.fh)
             nchan = tbf.get_channel_count(self.fh)
             firstFrameCount = tbf.get_first_frame_count(self.fh)
-            firstChan = tbf.get_first_channel(self.fh)
             
             # Pre-load the channel mapper
-            self.mapper = [firstChan+i*tbf.FRAME_CHANNEL_COUNT for i in range(nFramesPerObs)]
+            self.mapper = tbf.get_first_channel(self.fh, all_frames=True)
             
+            # Check for contiguous frequency coverage
+            chan_steps = numpy.diff(self.mapper)
+            if not all(chan_steps == tbf.FRAME_CHANNEL_COUNT):
+                bad_steps = numpy.where(chan_steps != tbf.FRAME_CHANNEL_COUNT)[0]
+                warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
+                
             # Find the "real" starttime
             while junkFrame.header.frame_count != firstFrameCount:
                 junkFrame = tbf.read_frame(self.fh)
@@ -1819,9 +1850,11 @@ class TBFFile(LDPFileBase):
         
         return 1.0 * frameOffset / framesPerObs / self.description['sample_rate']
         
-    def read_frame(self):
+    def read_frame(self, return_ci8=False):
         """
-        Read and return a single `lsl.reader.tbf.Frame` instance.
+        Read and return a single `lsl.reader.tbf.Frame` instance.  If
+        `return_ci8` is True then the frame will contain `lsl.reader.base.CI8`
+        data instead of numpy.complex64 data.
         """
         
         # Reset the buffer
@@ -1831,9 +1864,10 @@ class TBFFile(LDPFileBase):
         # Reset the timetag checker
         self._timetag = None
         
-        return tbf.read_frame(self.fh)
+        tbf_rf = tbf.read_frame_ci8 if return_ci8 else tbf.read_frame
+        return tbf_rf(self.fh)
         
-    def read(self, duration=None, time_in_samples=False):
+    def read(self, duration=None, time_in_samples=False, return_ci8=False):
         """
         Read and return the entire TBF capture.  This function returns 
         a three-element tuple with elements of:
@@ -1865,6 +1899,9 @@ class TBFFile(LDPFileBase):
         # Covert the sample rate to an expected timetag skip
         timetagSkip = int(1.0 / self.description['sample_rate'] * fS)
         
+        # Setup the read_frame version to use
+        tbf_rf = tbf.read_frame_ci8 if return_ci8 else tbf.read_frame
+        
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
@@ -1881,7 +1918,10 @@ class TBFFile(LDPFileBase):
         eofFound = False
         setTime = None
         count = [0 for i in range(framesPerObs)]
-        data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=numpy.complex64)
+        if return_ci8:
+            data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=CI8)
+        else:
+            data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=numpy.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -1889,7 +1929,7 @@ class TBFFile(LDPFileBase):
             cFrames = deque()
             for i in range(framesPerObs):
                 try:
-                    cFrame = tbf.read_frame(self.fh, verbose=False)
+                    cFrame = tbf_rf(self.fh, verbose=False)
                     if not cFrame.is_tbf:
                         continue
                     cFrames.append( cFrame )

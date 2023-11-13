@@ -363,7 +363,7 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Bring the data into C and make it usable
     data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, 
                                                         PyArray_TYPE((PyArrayObject *) signals), 
-                                                        2, 2);
+                                                        2, 3);
     freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
     delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
     if( data == NULL ) {
@@ -398,7 +398,11 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Get the properties of the data
     nStand = (long) PyArray_DIM(data, 0);
     nSamps = (long) PyArray_DIM(data, 1);
-    isReal = 1 - PyArray_ISCOMPLEX(data);
+    isReal = 1 - PyArray_LSL_ISCOMPLEX(data, 2);
+    if( PyArray_NDIM(data) == 3 && PyArray_TYPE(data) != NPY_INT8 ) {
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array as a 2-D array");
+        goto fail;
+    }
     
     // Calculate the windowing function
     if( windowFunc != Py_None ) {
@@ -463,13 +467,14 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
                                           (Complex32*) PyArray_DATA(dataF), \
                                           (unsigned char*) PyArray_DATA(validF))
     
-    switch( PyArray_TYPE(data) ){
+    switch( PyArray_LSL_TYPE(data, 2) ){
         case( NPY_INT8       ): LAUNCH_FENGINE_REAL(int8_t);    break;
         case( NPY_INT16      ): LAUNCH_FENGINE_REAL(int16_t);   break;
         case( NPY_INT32      ): LAUNCH_FENGINE_REAL(int);       break;
         case( NPY_INT64      ): LAUNCH_FENGINE_REAL(long);      break;
         case( NPY_FLOAT32    ): LAUNCH_FENGINE_REAL(float);     break;
         case( NPY_FLOAT64    ): LAUNCH_FENGINE_REAL(double);    break;
+        case( LSL_CI8        ): LAUNCH_FENGINE_COMPLEX(int8_t); break;
         case( NPY_COMPLEX64  ): LAUNCH_FENGINE_COMPLEX(float);  break;
         case( NPY_COMPLEX128 ): LAUNCH_FENGINE_COMPLEX(double); break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
@@ -561,7 +566,7 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Bring the data into C and make it usable
     data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, 
                                                         PyArray_TYPE((PyArrayObject *) signals), 
-                                                        2, 2);
+                                                        2, 3);
     freq = (PyArrayObject *) PyArray_ContiguousFromObject(freqs, NPY_DOUBLE, 1, 1);
     delay = (PyArrayObject *) PyArray_ContiguousFromObject(delays, NPY_DOUBLE, 2, 2);
     if( data == NULL ) {
@@ -596,7 +601,11 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     // Get the properties of the data
     nStand = (long) PyArray_DIM(data, 0);
     nSamps = (long) PyArray_DIM(data, 1);
-    isReal = 1 - PyArray_ISCOMPLEX(data);
+    isReal = 1 - PyArray_LSL_ISCOMPLEX(data, 2);
+    if( PyArray_NDIM(data) == 3 && PyArray_TYPE(data) != NPY_INT8 ) {
+        PyErr_Format(PyExc_RuntimeError, "Cannot cast input signals array as a 2-D array");
+        goto fail;
+    }
     
     // Calculate the windowing function for the PFB
     pfb = (double*) aligned64_malloc(sizeof(double) * (1+isReal)*nChan*nTap);
@@ -660,13 +669,14 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
                                           (Complex32*) PyArray_DATA(dataF), \
                                           (unsigned char*) PyArray_DATA(validF))
     
-    switch( PyArray_TYPE(data) ){
+    switch( PyArray_LSL_TYPE(data, 2) ){
         case( NPY_INT8       ): LAUNCH_PFBENGINE_REAL(int8_t);    break;
         case( NPY_INT16      ): LAUNCH_PFBENGINE_REAL(int16_t);   break;
         case( NPY_INT32      ): LAUNCH_PFBENGINE_REAL(int);       break;
         case( NPY_INT64      ): LAUNCH_PFBENGINE_REAL(long);      break;
         case( NPY_FLOAT32    ): LAUNCH_PFBENGINE_REAL(float);     break;
         case( NPY_FLOAT64    ): LAUNCH_PFBENGINE_REAL(double);    break;
+        case( LSL_CI8        ): LAUNCH_PFBENGINE_COMPLEX(int8_t); break;
         case( NPY_COMPLEX64  ): LAUNCH_PFBENGINE_COMPLEX(float);  break;
         case( NPY_COMPLEX128 ): LAUNCH_PFBENGINE_COMPLEX(double); break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;

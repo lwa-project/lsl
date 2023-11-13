@@ -10,27 +10,35 @@
  * Updated the documentation in lsl.correlator.fx to clarify that 'pfb' enables a 4-tap Hamming windowed PFB
  * Updated the documentation in lsl.correlator.fx to clarify that 'pfb' overrides the 'window' keyword
  * Added better documentation on the LWA data formats
+ * Fixed a bug in lsl.reader.ldp.TBFFile that caused it to die on files with gaps in the frequency coverage
+ * Updated lsl.imaging.util.build_gridded_image to allow for the image size and pixel size to be used instead of the (u,v) grid size and resolution
+ * Added image size and pixel scale options to imageIDI.py
+ * Added a -d/--decimation option to correlateTBF.py to allow on-the-fly channel decimation
+ * Fixed a bug in lsl.sim.vis.build_sim_data when computing the hour angle and declination for non-zenith phase centers
+ * Added support for Python 3.12
 
 2.1.7
  * Updated the LWA-SV SSMIF to 2022/11/15
  * Updated the LWA1 SSMIF to 2022/11/15
  * Fixed a build problem on Python 3.8+
+ * Added support to the lsl.readers for returning DRX, TBN, and TBF data as "ci8" data
+ * Added support to the lsl.readers for returning VDIF data as "i8" data
 
 2.1.6
- * Updated for Python 3.10
- * Cleaned up the naming of the tutorial notebooks
- * Added support for observing with TRK_LUN
+  * Updated for Python 3.10
+  * Cleaned up the naming of the tutorial notebooks
+  * Added support for observing with TRK_LUN
 
 2.1.5
- * Fixed a few more problems with the new cache management
- * Fixed a problem in lsl.sim.vis.add_baseline_noise() that caused the SEFD values to be ignored in some cases
- * Various clean ups
+  * Fixed a few more problems with the new cache management
+  * Fixed a problem in lsl.sim.vis.add_baseline_noise() that caused the SEFD values to be ignored in some cases
+  * Various clean ups
 
 2.1.4
- * Fixed a couple of problems with the new cache management
- * Fixed a couple of problems with the new file locking
- * Fixed a couple of problems with the lsl.testing.SilentVerbose class
- * More cleanup in the test suite
+  * Fixed a couple of problems with the new cache management
+  * Fixed a couple of problems with the new file locking
+  * Fixed a couple of problems with the lsl.testing.SilentVerbose class
+  * More cleanup in the test suite
 
 2.1.3
   * Added support for adding/subtracting timedelta instances from FrameTimestamp instances

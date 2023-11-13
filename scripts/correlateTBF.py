@@ -32,7 +32,7 @@ from lsl.misc import telemetry
 telemetry.track_script()
 
 
-def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_size=100):
+def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['xx',], chunk_size=100):
     """
     Given a lsl.reader.ldp.TBNFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -43,7 +43,10 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
     
     # Get the metadata
     freq = idf.get_info('freq1')
-    
+    if freq_decim > 1:
+        freq = freq.reshape(-1, freq_decim)
+        freq = freq.mean(axis=1)
+        
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  
     # These are:
     #  toKeep  -> mapping of digitizer number to array location
@@ -80,6 +83,11 @@ def process_chunk(idf, site, good, filename, int_time=5.0, pols=['xx',], chunk_s
         ## Prune out what we don't want
         data = data[toKeep,:,:]
         
+        ## Apply frequency decimation
+        if freq_decim > 1:
+            data = data.reshape(-1, freq.size, freq_decim)
+            data = data.mean(axis=2)
+            
         ## Split the polarizations
         antennasX, antennasY = [a for i,a in enumerate(antennas) if a.pol == 0 and i in toKeep], [a for i,a in enumerate(antennas) if a.pol == 1 and i in toKeep]
         dataX, dataY = data[0::2,:,:], data[1::2,:,:]
@@ -261,7 +269,7 @@ def main(args):
             chunk = leftToDo
             
         process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
-                     pols=args.products, chunk_size=chunk)
+                     freq_decim=args.decim, pols=args.products, chunk_size=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk
@@ -290,6 +298,8 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-a', '--all', action='store_true', 
                         help='correlated all dipoles regardless of their status')
+    parser.add_argument('-d', '--decimate', type=aph.positive_int, default=1,
+                        help='frequency decimation factor')
     pgroup = parser.add_mutually_exclusive_group(required=True)
     pgroup.add_argument('-x', '--xx', dest='products', action='store_const', const=['xx',], 
                         help='compute only the XX polarization product')
