@@ -214,18 +214,12 @@ class BeamAlm(aipy.amp.BeamAlm):
     
     def _response_primitive(self, top):
         """
-        Copy of the original aipy.amp.BeamAlm.response function.
-        
         Return beam response across active band for specified topocentric 
         coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
         Returns 'x' pol (rotate pi/2 for 'y').
         """
         
-        top = [aipy.healpix.mk_arr(c, dtype=numpy.double) for c in top]
-        px,wgts = self.hmap[0].crd2px(*top, interpolate=1)
-        poly = numpy.array([numpy.sum(h.map[px] * wgts, axis=-1) for h in self.hmap])
-        rv = numpy.polyval(poly, numpy.reshape(self.afreqs, (self.afreqs.size, 1)))
-        return rv
+        return aipy.amp.BeamAlm.response(self, top)
         
     def response(self, top):
         """
@@ -279,18 +273,12 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
     
     def _response_primitive(self, top):
         """
-        Copy of the original aipy.amp.Beam2DGaussian.response function.
-        
         Return beam response across active band for specified topocentric 
         coordinates: (x=E,y=N,z=UP). x,y,z may be arrays of multiple 
         coordinates.  Returns 'x' linear polarization (rotate pi/2 for 'y').
         """
         
-        x,y,z = top
-        x,y = numpy.arcsin(x)/self.xwidth, numpy.arcsin(y)/self.ywidth
-        resp = numpy.sqrt(numpy.exp(-(x**2 + y**2)/2.0))
-        resp = numpy.resize(resp, (self.afreqs.size, resp.size))
-        return resp
+        return aipy.amp.Beam2DGaussian.response(self, top)
         
     def response(self, top):
         """
@@ -340,27 +328,12 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
     
     def _response_primitive(self, top):
         """
-        Copy of the original aipy.amp.Beam2DGaussian.response function.
-        
         Return beam response across active band for specified topocentric 
         coordinates (x=E,y=N,z=UP). x,y,z may be multiple coordinates.  
         Returns 'x' pol (rotate pi/2 for 'y').
         """
         
-        az,alt = aipy.coord.top2azalt(top)
-        zang = numpy.pi/2 - alt
-        if zang.size == 1:
-            zang = numpy.array([zang]); zang.shape = (1,)
-            az = numpy.array([az])
-            az.shape = (1,)
-        a = 2 * numpy.arange(self.poly.shape[0], dtype=numpy.float)
-        a.shape = (1,) + a.shape
-        az.shape += (1,)
-        zang.shape += (1,)
-        a = numpy.cos(numpy.dot(az, a))
-        a[:,0] = 0.5
-        s = numpy.dot(a, self.sigma)
-        return numpy.sqrt(numpy.exp(-(zang/s)**2)).transpose()
+        return aipy.amp.BeamPolynomial.response(self, top)
         
     def response(self, top):
         """
@@ -409,13 +382,10 @@ class Beam(aipy.amp.Beam):
     
     def _response_primitive(self, top):
         """
-        Copy of the original aipy.amp.Beam.response function.
-        
         Return the (unity) beam response as a function of position.
         """
         
-        x,y,z = numpy.array(top)
-        return numpy.ones((self.afreqs.size, x.size))
+        return aipy.amp.Beam.response(self, top)
         
     def response(self, top):
         """
