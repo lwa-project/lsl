@@ -176,7 +176,7 @@ def graticule_radec(ax, antennaarray, phase_center='z', label=True, color='white
         top = numpy.dot(rot, eq)
         az,alt = aipy.coord.top2azalt(top)
         if alt > 15*numpy.pi/180 and label:
-            ax.text(top[0], top[1], '%+i$^\circ$' % dec, color=color)
+            ax.text(top[0], top[1], r'%+i$^\circ$' % dec, color=color)
             
     # Lines of constant RA			
     decs = numpy.linspace(-80, 80, 400)
@@ -247,7 +247,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
             valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
             pos = valid.size // 2 - valid.size // 5
             if valid.size > 10:
-                ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % el, color=color)
+                ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % el, color=color)
             
     # Lines of constant azimuth
     azs = range(0, 360, 45)
@@ -272,4 +272,4 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
         pos = valid.size // 2 - valid.size // 5
         if valid.size > 10:
-            ax.text(x[valid[pos]], y[valid[pos]], '%i$^\circ$' % az, color=color)
+            ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % az, color=color)
