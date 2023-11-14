@@ -87,7 +87,7 @@ vLight = vLight.to('m/s').value
 
 # Regular expression for trying to get the stand number out of an antenna
 # name
-_annameRE = re.compile('^.*?(?P<id>\d{1,3})$')
+_annameRE = re.compile(r'^.*?(?P<id>\d{1,3})$')
 
 
 def CorrelatedData(filename, verbose=False):
