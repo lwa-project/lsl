@@ -426,6 +426,8 @@ def _download_worker_cddis(url, filename):
     Download the URL from gdc.cddis.eosdis.nasa.gov via FTP-SSL and save it to a file.
     """
     
+    is_interactive = sys.__stdin__.isatty()
+    
     # Attempt to download the data
     print("Downloading %s" % url)
     ## Login
@@ -454,13 +456,15 @@ def _download_worker_cddis(url, filename):
         def write(data):
             fh.write(data)
             pbar.inc(len(data))
-            sys.stdout.write(pbar.show()+'\r')
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
+                
+        status = ftps.retrbinary('RETR %s' % remote_path, write, blocksize=DOWN_CONFIG.get('block_size'))
+        if is_interactive:
+            sys.stdout.write(pbar.show()+'\n')
             sys.stdout.flush()
             
-        status = ftps.retrbinary('RETR %s' % remote_path, write, blocksize=DOWN_CONFIG.get('block_size'))
-        sys.stdout.write(pbar.show()+'\n')
-        sys.stdout.flush()
-        
     if not status.startswith("226"):
         _CACHE_DIR.remove(filename)
         ftps.close()
@@ -480,6 +484,8 @@ def _download_worker_standard(url, filename):
     """
     Download the URL and save it to a file.
     """
+    
+    is_interactive = sys.__stdin__.isatty()
     
     # Attempt to download the data
     print("Downloading %s" % url)
@@ -505,11 +511,13 @@ def _download_worker_standard(url, filename):
                 data += new_data
             except NameError:
                 data = new_data
-            sys.stdout.write(pbar.show()+'\r')
-            sys.stdout.flush()
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
         tecFH.close()
-        sys.stdout.write(pbar.show()+'\n')
-        sys.stdout.flush()
+        if is_interactive:
+            sys.stdout.write(pbar.show()+'\n')
+            sys.stdout.flush()
     except IOError as e:
         warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         data = ''
