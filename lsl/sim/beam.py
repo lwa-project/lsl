@@ -5,6 +5,9 @@ from scipy.interpolate import interp1d, RegularGridInterpolator
 
 from lsl.common.paths import DATA as dataPath
 
+__version__ = '0.1'
+__all__ = ['mueller_matrix', 'beam_response', 'get_avaliable_models']
+
 
 _EMP_FILENAME  = os.path.join(dataPath, 'lwa1-dipole-emp.npz')
 _NEC_FILENAME  = 'test.hdf5'
