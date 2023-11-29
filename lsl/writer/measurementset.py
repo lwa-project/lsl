@@ -913,8 +913,8 @@ try:
                     matrix.shape = (len(order), self.nStokes, nBand, self.nChan)
                     
                     for j in range(nBand):
-                        fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=numpy.bool)
-                        fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=numpy.bool)
+                        fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=bool)
+                        fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=bool)
                         wg = numpy.ones((nBL,self.nStokes))
                         sg = numpy.ones((nBL,self.nStokes))*9999
                         

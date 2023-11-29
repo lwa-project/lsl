@@ -1,51 +1,46 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <complex.h>
+#include <cmath>
+#include <complex>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
 #include "numpy/arrayobject.h"
 
-#include "readers.h"
+#include "readers.hpp"
 
 
 /*
   COR Reader
 */
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct {
-    unsigned int sync_word;
+typedef struct __attribute__((packed)) {
+    uint32_t sync_word;
     union {
         struct {
-            unsigned int frame_count:24;
+            uint32_t frame_count:24;
             unsigned char adp_id:8;
         };
-        unsigned int frame_count_word;
+        uint32_t frame_count_word;
     };
-    unsigned int second_count;
-    signed short int first_chan;
-    signed short int gain;
+    uint32_t second_count;
+    int16_t  first_chan;
+    int16_t  gain;
 } CORHeader;
 
 
-typedef struct {
-    signed long long timetag;
-    signed int navg;
-    signed short int stand0;
-    signed short int stand1;
-    float complex vis[COR_NCHAN*4];
+typedef struct __attribute__((packed)) {
+    int64_t timetag;
+    int32_t navg;
+    int16_t stand0;
+    int16_t stand1;
+    float vis[COR_NCHAN*4*2];   // Really std::complex<float> vis[COR_NCHAN*4]
 } CORPayload;
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     CORHeader header;
     CORPayload payload;
 } CORFrame;
-#pragma pack(pop)
 
 
 PyObject *cor_method = NULL;
@@ -112,19 +107,16 @@ PyObject *read_cor(PyObject *self, PyObject *args) {
     cFrame.payload.stand1 = __bswap_16(cFrame.payload.stand1);
     
     // Fill the data array
-    float complex *a;
-    a = (float complex *) PyArray_DATA(data);
-    /*for(i=0; i<(COR_NCHAN*4); i++) {
-        *(a + i) = cFrame.payload.vis[i];
-    }*/
-    memcpy(a, &cFrame.payload.vis, sizeof(float complex)*COR_NCHAN*4);
+    std::complex<float> *a;
+    a = (std::complex<float> *) PyArray_DATA(data);
+    memcpy(a, &cFrame.payload.vis, sizeof(std::complex<float>)*COR_NCHAN*4);
     if( cFrame.payload.stand0 == cFrame.payload.stand1 ) {
         // Deal with the edge of the triangular matrix that ADP outputs
         // so that we do not get strange values in the output.  These are
         // all auto-correlations and we can just use conjgation to get YX
         // from XY.
         for(i=0; i<COR_NCHAN; i++) {
-            a[4*i + 1*2 + 0] = conj(a[4*i + 0*2 + 1]);
+            a[4*i + 1*2 + 0] = std::conj(a[4*i + 0*2 + 1]);
         }
     }
     

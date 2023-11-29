@@ -1,5 +1,4 @@
-#ifndef __READERS_H
-#define __READERS_H
+#pragma once
 
 #include "Python.h"
 
@@ -18,13 +17,13 @@
  Python3 compatibility
 */
 #if PY_MAJOR_VERSION >= 3
-	#define PyCapsule_Type PyCObject_Type
-	#define PyString_FromString PyUnicode_FromString
-	#define PyString_GET_SIZE PyBytes_GET_SIZE
-	#define PyString_AS_STRING PyBytes_AS_STRING
-	#define PyInt_AsLong PyLong_AsLong 
-	#define PyInt_FromLong PyLong_FromLong 
-	#define MOD_ERROR_VAL NULL
+    #define PyCapsule_Type PyCObject_Type
+    #define PyString_FromString PyUnicode_FromString
+    #define PyString_GET_SIZE PyBytes_GET_SIZE
+    #define PyString_AS_STRING PyBytes_AS_STRING
+    #define PyInt_AsLong PyLong_AsLong
+    #define PyInt_FromLong PyLong_FromLong 
+    #define MOD_ERROR_VAL NULL
     #define MOD_SUCCESS_VAL(val) val
     #define MOD_INIT(name) PyMODINIT_FUNC PyInit_##name(void)
     #define MOD_DEF(ob, name, methods, doc) \
@@ -51,7 +50,7 @@
   Exceptions for the Go Fast! Readers
 */
 
-// gofast.c
+// gofast.cpp
 extern PyObject *SyncError;
 extern PyObject *EOFError;
 
@@ -60,21 +59,20 @@ extern PyObject *EOFError;
   LWA1/LWA-SV Look up tables
 */
 
-// gofast.c
-extern short int tbw4LUT[256][2];
-extern float tbnLUT[256];
-extern float drxLUT[256][2];
-extern float tbfLUT[256][2];
-extern float drx8LUT[256];
+// gofast.cpp
+extern int16_t tbw4LUT[256][2];
+extern int8_t  tbnLUT[256];
+extern int8_t  drxLUT[256][2];
+extern int8_t  tbfLUT[256][2];
 
 
 /* 
   Support Functions
 */
 
-// gofast.c
-extern int validSync5C(unsigned int);
-// vdif.c
+// gofast.cpp
+extern int validSync5C(uint32_t);
+// vdif.cpp
 extern void initVDIFLUTs(void);
 
 /*
@@ -87,28 +85,34 @@ extern void initVDIFLUTs(void);
   Reader Functions and Documentation
 */
 
-// tbw.c
+// tbw.cpp
 extern PyObject *read_tbw(PyObject*, PyObject*);
 extern char read_tbw_doc[];
-// tbn.c
-extern PyObject *read_tbn(PyObject*, PyObject*);
-extern char read_tbn_doc[];
-// drx.c
-extern PyObject *read_drx(PyObject*, PyObject*);
-extern char read_drx_doc[];
-// drspec.c
+// tbn.cpp
+extern PyObject *read_tbn_cf32(PyObject*, PyObject*);
+extern char read_tbn_cf32_doc[];
+extern PyObject *read_tbn_ci8(PyObject*, PyObject*);
+extern char read_tbn_ci8_doc[];
+// drx.cpp
+extern PyObject *read_drx_cf32(PyObject*, PyObject*);
+extern char read_drx_cf32_doc[];
+extern PyObject *read_drx_ci8(PyObject*, PyObject*);
+extern char read_drx_ci8_doc[];
+// drspec.cpp
 extern PyObject *read_drspec(PyObject*, PyObject*);
 extern char read_drspec_doc[];
 
-// vdif.c
-extern PyObject *read_vdif(PyObject*, PyObject*, PyObject*);
-extern char read_vdif_doc[];
+// vdif.cpp
+extern PyObject *read_vdif_f32(PyObject*, PyObject*, PyObject*);
+extern char read_vdif_f32_doc[];
+extern PyObject *read_vdif_i8(PyObject*, PyObject*, PyObject*);
+extern char read_vdif_i8_doc[];
 
-// tbf.c
-extern PyObject *read_tbf(PyObject*, PyObject*);
-extern char read_tbf_doc[];
-// cor.c
+// tbf.cpp
+extern PyObject *read_tbf_cf32(PyObject*, PyObject*);
+extern char read_tbf_cf32_doc[];
+extern PyObject *read_tbf_ci8(PyObject*, PyObject*);
+extern char read_tbf_ci8_doc[];
+// cor.cpp
 extern PyObject *read_cor(PyObject*, PyObject*);
 extern char read_cor_doc[];
-
-#endif	// __READERS_H

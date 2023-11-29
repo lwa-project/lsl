@@ -401,9 +401,9 @@ class idf_tests(unittest.TestCase):
                     bdy = phase_center.fixed_body
                     bdy.compute(project.runs[0].scans[o].mjd + MJD_OFFSET - DJD_OFFSET + project.runs[0].scans[o].mjd/1000.0/86400.0)
                     
-                    ra = re.search("altra%i:(?P<ra>\d+(.\d*)?)" % (i+1,), sdf_phase_centers)
+                    ra = re.search(r"altra%i:(?P<ra>\d+(.\d*)?)" % (i+1,), sdf_phase_centers)
                     ra = float(ra.group('ra'))
-                    dec = re.search("altdec%i:(?P<dec>[-+]?\d+(.\d*)?)" % (i+1,), sdf_phase_centers)
+                    dec = re.search(r"altdec%i:(?P<dec>[-+]?\d+(.\d*)?)" % (i+1,), sdf_phase_centers)
                     dec = float(dec.group('dec'))
                     self.assertAlmostEqual(bdy.a_ra, ra*pi/12.0, 5)
                     self.assertAlmostEqual(bdy.a_dec, dec*pi/180.0, 5)

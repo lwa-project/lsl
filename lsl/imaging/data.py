@@ -39,7 +39,7 @@ class PolarizationDataSet(object):
         self.weight = weight
         
         if mask is None:
-            mask = numpy.zeros(self.data.shape, dtype=numpy.bool)
+            mask = numpy.zeros(self.data.shape, dtype=bool)
         self.mask = mask
             
     @property
@@ -77,7 +77,7 @@ class PolarizationDataSet(object):
             self.weight = weight
             
             if mask is None:
-                mask = numpy.zeros(data.shape, dtype=numpy.bool)
+                mask = numpy.zeros(data.shape, dtype=bool)
             if self.mask.shape != data.shape:
                 raise ValueError("mask shape does not match the data shape")
             self.mask = mask
@@ -92,7 +92,7 @@ class PolarizationDataSet(object):
             self.weight = numpy.vstack([self.weight, weight])
             
             if mask is None:
-                mask = numpy.zeros(data.shape, dtype=numpy.bool)
+                mask = numpy.zeros(data.shape, dtype=bool)
             if self.mask.shape != data.shape:
                 raise ValueError("mask shape does not match the data shape")
             self.mask = numpy.vstack([self.mask, mask])
@@ -336,46 +336,64 @@ class VisibilityDataSet(object):
         """
         Return a copy of the data containing baselines that meet the specified
         antenna selection criteria.  The selection is governed by the 'include', 
-        'exclude', and 'indicies' keywords.  If 'include' is not None, only 
-        baselines containing antennas in the list are selected.  If 'exclude' 
-        is not None, only baselines not containing antennas in the list are 
-        selected.  If both 'include' and 'exclude' are provided, the 'include' 
-        list has priority.  'indicies' sets whether or not the selection 
-        criteria are provided as indicies of the antennas stored in the 
-        antennaarray attribute or are stand numbers.
+        'exclude', and 'indicies' keywords.  If 'include' is not 'all' or None,
+        only baselines containing antennas in the list are selected.  If
+        'exclude' is not 'none' or None, only baselines not containing antennas
+        in the list are selected.  If both 'include' and 'exclude' are provided,
+        the 'include' list has priority.  'indicies' sets whether or not the
+        selection criteria are provided as indicies of the antennas stored in
+        the antennaarray attribute or are stand numbers.
         """
         
         # Validate
+        if include == 'all':
+            include = None
         if include is not None:
             if not isinstance(include, (list, tuple)):
                 raise TypeError("Expected 'include' to by a list or tuple")
+        if exclude == 'none':
+            exclude = None
         if exclude is not None:
+            if isinstance(exclude, int):
+                exclude = [exclude,]
             if not isinstance(exclude, (list, tuple)):
                 raise TypeError("Expected 'exclude' to by a list or tuple")
+        else:
+            exclude = []
         if not indicies:
             if self.antennaarray is None:
                 raise AttributeError("No anntennaarray defined for this data set")
                 
         # Convert to indicies, if needed
+        stands = list(self.antennaarray.get_stands())
         if not indicies:
-            stands = list(self.antennaarray.get_stands())
             if include is not None:
-                include = [stands.index(i) for i in include]
+                include = [stands.index(i) for i in include if i in stands]
             if exclude is not None:
-                exclude = [stands.index(e) for e in exclude]
+                exclude = [stands.index(e) for e in exclude if e in stands]
+                
+        # Merge include and exclude
+        to_keep = list(range(len(stands)))
+        if include is not None:
+            to_keep = include
+        for e in exclude:
+            ## Don't exclude things in the include list
+            if include is not None:
+                if e in include:
+                    continue
+                    
+            ## Remove excluded values
+            try:
+                del to_keep[to_keep.index(e)]
+            except ValueError:
+                pass
                 
         # Find the baselines to keep based on what we were given
         selection = []
         for i,(a1,a2) in enumerate(self.baselines):
-            if include is not None:
-                if a1 in include and a2 in include:
-                    selection.append( i )
-                    continue
-            if exclude is not None:
-                if a1 not in exclude and a2 not in exclude:
-                    selection.append( i )
-                    continue
-                    
+            if a1 in to_keep and a2 in to_keep:
+                selection.append( i )
+                
         # Create the new data set
         new_baselines = [self.baselines[b] for b in selection]
         new_data = self.copy(include_pols=False)

@@ -526,10 +526,10 @@ def csv_baseline_list(string):
     return value
 
 
-_IPV4_RANGE_RE = re.compile('^(?P<byte1>\d{1,3})(~(?P<byte1e>\d{1,3}))?\.(?P<byte2>\d{1,3})(~(?P<byte2e>\d{1,3}))?\.(?P<byte3>\d{1,3})(~(?P<byte3e>\d{1,3}))?\.(?P<byte4>\d{1,3})(~(?P<byte4e>\d{1,3}))?$')
+_IPV4_RANGE_RE = re.compile(r'^(?P<byte1>\d{1,3})(~(?P<byte1e>\d{1,3}))?\.(?P<byte2>\d{1,3})(~(?P<byte2e>\d{1,3}))?\.(?P<byte3>\d{1,3})(~(?P<byte3e>\d{1,3}))?\.(?P<byte4>\d{1,3})(~(?P<byte4e>\d{1,3}))?$')
 
-_HOSTNAME_RE = re.compile('^(?P<hostname>[a-zA-Z\-0-9]*?)$')
-_HOSTNAME_RANGE_RE=re.compile('^(?P<hostbase>[a-zA-Z\-]*?)(?P<start>[0-9]+)~(?P<stop>[0-9]+)$')
+_HOSTNAME_RE = re.compile(r'^(?P<hostname>[a-zA-Z0-9-]*?)$')
+_HOSTNAME_RANGE_RE=re.compile(r'^(?P<hostbase>[a-zA-Z-]*?)(?P<start>[0-9]+)~(?P<stop>[0-9]+)$')
     
 
 def csv_hostname_list(string):

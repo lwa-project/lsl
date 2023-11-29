@@ -138,18 +138,18 @@ class stations_tests(unittest.TestCase):
         """Test retrieving LSL interface modules."""
         
         lwa1 = stations.lwa1
-        self.assertEqual(lwa1.interface.get_module('backend'), dp)
-        self.assertEqual(lwa1.interface.get_module('mcs'), mcs)
-        self.assertEqual(lwa1.interface.get_module('sdf'), sdf)
-        self.assertEqual(lwa1.interface.get_module('metabundle'), metabundle)
-        self.assertEqual(lwa1.interface.get_module('sdm'), sdm)
+        self.assertEqual(lwa1.interface.get_module('backend').__file__, dp.__file__)
+        self.assertEqual(lwa1.interface.get_module('mcs').__file__, mcs.__file__)
+        self.assertEqual(lwa1.interface.get_module('sdf').__file__, sdf.__file__)
+        self.assertEqual(lwa1.interface.get_module('metabundle').__file__, metabundle.__file__)
+        self.assertEqual(lwa1.interface.get_module('sdm').__file__, sdm.__file__)
         
         lwasv = stations.lwasv
-        self.assertFalse(lwasv.interface.get_module('backend') == dp)
-        self.assertFalse(lwasv.interface.get_module('mcs') == mcs)
-        self.assertFalse(lwasv.interface.get_module('sdf') == sdf)
-        self.assertFalse(lwasv.interface.get_module('metabundle') == metabundle)
-        self.assertFalse(lwasv.interface.get_module('sdm') == sdm)
+        self.assertFalse(lwasv.interface.get_module('backend').__file__ == dp.__file__)
+        self.assertFalse(lwasv.interface.get_module('mcs').__file__ == mcs.__file__)
+        self.assertFalse(lwasv.interface.get_module('sdf').__file__ == sdf.__file__)
+        self.assertFalse(lwasv.interface.get_module('metabundle').__file__ == metabundle.__file__)
+        self.assertFalse(lwasv.interface.get_module('sdm').__file__ == sdm.__file__)
         
     def test_ssmif(self):
         """Test the SSMIF parser."""

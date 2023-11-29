@@ -178,11 +178,16 @@ def main(args):
         try:
             print("Downloading %s" % urlToDownload)
             ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
-            meta = ah.info()
+            remote_size = 1
             try:
+                remote_size = int(ah.headers["Content-Length"])
+            except AttributeError:
+                pass
+            try:
+                meta = ah.info()
                 remote_size = int(meta.getheaders("Content-Length")[0])
             except AttributeError:
-                remote_size = 1
+                pass
             pbar = DownloadBar(max=remote_size)
             while True:
                 new_data = ah.read(LSL_CONFIG.get('download.block_size'))

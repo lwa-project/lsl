@@ -1,6 +1,10 @@
 """
-Python module to read in DRX data.  This module defines the following 
-classes for storing the DRX data found in a file:
+Python module to read in DRX data.  DRX data consist of a time series of complex
+data a variable sample rate of up to 19.6 MHz from the beamformer.  The data are divided into
+packets of 4096 samples per beam per tuning per polarization.
+
+This module defines the following classes for storing the DRX data found in a
+file:
 
 Frame
   object that contains all data associated with a particular DRX frame.  
@@ -33,6 +37,10 @@ get_frames_per_obs
   read in the first several frames to see how many frames (tunings/polarizations)
   are associated with each beam.
 
+..versionchanged:: 2.1.3
+    Added a new read_frame_ci8 function that returns 8-bit+8-bit complex integers
+    instead of numpy.complex64
+
 ..versionchanged:: 1.2.0
     Dropped support for ObservingBlock since the lsl.reader.buffer modules does
     a better job.
@@ -47,9 +55,11 @@ import sys
 if sys.version_info < (3,):
     range = xrange
     
+import numpy
+
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_drx
+from lsl.reader._gofast import read_drx, read_drx_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -59,9 +69,10 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.8'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
-           'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
+__version__ = '0.9'
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
+           'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE',
+           'FILTER_CODES']
 
 #: DRX packet size (header + payload)
 FRAME_SIZE = 4128
@@ -211,6 +222,36 @@ def read_frame(filehandle, gain=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_drx(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+    
+    if gain is not None:
+        newFrame.gain = gain
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, gain=None, verbose=False):
+    """
+    Function to read in a single DRX frame (header+data) and store the 
+    contents as a Frame object.  This function wraps readerHeader and 
+    readData.
+    
+    .. note::
+        This function differs from `read_frame` in that it returns a
+        `lsl.reader.drx.FramePayload` that contains a 2-D numpy.int8 array
+        (samples by real/complex) rather than a 1-D numpy.complex64 array.
+    
+    .. versionadded:: 2.1.3
+    """
+    
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_drx_ci8(filehandle, Frame())
+        newFrame.payload._data = newFrame.payload.data.view(CI8)
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
