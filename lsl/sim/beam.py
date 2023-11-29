@@ -1,18 +1,98 @@
 import os
+import sys
 import h5py
 import numpy as np
+import socket
+import warnings
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
+from collections import OrderedDict
 from scipy.interpolate import interp1d, RegularGridInterpolator
 
 from lsl.common.paths import DATA as dataPath
+from lsl.common.progress import DownloadBar
+from lsl.misc.file_cache import FileCache, MemoryCache
+from lsl.common.color import colorfy
+
+from lsl.config import LSL_CONFIG
+DOWN_CONFIG = LSL_CONFIG.view('download')
 
 __version__ = '0.1'
 __all__ = ['mueller_matrix', 'beam_response', 'get_avaliable_models']
 
 
-_EMP_FILENAME  = os.path.join(dataPath, 'lwa1-dipole-emp.npz')
-_NEC_FILENAME  = 'test.hdf5'
-_FEKO_FILENAME = '/Users/jaycedowell/Downloads/OVRO_LWA-FEKO_er-3p5_sig-0p002.h5'
-_CST_FILENAME  = '/Users/jaycedowell/Downloads/OVRO_LWA-CST_er-3p5_sig-0p002.h5'
+_MODELS = OrderedDict()
+_MODELS['empirical'] = os.path.join(dataPath, 'lwa1-dipole-emp.npz')
+_MODELS['nec']       = 'test.hdf5'
+_MODELS['feko']      = 'OVRO_LWA-FEKO_er-3p5_sig-0p002.h5'
+_MODELS['cst']       = 'OVRO_LWA-CST_er-3p5_sig-0p002.h5'
+
+
+# Create the cache directory
+try:
+    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'beam_cache'),
+                           max_size=0)
+except OSError:
+    _CACHE_DIR = MemoryCache(max_size=0)
+    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
+
+
+def _download_worker(url, filename):
+    """
+    Download the URL and save it to a file.
+    """
+    
+    is_interactive = sys.__stdin__.isatty()
+    
+    # Attempt to download the data
+    print("Downloading %s" % url)
+    try:
+        uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
+        remote_size = 1
+        try:
+            remote_size = int(uh.headers["Content-Length"])
+        except AttributeError:
+            pass
+        try:
+            meta = uh.info()
+            remote_size = int(meta.getheaders("Content-Length")[0])
+        except AttributeError:
+            pass
+        pbar = DownloadBar(max=remote_size)
+        received = 0
+        with _CACHE_DIR.open(filename, 'wb') as fh:
+            while True:
+                data = uh.read(DOWN_CONFIG.get('block_size'))
+                if len(data) == 0:
+                    break
+                received += len(data)
+                pbar.inc(len(data))
+                
+                fh.write(data)
+                
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
+        uh.close()
+        if is_interactive:
+            sys.stdout.write(pbar.show()+'\n')
+            sys.stdout.flush()
+    except IOError as e:
+        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
+        received = 0
+    except socket.timeout:
+        received = 0
+        
+    # Did we get anything or, at least, enough of something like it looks like 
+    # a real file?
+    if received < 3:
+        ## Fail
+        _CACHE_DIR.remove(filename)
+        return False
+        
+    return True
 
 
 def _load_response_fitted(frequency, corrected=False):
@@ -36,7 +116,7 @@ def _load_response_fitted(frequency, corrected=False):
     
     for pol in ('X', 'Y'):
         # Get the empirical model of the beam and compute it for the correct frequencies
-        beamDict = np.load(_EMP_FILENAME)
+        beamDict = np.load(_MODELS['empirical'])
         beamCoeff = beamDict[f"fit{pol.upper()}"]
         alphaE = np.polyval(beamCoeff[0,0,:], frequency)
         betaE =  np.polyval(beamCoeff[0,1,:], frequency)
@@ -113,13 +193,9 @@ def _load_response_full(frequency, model='feko'):
     """
     
     model = model.lower()
-    if model == 'nec':
-        filename = _NEC_FILENAME
-    elif model == 'feko':
-        filename = _FEKO_FILENAME
-    elif model == 'cst':
-        filename = _CST_FILENAME
-    else:
+    try:
+        filename = _MODELS[model]
+    except KeyError:
         raise ValueError(f"Unknown dipole model source '{model}'")
         
     for pol in ('X', 'Y'):
@@ -127,8 +203,14 @@ def _load_response_full(frequency, model='feko'):
             ## Apparent polarization swap
             pol = {'X': 'Y', 'Y': 'X'}[pol]
             
+        # Make sure we have the file
+        if filename not in _CACHE_DIR:
+            status = _download_worker('https://fornax.phys.unm.edu/lwa/data/'+filename, filename)
+            if not status:
+                raise RuntimeError(f"Failed to download data for dipole model source '{model}'")
+                
         # Open the file and select the mode relevant frequencies
-        h = h5py.File(filename)
+        h = h5py.File(os.path.join(_CACHE_DIR.cache_dir, filename))
         mfreq = h['Freq(Hz)'][...]*1e6
         best = np.where(np.abs(mfreq - frequency) < 10e6)[0]
         maz = h['phi_pts'][...]
@@ -300,9 +382,9 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
 
 def get_avaliable_models():
     models = []
-    if os.path.exists(_EMP_FILENAME):
+    if os.path.exists(_MODELS['empirical']):
         models.extend(['empirical', 'llfss'])
-    for model,filename in zip(('nec', 'feko', 'cst'), (_NEC_FILENAME, _FEKO_FILENAME, _CST_FILENAME)):
+    for model,filename in _MODELS.items():
         if os.path.exists(filename):
             models.append(model)
     
