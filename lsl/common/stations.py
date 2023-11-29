@@ -874,6 +874,62 @@ class Cable(object):
         return (freq, attn)
 
 
+def _download_worker(url, filename):
+    """
+    Download the URL and save it to a file.
+    """
+    
+    is_interactive = sys.__stdin__.isatty()
+    
+    # Attempt to download the data
+    print("Downloading %s" % url)
+    try:
+        uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
+        remote_size = 1
+        try:
+            remote_size = int(uh.headers["Content-Length"])
+        except AttributeError:
+            pass
+        try:
+            meta = uh.info()
+            remote_size = int(meta.getheaders("Content-Length")[0])
+        except AttributeError:
+            pass
+        pbar = DownloadBar(max=remote_size)
+        received = 0
+        with _CACHE_DIR.open(filename, 'wb') as fh:
+            while True:
+                data = uh.read(DOWN_CONFIG.get('block_size'))
+                if len(data) == 0:
+                    break
+                received += len(data)
+                pbar.inc(len(data))
+                
+                fh.write(data)
+                
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
+        uh.close()
+        if is_interactive:
+            sys.stdout.write(pbar.show()+'\n')
+            sys.stdout.flush()
+    except IOError as e:
+        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
+        received = 0
+    except socket.timeout:
+        received = 0
+        
+    # Did we get anything or, at least, enough of something like it looks like 
+    # a real file?
+    if received < 3:
+        ## Fail
+        _CACHE_DIR.remove(filename)
+        return False
+        
+    return True
+
+
 class ARX(object):
     """
     Object to store information about a ARX board/channel combination.  Stores ARX:
@@ -951,25 +1007,10 @@ class ARX(object):
         # Find the filename to use
         filename = 'ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
         if filename not in _CACHE_DIR:
-            remote_filename = 'https://fornax.phys.unm.edu/lwa/data/lsl/arx/' + filename
-            with urlopen(remote_filename, timeout=120) as uh:
-                meta = uh.info()
-                try:
-                    remote_size = int(meta.getheaders("Content-Length")[0])
-                except AttributeError:
-                    remote_size = 1
-                    
-                pbar = DownloadBar(max=remote_size)
-                with _CACHE_DIR.open(filename.replace(os.path.sep, '_'), 'wb') as fh:
-                    while True:
-                        new_data = uh.read(DOWN_CONFIG.get('block_size'))
-                        if len(new_data) == 0:
-                            break
-                        fh.write(new_data)
-                        pbar.inc(len(new_data))
-                        sys.stdout.write(pbar.show()+'\r')
-                        sys.stdout.flush()
-                        
+            status = _download_worker('https://fornax.phys.unm.edu/lwa/data/lsl/arx/'+filename, filename)
+            if not status:
+                raise RuntimeError("Failed to download data for ARX board #%s, channel %i" % (self.id, self.channel))
+                
         # Read in the file and convert it to a numpy array
         with _CACHE_DIR.open(filename, 'rb') as fh:
             try:
