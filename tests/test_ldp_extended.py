@@ -14,7 +14,6 @@ import tempfile
 import shutil
 import subprocess
 
-from lsl.common.paths import DATA_BUILD
 from lsl.reader import ldp
 from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
