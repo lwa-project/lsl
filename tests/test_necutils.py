@@ -34,7 +34,7 @@ class necutils_tests(unittest.TestCase):
         """Setup unit tests."""
         
         # get a reference to the input test file
-        self.nec_name = os.path.join(DATA_BUILD, 'tests', 'bigblade_imp.out')
+        self.nec_name = os.path.join(os.path.dirname(__file__), 'data', 'bigblade_imp.out')
     
     def test_NECImpedance_init(self):
         """Test necutils.NECImpedance constructor method."""
@@ -92,4 +92,3 @@ class necutils_test_suite(unittest.TestSuite):
         
 if __name__ == '__main__':
     unittest.main()
-

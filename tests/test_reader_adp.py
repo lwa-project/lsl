@@ -12,7 +12,6 @@ import os
 import numpy
 import unittest
 
-from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbf
 from lsl.reader import cor
 from lsl.reader import errors
@@ -22,8 +21,8 @@ __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
-tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
-corFile = os.path.join(DATA_BUILD, 'tests', 'cor-test.dat')
+tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-test.dat')
+corFile = os.path.join(os.path.dirname(__file__), 'data', 'cor-test.dat')
 
 
 class reader_adp_tests(unittest.TestCase):
