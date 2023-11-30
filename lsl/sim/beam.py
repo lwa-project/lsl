@@ -222,7 +222,7 @@ def _load_response_full(frequency, model='feko'):
         E /= s
         H /= s
         
-        if maz.max() == 359:
+        if maz.max() < 360:
             ## Catch to make sure we can wrap around the north
             maz = np.append(maz, 360)
             E = np.append(E, E[...,[0,]], axis=2)
