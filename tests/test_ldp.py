@@ -13,7 +13,6 @@ import unittest
 import tempfile
 import shutil
 
-from lsl.common.paths import DATA_BUILD
 from lsl.reader import ldp
 from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
@@ -23,12 +22,12 @@ __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-test.dat')
-tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
-drspecFile = os.path.join(DATA_BUILD, 'tests', 'drspec-test.dat')
+tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
+tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
+drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
+drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
 
-tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
+tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-test.dat')
 
 
 class ldp_tests(unittest.TestCase):

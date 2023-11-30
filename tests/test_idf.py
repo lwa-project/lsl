@@ -26,7 +26,6 @@ except ImportError:
 from astropy.coordinates import Angle as AstroAngle
 
 from lsl.astro import MJD_OFFSET, DJD_OFFSET
-from lsl.common.paths import DATA_BUILD
 from lsl.common import idf
 from lsl.common.stations import lwa1, lwasv
 import lsl.testing
@@ -36,11 +35,11 @@ __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
-drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
-altFile = os.path.join(DATA_BUILD, 'tests', 'alt-idf.txt')
-solFile = os.path.join(DATA_BUILD, 'tests', 'sol-idf.txt')
-jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-idf.txt')
-sdfFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
+drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-idf.txt')
+altFile = os.path.join(os.path.dirname(__file__), 'data', 'alt-idf.txt')
+solFile = os.path.join(os.path.dirname(__file__), 'data', 'sol-idf.txt')
+jovFile = os.path.join(os.path.dirname(__file__), 'data', 'jov-idf.txt')
+sdfFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-sdf.txt')
 
 
 class idf_tests(unittest.TestCase):

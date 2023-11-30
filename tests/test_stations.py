@@ -156,8 +156,8 @@ class stations_tests(unittest.TestCase):
         
         filenames = [os.path.join(DATA_BUILD, 'lwa1-ssmif.txt'),
                      os.path.join(DATA_BUILD, 'lwasv-ssmif.txt'),
-                     os.path.join(DATA_BUILD, 'tests', 'ssmif.dat'),
-                     os.path.join(DATA_BUILD, 'tests', 'ssmif-adp.dat')]
+                     os.path.join(os.path.dirname(__file__), 'data', 'ssmif.dat'),
+                     os.path.join(os.path.dirname(__file__), 'data', 'ssmif-adp.dat')]
         sites = ['LWA1', 'LWA-SV', 'LWA1', 'LWA-SV']
         types = ['text', 'text', 'binary', 'binary']
         for filename,site,type in zip(filenames, sites, types):

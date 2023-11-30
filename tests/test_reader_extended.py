@@ -13,7 +13,6 @@ import glob
 import unittest
 import subprocess
 
-from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
@@ -28,7 +27,7 @@ __author__    = "Jayce Dowell"
 
 
 run_extended_tests = False
-if os.getenv('TRAVIS_OS_NAME', None) not in ('osx', None):
+if os.getenv('GITHUB_ACTIONS', None) is not None:
     run_extended_tests = True
 
 
