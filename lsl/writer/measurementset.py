@@ -128,7 +128,7 @@ try:
                 if overwrite:
                     shutil.rmtree(filename, ignore_errors=False)
                 else:
-                    raise IOError("File '%s' already exists" % filename)
+                    raise IOError(f"File '{filename}' already exists")
             self.basename = filename
             
         def set_geometry(self, site, antennas, bits=8):

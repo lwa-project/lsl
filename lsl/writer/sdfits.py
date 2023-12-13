@@ -94,7 +94,7 @@ class Sd(WriterBase):
             if overwrite:
                 os.unlink(filename)
             else:
-                raise IOError("File '%s' already exists" % filename)
+                raise IOError(f"File '{filename}' already exists")
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
 
     def set_site(self, site):

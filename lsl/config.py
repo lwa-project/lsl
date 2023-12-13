@@ -150,9 +150,9 @@ class LSLConfigParameter(object):
             
         section, item = self.name.rsplit('.', 1)
         if self.value is None:
-            output += "#%s = \n" % item
+            output += f"#{item} = \n"
         else:
-            output += "%s = %s\n" % (item, self.value)
+            output += f"{item} = {self.value}\n"
         return output
 
 
@@ -175,7 +175,7 @@ class LSLConfigContainer(object):
         
     def __str__(self):
         output = "# LSL Configuration File\n"
-        output += "# LSL Version: %s\n" % lsl_version
+        output += f"# LSL Version: {lsl_version}\n"
         
         last = None
         for name in self._parameters:
@@ -183,9 +183,9 @@ class LSLConfigContainer(object):
             section, item = name.rsplit('.', 1)
             if section != last:
                 output += "\n"
-                output += "[ %s ]\n" % section
+                output += f"[ {section} ]\n"
                 last = section
-            output += "%s\n" % str(param)
+            output += f"{str(param)}\n"
         return output
         
     def _load_config(self):
@@ -270,7 +270,7 @@ class LSLConfigContainer(object):
         """
         
         if section not in DEFAULTS_ALL:
-            raise ValueError("Unknown section '%s'" % section)
+            raise ValueError(f"Unknown section '{section}'")
             
         return LSLConfigSubContainer(self, section)
         
@@ -282,7 +282,7 @@ class LSLConfigContainer(object):
         try:
             value = self._parameters[name].value
         except KeyError:
-            raise ValueError("Unknown parameter '%s'" % name)
+            raise ValueError(f"Unknown parameter '{name}'")
         return value
         
     def set(self, name, value):
@@ -301,7 +301,7 @@ class LSLConfigContainer(object):
                 self._changed = True
                 
         except KeyError:
-            raise ValueError("Unknown parameter '%s'" % name)
+            raise ValueError(f"Unknown parameter '{name}'")
             
     @contextlib.contextmanager
     def set_temp(self, name, value):
@@ -323,7 +323,7 @@ class LSLConfigContainer(object):
                 self._paremeters[name].value = old_value
                 
         except KeyError:
-            raise ValueError("Unknown parameter '%s'" % name)
+            raise ValueError(f"Unknown parameter '{name}'")
 
 
 class LSLConfigSubContainer(object):

@@ -152,12 +152,12 @@ def read_obs_file(filename):
             fh.readinto(alignment)
             
             if alignment.block != (2**32 - 2):
-                raise IOError("Byte alignment lost at byte %i" % fh.tell())
+                raise IOError(f"Byte alignment lost at byte {fh.tell()}")
                 
         fh.readinto(bfooter)
         
         if bfooter.alignment != (2**32 - 1):
-            raise IOError("Byte alignment lost at byte %i" % fh.tell())
+            raise IOError(f"Byte alignment lost at byte {fh.tell()}")
             
     output = {'version': bheader.FORMAT_VERSION,
               'project_id': bheader.PROJECT_ID.lstrip().rstrip(), 'session_id': bheader.SESSION_ID,
@@ -547,7 +547,7 @@ def get_asp_configuration(tarname, which='beginning'):
     
     which = which.lower()
     if which not in ('beginning', 'begin', 'end'):
-        raise ValueError("Unknown configuration time '%s'" % which)
+        raise ValueError(f"Unknown configuration time '{which}'")
         
     # Stub ASP configuration
     aspConfig = {'asp_filter':      [-1 for i in range(264)],

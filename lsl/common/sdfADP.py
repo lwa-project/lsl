@@ -574,7 +574,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
                     
             obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
     else:
-        raise RuntimeError("Invalid mode encountered: %s" % mode)
+        raise RuntimeError(f"Invalid mode encountered: {mode}")
         
     # Set the beam-dipole mode information (if applicable)
     if obs_temp['beamDipole'] is not None:
@@ -1010,7 +1010,7 @@ def parse_sdf(filename, verbose=False):
             
             # Keywords that might indicate this is for DP-based stations/actually an IDF
             if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'RUN_ID'):
-                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+                raise RuntimeError(f"Invalid keyword encountered: {keyword}")
             
         # Create the final observation
         if obs_temp['id'] != 0:

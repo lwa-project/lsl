@@ -8,6 +8,7 @@ classes for all of the LSL readers.
 import copy
 import pytz
 import numpy
+import functools import total_ordering
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
 
@@ -68,6 +69,7 @@ class FramePayloadBase(object):
         return self._data
 
 
+@total_ordering
 class FrameBase(object):
     """
     Base class for all lsl.reader Frame-type objects.
@@ -81,14 +83,14 @@ class FrameBase(object):
             self.header = self._header_class()
         else:
             if not isinstance(header, self._header_class):
-                raise TypeError("Excepted header of type '%s' but found '%s'" % (self._header_class.__type__.__name__, header.__type__.__name__))
+                raise TypeError(f"Excepted header of type '{self._header_class.__type__.__name__}' but found '{header.__type__.__name__}'")
             self.header = header
             
         if payload is None:
             self.payload = self._payload_class()
         else:
             if not isinstance(payload, self._payload_class):
-                raise TypeError("Excepted payload of type '%s' but found '%s'" % (self._payload_class.__type__.__name__, payload.__type__.__name__))
+                raise TypeError(f"Excepted payload of type '{self._payload_class.__type__.__name__}' but found '{payload.__type__.__name__}'")
             self.payload = payload
             
         self.valid = valid
@@ -111,7 +113,7 @@ class FrameBase(object):
         """
         
         if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
-            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         newFrame = copy.deepcopy(self)
         newFrame += y
@@ -128,7 +130,7 @@ class FrameBase(object):
         """
         
         if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
-            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         try:
             self.payload._data += y.payload._data
@@ -147,7 +149,7 @@ class FrameBase(object):
         """
         
         if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
-            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         newFrame = copy.deepcopy(self)
         newFrame -= y
@@ -164,7 +166,7 @@ class FrameBase(object):
         """
         
         if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
-            raise TypeError("Unsupported type '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         try:
             self.payload._data -= y.payload._data
@@ -298,67 +300,9 @@ class FrameBase(object):
         elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         if tX == tY:
-            return True
-        else:
-            return False
-            
-    def __ne__(self, y):
-        """
-        Check if the time tags of two frames are not equal or if the time
-        tag is not equal to a particular value.
-        """
-        
-        tX = self.time
-        if isinstance(y, FrameBase):
-            tY = y.time
-        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
-            tY = y
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
-            
-        if tX != tY:
-            return True
-        else:
-            return False
-            
-    def __gt__(self, y):
-        """
-        Check if the time tag of the first frame is greater than that of a
-        second frame or if the time tag is greater than a particular value.
-        """
-        
-        tX = self.time
-        if isinstance(y, FrameBase):
-            tY = y.time
-        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
-            tY = y
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
-            
-        if tX > tY:
-            return True
-        else:
-            return False
-            
-    def __ge__(self, y):
-        """
-        Check if the time tag of the first frame is greater than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.time
-        if isinstance(y, FrameBase):
-            tY = y.time
-        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
-            tY = y
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
-            
-        if tX >= tY:
             return True
         else:
             return False
@@ -375,34 +319,15 @@ class FrameBase(object):
         elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
             tY = y
         else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         if tX < tY:
             return True
         else:
             return False
-            
-    def __le__(self, y):
-        """
-        Check if the time tag of the first frame is less than or equal to 
-        that of a second frame or if the time tag is greater than a particular 
-        value.
-        """
-        
-        tX = self.time
-        if isinstance(y, FrameBase):
-            tY = y.time
-        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
-            tY = y
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
-            
-        if tX <= tY:
-            return True
-        else:
-            return False
 
 
+@total_ordering
 class FrameTimestamp(object):
     """
     Class to represent the UNIX timestamp of a data frame as an integer 
@@ -512,7 +437,7 @@ class FrameTimestamp(object):
                 _frac -= 1
             return FrameTimestamp(_int, _frac)
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __iadd__(self, other):
         if isinstance(other, (int, float, numpy.integer, numpy.floating)):
@@ -534,7 +459,7 @@ class FrameTimestamp(object):
                 self._frac -= 1
             return self
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __sub__(self, other):
         if isinstance(other, FrameTimestamp):
@@ -564,7 +489,7 @@ class FrameTimestamp(object):
                 _frac += 1
             return FrameTimestamp(_int, _frac)
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __isub__(self, other):
         if isinstance(other, (int, float, numpy.integer, numpy.floating)):
@@ -586,7 +511,7 @@ class FrameTimestamp(object):
                 self._frac += 1
             return self
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __eq__(self, y):
         if isinstance(y, FrameTimestamp):
@@ -596,24 +521,8 @@ class FrameTimestamp(object):
         elif isinstance(y, (float, numpy.floating)):
             return float(self) == float(y)
         else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
-    def __ne__(self, y):
-        return not (self == y)
-            
-    def __gt__(self, y):
-        if isinstance(y, FrameTimestamp):
-            return (self._int > y._int) or (self._int == y._int and self._frac > y._frac)
-        elif isinstance(y, (int, numpy.integer)):
-            return self._int > y or (self._int == y and self._frac > 0.0)
-        elif isinstance(y, (float, numpy.floating)):
-            return float(self) > y
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
-            
-    def __ge__(self, y):
-        return (self > y or self == y)
-        
     def __lt__(self, y):
         if isinstance(y, FrameTimestamp):
             return (self._int < y._int) or (self._int == y._int and self._frac < y._frac)
@@ -622,11 +531,8 @@ class FrameTimestamp(object):
         elif isinstance(y, (float, numpy.floating)):
             return float(self) < y
         else:
-            raise TypeError("Unsupported type: '%s'" % type(y).__name__)
+            raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
-    def __le__(self, y):
-        return (self < y or self == y)
-        
     @property
     def unix(self):
         """

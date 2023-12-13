@@ -196,7 +196,7 @@ class LDPFileBase(object):
             try:
                 return self.description[key]
             except KeyError:
-                raise ValueError("Unknown key '%s'" % key)
+                raise ValueError(f"Unknown key '{key}'")
                 
     def get_remaining_frame_count(self):
         """
@@ -769,7 +769,7 @@ class TBNFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
@@ -796,7 +796,7 @@ class TBNFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}"))
                 self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
@@ -1194,7 +1194,7 @@ class DRXFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                         
                 if setTime is None:
                     if time_in_samples:
@@ -1222,7 +1222,7 @@ class DRXFile(LDPFileBase):
                         if self.ignore_timetag_errors:
                             warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
                         else:
-                            raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep))
+                            raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                             
                     if setTime is None:
                         if time_in_samples:
@@ -1507,7 +1507,7 @@ class DRSpecFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip} but found {actStep}")
                     
             if setTime is None:
                 if time_in_samples:
@@ -1666,7 +1666,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=
         
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA1 data file" % filename)
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 data file")
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
@@ -1937,7 +1937,7 @@ class TBFFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
@@ -1970,7 +1970,7 @@ class TBFFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
@@ -2259,7 +2259,7 @@ class CORFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
@@ -2290,7 +2290,7 @@ class CORFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
@@ -2462,7 +2462,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
     
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA-SV data file")
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
@@ -2521,7 +2521,7 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
             
     # Failed?
     if not found:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA1 or LWA-SV data file" % filename)
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 or LWA-SV data file")
         
     return ldpInstance
 

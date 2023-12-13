@@ -35,6 +35,7 @@ import copy
 import math
 import pytz
 import ephem
+from functools import total_ordering
 from datetime import datetime, timedelta
 
 from astropy import units as astrounits
@@ -311,7 +312,7 @@ class Project(object):
         run and write it to the provided filename."""
         
         if os.path.exists(filename) and not overwrite:
-            raise RuntimeError("'%s' already exists" % filename)
+            raise RuntimeError(f"'{filename}' already exists")
             
         output = self.render(run=run, verbose=verbose)
         with open(filename, 'w') as fh:
@@ -416,6 +417,7 @@ class Project(object):
         return sdfs
 
 
+@total_ordering
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
@@ -475,7 +477,7 @@ class Run(object):
         
         value = int(value)
         if value < 16 or value > 32768 or value % 2:
-            raise ValueError("Invalid correlator channel count '%i'" % value)
+            raise ValueError(f"Invalid correlator channel count '{value}'")
         self.corr_channels = value
         
     @property
@@ -490,7 +492,7 @@ class Run(object):
         
         value = float(value)
         if value < 0.1 or value > 10.0:
-            raise ValueError("Invalid integration time '%.3f'" % value)
+            raise ValueError(f"Invalid integration time '{value:.3f}'")
         self.corr_inttime = value
         
     @property
@@ -503,7 +505,7 @@ class Run(object):
         """Set the correlator output polarization basis."""
         
         if value.lower() not in ('linear', 'circular', 'stokes'):
-            raise ValueError("Unknown polarization basis: %s" % value)
+            raise ValueError(f"Unknown polarization basis: {value}")
         self.corr_basis = value
         
     @property
@@ -516,7 +518,7 @@ class Run(object):
         'USB Harddrives'."""
         
         if method not in ('UCF', 'DRSU', 'USB Harddrives'):
-            raise ValueError("Unknown data return method: %s" % method)
+            raise ValueError(f"Unknown data return method: {method}")
             
         self.dataReturnMethod = method
         
@@ -616,40 +618,7 @@ class Run(object):
             startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Run):
@@ -660,20 +629,10 @@ class Run(object):
             startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
+@total_ordering
 class Scan(object):
     """
     Class to hold the specifics of a scans.  It currently
@@ -740,7 +699,7 @@ class Scan(object):
     def intent(self, value):
         value = value.lower()
         if value not in ('fluxcal', 'phasecal', 'target', 'dummy'):
-            raise ValueError("Invalid scan intent '%s'" % value)
+            raise ValueError(f"Invalid scan intent '{value}'")
         self._intent = value
         
     @property
@@ -814,7 +773,7 @@ class Scan(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
-            raise ValueError("Invalid value for RA '%.6f' hr" % value)
+            raise ValueError(f"Invalid value for RA '{value:.6f}' hr")
         self._ra = value
         
     @property
@@ -831,7 +790,7 @@ class Scan(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
-            raise ValueError("Invalid value for dec. '%.6f' deg" % value)
+            raise ValueError(f"Invalid value for dec. '{value:+.6f}' deg")
         self._dec = value
         
     @property
@@ -1032,31 +991,7 @@ class Scan(object):
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Scan):
@@ -1064,15 +999,7 @@ class Scan(object):
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
 class DRX(Scan):
@@ -1177,7 +1104,7 @@ class AlternatePhaseCenter(object):
     def intent(self, value):
         value = value.lower()
         if value not in ('fluxcal', 'phasecal', 'target', 'dummy'):
-            raise ValueError("Invalid scan intent '%s'" % value)
+            raise ValueError(f"Invalid scan intent '{value}'")
         self._intent = value
         
     @property
@@ -1195,7 +1122,7 @@ class AlternatePhaseCenter(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
-            raise ValueError("Invalid value for RA '%.6f' hr" % value)
+            raise ValueError(f"Invalid value for RA '{value:.6f}' hr")
         self._ra = value
         
     @property
@@ -1213,7 +1140,7 @@ class AlternatePhaseCenter(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
-            raise ValueError("Invalid value for dec. '%.6f' deg" % value)
+            raise ValueError(f"Invalid value for dec. '{value:+.6f}' deg")
         self._dec = value
         
     @property
@@ -1353,7 +1280,7 @@ def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
     elif mode == 'TRK_JOV':
         obsOut = Jovian(obs_temp['target'], obs_temp['intent'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
     else:
-        raise RuntimeError("Invalid mode encountered: %s" % mode)
+        raise RuntimeError(f"Invalid mode encountered: {mode}")
         
     # Add in the alternate phase centers
     if obs_temp['nAlt'] != len(alt_temps):
@@ -1645,7 +1572,7 @@ def parse_idf(filename, verbose=False):
             
             # Keywords that might indicate this is a SDF
             if keyword in ('SESSION_ID', 'SESSION_DRX_BEAM'):
-                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+                raise RuntimeError(f"Invalid keyword encountered: {keyword}")
             
         # Create the final scan
         if obs_temp['id'] != 0:

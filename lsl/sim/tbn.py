@@ -160,31 +160,31 @@ class SimFrame(tbn.Frame):
         # Is the stand number reasonable?
         if stand == 0 or stand > 260:
             if raise_errors:
-                raise ValueError("Invalid stand: '%s'" % stand)
+                raise ValueError(f"Invalid stand: '{stand}'")
             return False
 
         # Is the polarization reasonable?
         if pol not in [0, 1]:
             if raise_errors:
-                raise ValueError("Invalid polarization: '%s'" % tune)
+                raise ValueError(f"Invalid polarization: '{tune}'")
             return False
 
         # Is there data loaded into frame.payload.data?
         if self.payload.data is None:
             if raise_errors:
-                raise ValueError("Invalid data payload: '%s'" % self.payload.data)
+                raise ValueError(f"Invalid data payload: '{self.payload.data}'")
             return False
 
         # Does the data length make sense?
         if self.payload.data.shape[0] != 512:
             if raise_errors:
-                raise ValueError("Invalid data length: %i", self.payload.data.shape[0])
+                raise ValueError(f"Invalid data length: {self.payload.data.shape[0]}")
             return False
 
         # Does the data type make sense?
         if self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c':
             if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
+                raise ValueError(f"Invalid data type: '{self.payload.data.dtype.kind}'")
             return False
             
         # If we made it this far, it's valid

@@ -256,15 +256,14 @@ class NECPattern:
                 try:
                     subprocess.check_call(['nec4d', necname, outname])
                 except subprocess.CalledProcessError as e:
-                    raise RuntimeError("Bad return value from nec2++ call : %e" % str(e))       
+                    raise RuntimeError(f"Bad return value from nec2++ call : {str(e)}")       
                 fh, filefreq = open_and_get_nec_freq(outname)
                 if not close_to(filefreq, freq):
                     fh.close()
                     raise ValueError("NEC failed to generate a file with the correct frequency.")
                     
             else:
-                raise ValueError("NEC output file is at a different frequency (%f) than the requested frequency (%f)." % \
-                    (filefreq, freq))
+                raise ValueError(f"NEC output file is at a different frequency ({filefreq}) than the requested frequency ({freq}).")
                     
         #  Now look for RADIATION PATTERN or EXCITATION and read it
         radpat = None

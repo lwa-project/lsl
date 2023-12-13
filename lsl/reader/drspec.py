@@ -389,7 +389,7 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) + getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot add {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
                     temp = getattr(self.payload, attr, None) + numpy.float32(y)
                 setattr(self.payload, attr, temp)
@@ -418,7 +418,7 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) - getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot add {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
                     temp = getattr(self.payload, attr, None) - numpy.float32(y)
                 setattr(self.payload, attr, temp)
@@ -447,7 +447,7 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) * getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
                     temp = getattr(self.payload, attr, None) * numpy.float32(y)
                 setattr(self.payload, attr, temp)
@@ -476,7 +476,7 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) // getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
                     temp = getattr(self.payload, attr, None) // numpy.float32(y)
                 setattr(self.payload, attr, temp)
@@ -505,7 +505,7 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) / getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
                     temp = getattr(self.payload, attr, None) / numpy.float32(y)
                 setattr(self.payload, attr, temp)

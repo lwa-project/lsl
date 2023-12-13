@@ -413,7 +413,7 @@ class VisibilityData(object):
                 for i,d in enumerate(data):
                     if not isinstance(d, VisibilityDataSet):
                         ### Is everybody in the list a VisibilityDataSet?
-                        raise TypeError("Excepted element %i to be a VisibilityDataSet object")
+                        raise TypeError(f"Excepted element {i} to be a VisibilityDataSet object")
                 self._data = data
             elif isinstance(data, VisibilityDataSet):
                 ## Do we have a single VisibilityDataSet?
@@ -546,7 +546,7 @@ class VisibilityData(object):
         if not isinstance(value, VisibilityDataSet):
             raise TypeError("Expected type to be VisibilityDataSet")
         if value.jd in self.jds:
-            raise ValueError("Data for JD %f have already been added" % value.jd)
+            raise ValueError(f"Data for JD {value.jd} have already been added")
         if self.nbaseline > 0 and value.nbaseline != self.nbaseline:
             raise ValueError("Data do not have the expected number of baselines")
         if self.nchan > 0 and value.nchan != self.nchan:

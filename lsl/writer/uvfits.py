@@ -86,7 +86,7 @@ class Uv(WriterBase):
             if overwrite:
                 os.unlink(filename)
             else:
-                raise IOError("File '%s' already exists" % filename)
+                raise IOError(f"File '{filename}' already exists")
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
         
     def set_geometry(self, site, antennas, bits=8):
@@ -102,7 +102,7 @@ class Uv(WriterBase):
         
         # Make sure that we have been passed 2047 or fewer stands
         if len(antennas) > 2047:
-            raise RuntimeError("UVFITS supports up to 2047 antennas only, given %i" % len(antennas))
+            raise RuntimeError(f"UVFITS supports up to 2047 antennas only, given {len(antennas)}")
             
         # Update the observatory-specific information
         self.siteName = site.name

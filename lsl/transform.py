@@ -16,7 +16,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['Time', 'SkyPosition', 'CelestialPosition', 'PlanetaryPosition', 
            'GeographicalPosition', 'PointingDirection']
 __author__ = "Unknown"
@@ -38,7 +38,6 @@ class Time(object):
     utc_mjd (S)       - UTC modified Julian day
     utc_timet (S)     - UTC UNIX timet seconds
     utc_py_date (S)   - UTC python datetime.datetime object
-    utc_ln_date (S)   - UTC libnova astro.date object
     utc_dp (S)        - UTC DP samples at 196 MHz
     utc_mcs           - UTC MCS MJD/MPM pair
     utc_str           - UTC ISO8601 calendar string format
@@ -50,7 +49,6 @@ class Time(object):
 
     # time format types
 
-    FORMAT_LN_DATE    = 'LN_DATE'
     FORMAT_PY_DATE    = 'PY_DATE'
     FORMAT_STR        = 'STR'
     FORMAT_JD         = 'JD'
@@ -59,7 +57,7 @@ class Time(object):
     FORMAT_MCS        = 'MCS'
     FORMAT_TIMET      = 'TIMET'
     
-    known_formats = (FORMAT_LN_DATE, FORMAT_PY_DATE, FORMAT_STR, FORMAT_JD, 
+    known_formats = (FORMAT_PY_DATE, FORMAT_STR, FORMAT_JD, 
     FORMAT_MJD, FORMAT_DP, FORMAT_MCS, FORMAT_TIMET)
     
     # time system types
@@ -81,7 +79,6 @@ class Time(object):
         Create a Time instance, using 'value' as the initial time.
         
         'format' describes the type of 'value'
-            Time.FORMAT_LN_DATE - libnova astro.date class calendar format
             Time.FORMAT_PY_DATE - python datetime.datetime class calendar format
             Time.FORMAT_STR     - ISO 8601 (YYYY-MM-DD hh:mm:ss.s) calendar format 
                                   string 
@@ -98,17 +95,14 @@ class Time(object):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format)
+            raise ValueError(f"unknown format {format}")
             
         if timesys not in self.known_timesys:
-            raise ValueError("unknown timesys %s" % timesys)
+            raise ValueError(f"unknown timesys {timesys}")
         
         # parse init value base on format type
         # time value is held internally as UTC JD float
-        if format == self.FORMAT_LN_DATE:
-            self.utc_ln_date = value
-            
-        elif format == self.FORMAT_PY_DATE:
+        if format == self.FORMAT_PY_DATE:
             self.utc_py_date = value
             
         elif format == self.FORMAT_STR:
@@ -239,24 +233,9 @@ class Time(object):
         self._time = astro.mjd_to_jd(float(mjd) + float(mpm)/86400/1000)
         
     @property
-    def utc_ln_date(self):
-        """
-        Time value formatted as UTC calendar astro.date object.
-        """
-        
-        return astro.get_date(self._time)
-        
-    @utc_ln_date.setter
-    def utc_ln_date(self, value):
-        if not isinstance(value, astro.date):
-            raise TypeError("value must be type astro.date")
-            
-        self._time = astro.get_julian_day(value)
-        
-    @property
     def utc_py_date(self):
         """
-        Time value formattes as UTC calendar datetime.datetime object.
+        Time value formatted as UTC calendar datetime.datetime object.
         """
         
         return self.date_ln_to_py(self.utc_ln_date)
@@ -335,29 +314,6 @@ class Time(object):
             raise TypeError("value must be type int or float")
             
         self._time = astro.tai_to_utc(astro.get_julian_from_timet(int(value)))
-        
-    @staticmethod
-    def date_py_to_ln(pyDate):
-        """
-        Convert python datatime.datetime object into a libnova astro.date
-        object.
-        """
-        
-        lnDate = astro.date(pyDate.year, pyDate.month, pyDate.day, pyDate.hour, pyDate.minute)
-        lnDate.seconds = float(pyDate.second) + (pyDate.microsecond * 1e-6)
-        return lnDate
-        
-    @staticmethod
-    def date_ln_to_py(lnDate):
-        """
-        Convert libnova astro.date object into a python datetime.datetime
-        object.
-        """
-        
-        (usec, sec) = math.modf(lnDate.seconds)
-        pyDate = datetime.datetime(lnDate.years, lnDate.months, lnDate.days,
-            lnDate.hours, lnDate.minutes, int(sec), int(usec * 1e6))
-        return pyDate
 
 
 class SkyPosition(object):
@@ -455,10 +411,10 @@ class CelestialPosition(SkyPosition):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format)
+            raise ValueError(f"unknown format {format}")
             
         if epoch not in self.known_epochs:
-            raise ValueError("unknown epoch %s" % epoch)
+            raise ValueError(f"unknown epoch {epoch}")
             
         self.name = name
         
@@ -475,12 +431,12 @@ class CelestialPosition(SkyPosition):
             if epoch == self.EPOCH_J2000:
                 self.j2000_gal = value
             else:
-                raise ValueError("epoch %s not supported for GAL format" % epoch)
+                raise ValueError(f"epoch {epoch} not supported for GAL format")
         elif format == self.FORMAT_ECL:
             if epoch == self.EPOCH_J2000:
                 self.j2000_ecl = value
             else:
-                raise ValueError("epoch %s not supported for ECL format" % epoch)
+                raise ValueError(f"epoch {epoch} not supported for ECL format")
                 
     def __repr__(self):
         return "%s.%s(%s, name=%s)" % (type(self).__module__, type(self).__name__, repr(self._posn), repr(self.name))
@@ -702,7 +658,7 @@ class GeographicalPosition(object):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format) 
+            raise ValueError(f"unknown format {format}") 
             
         self.name = name
         
@@ -808,10 +764,10 @@ class PointingDirection(object):
         # make surce 'source' and 'site' member are correct type
         
         if (name == 'source') and (not isinstance(value, SkyPosition)):
-            raise TypeError("\'source\' must be type SkyPosition")
+            raise TypeError("'source' must be type SkyPosition")
             
         elif (name == 'site') and (not isinstance(value, GeographicalPosition)):
-            raise TypeError("\'site\' must be type GeographicalPosition")
+            raise TypeError("'site' must be type GeographicalPosition")
             
         object.__setattr__(self, name, value)
         

@@ -51,6 +51,7 @@ import pytz
 import ephem
 import weakref
 import warnings
+from functools import total_ordering
 from datetime import datetime, timedelta
 
 from astropy import units as astrounits
@@ -161,7 +162,7 @@ def parse_time(s, station=lwa1):
     else:
         mtch = _dtRE.match(s)
         if mtch is None:
-            raise ValueError("Unparsable time string: '%s'" % s)
+            raise ValueError(f"Unparsable time string: '{s}'")
         else:
             year = int(mtch.group('year'))
             day = int(mtch.group('day'))
@@ -201,7 +202,7 @@ def parse_time(s, station=lwa1):
                 elif monthName == 'dec':
                     month = 12
                 else:
-                    raise ValueError("Unknown month abbreviation: '%s'" % monthName)
+                    raise ValueError(f"Unknown month abbreviation: '{monthName}'")
                     
             if mtch.group('tz') is None and mtch.group('tzOffset') is None:
                 tz = _UTC
@@ -244,7 +245,7 @@ def parse_time(s, station=lwa1):
                             break
                             
                     if not tzFound:
-                        raise ValueError("Unknown time zone: '%s'" % tzName)
+                        raise ValueError(f"Unknown time zone: '{tzName}'")
                         
             if tz == 'LST':
                 # Deal with sidereal times...
@@ -772,13 +773,14 @@ class Project(object):
         session and write it to the provided filename."""
         
         if os.path.exists(filename) and not overwrite:
-            raise RuntimeError("'%s' already exists" % filename)
+            raise RuntimeError(f"'{filename}' already exists")
             
         output = self.render(session=session, verbose=verbose)
         with open(filename, 'w') as fh:
             fh.write(output)
 
 
+@total_ordering
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
@@ -903,7 +905,7 @@ class Observation(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
-            raise ValueError("Invalid value for RA '%.6f' hr" % value)
+            raise ValueError(f"Invalid value for RA '{value:.6f}' hr")
         self._ra = value
         
     @property
@@ -921,7 +923,7 @@ class Observation(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
-            raise ValueError("Invalid value for dec. '%+.6f' deg" % value)
+            raise ValueError(f"Invalid value for dec. '{dec:+.6f}' deg")
         self._dec = value
         
     @property
@@ -1071,31 +1073,7 @@ class Observation(object):
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Observation):
@@ -1103,15 +1081,7 @@ class Observation(object):
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Observation):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
 class TBW(Observation):
@@ -1319,7 +1289,7 @@ class DRX(Observation):
         
         # Validate
         if stand < 0 or stand > LWA_MAX_NSTD:
-            raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
+            raise ValueError(f"Stand number {stand} is out of range: 0 <= stand <= {LWA_MAX_NSTD}")
         if beam_gain < 0.0 or beam_gain > 1.0:
             raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0")
         if dipole_gain < 0.0 or dipole_gain > 1.0:
@@ -1650,7 +1620,7 @@ class Stepped(Observation):
         
         # Validate
         if stand < 0 or stand > LWA_MAX_NSTD:
-            raise ValueError("Stand number %i is out of range: 0 <= stand <= %i" % (stand, LWA_MAX_NSTD))
+            raise ValueError(f"Stand number {stand} is out of range: 0 <= stand <= {LWA_MAX_NSTD}")
         if beam_gain < 0.0 or beam_gain > 1.0:
             raise ValueError("Beam BAM gain is out of range: 0.0 <= beam_gain <= 1.0")
         if dipole_gain < 0.0 or dipole_gain > 1.0:
@@ -1876,10 +1846,10 @@ class BeamStep(object):
                 value = value.to('deg').value
         if self.is_radec:
             if value < 0.0 or value >=24.0:
-                raise ValueError("Invalid value for RA '%.6f' hr" % value)
+                raise ValueError(f"Invalid value for RA '{value:.6f}' hr")
         else:
             if value < 0.0 or value >= 360.0:
-                raise ValueError("Invalid value for azimuth '%.6f' deg" % value)
+                raise ValueError(f"Invalid value for azimuth '{value:.6f}' deg")
         self._c1 = value
         
     @property
@@ -1898,10 +1868,10 @@ class BeamStep(object):
             value = AstroAngle(value).to('deg').value
         if self.is_radec:
             if value < -90.0 or value > 90.0:
-                raise ValueError("Invalid value for dec. '%.6f' deg" % value)
+                raise ValueError(f"Invalid value for dec. '{value:+.6f}' deg")
         else:
             if value < 0.0 or value > 90.0:
-                raise ValueError("Invalid value for elevation '%.6f' deg" % value)
+                raise ValueError(f"Invalid value for elevation '{value:.6f}' deg")
         self._c2 = value
         
     @property
@@ -2072,6 +2042,7 @@ class BeamStep(object):
             return False
 
 
+@total_ordering
 class Session(object):
     """Class to hold all of the observations in a session."""
     
@@ -2144,7 +2115,7 @@ class Session(object):
         
         value = int(value)
         if value not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
-            raise ValueError("Invalid DR spectrometer channel count '%i'" % value)
+            raise ValueError(f"Invalid DR spectrometer channel count '{value}'")
         self.spcSetup[0] = value
         
     @property
@@ -2160,7 +2131,7 @@ class Session(object):
         
         value = int(value)
         if value not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
-            raise ValueError("Invalid DR spectrometer integration count '%i'" % value)
+            raise ValueError(f"Invalid DR spectrometer integration count '{value}'")
         self.spcSetup[1] = value
         
     @property
@@ -2183,7 +2154,7 @@ class Session(object):
         if value not in (None, '', 
                          '{Stokes=XXYY}', '{Stokes=CRCI}', '{Stokes=XXCRCIYY}', 
                          '{Stokes=I}', '{Stokes=IV}', '{Stokes=IQUV}'):
-            raise ValueError("Invalid DR spectrometer mode '%s'" % value)
+            raise ValueError(f"Invalid DR spectrometer mode '{value}'")
         self.spcMetatag = value
         
     def set_mib_record_interval(self, component, interval):
@@ -2197,7 +2168,7 @@ class Session(object):
         """
         
         if component not in self.recordMIB.keys():
-               raise KeyError("Unknown subsystem '%s'" % component)
+               raise KeyError(f"Unknown subsystem '{component}'")
         self.recordMIB[component] = int(interval)
         
     def set_mib_update_interval(self, component, interval):
@@ -2211,7 +2182,7 @@ class Session(object):
         """
         
         if component not in self.updateMIB.keys():
-               raise KeyError("Unknown subsystem '%s'" % component)
+               raise KeyError(f"Unknown subsystem '{component}'")
         self.updateMIB[component] = int(interval)
         
     @property
@@ -2224,7 +2195,7 @@ class Session(object):
         'USB Harddrives'."""
         
         if method not in ('UCF', 'DRSU', 'USB Harddrives'):
-            raise ValueError("Unknown data return method: %s" % method)
+            raise ValueError(f"Unknown data return method: {method}")
             
         self.dataReturnMethod = method
         
@@ -2345,40 +2316,7 @@ class Session(object):
             startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Session):
@@ -2389,18 +2327,7 @@ class Session(object):
             startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Session):
-            self.observations.sort()
-            other.observations.sort()
-            
-            startSelf = self.observations[0].mjd + self.observations[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.observations[0].mjd + other.observations[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
 def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
@@ -2483,7 +2410,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
                     
             obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
     else:
-        raise RuntimeError("Invalid mode encountered: %s" % mode)
+        raise RuntimeError(f"Invalid mode encountered: {mode}")
         
     # Set the beam-dipole mode information (if applicable)
     if obs_temp['beamDipole'] is not None:
@@ -2922,7 +2849,7 @@ def parse_sdf(filename, verbose=False):
             
             # Keywords that might indicate this is for ADP-based stations/actually an IDF
             if keyword in ('OBS_TBF_SAMPLES', 'RUN_ID'):
-                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+                raise RuntimeError(f"Invalid keyword encountered: {keyword}")
             
         # Create the final observation
         if obs_temp['id'] != 0:

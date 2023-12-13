@@ -130,7 +130,7 @@ class BusyIndicatorPlus(BusyIndicator):
         BusyIndicator.__init__(self, message, interval, 0, color)
         
         if style not in self._styles:
-            raise ValueError("Unknown BusyIndicatorPlus style '%s'" % style)
+            raise ValueError(f"Unknown BusyIndicatorPlus style '{style}'")
         self.style = style
         self.width = width
         self._dir = 1

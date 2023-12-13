@@ -341,7 +341,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):
-        raise RuntimeError("Unknown character mode: '%s'" % char_mode)
+        raise RuntimeError(f"Unknown character mode: '{char_mode}'")
     if char_mode == 'str':
         baseCharType = ctypes.c_char
     else:
@@ -368,7 +368,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         ## the next structure variable
         mtch = _cDecRE.search(line)
         if mtch is None:
-            raise RuntimeError("Unparseable line: '%s'" % line)
+            raise RuntimeError(f"Unparseable line: '{line}'")
         
         dec = mtch.group('type')
         dec = dec.rstrip()
@@ -400,7 +400,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
                 except KeyError:
                     d4 = eval(d4)
         except NameError:
-            raise RuntimeError("Unknown value in array index: '%s'" % line)
+            raise RuntimeError(f"Unknown value in array index: '{line}'")
         
         ## Basic data types
         if dec in ('signed int', 'int'):
@@ -430,7 +430,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         elif dec == 'unsigned char':
             typ = ctypes.c_ubyte
         else:
-            raise RuntimeError("Unparseable line: '%s' -> type: %s, name: %s, dims: %s, %s, %s %s" % (line, dec, name, d1, d2, d3, d4))
+            raise RuntimeError(f"Unparseable line: '{line}' -> type: {dec}, name: {name}, dims: {d1}, {d2}, {d3}, {d4}")
         
         ## Array identification and construction
         dims2[name] = []
@@ -453,10 +453,10 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         ## Append
         fields.append( (name, typ) )
     
-    # ctypes creation - endianess
+    # ctypes creation - endianness
     endianness = endianness.lower()
     if endianness not in ('little', 'big', 'network', 'native'):
-        raise RuntimeError("Unknown endianness: '%s'" % endianness)
+        raise RuntimeError(f"Unknown endianness: '{endianness}'")
     
     if endianness == 'little':
         endianness = ctypes.LittleEndianStructure

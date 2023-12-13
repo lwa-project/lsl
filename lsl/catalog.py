@@ -127,7 +127,7 @@ class Catalog(Mapping):
         
         entry = self.lookup(key)
         if entry is None:
-            raise KeyError("name %s not in catalog" % repr(key))
+            raise KeyError(f"name {key} not in catalog")
         return entry
         
     def __iter__(self):
@@ -195,7 +195,7 @@ class LWA_Catalog(Catalog):
                     decMinutes = int(line[25:27], 10)
                     decSeconds = float(line[28:32])
                 except ValueError as err:
-                    raise RuntimeError("file %s, line %d incorectly formated: \'%s\' : %s]" % (fileName, lineNum, line, err))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated: '{line}' : {err}]")
                     
                 name = name.rstrip()           
                 
@@ -379,7 +379,7 @@ class PKS_Catalog(Catalog):
                     decMinutes = int(line[37:39])
                     decSeconds = int(line[40:42])
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
                     
                 ra = astro.hms(raHours, raMinutes, raSeconds)
                 if decSign == '-':
@@ -443,7 +443,7 @@ class PKS90_Catalog(Catalog):
                     decMinutes = int(line[27:29])
                     decSeconds = float(line[30:34])
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
                     
                 ra = astro.hms(raHours, raMinutes, raSeconds)
                 if decSign == '-':
@@ -502,7 +502,7 @@ class C3C_Catalog(Catalog):
                     decDegrees = int(line[28:30])
                     decMinutes = float(line[31:35])
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName} line {lineNum} incorectly formated [{line}]")
                     
                 name = ('3C' + name.strip())         
                 
@@ -557,7 +557,7 @@ class C4C_Catalog(Catalog):
                     decMinutes = float(line[26:30])
                     alias = line[64:-1]
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
                     
                 name = name.strip()        
                 name = ('4C' + name)
@@ -690,7 +690,7 @@ class CatalogFactory(object):
         
         # check parameters
         if name not in list(klass.catalog_class_map.keys()):
-            raise ValueError("unknown catalog \'%s\'" % name)
+            raise ValueError(f"unknown catalog '{name}'")
             
         # try to find an already created instance
         # if not found, create a new instance and cache

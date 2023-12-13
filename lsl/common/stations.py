@@ -146,7 +146,7 @@ class LWAStationBase(object):
             raise TypeError("Expected a list")
         for i,antenna in enumerate(antennas):
             if not isinstance(antenna, Antenna):
-                raise TypeError("Expected index %i to be an Antenna" % i)
+                raise TypeError(f"Expected index {i} to be an Antenna")
         self._antennas = antennas
         
         # Fix the sorting
@@ -507,13 +507,13 @@ class Antenna(object):
         if isinstance(other, Antenna):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Antenna):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def response(self, dB=False):
         """
@@ -574,13 +574,13 @@ class Stand(object):
         if isinstance(other, Stand):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Stand):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __str__(self):
         return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
@@ -604,7 +604,7 @@ class Stand(object):
         elif key == 2:
             return self.z
         else:
-            raise ValueError("Subscript %i out of range" % key)
+            raise ValueError(f"Subscript {key} out of range")
             
     def __setitem__(self, key, value):
         if key == 0:
@@ -614,7 +614,7 @@ class Stand(object):
         elif key == 2:
             self.z = float(value)
         else:
-            raise ValueError("Subscript %i out of range" % key)
+            raise ValueError(f"Subscript {key} out of range")
             
     def __add__(self, std):
         try:
@@ -686,13 +686,13 @@ class FEE(object):
         if isinstance(other, FEE):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, FEE):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def response(self, dB=False):
         """
@@ -766,13 +766,13 @@ class Cable(object):
         if isinstance(other, Cable):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Cable):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def delay(self, frequency=49e6, ns=False):
         """Get the delay associated with the cable in second (or nanoseconds 
@@ -892,7 +892,7 @@ class ARX(object):
         if isinstance(other, ARX):
             return self.id == other.id and self.channel == other.channel
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def response(self, filter='split', dB=True):
         """
@@ -929,7 +929,7 @@ class ARX(object):
         try:
             dataDict = numpy.load(filename)
         except IOError:
-            raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
+            raise RuntimeError(f"Could not find the response data for ARX board #{self.id}, channel {self.channel}")
             
         freq = dataDict['freq']
         data = dataDict['data']
@@ -961,7 +961,7 @@ class ARX(object):
                 ## Catch LWA1 boards
                 return (freq, data[:,1])
         else:
-            raise ValueError("Unknown ARX filter '%s'" % filter)
+            raise ValueError(f"Unknown ARX filter '{filter}'")
 
 
 class LSLInterface(object):
@@ -1013,7 +1013,7 @@ class LSLInterface(object):
         except KeyError:
             value = getattr(self, which)
             if value is None:
-                raise RuntimeError("Unknown module for interface type '%s'" % which)
+                raise RuntimeError(f"Unknown module for interface type '{which}'")
             modSpec = importlib.util.find_spec(value, [os.path.dirname(__file__)])
             modInfo = importlib.util.module_from_spec(modSpec)
             modSpec.loader.exec_module(modInfo)
@@ -1707,7 +1707,7 @@ def parse_ssmif(filename):
     elif ext == '.txt':
         ssmifDataDict = _parse_ssmif_text(filename)
     else:
-        raise ValueError("Unknown file extension '%s', cannot tell if it is text or binary" % ext)
+        raise ValueError(f"Unknown file extension '{ext}', cannot tell if it is text or binary")
         
     # Unpack the dictionary into the current variable scope
     ## Site

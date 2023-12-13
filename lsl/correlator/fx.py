@@ -58,7 +58,7 @@ def pol_to_pols(pol):
         elif p in ('Y', 'L'):
             out.append(1)
         else:
-            raise RuntimeError("Unknown polarization code '%s'" % pol)
+            raise RuntimeError(f"Unknown polarization code '{pol}'")
         
     return out
 

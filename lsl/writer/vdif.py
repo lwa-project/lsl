@@ -49,7 +49,7 @@ class Frame(object):
         
         # Validate
         if self.bits not in (1, 2, 4, 8):
-            raise ValueError("Unsupported output bitdepth: %i" % self.bits)
+            raise ValueError(f"Unsupported output bitdepth: {self.bits}")
             
         # Convert the time from UNIX to epoch and make the data ready to 
         # be written to the disk.

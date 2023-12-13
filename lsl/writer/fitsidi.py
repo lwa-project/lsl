@@ -20,6 +20,7 @@ import re
 import math
 import ephem
 import numpy
+from functools import total_ordering
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight
 from astropy.utils import iers
@@ -110,6 +111,7 @@ class WriterBase(object):
             self.sideBand = 1
             self.baseBand = 0
             
+    @total_ordering
     class _UVData(object):
         """
         Represents one UV visibility data set for a given observation time.
@@ -130,31 +132,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID == oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-                
-        def __ne__(self, other):
-            if isinstance(other, WriterBase._UVData):
-                sID = (self.obsTime,  abs(self.pol))
-                oID = (other.obsTime, abs(other.pol)   )
-                return sID != oID
-            else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-                
-        def __gt__(self, other):
-            if isinstance(other, WriterBase._UVData):
-                sID = (self.obsTime,  abs(self.pol))
-                oID = (other.obsTime, abs(other.pol)   )
-                return sID > oID
-            else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-                
-        def __ge__(self, other):
-            if isinstance(other, WriterBase._UVData):
-                sID = (self.obsTime,  abs(self.pol))
-                oID = (other.obsTime, abs(other.pol)   )
-                return sID >= oID
-            else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def __lt__(self, other):
             if isinstance(other, WriterBase._UVData):
@@ -162,15 +140,7 @@ class WriterBase(object):
                 oID = (other.obsTime, abs(other.pol)   )
                 return sID < oID
             else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-                
-        def __le__(self, other):
-            if isinstance(other, WriterBase._UVData):
-                sID = (self.obsTime,  abs(self.pol))
-                oID = (other.obsTime, abs(other.pol)   )
-                return sID <= oID
-            else:
-                raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+                raise TypeError(f"Unsupported type: '{type(other).__name__}'")
                 
         def time(self):
             return self.obsTime
@@ -240,7 +210,7 @@ class WriterBase(object):
         elif isinstance(ref_time, str):
             # Make sure that the string times are of the correct format
             if re.match(timeRE, ref_time) is None:
-                raise RuntimeError("Malformed date/time provided: %s" % ref_time)
+                raise RuntimeError(f"Malformed date/time provided: {ref_time}")
             else:
                 ref_time = ref_time.replace(' ', 'T', 1)
         else:
@@ -364,7 +334,7 @@ class WriterBase(object):
                     'TELESCOP', 'OBSERVER', 'PROJECT', 'ORIGIN', 'CORRELAT', 'FXCORVER', 
                     'LWATYPE', 'LWAMAJV', 'LWAMINV', 'DATE-OBS', 'DATE-MAP', 
                     'COMMENT', 'HISTORY'):
-            raise ValueError("Cannot set a value for '%s'" % name)
+            raise ValueError(f"Cannot set a value for '{name}'")
         if len(name) > 8:
             raise ValueError("Keyword name cannot be more than eight characters long")
             
@@ -444,7 +414,7 @@ class Idi(WriterBase):
             if overwrite:
                 os.unlink(filename)
             else:
-                raise IOError("File '%s' already exists" % filename)
+                raise IOError(f"File '{filename}' already exists")
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
         
     def set_geometry(self, site, antennas, bits=8):
@@ -460,7 +430,7 @@ class Idi(WriterBase):
         
         # Make sure that we have been passed 255 or fewer stands
         if len(antennas) > self._MAX_ANTS:
-            raise RuntimeError("FITS IDI supports up to %s antennas only, given %i" % (self._MAX_ANTS, len(antennas)))
+            raise RuntimeError(f"FITS IDI supports up to {self._MAX_ANTS} antennas only, given {len(antennas)}")
             
         # Update the observatory-specific information
         self.siteName = site.name

@@ -37,7 +37,7 @@ def regrid(x, y, newx, allow_extrapolation = False, method = 'spline'):
     elif method == 'spline':
         return _regrid_spline(x, y, newx, allow_extrapolation)
     else:
-        raise ValueError("interp method '%s' not recognized" % method)
+        raise ValueError(f"interp method '{method}' not recognized")
 
 
 def _regrid_linear(x, y, newx, allow_extrapolation=False):
@@ -49,9 +49,9 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
         warnings.warn(colorfy("{{%yellow allow_extrapolation=True not honored for regrid_linear"), RuntimeWarning)
         
     if newx.min() < x.min():
-        raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
+        raise ValueError(f"x.min({x.min()}) must be smaller than newx.min({newx.min()})")
     if newx.max() > x.max():
-        raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
+        raise ValueError(f"x.max({x.max()}) must be larger than newx.max({newx.max()})")
         
     return numpy.interp(newx, x, y)
 
@@ -65,9 +65,9 @@ def _regrid_spline(x, y, newx, allow_extrapolation=False):
 
     if not allow_extrapolation:
         if newx.min() < x.min():
-            raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
+            raise ValueError(f"x.min({x.min()}) must be smaller than newx.min({newx.min()})")
         if newx.max() > x.max():
-            raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
+            raise ValueError(f"x.max({x.max()}) must be larger than newx.max({newx.max()})")
     spl = interpolate.splrep(x, y)
     newy = interpolate.splev(newx, spl)
     
@@ -341,7 +341,7 @@ def gaussparams(data, x=None, y=None):
         
     else:
         # N-D data
-        raise ValueError("Cannot estimate parameters for %i-D" % (len(data.shape),))        
+        raise ValueError(f"Cannot estimate parameters for {len(data.shape)}-D")        
 
 
 def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):

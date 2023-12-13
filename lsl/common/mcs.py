@@ -344,7 +344,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):
-        raise RuntimeError("Unknown character mode: '%s'" % char_mode)
+        raise RuntimeError(f"Unknown character mode: '{char_mode}'")
     if char_mode == 'str':
         baseCharType = ctypes.c_char
     else:
@@ -371,7 +371,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         ## the next structure variable
         mtch = _cDecRE.search(line)
         if mtch is None:
-            raise RuntimeError("Unparseable line: '%s'" % line)
+            raise RuntimeError(f"Unparseable line: '{line}'")
         
         dec = mtch.group('type')
         dec = dec.rstrip()
@@ -403,7 +403,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
                 except KeyError:
                     d4 = eval(d4)
         except NameError:
-            raise RuntimeError("Unknown value in array index: '%s'" % line)
+            raise RuntimeError(f"Unknown value in array index: '{line}'")
         
         ## Basic data types
         if dec in ('signed int', 'int'):
@@ -433,7 +433,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         elif dec == 'unsigned char':
             typ = ctypes.c_ubyte
         else:
-            raise RuntimeError("Unparseable line: '%s' -> type: %s, name: %s, dims: %s, %s, %s %s" % (line, dec, name, d1, d2, d3, d4))
+            raise RuntimeError(f"Unparseable line: '{line}' -> type: {dec}, name: {name}, dims: {d1}, {d2}, {d3}, {d4}")
         
         ## Array identification and construction
         dims2[name] = []
@@ -456,10 +456,10 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         ## Append
         fields.append( (name, typ) )
     
-    # ctypes creation - endianess
+    # ctypes creation - endianness
     endianness = endianness.lower()
     if endianness not in ('little', 'big', 'network', 'native'):
-        raise RuntimeError("Unknown endianness: '%s'" % endianness)
+        raise RuntimeError(f"Unknown endianness: '{endianness}'")
     
     if endianness == 'little':
         endianness = ctypes.LittleEndianStructure
@@ -654,7 +654,7 @@ def status_to_string(code):
     elif code == 3:
         return "OK"
     else:
-        raise ValueError("Unknown status code '%i'" % code)
+        raise ValueError(f"Unknown status code '{code}'")
 
 
 def summary_to_string(code):
@@ -677,7 +677,7 @@ def summary_to_string(code):
     elif code == 6:
         return "Unknown"
     else:
-        raise ValueError("Unknown summary code '%i'" % code)
+        raise ValueError(f"Unknown summary code '{code}'")
 
 
 def sid_to_string(sid):
@@ -708,7 +708,7 @@ def sid_to_string(sid):
     elif sid == 19:
         return "ADP"
     else:
-        raise ValueError("Invalid sid code %i" % sid)
+        raise ValueError(f"Invalid sid code {sid}")
 
 
 def cid_to_string(cid):
@@ -801,7 +801,7 @@ def cid_to_string(cid):
     elif cid == 41:
         return "COR"
     else:
-        raise ValueError("Invalid cid code %i" % cid)
+        raise ValueError(f"Invalid cid code {cid}")
 
 
 def mode_to_string(mode):
@@ -826,7 +826,7 @@ def mode_to_string(mode):
     elif mode == 8:
         return "TBF"
     else:
-        raise ValueError("Invalid observing mode %i" % mode)
+        raise ValueError(f"Invalid observing mode {mode}")
 
 
 def flat_to_multi(inputList, dim1, dim2=None, dim3=None, dim4=None):
@@ -850,7 +850,7 @@ def _flat_to_two(inputList, dim1, dim2):
     """
     
     if dim1*dim2 < len(inputList):
-        raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i" % (len(inputList), dim1, dim2))
+        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={dim1} by {dim2}")
     
     outputList = []
     for i in range(dim1):
@@ -871,7 +871,7 @@ def _flat_to_three(inputList, dim1, dim2, dim3):
     """
     
     if dim1*dim2*dim3 < len(inputList):
-        raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i by %i" % (len(inputList), dim1, dim2, dim3))
+        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={dim1} by {dim2} by {dim3}")
     
     outputList = []
     for i in range(dim1):
@@ -893,7 +893,7 @@ def _flat_to_four(inputList, dim1, dim2, dim3, dim4):
     """
     
     if dim1*dim2*dim3*dim4 < len(inputList):
-        raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i by %i by %i" % (len(inputList), dim1, dim2, dim3, dim4))
+        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={dim1} by {dim2} by {dim3} by {dim4}")
     
     outputList = []
     for i in range(dim1):
@@ -1181,7 +1181,7 @@ class MIBEntry(object):
             except struct.error:
                 return 0.0
         else:
-            raise ValueError("Unknown data type '%s'" % dataType)
+            raise ValueError(f"Unknown data type '{dataType}'")
             
     def from_entry(self, value):
         """
@@ -1227,9 +1227,9 @@ class MIBEntry(object):
             raise ValueError("Cannot interpret MIB branch entries")
         try:
             if index[0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
-                raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
+                raise ValueError(f"Entry index '{record.index}' does not appear to be numeric")
         except IndexError:
-            raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
+            raise ValueError(f"Entry index '{record.index}' does not appear to be numeric")
             
         # Basic information
         self.eType = int(record.eType)

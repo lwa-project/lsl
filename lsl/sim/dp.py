@@ -159,7 +159,7 @@ def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filte
     elif mode == 'DRX':
         _basic_drx(fh, stands, nframes, filter=filter, ntuning=ntuning, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     else:
-        raise RuntimeError("Unknown observations mode: %s" % mode)
+        raise RuntimeError(f"Unknown observations mode: {mode}")
 
 
 def _get_antennaarray(station, stands, utime, freqs):
@@ -344,4 +344,4 @@ def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', 
     if mode == 'TBN':
         _point_source_tbn(fh, stands, src, nframes, station=station, central_freq=central_freq, filter=filter, gain=gain, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     else:
-        raise RuntimeError("Unknown observations mode: %s" % mode)
+        raise RuntimeError(f"Unknown observations mode: {mode}")

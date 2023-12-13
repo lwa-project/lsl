@@ -254,7 +254,7 @@ class FrameHeader(FrameHeaderBase):
             fields['vlba_timecode_value'] = True if crcc == crcf else False
             
         else:
-            raise RuntimeError("Unknown extended user data version: %i" % edv)
+            raise RuntimeError(f"Unknown extended user data version: {edv}")
             
         return fields
 

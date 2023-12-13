@@ -116,35 +116,35 @@ class FrameBufferBase(object):
         
         # Input validation
         if mode.upper() not in ('TBN', 'DRX', 'TBF', 'COR', 'VDIF'):
-            raise RuntimeError("Invalid observing mode '%s'" % mode)
+            raise RuntimeError(f"Invalid observing mode '{mode}'")
             
         if mode.upper() == 'TBN':
             for pol in pols:
                 if pol not in (0, 1):
-                    raise RuntimeError("Invalid polarization '%i'" % pol)
+                    raise RuntimeError(f"Invalid polarization '{pol}'")
                     
         elif mode.upper() == 'DRX':
             for tune in tunes:
                 if tune not in (1, 2):
-                    raise RuntimeError("Invalid tuning '%i'" % tune)
+                    raise RuntimeError(f"Invalid tuning '{tune}'")
             for pol in pols:
                 if pol not in (0, 1):
-                    raise RuntimeError("Invalid polarization '%i'" % pol)
+                    raise RuntimeError(f"Invalid polarization '{pol}'")
                     
         elif mode.upper() == 'TBF':
             for chan in chans:
                 if chan not in range(4096):
-                    raise RuntimeError("Invalid start channel '%i'" % chan)
+                    raise RuntimeError(f"Invalid start channel '{chan}'")
                     
         elif mode.upper() == 'COR':
             for chan in chans:
                 if chan not in range(4096):
-                    raise RuntimeError("Invalid start channel '%i'" % chan)
+                    raise RuntimeError(f"Invalid start channel '{chan}'")
             
         else:
             for thread in threads:
                 if thread not in range(1024):
-                    raise RuntimeError("Invalid thread ID '%i'" % thread)
+                    raise RuntimeError(f"Invalid thread ID '{thread}'")
                     
         # The buffer itself
         self.nsegments = nsegments

@@ -142,7 +142,7 @@ def _compute_igrf_coefficents(year, coeffs):
     
     if year < min(coeffs['years']):
         # If the requested year is before 1900 we can't do anything
-        raise RuntimeError("Invalid year %i" % year)
+        raise RuntimeError(f"Invalid year {year}")
     else:
         # Otherwise, figure out the coefficients using a simple linear interpolation 
         # or extrapolation using the secular changes in the model
@@ -575,7 +575,7 @@ def _download_igs(mjd, type='final'):
         long_filename = 'IGS0OPSRAP_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     for fname in (long_filename, filename):
@@ -615,7 +615,7 @@ def _download_jpl(mjd, type='final'):
         filename = 'jprg%03i0.%02ii.Z' % (dayOfYear, year%100)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_url'), year, dayOfYear, filename), filename)
@@ -654,7 +654,7 @@ def _download_emr(mjd, type='final'):
         long_filename = 'EMR0OPSRAP_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     for fname in (long_filename, filename):
@@ -694,7 +694,7 @@ def _download_uqr(mjd, type='final'):
         filename = 'uqrg%03i0.%02ii.Z' % (dayOfYear, year%100)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_url'), year, dayOfYear, filename), filename)
@@ -1265,7 +1265,7 @@ def _load_map(mjd, type='IGS'):
         filenameAltTemplate = '%s_ustec.tar.gz'
         
     else:
-        raise ValueError("Unknown data source '%s'" % type)
+        raise ValueError(f"Unknown data source '{type}'")
         
     try:
         # Is it already in the on-line cache?

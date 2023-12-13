@@ -65,9 +65,9 @@ def calc_delay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
     
     # Make sure the pointing coordinates make sense
     if elevation < 0 or elevation > 90:
-        raise ValueError("Pointing elevation (%.2f deg) is out of range [0, 90]" % elevation)
+        raise ValueError(f"Pointing elevation ({elevation:.2f} deg) is out of range [0, 90]")
     if azimuth < 0 or azimuth > 360:
-        raise ValueError("Pointing azimuth (%.2f deg) is out of range [0, 360]" % azimuth)
+        raise ValueError(f"Pointing azimuth ({azimuth:.2f} deg) is out of range [0, 360]")
         
     # Get the positions of the stands and compute the mean center of the array
     xyz = numpy.zeros((len(antennas),3))

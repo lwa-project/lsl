@@ -520,13 +520,13 @@ class SoftwareDP(object):
         
         # Set the mode and make sure it is valid
         if mode not in self.avaliableModes:
-            raise ValueError("Unknown mode '%s'" % mode)
+            raise ValueError(f"Unknown mode '{mode}'")
         self.mode = mode
         
         # Set the filter and make sure it is valid
         filter = int(filter)
         if filter not in self.avaliableModes[self.mode]:
-            raise ValueError("Unknown or unsupported filter for %s, '%i'" % (self.mode, filter))
+            raise ValueError(f"Unknown or unsupported filter for {self.mode}, '{filter}'")
         self.filter = filter
         
         # Set the tuning frequency and make sure it is valid
@@ -535,7 +535,7 @@ class SoftwareDP(object):
         
         if central_word < (DRX_TUNING_WORD_MIN if self.mode == 'DRX' else TBN_TUNING_WORD_MIN) \
            or central_word > (DRX_TUNING_WORD_MAX if self.mode == 'DRX' else TBN_TUNING_WORD_MAX):
-            raise ValueError("Central frequency of %.2f MHz outside the DP tuning range." % (central_freq/1e6,))
+            raise ValueError(f"Central frequency of {central_freq/1e6:.2f} MHz outside the DP tuning range.")
         self.central_freq = central_freq
         
     def __str__(self):
@@ -547,7 +547,7 @@ class SoftwareDP(object):
         """
         
         if mode not in self.avaliableModes:
-            raise ValueError("Unknown mode '%s'" % mode)
+            raise ValueError(f"Unknown mode '{mode}'")
         self.mode = mode
         
     def set_filter(self, filter):
@@ -558,7 +558,7 @@ class SoftwareDP(object):
         filter = int(filter)
         
         if filter not in self.avaliableModes[self.mode]:
-            raise ValueError("Unknown or unsupported filter for %s, '%i'" % (self.mode, filter))
+            raise ValueError(f"Unknown or unsupported filter for {self.mode}, '{filter}'")
         self.filter = filter
         
     def set_tuning_freq(self, central_freq):
@@ -571,7 +571,7 @@ class SoftwareDP(object):
         
         if central_word < (DRX_TUNING_WORD_MIN if self.mode == 'DRX' else TBN_TUNING_WORD_MIN) \
            or central_word > (DRX_TUNING_WORD_MAX if self.mode == 'DRX' else TBN_TUNING_WORD_MAX):
-            raise ValueError("Central frequency of %.2f MHz outside the DP tuning range." % (central_freq/1e6,))
+            raise ValueError(f"Central frequency of {central_freq/1e6:.2f} MHz outside the DP tuning range.")
         self.central_freq = central_freq
         
     def set_delay_firs(self, channel, coeffs):

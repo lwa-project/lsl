@@ -245,7 +245,7 @@ class BeamAlm(aipy.amp.BeamAlm):
                     temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
-            raise ValueError("Cannot compute response for %s" % str(test.shape))
+            raise ValueError(f"Cannot compute response for {str(test.shape)}")
             
         return temp
 
@@ -304,7 +304,7 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
                     temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
-            raise ValueError("Cannot compute response for %s" % str(test.shape))
+            raise ValueError(f"Cannot compute response for {str(test.shape)}")
             
         return temp
 
@@ -359,7 +359,7 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
                     temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
-            raise ValueError("Cannot compute response for %s" % str(test.shape))
+            raise ValueError(f"Cannot compute response for {str(test.shape)}")
             
         return temp
 
@@ -411,7 +411,7 @@ class Beam(aipy.amp.Beam):
                     temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
-            raise ValueError("Cannot compute response for %s" % str(test.shape))
+            raise ValueError(f"Cannot compute response for {str(test.shape)}")
             
         return temp
 
@@ -477,7 +477,7 @@ class Antenna(aipy.amp.Antenna):
                         temp[:,i,j] = numpy.dot(a, b[:,i,j])
                         
             else:
-                raise ValueError("Cannot dot a (%s) with b (%s)" % (str(a.shape), str(b.shape)))
+                raise ValueError(f"Cannot dot a ({str(a.shape)}) with b ({str(b.shape)})")
             
             return temp
             
@@ -641,10 +641,10 @@ class AntennaArray(aipy.amp.AntennaArray):
             elif src == 'r':
                 return bl
             else:
-                raise ValueError('Unrecognized source:' + src)
+                raise ValueError(f"Unrecognized source: {src}")
         try:
             if src.alt < 0:
-                raise RuntimeError('%s below horizon' % src.src_name)
+                raise RuntimeError(f"{src.src_name} below horizon")
             m = src.map
         except AttributeError:
             if map is None:
