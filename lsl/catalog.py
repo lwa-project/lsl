@@ -617,46 +617,21 @@ class F2FGL_Catalog(Catalog):
             name = str(row.field('Source_Name')).replace(' ', '_')
             ra = float(row.field('RAJ2000'))
             dec = float(row.field('DEJ2000'))
-            entry = CatalogEntry(name, 
-            transform.CelestialPosition((ra, dec), name=name))
+            entry = CatalogEntry(name, transform.CelestialPosition((ra, dec), name=name))
             self.source_map[name] = entry
             
-            alias = str(row.field('0FGL_Name'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('1FGL_Name'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC_GAM1'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC_GAM2'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC1'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC2'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
+            for fieldname in ('0FGL_NAME', '1FGL_NAME', '2FGL_NAME',
+                              'ASSOC_FGL', 'ASSOC_GAM1', 'ASSOC_GAM2', 'ASSOC_GAM3',
+                              'ASSOC1', 'ASSOC2'):
+                try:
+                    alias = str(row.field(fieldname))
+                    if len(alias):
+                        alias = alias.replace(' ', '_')
+                        self.alias_map[alias] = entry
+                        entry.alias_list.append(alias)
+                except KeyError:
+                    pass
+                    
         catFile.close()
 
 
