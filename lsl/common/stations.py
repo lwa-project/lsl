@@ -47,12 +47,12 @@ def geo_to_ecef(lat, lon, elev):
 
 def ecef_to_geo(x, y, z):
     """
-    Convert earth-centered, earth-fixed coordinates to (rad), longitude 
-    (rad), elevation (m) using Bowring's method.
+    Convert earth-centered, earth-fixed coordinates to latitude (rad), longitude 
+    (rad), elevation (m).
     """
     
     el = EarthLocation.from_geocentric(f"{x}m", f"{y}m", f"{z}m")
-    return (el.lon.to('rad').value, lon, el.lat.to('rad').value, el.height.to('m').value)
+    return (el.lat.to('rad').value, lon, el.lon.to('rad').value, el.height.to('m').value)
 
 
 def _build_repr(name, attrs=[]):
@@ -330,7 +330,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             ecefTo = EarthLocation.from_geodetic(f"{locTo.long}rad", f"{locTo.lat}rad", height=f"{locTo.elev}m",
                                                    ellipsoid='WGS84')
         except AttributeError:
-            ecefTo = EarthLocation.from_geodetic(f"{locTo[0]}def", f"{locTo[1]}deg", height=f"{locTo[2]}m",
+            ecefTo = EarthLocation.from_geodetic(f"{locTo[0]}deg", f"{locTo[1]}deg", height=f"{locTo[2]}m",
                                                  ellipsoid='WGS84')
             
         aa = AltAz(location=ecefFrom, obstime=ecefTo.itrs.obstime, pressure=0)
