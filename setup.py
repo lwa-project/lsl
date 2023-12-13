@@ -199,12 +199,12 @@ def get_fingerprint():
     
     filenames = []
     for ext in ('.py', '.so'):
-        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), '*%%s' %% ext)) )
-        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), '*', '*%%s' %% ext)) )
+        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), f"*{{ext}}")) )
+        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), '*', f"*{{ext}}")) )
         
     m = hashlib.md5()
     for filename in filenames:
-        m.update(_get_md5(filename))
+        m.update(_get_md5(filename).encode())
     return m.hexdigest()
 
 version = '{lslVersion}'
