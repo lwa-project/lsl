@@ -386,7 +386,7 @@ def mpm(string):
             try:
                 dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S")
             except ValueError:
-                msg = f"{string} cannot be interpretted as a time string" % string
+                msg = f"{string} cannot be interpretted as a time string"
                 raise ArgumentTypeError(msg)
         mjd, mpm = datetime_to_mjdmpm(dt)
     return mpm
