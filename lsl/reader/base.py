@@ -8,7 +8,7 @@ classes for all of the LSL readers.
 import copy
 import pytz
 import numpy
-import functools import total_ordering
+from functools import total_ordering
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
 
