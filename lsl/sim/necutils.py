@@ -57,6 +57,7 @@ def open_and_get_nec_freq(fname):
         if line.find('STRUCTURE SPECIFICATION') >= 0:
             break
     else:
+        fh.close()
         raise RuntimeError("STRUCTURE SPECIFICATION not found!")
         
     #  Now look for FREQUENCY and get the value
@@ -72,6 +73,7 @@ def open_and_get_nec_freq(fname):
             freq = float(line[line.find(':')+1:].split()[0])
             break
     else:
+        fh.close()
         raise RuntimeError("Frequency value not found")
         
     #print("Found frequency %f MHz" % freq)
