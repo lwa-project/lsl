@@ -233,6 +233,21 @@ class Time(object):
         self._time = astro.mjd_to_jd(float(mjd) + float(mpm)/86400/1000)
         
     @property
+    def utc_ln_date(self):
+        """
+        Time value formatted as UTC calendar astro.date object.
+        """
+
+        return astro.get_date(self._time)
+
+    @utc_ln_date.setter
+    def utc_ln_date(self, value):
+        if not isinstance(value, astro.date):
+            raise TypeError("value must be type astro.date")
+
+        self._time = astro.get_julian_day(value)
+        
+    @property
     def utc_py_date(self):
         """
         Time value formatted as UTC calendar datetime.datetime object.
@@ -314,6 +329,29 @@ class Time(object):
             raise TypeError("value must be type int or float")
             
         self._time = astro.tai_to_utc(astro.get_julian_from_timet(int(value)))
+        
+    @staticmethod
+    def date_py_to_ln(pyDate):
+        """
+        Convert python datatime.datetime object into a libnova astro.date
+        object.
+        """
+
+        lnDate = astro.date(pyDate.year, pyDate.month, pyDate.day, pyDate.hour, pyDate.minute)
+        lnDate.seconds = float(pyDate.second) + (pyDate.microsecond * 1e-6)
+        return lnDate
+
+    @staticmethod
+    def date_ln_to_py(lnDate):
+        """
+        Convert libnova astro.date object into a python datetime.datetime
+        object.
+        """
+
+        (usec, sec) = math.modf(lnDate.seconds)
+        pyDate = datetime.datetime(lnDate.years, lnDate.months, lnDate.days,
+            lnDate.hours, lnDate.minutes, int(sec), int(usec * 1e6))
+        return pyDate
 
 
 class SkyPosition(object):
