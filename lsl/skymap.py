@@ -16,6 +16,10 @@ from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty,
 
 from scipy.interpolate import interp1d
 
+from astropy.coordinates import ICRS, EarthLocation, AltAz
+from astropy import units as AstroUnits
+from astropy.time import Time as AstroTime
+
 from lsl import astro
 from lsl.common.paths import DATA as dataPath
 
@@ -23,7 +27,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__   = '0.4'
+__version__   = '0.5'
 __all__ = ['SkyMapBase', 'SkyMapBase', 'SkyMapGSM', 'SkyMapLFSM', 'ProjectedSkyMap']
 __author__    = 'J. York'
 __maintainer__ = 'Jayce Dowell'
@@ -236,29 +240,12 @@ class ProjectedSkyMap(object):
         
         # Compute the ra and dec locations to a altitude and azimuth. This requires a lat/lon and a time (UTC).
         # Alt and Az are compressed to show only the visible source.
-        ## Extract the RA/dec values
-        ra = self.skymap_object.ra
-        dec = self.skymap_object.dec
-        
-        ## Compute the LST at the lat/lon (hours)
-        lst = astro.get_local_sidereal_time(self.lon, self.time)
-        
-        ## RA -> HA (deg)
-        ha = lst*15.0 - ra
-        
-        ## HA, dec, and lat in degrees to alt and az in radians
-        sinAlt = sin(dec*pi/180)*sin(self.lat*pi/180) + cos(dec*pi/180)*cos(lat*pi/180)*cos(ha*pi/180)
-        sinAlt = clip(sinAlt, -1.0, 1.0)
-        alt = arcsin(sinAlt)
-        cosAz = (sin(dec*pi/180)-sinAlt*sin(self.lat*pi/180))/(cos(alt)*cos(lat*pi/180))
-        cosAz = clip(cosAz, -1.0, 1.0)
-        az = arccos(cosAz)
-        swap = where(sin(ha*pi/180) > 0)
-        az[swap] = 2*pi-az[swap]
-        
-        ## Convert to alt and az to degrees
-        self.alt = alt*180/pi
-        self.az  = az*180/pi
+        sc = ICRS(ra=self.skymap_object.ra*AstroUnits.deg, dec=self.skymap_object.dec*AstroUnits.deg)
+        el = EarthLocation.from_geodetic(lon*AstroUnits.deg, lat*AstroUnits.deg, height=0*AstroUnits.m)
+        aa = AltAz(location=el, obstime=AstroTime(utc_jd, format='jd', scale='utc'))
+        tc = sc.transform_to(aa)
+        self.alt = tc.alt.to('deg').value
+        self.az = tc.az.to('deg').value
         
         # Compress the az/alt so that only the visible sources are available. "
         visibleMask = self.alt > 0.0
