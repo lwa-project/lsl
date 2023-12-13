@@ -5,11 +5,7 @@ import glob
 import tempfile
 import subprocess
 
-from setuptools import setup, Extension
-try:
-    from setuptools import find_namespace_packages
-except ImportError:
-    from setuptools import find_packages as find_namespace_packages
+from setuptools import setup, Extension, find_namespace_packages
 from distutils import log
 from distutils.command.build import build
 try:
@@ -24,13 +20,15 @@ except ImportError:
 try:
     import numpy
 except Exception as e:
-    raise RuntimeError("numpy is required to run setup.py: %s" % str(e))
+    raise RuntimeError(f"numpy is required to run setup.py: {str(e)}")
 
 
 def get_version():
     """Read the VERSION file and return the version number as a string."""
 
-    return open('VERSION').read().strip()
+    with open('VERSION', 'r') as fh:
+        version = fh.read().strip()
+    return version
 
 
 def get_description(filename):
@@ -38,10 +36,9 @@ def get_description(filename):
     section."""
 
     desc = ''
-    fh = open(filename, 'r')
-    lines = fh.readlines()
-    fh.close()
-
+    with open(filename, 'r') as fh:
+        lines = fh.readlines()
+        
     inDescription = False
     for line in lines:
         if line.find('DESCRIPTION') == 0:
@@ -78,8 +75,8 @@ def get_openmp():
     curdir = os.getcwd()
     os.chdir(tmpdir)
     
-    fh = open('test.c', 'w')
-    fh.write(r"""#include <omp.h>
+    with open('test.c', 'w') as fh:
+        fh.write(r"""#include <omp.h>
 #include <stdio.h>
 int main(void) {
 #pragma omp parallel
@@ -87,8 +84,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 return 0;
 }
 """)
-    fh.close()
-    
+        
     ccmd = []
     ccmd.extend( cc )
     ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
