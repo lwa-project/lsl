@@ -8,12 +8,6 @@ of value formats, including:
 .. versionadded:: 1.2.4
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import re
 import ephem
 from argparse import ArgumentTypeError

@@ -2,25 +2,11 @@ import sys
 import numpy
 import unittest
 import contextlib
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
+from io import StringIO
 
 
 __version__ = '0.2'
 __all__ = ['assert_allclose', 'assert_spatially_close', 'SilentVerbose']
-
-
-# Check if unittest has a 'subTest' method.  If it does not add a dummy one
-# to help out Python2.7.
-if not hasattr(unittest.TestCase, "subTest"):
-    @contextlib.contextmanager
-    def subTest(self, msg=None, **params):
-        yield
-        return
-        
-    unittest.TestCase.subTest = subTest
 
 
 def assert_allclose(actual, desired, rtol=1e-01, atol=1e-6, err_msg='', verbose=True):

@@ -2,22 +2,13 @@
 Astronomical utility functions and classes based on libnova library.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import math
 import ephem
 import numpy
 import warnings
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
 from calendar import timegm
 from datetime import datetime
 from functools import total_ordering    

@@ -6,12 +6,6 @@ These errors are currently meant to deal with file I/O problems.
     Removed numpyError and re-enumerated
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 from lsl.misc import telemetry
 telemetry.track_module()
 

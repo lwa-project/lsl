@@ -3,12 +3,6 @@ Module for calculating dispersion delay due to an ionized ISM and performing
 incoherent/coherent dedispersion.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import numpy
 
 from lsl.misc import telemetry

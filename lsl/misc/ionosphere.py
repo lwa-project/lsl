@@ -3,27 +3,16 @@ A collection of utilities for retrieving parameters that may be relevant
 for ionospheric corrections.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
+import sys
 import gzip
 import numpy
 import socket
 import tarfile
 import warnings
 import subprocess
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from io import StringIO
+from urllib.request import urlopen
 from datetime import datetime, timedelta
 from ftplib import FTP_TLS, error_perm as FTP_ERROR
 

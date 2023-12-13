@@ -26,12 +26,6 @@ get_thread_count
   threads are present in the file.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import warnings
 from datetime import datetime
 

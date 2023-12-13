@@ -46,12 +46,6 @@ which takes a dictionary of visibilities and returns and aipy.im.ImgW object.
     function to be the Gaussian full width at half maximum in degrees
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import aipy
 import math

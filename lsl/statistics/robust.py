@@ -19,12 +19,6 @@ For additional information about the original IDL routines, see:
 http://idlastro.gsfc.nasa.gov/contents.html#C17
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 import numpy
 from numpy.polynomial.polynomial import polyfit as npp_polyfit, polyval as npp_polyval

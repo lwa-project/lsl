@@ -3,12 +3,6 @@ Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM)
 files (as defined in MCS0031, v5).
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 from datetime import datetime
 
 from lsl.common.mcs import summary_to_string, parse_c_struct, flat_to_multi, \

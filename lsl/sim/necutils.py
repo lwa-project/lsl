@@ -9,12 +9,6 @@ dipoles.  See the `README.NEC` file included in the LSL data directory for
 more information about what is included.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
 from lsl.misc.mathutils import regrid
 from lsl.common.color import colorfy

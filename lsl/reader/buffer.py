@@ -21,12 +21,6 @@ Buffer for dealing with out-of-order/missing frames.
     Added support for the LWA-SV TBF and COR modes
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import abc
 import copy
 from functools import cmp_to_key

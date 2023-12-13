@@ -2,12 +2,6 @@
 Module to simulate observations made with the DP system.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import time
 import numpy
 from aipy import coord as aipycoord

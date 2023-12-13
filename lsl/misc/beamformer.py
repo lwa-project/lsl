@@ -4,12 +4,6 @@ sample delays for TBW time series data (int_delay_and_sum) and phase-and-sum
 beamforming for TBN time series data (delayAndSum).
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import aipy

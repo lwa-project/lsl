@@ -15,12 +15,6 @@ filters.
     filters
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import numpy
 from scipy.signal import freqz
 from scipy.interpolate import interp1d

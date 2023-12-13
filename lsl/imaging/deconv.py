@@ -2,12 +2,6 @@
 Deconvolution support for images made with :func:`lsl.imaging.utils.build_gridded_image`.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import numpy
 from aipy.coord import eq2radec, top2azalt
 from aipy.fit import RadioFixedBody

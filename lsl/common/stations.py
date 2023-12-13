@@ -2,18 +2,9 @@
 Module for creating object oriented representations of the LWA stations.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
-try:
-    import importlib.util
-except ImportError:
-    import imp
+import importlib.util
 import numpy
 import ephem
 import struct
@@ -1023,17 +1014,12 @@ class LSLInterface(object):
             value = getattr(self, which)
             if value is None:
                 raise RuntimeError("Unknown module for interface type '%s'" % which)
-            try:
-                modSpec = importlib.util.find_spec(value, [os.path.dirname(__file__)])
-                modInfo = importlib.util.module_from_spec(modSpec)
-                modSpec.loader.exec_module(modInfo)
-                self._cache[which] = modInfo
-                if hasattr(modSpec.loader, 'file'):
-                    modSpec.loader.file.close()
-            except NameError:
-                modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
-                self._cache[which] = imp.load_module(value, modInfo)
-                modInfo[0].close()
+            modSpec = importlib.util.find_spec(value, [os.path.dirname(__file__)])
+            modInfo = importlib.util.module_from_spec(modSpec)
+            modSpec.loader.exec_module(modInfo)
+            self._cache[which] = modInfo
+            if hasattr(modSpec.loader, 'file'):
+                modSpec.loader.file.close()
                 
         return self._cache[which]
 

@@ -2,9 +2,6 @@
 Module to make a blinking ASCII busy indicator.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-
 import sys
 import time
 import threading
@@ -226,4 +223,3 @@ class BusyIndicatorPlus(BusyIndicator):
             sys.stdout.flush()
             
             time.sleep(self.interval)
-

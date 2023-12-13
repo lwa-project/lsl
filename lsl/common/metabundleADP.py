@@ -4,12 +4,6 @@ it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.
 and :class:`lsl.common.sdm.SDM`.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
 import copy
@@ -17,12 +11,12 @@ import glob
 import shutil
 import tarfile
 import tempfile
+from functools import lru_cache
 from datetime import datetime, timedelta
 
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
 from lsl.common.adp import word_to_freq, fS
-from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
 
 from lsl.misc import telemetry

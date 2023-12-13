@@ -2,13 +2,7 @@
 Time and position transform objects.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-
-try:
-    from collections.abc import Sequence as SequenceABC
-except ImportError: 
-    from collections import Sequence as SequenceABC
+from collections.abc import Sequence as SequenceABC
 import copy
 import datetime
 import math

@@ -8,12 +8,6 @@ This module is based on:
   * Nita & Gary (2010, MNRAS 406, L60)
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import numpy
 
 from scipy.special import erf
