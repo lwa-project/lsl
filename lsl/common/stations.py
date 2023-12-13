@@ -10,7 +10,8 @@ import ephem
 import struct
 from textwrap import fill as tw_fill
 from functools import total_ordering
-    
+
+from astropy.coordinates import EarthLocation, AltAz
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
@@ -39,15 +40,9 @@ def geo_to_ecef(lat, lon, elev):
     centered, earth-fixed coordinates.
     """
     
-    WGS84_a = 6378137.00000000
-    WGS84_b = 6356752.31424518
-    N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
-    
-    x = (N+elev)*numpy.cos(lat)*numpy.cos(lon)
-    y = (N+elev)*numpy.cos(lat)*numpy.sin(lon)
-    z = ((WGS84_b**2/WGS84_a**2)*N+elev)*numpy.sin(lat)
-    
-    return (x, y, z)
+    el = EarthLocation.from_geodetic(f"{lon}rad", f"{lat}rad", height=f"{elev}m",
+                                     ellipsoid='WGS84')
+    return (el.x.to('m').value, el.y.to('m').value, el.z.to('m').value)
 
 
 def ecef_to_geo(x, y, z):
@@ -56,28 +51,8 @@ def ecef_to_geo(x, y, z):
     (rad), elevation (m) using Bowring's method.
     """
     
-    WGS84_a = 6378137.00000000
-    WGS84_b = 6356752.31424518
-    e2 = (WGS84_a**2 - WGS84_b**2) / WGS84_a**2
-    ep2 = (WGS84_a**2 - WGS84_b**2) / WGS84_b**2
-    
-    # Distance from rotation axis
-    p = numpy.sqrt(x**2 + y**2)
-    
-    # Longitude
-    lon = numpy.arctan2(y, x)
-    
-    # Latitude (using one iteration of Bowring's method)
-    psi = numpy.arctan2(WGS84_a*z, WGS84_b*p)
-    num = z + WGS84_b*ep2*numpy.sin(psi)**3
-    den = p - WGS84_a*e2*numpy.cos(psi)**3
-    lat = numpy.arctan2(num, den)
-    
-    # Elevation
-    N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
-    elev = p / numpy.cos(lat) - N
-    
-    return lat, lon, elev
+    el = EarthLocation.from_geocentric(f"{x}m", f"{y}m", f"{z}m")
+    return (el.lon.to('rad').value, lon, el.lat.to('rad').value, el.height.to('m').value)
 
 
 def _build_repr(name, attrs=[]):
@@ -332,26 +307,11 @@ class LWAStation(ephem.Observer, LWAStationBase):
         in meter along the east, north, and vertical directions.
         """
         
-        ecefFrom = self.geocentric_location
-        try:
-            ecefTo = locTo.geocentric_location
-        except AttributeError:
-            ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
-            
-        ecefFrom = numpy.array(ecefFrom)
-        ecefTo = numpy.array(ecefTo)
         
-        rho = ecefTo - ecefFrom
-        rot = numpy.array([[ numpy.sin(self.lat)*numpy.cos(self.long), numpy.sin(self.lat)*numpy.sin(self.long), -numpy.cos(self.lat)], 
-                        [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
-                        [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
-        sez = numpy.dot(rot, rho)
-        
-        # Convert from south, east, zenith to east, north, zenith
-        enz = 1.0*sez[[1,0,2]]
-        enz[1] *= -1.0
-        
-        return enz
+        az, alt, dist = self.get_pointing_and_distance(locTo)
+        return numpy.array([numpy.cos(az)*numpy.cos(alt),
+                            numpy.sin(az)*numpy.cos(alt),
+                            numpy.sin(alt)])*dist
         
     def get_pointing_and_distance(self, locTo):
         """
@@ -364,26 +324,19 @@ class LWAStation(ephem.Observer, LWAStationBase):
             Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = self.geocentric_location
+        ecefFrom = EarthLocation.from_geodetic(f"{self.long}rad", f"{self.lat}rad", height=f"{self.elev}m",
+                                               ellipsoid='WGS84')
         try:
-            ecefTo = locTo.geocentric_location
+            ecefTo = EarthLocation.from_geodetic(f"{locTo.long}rad", f"{locTo.lat}rad", height=f"{locTo.elev}m",
+                                                   ellipsoid='WGS84')
         except AttributeError:
-            ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
+            ecefTo = EarthLocation.from_geodetic(f"{locTo[0]}def", f"{locTo[1]}deg", height=f"{locTo[2]}m",
+                                                 ellipsoid='WGS84')
             
-        ecefFrom = numpy.array(ecefFrom)
-        ecefTo = numpy.array(ecefTo)
+        aa = AltAz(location=ecefFrom, obstime=ecefTo.itrs.obstime, pressure=0)
+        pd = ecefTo.itrs.transform_to(aa)
         
-        rho = ecefTo - ecefFrom
-        rot = numpy.array([[ numpy.sin(self.lat)*numpy.cos(self.long), numpy.sin(self.lat)*numpy.sin(self.long), -numpy.cos(self.lat)], 
-                           [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
-                           [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
-        sez = numpy.dot(rot, rho)
-        
-        d = numpy.sqrt( (rho**2).sum() )
-        el = numpy.arcsin(sez[2] / d)
-        az = numpy.arctan2(sez[1], -sez[0])
-        
-        return az, el, d
+        return (pd.az.to('rad').value, pd.alt.to('rad').value, pd.distance.to('m').value)
         
     @property
     def stands(self):
