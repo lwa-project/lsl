@@ -78,7 +78,7 @@ class SkyMapBase(object):
         """
         
         if len(self._power) == 0:
-            raise RuntimeError("%s contains no data" % type(self).__name__)
+            raise RuntimeError(f"{type(self).__name__} contains no data")
         return self.normalize_power().sum()
 
 
