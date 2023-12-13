@@ -67,7 +67,7 @@ def positive_or_zero_float(string):
         msg = f"{string} is a non-float value"
         raise ArgumentTypeError(msg)
     if value < 0.0:
-        msg = f"{string} < 0.0"g
+        msg = f"{string} < 0.0"
         raise ArgumentTypeError(msg)
     return value
 

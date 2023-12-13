@@ -796,7 +796,7 @@ class TBNFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}"))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:

@@ -475,7 +475,7 @@ class date(object):
         try:
             second = float(secondStr)
         except ValueError:
-            raise ValueError(f"seconds incorrectly formated: {secondStr})
+            raise ValueError(f"seconds incorrectly formated: {secondStr}")
         if second < 0.0 or second >= 60.0:
             raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
             
