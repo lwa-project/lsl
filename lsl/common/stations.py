@@ -4,15 +4,16 @@ Module for creating object oriented representations of the LWA stations.
 
 import os
 import re
-import importlib.util
 import numpy
 import ephem
 import struct
+import weakref
+import importlib.util
 from textwrap import fill as tw_fill
 from functools import total_ordering
 
-from astropy import units as AstroUnits
-from astropy.coordinates import EarthLocation, AltAz
+from astropy import units as AU
+from astropy.coordinates import EarthLocation, AltAz, CartesianRepresentation, ITRS
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
@@ -41,7 +42,7 @@ def geo_to_ecef(lat, lon, elev):
     centered, earth-fixed coordinates.
     """
     
-    el = EarthLocation.from_geodetic(lon*AstroUnits.rad, lat*AstroUnits.rad, height=elev*AstroUnits.m,
+    el = EarthLocation.from_geodetic(lon*AU.rad, lat*AU.rad, height=elev*AU.m,
                                      ellipsoid='WGS84')
     return (el.x.to('m').value, el.y.to('m').value, el.z.to('m').value)
 
@@ -52,7 +53,7 @@ def ecef_to_geo(x, y, z):
     (rad), elevation (m).
     """
     
-    el = EarthLocation.from_geocentric(x*AstroUnits.m, y*AstroUnits.m, z*AstroUnits.m)
+    el = EarthLocation.from_geocentric(x*AU.m, y*AU.m, z*AU.m)
     return (el.lat.to('rad').value, el.lon.to('rad').value, el.height.to('m').value)
 
 
@@ -89,6 +90,7 @@ class LWAStationBase(object):
             self._antennas = list(antennas)
         self._sort_order = ''
         self._sort_antennas()
+        self._tag_antennas()
         
         if interface is None:
             self.interface = LSLInterface()
@@ -111,6 +113,7 @@ class LWAStationBase(object):
         
     def __setitem__(self, *args):
         self.antennas.__setitem__(*args)
+        self._tag_antennas(args[0])
         
     @property
     def antennas(self):
@@ -129,6 +132,7 @@ class LWAStationBase(object):
         orig_sort_order = self._sort_order
         self._sort_order = ''
         self._sort_antennas(attr=orig_sort_order)
+        self._tag_antennas()
         
     def _sort_antennas(self, attr='digitizer'):
         """
@@ -139,6 +143,18 @@ class LWAStationBase(object):
         if self._sort_order != attr:
             self._antennas.sort(key=lambda x: getattr(x, attr))
             self._sort_order = attr
+            
+    def _tag_antennas(self, index=None):
+        """
+        Tag the antenna stands with the station so that we can perform
+        coordinate transforms on the stands.
+        """
+        
+        if index is not None:
+            self._antennas[index].stand._parent = weakref.proxy(self)
+        else:
+            for a in self._antennas:
+                a.stand._parent = weakref.proxy(self)
 
 
 class LWAStation(ephem.Observer, LWAStationBase):
@@ -276,6 +292,15 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return geo_to_ecef(self.lat, self.long, self.elev)
         
     @property
+    def earth_location(self):
+        """
+        Return an astropy.coordinates.EarthLocation for the station.
+        """
+        
+        return EarthLocation.from_geodetic(self.long*AU.rad, self.lat*AU.rad, height=self.elev*AU.m,
+                                           ellipsoid='WGS84')
+        
+    @property
     def eci_transform_matrix(self):
         """
         Return a 3x3 transformation matrix that converts a baseline in 
@@ -310,8 +335,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         
         az, alt, dist = self.get_pointing_and_distance(locTo)
-        return numpy.array([numpy.cos(az)*numpy.cos(alt),
-                            numpy.sin(az)*numpy.cos(alt),
+        return numpy.array([numpy.sin(az)*numpy.cos(alt),
+                            numpy.cos(az)*numpy.cos(alt),
                             numpy.sin(alt)])*dist
         
     def get_pointing_and_distance(self, locTo):
@@ -325,17 +350,19 @@ class LWAStation(ephem.Observer, LWAStationBase):
             Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = EarthLocation.from_geodetic(self.long*AstroUnits.rad, self.lat*AstroUnits.rad, height=self.elev*AstroUnits.m,
-                                               ellipsoid='WGS84')
+        ecefFrom = self.earth_location
         try:
-            ecefTo = EarthLocation.from_geodetic(locTo.long*AstroUnits.rad, locTo.lat*AstroUnits.rad, height=locTo.elev*AstroUnits.rad,
-                                                   ellipsoid='WGS84')
+            ecefTo = locTo.itrs
         except AttributeError:
-            ecefTo = EarthLocation.from_geodetic(locTo[1]*AstroUnits.deg, locTo[0]*AstroUnits.deg, height=locTo[2]*AstroUnits.m,
-                                                 ellipsoid='WGS84')
+            try:
+                ecefTo = locTo.earth_location
+            except AttributeError:
+                ecefTo = EarthLocation.from_geodetic(locTo[1]*AU.deg, locTo[0]*AU.deg, height=locTo[2]*AU.m,
+                                                     ellipsoid='WGS84')
+            ecefTo = ecefTo.itrs
             
-        aa = AltAz(location=ecefFrom, obstime=ecefTo.itrs.obstime, pressure=0)
-        pd = ecefTo.itrs.transform_to(aa)
+        aa = AltAz(location=ecefFrom, obstime=ecefTo.obstime, pressure=0)
+        pd = ecefTo.transform_to(aa)
         
         return (pd.az.to('rad').value, pd.alt.to('rad').value, pd.distance.to('m').value)
         
@@ -499,6 +526,15 @@ class Antenna(object):
         """
         
         return 10*self.status + self.fee.status
+        
+    @property
+    def itrs(self):
+        """
+        Return an astropy.coordinates.ITRS position of the stand associated with
+        this antenna.
+        """
+        
+        return self.stand.itrs
 
 
 @total_ordering
@@ -523,6 +559,8 @@ class Stand(object):
         self.x = float(x)
         self.y = float(y)
         self.z = float(z)
+        
+        self._parent = None
         
     def __eq__(self, other):
         if isinstance(other, Stand):
@@ -595,6 +633,21 @@ class Stand(object):
                 out = (self.x-std, self.y-std, self.z-std)
                 
         return out
+        
+    @property
+    def itrs(self):
+        """
+        Return an astropy.coordinates.ITRS position of the stand.
+        """
+        
+        if self._parent is None:
+            raise RuntimeError("This stand is not associated with a station")
+            
+        aa = AltAz(CartesianRepresentation(self.y*AU.m,
+                                           self.x*AU.m,
+                                           self.z*AU.m),
+                    location=self._parent.earth_location)
+        return aa.transform_to(ITRS())
 
 
 @total_ordering
