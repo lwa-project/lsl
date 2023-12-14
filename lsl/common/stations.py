@@ -526,15 +526,6 @@ class Antenna(object):
         """
         
         return 10*self.status + self.fee.status
-        
-    @property
-    def itrs(self):
-        """
-        Return an astropy.coordinates.ITRS position of the stand associated with
-        this antenna.
-        """
-        
-        return self.stand.itrs
 
 
 @total_ordering
@@ -633,21 +624,6 @@ class Stand(object):
                 out = (self.x-std, self.y-std, self.z-std)
                 
         return out
-        
-    @property
-    def itrs(self):
-        """
-        Return an astropy.coordinates.ITRS position of the stand.
-        """
-        
-        if self._parent is None:
-            raise RuntimeError("This stand is not associated with a station")
-            
-        aa = AltAz(CartesianRepresentation(self.y*AU.m,
-                                           self.x*AU.m,
-                                           self.z*AU.m),
-                    location=self._parent.earth_location)
-        return aa.transform_to(ITRS())
 
 
 @total_ordering
