@@ -24,7 +24,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '2.3'
+__version__ = '2.4'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
         'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations']
 
@@ -325,7 +325,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = EarthLocation.from_geodetic(self.long*AstroUnits.rad, self.lat*AstroUnits.rad, height=self.elev*AstroUnits.m",
+        ecefFrom = EarthLocation.from_geodetic(self.long*AstroUnits.rad, self.lat*AstroUnits.rad, height=self.elev*AstroUnits.m,
                                                ellipsoid='WGS84')
         try:
             ecefTo = EarthLocation.from_geodetic(locTo.long*AstroUnits.rad, locTo.lat*AstroUnits.rad, height=locTo.elev*AstroUnits.rad,
