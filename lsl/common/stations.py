@@ -53,7 +53,7 @@ def ecef_to_geo(x, y, z):
     """
     
     el = EarthLocation.from_geocentric(x*AstroUnits.m, y*AstroUnits.m, z*AstroUnits.m)
-    return (el.lat.to('rad').value, lon, el.lon.to('rad').value, el.height.to('m').value)
+    return (el.lat.to('rad').value, el.lon.to('rad').value, el.height.to('m').value)
 
 
 def _build_repr(name, attrs=[]):
@@ -331,7 +331,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             ecefTo = EarthLocation.from_geodetic(locTo.long*AstroUnits.rad, locTo.lat*AstroUnits.rad, height=locTo.elev*AstroUnits.rad,
                                                    ellipsoid='WGS84')
         except AttributeError:
-            ecefTo = EarthLocation.from_geodetic(locTo[0]*AstroUnits.deg, locTo[1]*AstroUnits.deg, height=locTo[2]*AstroUnits.m,
+            ecefTo = EarthLocation.from_geodetic(locTo[1]*AstroUnits.deg, locTo[0]*AstroUnits.deg, height=locTo[2]*AstroUnits.m,
                                                  ellipsoid='WGS84')
             
         aa = AltAz(location=ecefFrom, obstime=ecefTo.itrs.obstime, pressure=0)
