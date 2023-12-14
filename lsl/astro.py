@@ -122,9 +122,7 @@ class dms(object):
         else:
             sign = '+' 
             
-        sec = "%02.2f" % self.seconds   	
-        
-        return "%s%02d %02d %s" % (sign, self.degrees, self.minutes, sec.zfill(5))
+        return f"{sign}{self.degrees:02d} {self.minutes:02d} {self.seconds:05.2f}"
         
     def __repr__(self):
         """
@@ -236,9 +234,7 @@ class hms(object):
         hms object print/str method.
         """
         
-        sec = "%02.2f" % self.seconds
-        
-        return "%02d %02d %s" % (self.hours, self.minutes, sec.zfill(5))
+        return f"{self.hours:02d} {self.minutes:02d} {self.seconds:05.2f}"
         
     def __reduce__(self):
         """
@@ -356,9 +352,7 @@ class date(object):
         date object print/str method.
         """
         
-        sec = "%02.3f" % self.seconds
-        
-        return "%04d-%02d-%02d %02d:%02d:%s" % (self.years, self.months, self.days, self.hours, self.minutes, sec.zfill(6))
+        return f"{self.years:04d}-{self.months:02d}-{self.days:02d} {self.hours:02d}:{self.minutes:02d}:{self.seconds:06.3f}"
         
     def __repr__(self):
         """
@@ -553,9 +547,7 @@ class zonedate(object):
         zonedate object str/print method.
         """
         
-        sec = "%02.3f" % self.seconds 
-        
-        return "%04d-%02d-%02d %02d:%02d:%s [%d]" % (self.years, self.months, self.days, self.hours, self.minutes, sec.zfill(6), self.gmtoff)
+        return f"{self.years:04d}-{self.months:02d}-{self.days:02d} {self.hours:02d}:{self.minutes:02d}:{self.seconds:06.3f} [{self.gmtoff}]"
         
     def __repr__(self):
         """
@@ -651,7 +643,7 @@ class rst_time(object):
         rst_time object str/print method.
         """
         
-        return "%0.3f %0.3f %0.3f" % (self.rise, self.set, self.transit)
+        return f"{self.rise:0.3f} {self.set:0.3f} {self.transit:0.3f}"
         
     def __repr__(self):
         """
@@ -727,7 +719,7 @@ class hrz_posn(object):
         hrz_posn object print/str method.
         """
         
-        return "%0.3f %0.3f" % (self.az, self.alt)
+        return f"{self.az:0.3f} {self.alt:0.3f}"
         
     def __repr__(self):
         """
@@ -854,7 +846,7 @@ class equ_posn(object):
         equ_posn object str/print method.
         """
         
-        return "%0.3f %0.3f" % (self.ra, self.dec)
+        return f"{self.ra:0.3f} {self.dec:0.3f}"
         
     def __repr__(self):
         """
@@ -1024,7 +1016,7 @@ class gal_posn(object):
         gal_posn object print/str method.
         """
         
-        return "%0.3f %0.3f" % (self.l, self.b)
+        return f"{self.l:0.3f} {self.b:0.3f}"
         
     def __repr__(self):
         """
@@ -1142,7 +1134,7 @@ class rect_posn(object):
         rect_posn object str/print method.
         """
         
-        return "%0.3f %0.3f %0.3f" % (self.X, self.Y, self.Z)
+        return f"{self.X:0.3f} {self.Y:0.3f} {self.Z:0.3f}"
         
     def __repr__(self):
         """
@@ -1252,7 +1244,7 @@ class lnlat_posn(object):
         lnlat_posn object print/str method.
         """
         
-        return "%0.3f %0.3f" % (self.lng, self.lat)
+        return f"{self.lng:0.3f} {self.lat:0.3f}"
         
     def __repr__(self):
         """
@@ -1415,7 +1407,7 @@ class nutation(object):
         nutation object print/str method.
         """
         
-        return "%0.3f %0.3f %0.3f" % (self.longitude, self.obliquity, self.ecliptic) 
+        return f"{self.longitude:0.3f} {self.obliquity:0.3f} {self.ecliptic:0.3f}"
         
     def __repr__(self):
         """
@@ -3610,7 +3602,7 @@ class geo_posn(lnlat_posn):
         Get string representation of geo_posn object.
         """
         
-        return lnlat_posn.__str__(self) + " %0.3f" % self.elv
+        return lnlat_posn.__str__(self) + f" {self.elv:0.3f}"
         
     def __reduce__(self):
         """

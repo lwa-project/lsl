@@ -496,7 +496,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
             
             out = ''
             for f,d in self._fields_:
-                out += '%s (%s): %s\n' % (f, d, eval("self.%s" % f))
+                out += f"{f} ({d}): "+str(getattr(self, f))+'\n'
             return out
             
         def sizeof(self):

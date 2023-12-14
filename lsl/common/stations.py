@@ -13,7 +13,7 @@ from textwrap import fill as tw_fill
 from functools import total_ordering
 
 from astropy import units as AU
-from astropy.coordinates import EarthLocation, AltAz, CartesianRepresentation, ITRS
+from astropy.coordinates import EarthLocation, AltAz
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
@@ -100,7 +100,7 @@ class LWAStationBase(object):
             self.interface = interface
             
     def __str__(self):
-        return "%s (%s) with %i antennas" % (self.name, self.id, len(self.antennas))
+        return f"{self.name} ({self.id}) with {len(self.antennas)} antennas"
         
     def __reduce__(self):
         return (LWAStationBase, (self.name, self.id, tuple(self.antennas), self.interface))
@@ -566,7 +566,7 @@ class Stand(object):
             raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __str__(self):
-        return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
+        return f"Stand {self.id}: x={self.x:+.2f} m, y={self.y:+.2f} m, z={self.z:+.2f} m"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -651,7 +651,7 @@ class FEE(object):
         self.status = int(status)
         
     def __str__(self):
-        return "FEE '%s': gain1=%.2f, gain2=%.2f; status is %i" % (self.id, self.gain1, self.gain2, self.status)
+        return f"FEE '{self.id}': gain1={self.gain1:.2f}, gain2={self.gain2:.2f}; status is {self.status}"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -731,7 +731,7 @@ class Cable(object):
         self.clock_offset = 0.0
         
     def __str__(self):
-        return "Cable '%s' with length %.2f m (stretched to %.2f m)" % (self.id, self.length, self.length*self.stretch)
+        return f"Cable '{self.id}' with length {self.length:.2f} m (stretched to {self.length*self.stretch:.2f} m)"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -856,7 +856,7 @@ class ARX(object):
         self.output = output
         
     def __str__(self):
-        return "ARX Board %s, channel %i (ASP Channel %i)" % (self.id, self.channel, self.asp_channel)
+        return f"ARX Board {self.id}, channel {self.channel} (ASP Channel {self.asp_channel})"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -905,7 +905,7 @@ class ARX(object):
         """
         
         # Find the filename to use
-        filename = 'ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
+        filename = f"ARX_board_{self.id:4s}_filters_ch{self.channel}.npz"
         filename = os.path.join(dataPath, 'arx', filename)
         
         # Read in the file and convert it to a numpy array
@@ -979,8 +979,7 @@ class LSLInterface(object):
             self._cache['mcs'] = mcsADP
             
     def __str__(self):
-        return "LSL Interfaces:\n Backend: %s\n MCS: %s\n SDF: %s\n Metadata: %s\n SDM: %s" % \
-                (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm)
+        return f"LSL Interfaces:\n Backend: {self.backend}\n MCS: {self.mcs}\n SDF: {self.sdf}\n Metadata: {self.metabundle}\n SDM: {self.sdm}"
         
     def __repr__(self):
         n = self.__class__.__name__

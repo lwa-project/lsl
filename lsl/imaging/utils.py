@@ -141,7 +141,7 @@ class CorrelatedDataBase(object):
         self.filename = filename
         
     def __str__(self):
-        return "%s @ %s" % (self.__name__, self.filename)
+        return f"{self.__name__} @ {self.filename}"
         
     def __enter__(self):
         return self

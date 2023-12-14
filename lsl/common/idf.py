@@ -113,7 +113,7 @@ class Project(object):
             self.project_office = project_office
             
     def __str__(self):
-        return "%s: %s with %i run(s) for %s" % (self.id, self.name, len(self.runs), str(self.observer))
+        return f"{self.id}: {self.name} with {len(self.runs)} run(s) for {str(self.observer)}"
         
     @classmethod
     def autofilled(cls, runs=None, comments=None, project_office=None):
@@ -440,7 +440,7 @@ class Run(object):
         self.stations = sdf._TypedParentList(LWAStation, None, stations)
         
     def __str__(self):
-        return "%i: %s with %i scans and correlator setup:\n  channels: %i\n  int. time: %f\n  basis: %s\n  stations: %s" % (self.id, self.name, len(self.scans), self.correlator_channels, self.correlator_inttime, self.correlator_basis, " ".join([s.id for s in self.stations]))
+        return f"{self.id}: {self.name} with {len(self.scans)} scans and correlator setup:\n  channels: {self.correlator_channels}\n  int. time: {self.correlator_inttime}\n  basis: {self.correlator_basis}\n  stations: {' '.join([s.id for s in self.stations])}"
         
     @property
     def stations(self):

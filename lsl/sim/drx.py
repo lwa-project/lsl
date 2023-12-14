@@ -253,4 +253,4 @@ class SimFrame(drx.Frame):
         if self.beam is None:
             return "Empty DRX SimFrame object"
         else:
-            return "DRX SimFrame for beam %i, tunning %i, pol. %i @ time %i" % (self.beam, self.tune, self.pol, self.obs_time)
+            return f"DRX SimFrame for beam {self.beam}, tunning {self.tune}, pol. {self.pol} @ time {self.obs_time}"

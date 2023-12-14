@@ -539,7 +539,7 @@ class SoftwareDP(object):
         self.central_freq = central_freq
         
     def __str__(self):
-        return "Sofware DP: %s with filter %i at %.3f MHz" % (self.mode, self.filter, self.central_freq/1e6)
+        return f"Sofware DP: {self.mode} with filter {self.filter} at {self.central_freq/1e6:.3f} MHz"
         
     def set_mode(self, mode):
         """

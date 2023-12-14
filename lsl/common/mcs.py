@@ -499,7 +499,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
             
             out = ''
             for f,d in self._fields_:
-                out += '%s (%s): %s\n' % (f, d, eval("self.%s" % f))
+                out += f"{f} ({d}): "+str(getattr(self, f))+'\n'
             return out
             
         def sizeof(self):
@@ -979,7 +979,7 @@ class MIB(object):
         
         nEntry = len(self.entries.keys())
         times = [self.entries[k].updateTime for k in self.entries.keys()]
-        return "MIB containing %i entries from %s to %s" % (nEntry, min(times), max(times))
+        return f"MIB containing {nEntry} entries from {min(times)} to {max(times)}"
         
     def __getitem__(self, key):
         """
@@ -1105,7 +1105,7 @@ class MIBEntry(object):
         Represent the class as a string for display purposes.
         """
         
-        return "Index: %s; Value: %s; Updated at %s" % (self.index, self.value, self.updateTime)
+        return f"Index: {self.index}; Value: {self.value}; Updated at {self.updateTime}"
         
     def _parse_value(self, value, dataType):
         """

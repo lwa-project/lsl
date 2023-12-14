@@ -217,4 +217,4 @@ class SimFrame(tbn.Frame):
         if self.stand is None:
             return "Empty TBN SimFrame object"
         else:
-            return "TBN SimFrame for stand %i, pol. %i @ time %i" % (self.stand, self.pol, self.obs_time)
+            return f"TBN SimFrame for stand {self.stand}, pol. {self.pol} @ time {self.obs_time}"
