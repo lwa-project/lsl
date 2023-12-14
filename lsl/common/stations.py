@@ -11,6 +11,7 @@ import struct
 from textwrap import fill as tw_fill
 from functools import total_ordering
 
+from astropy import units as AstroUnits
 from astropy.coordinates import EarthLocation, AltAz
 from astropy.constants import c as speedOfLight
 
@@ -40,7 +41,7 @@ def geo_to_ecef(lat, lon, elev):
     centered, earth-fixed coordinates.
     """
     
-    el = EarthLocation.from_geodetic(f"{lon}rad", f"{lat}rad", height=f"{elev}m",
+    el = EarthLocation.from_geodetic(lon*AstroUnits.rad, lat*AstroUnits.rad, height=elev*AstroUnits.m,
                                      ellipsoid='WGS84')
     return (el.x.to('m').value, el.y.to('m').value, el.z.to('m').value)
 
@@ -51,7 +52,7 @@ def ecef_to_geo(x, y, z):
     (rad), elevation (m).
     """
     
-    el = EarthLocation.from_geocentric(f"{x}m", f"{y}m", f"{z}m")
+    el = EarthLocation.from_geocentric(x*AstroUnits.m, y*AstroUnits.m, z*AstroUnits.m)
     return (el.lat.to('rad').value, lon, el.lon.to('rad').value, el.height.to('m').value)
 
 
@@ -324,13 +325,13 @@ class LWAStation(ephem.Observer, LWAStationBase):
             Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = EarthLocation.from_geodetic(f"{self.long}rad", f"{self.lat}rad", height=f"{self.elev}m",
+        ecefFrom = EarthLocation.from_geodetic(self.long*AstroUnits.rad, self.lat*AstroUnits.rad, height=self.elev*AstroUnits.m",
                                                ellipsoid='WGS84')
         try:
-            ecefTo = EarthLocation.from_geodetic(f"{locTo.long}rad", f"{locTo.lat}rad", height=f"{locTo.elev}m",
+            ecefTo = EarthLocation.from_geodetic(locTo.long*AstroUnits.rad, locTo.lat*AstroUnits.rad, height=locTo.elev*AstroUnits.rad,
                                                    ellipsoid='WGS84')
         except AttributeError:
-            ecefTo = EarthLocation.from_geodetic(f"{locTo[0]}deg", f"{locTo[1]}deg", height=f"{locTo[2]}m",
+            ecefTo = EarthLocation.from_geodetic(locTo[0]*AstroUnits.deg, locTo[1]*AstroUnits.deg, height=locTo[2]*AstroUnits.m,
                                                  ellipsoid='WGS84')
             
         aa = AltAz(location=ecefFrom, obstime=ecefTo.itrs.obstime, pressure=0)
