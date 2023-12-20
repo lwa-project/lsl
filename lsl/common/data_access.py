@@ -146,11 +146,8 @@ class _DataAccess(object):
         self.establish_data_file(filename)
         
         # Open the file
-        fh = self._CACHE_DIR.open(filename, mode=mode)
-        try:
+        with self._CACHE_DIR.open(filename, mode=mode) as fh:
             yield fh
-        finally:
-            fh.close()
 
 
 DataAccess = _DataAccess()
