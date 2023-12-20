@@ -42,16 +42,16 @@ def _load_stand_response(freq=49.0e6):
     # LSL
     with DataAccess.open('beam-shape.npz', 'rb') as fh:
         dd = numpy.load(fh)
-    coeffs = dd['coeffs']
-    
-    # Calculate how many harmonics are stored in the data set and reorder the data
-    # to AIPY's liking
-    deg = coeffs.shape[0]-1
-    lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
-    beam_shapeDict = {}
-    for i in range(deg+1):
-        beam_shapeDict[i] = numpy.squeeze(coeffs[-1-i,:])
+        coeffs = dd['coeffs']
         
+        # Calculate how many harmonics are stored in the data set and reorder the data
+        # to AIPY's liking
+        deg = coeffs.shape[0]-1
+        lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
+        beam_shapeDict = {}
+        for i in range(deg+1):
+            beam_shapeDict[i] = numpy.squeeze(coeffs[-1-i,:])
+            
     # Build the beam object and done
     return aipy.amp.BeamAlm(numpy.array([freq/1e9]), lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beam_shapeDict)
 
