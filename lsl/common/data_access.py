@@ -30,6 +30,9 @@ class _DataAccess(object):
     # Base URL for remote data downloads
     _BASE_URL = 'https://fornax.phys.unm.edu/lwa/data/lsl'
     
+    # Backup URL for remote data downloads
+    _BACKUP_URL = 'https://leo.phys.unm.edu/data/lsl'
+    
     def __init__(self):
         # Create the cache directory
         try:
@@ -67,7 +70,7 @@ class _DataAccess(object):
             
         return True
         
-    def _download_worker(self, relative_url, filename):
+    def _download_worker(self, relative_url, filename, use_backup=False):
         """
         Download the URL and save it to a file.
         """
@@ -76,6 +79,8 @@ class _DataAccess(object):
         
         # Attempt to download the data
         url = self._BASE_URL+'/'+relative_url
+        if use_backup:
+            url = self._BACKUP_URL+'/'+relative_url
         print("Downloading %s" % url)
         try:
             uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
@@ -132,7 +137,9 @@ class _DataAccess(object):
         if filename not in self._CACHE_DIR:
             status = self._local_copy_worker(filename, filename)
             if not status:
-                status = self._download_worker(filename, filename)
+                status = self._download_worker(filename, filename, use_backup=False)
+            if not status:
+                status = self._download_worker(filename, filename, use_backup=True)
             if not status:
                 raise RuntimeError("Failed to download '%s'" % filename)
                 
