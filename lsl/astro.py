@@ -7,7 +7,7 @@ import sys
 import time
 import math
 import ephem
-import numpy
+import numpy as np
 import warnings
 from urllib.request import urlopen
 from calendar import timegm
@@ -2247,72 +2247,72 @@ def get_nutation(jD):
     t = (jD - 2451545.0) / 36525.
     
     # Mean elongation of the Moon
-    coeff1 = numpy.array([297.85036, 445267.111480, -0.0019142, 1.0/189474])
-    d = deg_to_rad(numpy.polyval(coeff1[::-1], t))
+    coeff1 = np.array([297.85036, 445267.111480, -0.0019142, 1.0/189474])
+    d = deg_to_rad(np.polyval(coeff1[::-1], t))
     d %= (2*math.pi)
     
     # Sun's mean anomaly
-    coeff2 = numpy.array([357.52772, 35999.050340, -0.0001603, -1.0/3e5])
-    M = deg_to_rad(numpy.polyval(coeff2[::-1], t))
+    coeff2 = np.array([357.52772, 35999.050340, -0.0001603, -1.0/3e5])
+    M = deg_to_rad(np.polyval(coeff2[::-1], t))
     M %= (2*math.pi)
     
     # Moon's mean anomaly
-    coeff3 = numpy.array([134.96298, 477198.867398, 0.0086972, 1.0/5.625e4])
-    Mprime = deg_to_rad(numpy.polyval(coeff3[::-1], t))
+    coeff3 = np.array([134.96298, 477198.867398, 0.0086972, 1.0/5.625e4])
+    Mprime = deg_to_rad(np.polyval(coeff3[::-1], t))
     Mprime %= (2*math.pi)
     
     # Moon's argument of latitude
-    coeff4 = numpy.array([93.27191, 483202.017538, -0.0036825, -1.0/3.27270e5])
-    F = deg_to_rad(numpy.polyval(coeff4[::-1], t)) 
+    coeff4 = np.array([93.27191, 483202.017538, -0.0036825, -1.0/3.27270e5])
+    F = deg_to_rad(np.polyval(coeff4[::-1], t)) 
     F %= (2*math.pi)
     
     # Longitude of the ascending node of the Moon's mean orbit on the ecliptic,
     # measured from the mean equinox of the date
-    coeff5 = numpy.array([125.04452, -1934.136261, 0.0020708, 1.0/4.5e5])
-    omega = deg_to_rad(numpy.polyval(coeff5[::-1], t))
+    coeff5 = np.array([125.04452, -1934.136261, 0.0020708, 1.0/4.5e5])
+    omega = deg_to_rad(np.polyval(coeff5[::-1], t))
     omega %= (2*math.pi)
     
-    d_lng = numpy.array([0,-2,0,0,0,0,-2,0,0,-2,-2,-2,0,2,0,2,0,0,-2,0,2,0,0,-2,
+    d_lng = np.array([0,-2,0,0,0,0,-2,0,0,-2,-2,-2,0,2,0,2,0,0,-2,0,2,0,0,-2,
                     0,-2,0,0,2,-2,0,-2,0,0,2,2,0,-2,0,2,2,-2,-2,2,2,0,-2,-2,
                     0,-2,-2,0,-1,-2,1,0,0,-1,0,0,2,0,2])
                     
-    m_lng = numpy.array([0,0,0,0,1,0,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+    m_lng = np.array([0,0,0,0,1,0,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                     2,0,2,1,0,-1,0,0,0,1,1,-1,0,0,0,0,0,0,-1,-1,0,0,0,1,0,0,
                     1,0,0,0,-1,1,-1,-1,0,-1])
                     
-    mp_lng = numpy.array([0,0,0,0,0,1,0,0,1,0,1,0,-1,0,1,-1,-1,1,2,-2,0,2,2,1,0,0,
+    mp_lng = np.array([0,0,0,0,0,1,0,0,1,0,1,0,-1,0,1,-1,-1,1,2,-2,0,2,2,1,0,0,
                     -1,0,-1,0,0,1,0,2,-1,1,0,1,0,0,1,2,1,-2,0,1,0,0,2,2,0,1,
                     1,0,0,1,-2,1,1,1,-1,3,0])
                     
-    f_lng = numpy.array([0,2,2,0,0,0,2,2,2,2,0,2,2,0,0,2,0,2,0,2,2,2,0,2,2,2,2,0,0,
+    f_lng = np.array([0,2,2,0,0,0,2,2,2,2,0,2,2,0,0,2,0,2,0,2,2,2,0,2,2,2,2,0,0,
                     2,0,0,0,-2,2,2,2,0,2,2,0,2,2,0,0,0,2,0,2,0,2,-2,0,0,0,2,2,
                     0,0,2,2,2,2])
                     
-    om_lng = numpy.array([1,2,2,2,0,0,2,1,2,2,0,1,2,0,1,2,1,1,0,1,2,2,0,2,0,0,1,0,1,
+    om_lng = np.array([1,2,2,2,0,0,2,1,2,2,0,1,2,0,1,2,1,1,0,1,2,2,0,2,0,0,1,0,1,
                     2,1,1,1,0,1,2,2,0,2,1,0,2,1,1,1,0,1,1,1,1,1,0,0,0,0,0,2,0,
                     0,2,2,2,2])
                     
-    sin_lng = numpy.array([-171996, -13187, -2274, 2062, 1426, 712, -517, -386, -301, 217, 
+    sin_lng = np.array([-171996, -13187, -2274, 2062, 1426, 712, -517, -386, -301, 217, 
                         -158, 129, 123, 63, 63, -59, -58, -51, 48, 46, -38, -31, 29, 29, 
                         26, -22, 21, 17, 16, -16, -15, -13, -12, 11, -10, -8, 7, -7, -7, 
                         -7, 6,6,6,-6,-6,5,-5,-5,-5,4,4,4,-4,-4,-4,3,-3,-3,-3,-3,-3,-3,-3])
                         
-    sdelt = numpy.array([-174.2, -1.6, -0.2, 0.2, -3.4, 0.1, 1.2, -0.4, 0, -0.5, 0, 0.1, 
+    sdelt = np.array([-174.2, -1.6, -0.2, 0.2, -3.4, 0.1, 1.2, -0.4, 0, -0.5, 0, 0.1, 
                     0,0,0.1, 0,-0.1,0,0,0,0,0,0,0,0,0,0, -0.1, 0, 0.1,0,0,0,0,0,0,0,
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]) 
                     
-    cos_lng = numpy.array([92025, 5736, 977, -895, 54, -7, 224, 200, 129, -95,0,-70,-53,0, 
+    cos_lng = np.array([92025, 5736, 977, -895, 54, -7, 224, 200, 129, -95,0,-70,-53,0, 
                         -33, 26, 32, 27, 0, -24, 16,13,0,-12,0,0,-10,0,-8,7,9,7,6,0,5,3,
                         -3,0,3,3,0,-3,-3,3,3,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
                         
-    cdelt = numpy.array([8.9, -3.1, -0.5, 0.5, -0.1, 0.0, -0.6, 0.0, -0.1, 0.3,0,0,0,0,
+    cdelt = np.array([8.9, -3.1, -0.5, 0.5, -0.1, 0.0, -0.6, 0.0, -0.1, 0.3,0,0,0,0,
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
                     0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
                     
     # Sum the periodic terms 
     arg = d_lng*d + m_lng*M + mp_lng*Mprime + f_lng*F + om_lng*omega
-    sarg = numpy.sin(arg)
-    carg = numpy.cos(arg)
+    sarg = np.sin(arg)
+    carg = np.cos(arg)
     lng = 0.0001*( (sdelt*t + sin_lng)*sarg ).sum()
     obl = 0.0001*( (cdelt*t + cos_lng)*carg ).sum()
 
@@ -2346,30 +2346,30 @@ def get_equ_nut(position, jD):
     # Convert RA/dec into cartesian
     ra  = deg_to_rad(position.ra)
     dec = deg_to_rad(position.dec)
-    x = numpy.cos(dec) * numpy.cos(ra)
-    y = numpy.cos(dec) * numpy.sin(ra)
-    z = numpy.sin(dec)
+    x = np.cos(dec) * np.cos(ra)
+    y = np.cos(dec) * np.sin(ra)
+    z = np.sin(dec)
     
     # Apply the nutation
     ecl = deg_to_rad(nut.ecliptic)
     obl = deg_to_rad(nut.obliquity)
     lng = deg_to_rad(nut.longitude)
     
-    x2 = x - (y*numpy.cos(ecl)*lng + z*numpy.sin(ecl)*lng)
-    y2 = y + (x*numpy.cos(ecl)*lng - z*obl)
-    z2 = z + (x*numpy.sin(ecl)*lng + y*obl)
+    x2 = x - (y*np.cos(ecl)*lng + z*np.sin(ecl)*lng)
+    y2 = y + (x*np.cos(ecl)*lng - z*obl)
+    z2 = z + (x*np.sin(ecl)*lng + y*obl)
     
     # Back to RA/dec
-    r = numpy.sqrt(x2**2 + y2**2 + z2**2)
-    xyproj = numpy.sqrt(x2**2 + y2**2)
+    r = np.sqrt(x2**2 + y2**2 + z2**2)
+    xyproj = np.sqrt(x2**2 + y2**2)
     
     ra, dec = 0.0, 0.0
     if xyproj == 0.0 and z != 0.0:
         ra = 0.0
-        dec = numpy.arcsin(y2/x2)
+        dec = np.arcsin(y2/x2)
     if xyproj != 0.0:
-        ra = numpy.arctan2(y2, x2)
-        dec = numpy.arcsin(z2/r)
+        ra = np.arctan2(y2, x2)
+        dec = np.arcsin(z2/r)
         
     # Create the output object and update it
     _posn = equ_posn()

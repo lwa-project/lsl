@@ -6,7 +6,7 @@ directly worked with in the :mod:`lsl.imaging.utils` module.
 """
 
 import sys
-import numpy
+import numpy as np
 from datetime import datetime
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight
@@ -94,31 +94,31 @@ class VirtualWriter(WriterBase):
         
         Nbase = len(baselines)
         Nchan = len(self.freq)
-        uvw = numpy.zeros((Nbase,3,Nchan), dtype=numpy.float32)
+        uvw = np.zeros((Nbase,3,Nchan), dtype=np.float32)
         
         old_date = self.observer.date*1.0
         self.observer.date = jd - astro.DJD_OFFSET
         
         if source == 'z':
             HA = 0.0
-            dec = self.observer.lat * 180/numpy.pi
+            dec = self.observer.lat * 180/np.pi
         else:
-            HA = (self.observer.sidereal_time() - source.ra) * 12/numpy.pi
-            dec = source.dec * 180/numpy.pi
+            HA = (self.observer.sidereal_time() - source.ra) * 12/np.pi
+            dec = source.dec * 180/np.pi
             
         # Phase center coordinates
         # Convert numbers to radians and, for HA, hours to degrees
-        HA2 = HA * 15.0 * numpy.pi/180
-        dec2 = dec * numpy.pi/180
+        HA2 = HA * 15.0 * np.pi/180
+        dec2 = dec * np.pi/180
         lat2 = self.observer.lat
         
         # Coordinate transformation matrices
-        trans1 = numpy.array([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+        trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
                               [1,  0,               0],
-                              [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-        trans2 = numpy.array([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                              [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                              [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                              [0,  np.cos(lat2), np.sin(lat2)]])
+        trans2 = np.array([[ np.sin(HA2),                  np.cos(HA2),                 0],
+                              [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
+                              [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
         
         # Frequency scaling
         uscl = self.freq / speedOfLight
@@ -128,10 +128,10 @@ class VirtualWriter(WriterBase):
             # Go from a east, north, up coordinate system to a celestial equation, 
             # east, north celestial pole system
             xyzPrime = a1.stand - a2.stand
-            xyz = numpy.dot(trans1, numpy.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
+            xyz = np.dot(trans1, np.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
             
             # Go from CE, east, NCP to u, v, w
-            temp = numpy.dot(trans2, xyz)
+            temp = np.dot(trans2, xyz)
             uvw[i,:,:] = temp
         uvw *= uscl
         
@@ -215,7 +215,7 @@ class VirtualWriter(WriterBase):
         
         raise NotImplementedError
         
-    def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
+    def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=np.inf):
         """
         Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
         :class:`lsl.imaging.data.VisibilityData` object for all 
@@ -244,7 +244,7 @@ class VirtualWriter(WriterBase):
         # Prune
         if not include_auto and min_uv == 0:
             min_uv = 1e-3
-        if min_uv != 0 or max_uv != numpy.inf:
+        if min_uv != 0 or max_uv != np.inf:
             dataSets = dataSets.get_uv_range(min_uv=min_uv, max_uv=max_uv)
             
         # Prune a different way

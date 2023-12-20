@@ -39,7 +39,7 @@ For describing the format of data in the file, three function are provided:
 """
 
 import copy
-import numpy
+import numpy as np
 
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
@@ -232,7 +232,7 @@ class FramePayload(FramePayloadBase):
                 if sub is not None:
                     packed.append(sub)
                     dtype.append(("%s%i" % (p, t), packed[-1].dtype))
-        return numpy.rec.array(packed, dtype=dtype)
+        return np.rec.array(packed, dtype=dtype)
         
     @property
     def central_freq(self):
@@ -391,7 +391,7 @@ class Frame(FrameBase):
                 except TypeError:
                     raise RuntimeError(f"Cannot add {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) + numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) + np.float32(y)
                 setattr(self.payload, attr, temp)
             
         return self
@@ -420,7 +420,7 @@ class Frame(FrameBase):
                 except TypeError:
                     raise RuntimeError(f"Cannot add {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) - numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) - np.float32(y)
                 setattr(self.payload, attr, temp)
             
         return self
@@ -449,7 +449,7 @@ class Frame(FrameBase):
                 except TypeError:
                     raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) * numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) * np.float32(y)
                 setattr(self.payload, attr, temp)
                 
         return self
@@ -478,7 +478,7 @@ class Frame(FrameBase):
                 except TypeError:
                     raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) // numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) // np.float32(y)
                 setattr(self.payload, attr, temp)
                 
         return self
@@ -507,7 +507,7 @@ class Frame(FrameBase):
                 except TypeError:
                     raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) / numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) / np.float32(y)
                 setattr(self.payload, attr, temp)
                 
         return self

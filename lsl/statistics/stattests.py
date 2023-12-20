@@ -3,7 +3,7 @@ Collection of statistical tests not found in any of the common
 python libraries.
 """
 
-import numpy
+import numpy as np
 from scipy.special import ndtr
 
 from lsl.misc import telemetry
@@ -22,8 +22,8 @@ def _to_binary(inputData):
     """
     
     data = inputData.ravel()
-    binary = numpy.where( data > 0, 1, 0 )
-    return binary.astype(numpy.int8)
+    binary = np.where( data > 0, 1, 0 )
+    return binary.astype(np.int8)
 
 
 def _count_runs(inputData):
@@ -68,7 +68,7 @@ def wald_wolfowitz(inputData):
     N, Np, Nn = _count_runs(inputData)
     mean = 2.0*Np*Nn/(Np+Nn) + 1.0
     vari = ((2.0*Np*Nn)*(2.0*Np*Nn-Np-Nn)) / ((Np+Nn)**2 * (Np+Nn-1))
-    sigm = numpy.sqrt(vari)
+    sigm = np.sqrt(vari)
     
     if N > 50:
         z = (N - mean) / sigm
@@ -77,6 +77,6 @@ def wald_wolfowitz(inputData):
     else:
         z = (N - mean - 0.5) /sigm
         
-    pValue = 2.0*(1-ndtr(numpy.abs(z)))
+    pValue = 2.0*(1-ndtr(np.abs(z)))
     return pValue
     

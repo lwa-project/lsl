@@ -3,7 +3,7 @@ Python module for creating creating, validating, and writing simulated
 DRX frames to a file.
 """
 
-import numpy
+import numpy as np
 
 from lsl.common.dp import fS
 from lsl.reader import drx
@@ -23,7 +23,7 @@ def frame_to_frame(drx_frame):
     """
 
     # The raw frame
-    rawFrame = numpy.zeros(drx.FRAME_SIZE, dtype=numpy.uint8)
+    rawFrame = np.zeros(drx.FRAME_SIZE, dtype=np.uint8)
 
     # Part 1: The header
     ## Sync. words (0xDEC0DE5C)
@@ -78,10 +78,10 @@ def frame_to_frame(drx_frame):
         ### Round, clip, and convert to unsigned integers
         i = i.round()
         i = i.clip(-8, 7)
-        i = i.astype(numpy.int8)
+        i = i.astype(np.int8)
         q = q.round()
         q = q.clip(-8, 7)
-        q = q.astype(numpy.int8)
+        q = q.astype(np.int8)
     i += ((i & 8) << 1)
     q += ((q & 8) << 1)
     

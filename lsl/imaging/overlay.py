@@ -17,7 +17,7 @@ is used for plotting.
 
 import aipy
 import ephem
-import numpy
+import numpy as np
 
 from lsl import astro
 
@@ -31,16 +31,16 @@ __all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt"]
 
 def _radec_of(antennaarray, az, alt):
     # az/el -> HA/dec
-    HA = numpy.arctan2(numpy.sin(az-numpy.pi), (numpy.cos(az-numpy.pi)*numpy.sin(antennaarray.lat) + numpy.tan(alt)*numpy.cos(antennaarray.lat)))
-    dec = numpy.arcsin(numpy.sin(antennaarray.lat)*numpy.sin(alt) - numpy.cos(antennaarray.lat)*numpy.cos(alt)*numpy.cos(az-numpy.pi))
+    HA = np.arctan2(np.sin(az-np.pi), (np.cos(az-np.pi)*np.sin(antennaarray.lat) + np.tan(alt)*np.cos(antennaarray.lat)))
+    dec = np.arcsin(np.sin(antennaarray.lat)*np.sin(alt) - np.cos(antennaarray.lat)*np.cos(alt)*np.cos(az-np.pi))
     
     # HA -> RA
     RA = antennaarray.sidereal_time() - HA
     
     # radians -> degrees
-    RA = RA * 180.0/numpy.pi
+    RA = RA * 180.0/np.pi
     RA %= 360.0
-    dec = dec * 180.0/numpy.pi
+    dec = dec * 180.0/np.pi
     
     # RA/dec -> astro.eqn_posn()
     pos = astro.equ_posn(RA, dec)
@@ -64,8 +64,8 @@ def _radec_of(antennaarray, az, alt):
     RA, dec = pos.ra, pos.dec
     
     # degrees -> radians
-    RA = RA * numpy.pi/180.0
-    dec = dec * numpy.pi/180.0
+    RA = RA * np.pi/180.0
+    dec = dec * np.pi/180.0
     
     return RA, dec 
 
@@ -88,7 +88,7 @@ def sources(ax, antennaarray, srcs, phase_center='z', label=True, marker='x', co
     for name,src in srcs.items():
         src.compute(antennaarray)
         eq = aipy.coord.radec2eq((src.ra-pcRA, src.dec))
-        top = numpy.dot(rot, eq)
+        top = np.dot(rot, eq)
         junk,alt = aipy.coord.top2azalt(top)
         if alt >= 0:
             ax.plot(top[0], top[1], marker=marker, markerfacecolor='None', markeredgecolor=color, 
@@ -115,12 +115,12 @@ def horizon(ax, antennaarray, phase_center='z', color='white'):
     rot = aipy.coord.eq2top_m(0, pcDec)
     
     # Add in the horizon
-    x = numpy.zeros(361) + numpy.nan
-    y = numpy.zeros(361) + numpy.nan
+    x = np.zeros(361) + np.nan
+    y = np.zeros(361) + np.nan
     for i in range(361):
-        ra, dec = _radec_of(antennaarray, i*numpy.pi/180.0, 0.0)
+        ra, dec = _radec_of(antennaarray, i*np.pi/180.0, 0.0)
         eq = aipy.coord.radec2eq((ra-pcRA,dec))
-        top = numpy.dot(rot, eq)
+        top = np.dot(rot, eq)
         junk,alt = aipy.coord.top2azalt(top)
         if alt >= -0.01:
             x[i] = top[0]
@@ -145,20 +145,20 @@ def graticule_radec(ax, antennaarray, phase_center='z', label=True, color='white
     
     # Lines of constant declination first
     decs = range(-80, 90, 20)
-    ras = numpy.linspace(0, 360, 800)
+    ras = np.linspace(0, 360, 800)
     
-    x = numpy.zeros(ras.size) + numpy.nan
-    y = numpy.zeros(ras.size) + numpy.nan
+    x = np.zeros(ras.size) + np.nan
+    y = np.zeros(ras.size) + np.nan
     for dec in decs:
-        x *= numpy.nan
-        y *= numpy.nan
+        x *= np.nan
+        y *= np.nan
         
         # Loop over RA to compute the topocentric coordinates (used by the image) for
         # the lines.  Also, figure out the elevation for each point on the line so
         # we can mask those below the horizon
         for i,ra in enumerate(ras):
-            eq = aipy.coord.radec2eq((ra*numpy.pi/180-pcRA, dec*numpy.pi/180))
-            top = numpy.dot(rot, eq)
+            eq = aipy.coord.radec2eq((ra*np.pi/180-pcRA, dec*np.pi/180))
+            top = np.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
             if alt >= -1e-5:
                 x[i] = top[0]
@@ -166,28 +166,28 @@ def graticule_radec(ax, antennaarray, phase_center='z', label=True, color='white
                 
         ax.plot(x, y, color=color, alpha=0.75)
         
-        eq = aipy.coord.radec2eq((pcRA-pcRA, (dec+5)*numpy.pi/180))
-        top = numpy.dot(rot, eq)
+        eq = aipy.coord.radec2eq((pcRA-pcRA, (dec+5)*np.pi/180))
+        top = np.dot(rot, eq)
         az,alt = aipy.coord.top2azalt(top)
-        if alt > 15*numpy.pi/180 and label:
+        if alt > 15*np.pi/180 and label:
             ax.text(top[0], top[1], r'%+i$^\circ$' % dec, color=color)
             
     # Lines of constant RA			
-    decs = numpy.linspace(-80, 80, 400)
+    decs = np.linspace(-80, 80, 400)
     ras = range(0, 360, 30)
     
-    x = numpy.zeros(decs.size) + numpy.nan
-    y = numpy.zeros(decs.size) + numpy.nan
+    x = np.zeros(decs.size) + np.nan
+    y = np.zeros(decs.size) + np.nan
     for ra in ras:
-        x *= numpy.nan
-        y *= numpy.nan
+        x *= np.nan
+        y *= np.nan
         
         # Loop over dec to compute the topocentric coordinates (used by the image) for
         # the lines.  Also, figure out the elevation for each point on the line so
         # we can mask those below the horizon
         for i,dec in enumerate(decs):
-            eq = aipy.coord.radec2eq((ra*numpy.pi/180-pcRA, dec*numpy.pi/180))
-            top = numpy.dot(rot, eq)
+            eq = aipy.coord.radec2eq((ra*np.pi/180-pcRA, dec*np.pi/180))
+            top = np.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
             if alt >= -1e-5:
                 x[i] = top[0]
@@ -195,10 +195,10 @@ def graticule_radec(ax, antennaarray, phase_center='z', label=True, color='white
                 
         ax.plot(x, y, color=color, alpha=0.75)
         
-        eq = aipy.coord.radec2eq((ra*numpy.pi/180-pcRA, 0))
-        top = numpy.dot(rot, eq)
+        eq = aipy.coord.radec2eq((ra*np.pi/180-pcRA, 0))
+        top = np.dot(rot, eq)
         az,alt = aipy.coord.top2azalt(top)
-        if alt > 20*numpy.pi/180 and label:
+        if alt > 20*np.pi/180 and label:
             ax.text(top[0], top[1], '%i$^h$' % (ra/15,), color=color)
 
 
@@ -220,16 +220,16 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
     # Lines of constant elevation
     els = range(0, 90, 20)
     
-    x = numpy.zeros(361) + numpy.nan
-    y = numpy.zeros(361) + numpy.nan
+    x = np.zeros(361) + np.nan
+    y = np.zeros(361) + np.nan
     for el in els:
-        x *= numpy.nan
-        y *= numpy.nan
+        x *= np.nan
+        y *= np.nan
         
         for i in range(361):
-            ra, dec = _radec_of(antennaarray, i*numpy.pi/180.0, el*numpy.pi/180.0)
+            ra, dec = _radec_of(antennaarray, i*np.pi/180.0, el*np.pi/180.0)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
-            top = numpy.dot(rot, eq)
+            top = np.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
             if alt >= -1e-5:
                 x[i] = top[0]
@@ -238,7 +238,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         ax.plot(x, y, color=color)
         
         if el > 0 or phase_center != 'z':
-            valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
+            valid = np.where( np.isfinite(x) & np.isfinite(y) )[0]
             pos = valid.size // 2 - valid.size // 5
             if valid.size > 10:
                 ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % el, color=color)
@@ -246,16 +246,16 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
     # Lines of constant azimuth
     azs = range(0, 360, 45)
     
-    x = numpy.zeros(81) + numpy.nan
-    y = numpy.zeros(81) + numpy.nan
+    x = np.zeros(81) + np.nan
+    y = np.zeros(81) + np.nan
     for az in azs:
-        x *= numpy.nan
-        y *= numpy.nan
+        x *= np.nan
+        y *= np.nan
         
         for i in range(81):
-            ra, dec = _radec_of(antennaarray, az*numpy.pi/180.0, i*numpy.pi/180.0)
+            ra, dec = _radec_of(antennaarray, az*np.pi/180.0, i*np.pi/180.0)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
-            top = numpy.dot(rot, eq)
+            top = np.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
             if alt >= -1e-5:
                 x[i] = top[0]
@@ -263,7 +263,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
                 
         ax.plot(x, y, color=color)
         
-        valid = numpy.where( numpy.isfinite(x) & numpy.isfinite(y) )[0]
+        valid = np.where( np.isfinite(x) & np.isfinite(y) )[0]
         pos = valid.size // 2 - valid.size // 5
         if valid.size > 10:
             ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % az, color=color)

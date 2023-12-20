@@ -8,7 +8,7 @@ This module is based on:
   * Nita & Gary (2010, MNRAS 406, L60)
 """
 
-import numpy
+import numpy as np
 
 from scipy.special import erf
 from scipy.stats import betaprime
@@ -36,7 +36,7 @@ def std(M, N=1):
     each composed of N measurements.
     """
     
-    return numpy.sqrt( var(M, N) )
+    return np.sqrt( var(M, N) )
 
 
 def var(M, N=1):
@@ -71,7 +71,7 @@ def _alpha(M, N):
     m2 = var(M, N)
     m3 = skew(M, N)
 
-    return 1.0/m3**3*(32*m2**5 - 4*m3*m2**3 + 8*m3**2*m2**2 + m3**2*m2 - m3**3 + (8*m2**3 - m3*m2 + m3**2)*numpy.sqrt( 16*m2**4 + 4*m3**2*m2 + m3**2 ))
+    return 1.0/m3**3*(32*m2**5 - 4*m3*m2**3 + 8*m3**2*m2**2 + m3**2*m2 - m3**3 + (8*m2**3 - m3*m2 + m3**2)*np.sqrt( 16*m2**4 + 4*m3**2*m2 + m3**2 ))
 
 
 def _beta(M, N):
@@ -86,7 +86,7 @@ def _beta(M, N):
     m2 = var(M, N)
     m3 = skew(M, N)
 
-    return 3 + 2*m2/m3**2*(4*m2**2 + numpy.sqrt( 16*m2**4 + 4*m3**2*m2 + m3**2 ))
+    return 3 + 2*m2/m3**2*(4*m2**2 + np.sqrt( 16*m2**4 + 4*m3**2*m2 + m3**2 ))
 
 
 def _delta(M, N):
@@ -112,11 +112,11 @@ def get_limits(sigma, M, N=1):
     """
     
     # Adjust the NumPy error levels so that we know when ppf() may be suspect
-    errLevels = numpy.geterr()
-    numpy.seterr(all='raise')
+    errLevels = np.geterr()
+    np.seterr(all='raise')
     
     # Convert the sigma to a fraction for the high and low clip levels
-    percentClip = ( 1.0 - erf(sigma/numpy.sqrt(2)) ) / 2.0
+    percentClip = ( 1.0 - erf(sigma/np.sqrt(2)) ) / 2.0
     
     # Build the Pearson type VI distribution function - parameters then instance
     a = _alpha(M, N)
@@ -138,7 +138,7 @@ def get_limits(sigma, M, N=1):
         upper = mean(M, N) + sigma*std(M, N)
         
     # Restore the NumPy error levels
-    numpy.seterr(**errLevels)
+    np.seterr(**errLevels)
     
     return lower, upper
 
@@ -151,7 +151,7 @@ def spectral_fft(x, axis=None):
     """
     
     # Convert to power
-    xPrime = numpy.abs(x)**2
+    xPrime = np.abs(x)**2
     return spectral_power(xPrime, N=1, axis=axis)
 
 

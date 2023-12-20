@@ -7,7 +7,7 @@ Module for analyzing images.  Currently, this module supports:
 """
 
 import math
-import numpy
+import numpy as np
 from scipy.signal import convolve, medfilt
 from scipy.interpolate import bisplrep, bisplev
 
@@ -50,9 +50,9 @@ def estimate_background(image, window=32):
     nY = 2 * image.shape[1] // window
     
     # Process the background grid
-    backgroundX = numpy.zeros((nX,nY), dtype=numpy.float64)
-    backgroundY = numpy.zeros((nX,nY), dtype=numpy.float64)
-    backgroundBasis = numpy.zeros((nX,nY), dtype=image.dtype)
+    backgroundX = np.zeros((nX,nY), dtype=np.float64)
+    backgroundY = np.zeros((nX,nY), dtype=np.float64)
+    backgroundBasis = np.zeros((nX,nY), dtype=image.dtype)
     for i in range(nX):
         for j in range(nY):
             ## Extract the tile area
@@ -60,9 +60,9 @@ def estimate_background(image, window=32):
             
             ## Compute the mean and standard deviation - both with and
             ## without progressive clipping
-            m0, s0 = numpy.mean(tile), numpy.std(tile)
-            valid = numpy.where( numpy.abs(tile-m0) < 3*s0 )
-            m1, s1 = numpy.mean(tile[valid]), numpy.std(tile[valid])
+            m0, s0 = np.mean(tile), np.std(tile)
+            valid = np.where( np.abs(tile-m0) < 3*s0 )
+            m1, s1 = np.mean(tile[valid]), np.std(tile[valid])
             
             ## If the standard deviation hasn't changed by more than 20% use
             ## it's an uncrowded field and we can use the clipped mean.  Other-
@@ -72,16 +72,16 @@ def estimate_background(image, window=32):
             else:
                 ### This is SExtractor specific and is a correction for the 
                 ### clipped distributions that are being used in this step.
-                backgroundBasis[i,j] = 2.5*numpy.median(tile[valid]) - 1.5*m1
+                backgroundBasis[i,j] = 2.5*np.median(tile[valid]) - 1.5*m1
                 
             ## Save the center of this tile for interpolation
             backgroundX[i,j] = i*window//2 + window/4.0
             backgroundY[i,j] = j*window//2 + window/4.0
             
     # Deal with NaNs in the image
-    good = numpy.where( numpy.isfinite(backgroundBasis) )
-    bad = numpy.where( ~numpy.isfinite(backgroundBasis) )
-    backgroundBasis[bad] = numpy.median(backgroundBasis[good])
+    good = np.where( np.isfinite(backgroundBasis) )
+    bad = np.where( ~np.isfinite(backgroundBasis) )
+    backgroundBasis[bad] = np.median(backgroundBasis[good])
     
     # Use a median filter to get rid of unusually high regions
     backgroundBasis = medfilt(backgroundBasis, 3)
@@ -93,7 +93,7 @@ def estimate_background(image, window=32):
                                 xb=0, xe=image.shape[0], yb=0, ye=image.shape[1], kx=3, ky=3)
         
     # Evaluate
-    x, y = numpy.arange(image.shape[0]), numpy.arange(image.shape[1])
+    x, y = np.arange(image.shape[0]), np.arange(image.shape[1])
     background = bisplev(x, y, backgroundInterp)
     
     # Done
@@ -159,21 +159,21 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
     # Create the raw convolution kernel and a mask that excludes pixels beyond
     # the detection radius
     ## Coordinate setup
-    row = numpy.arange(nBox, dtype=numpy.float64) - nHalf
-    rx, ry = numpy.meshgrid(row, row)
+    row = np.arange(nBox, dtype=np.float64) - nHalf
+    rx, ry = np.meshgrid(row, row)
     ## Build the mask
     mask = (rx**2 + ry**2) <= radius**2
-    valid = numpy.where( mask )
+    valid = np.where( mask )
     pixels = int(mask.sum())
     ## Build the kernel
-    kernel = numpy.exp(-(rx**2 + ry**2)/2.0/sigma**2)
+    kernel = np.exp(-(rx**2 + ry**2)/2.0/sigma**2)
     ## Trim the kernel to take into account the mask and normalize it
     kernel *= mask  
     kernel /= kernel[valid].sum()
     
     # Build a cross-section of the raw kernel for use in computing the 
     # roundness
-    c1 = numpy.exp(-row**2/2.0/sigma**2)
+    c1 = np.exp(-row**2/2.0/sigma**2)
     c1 /= c1.sum()
     
     # Convolve the image with the trimmed and normalized kernel
@@ -190,28 +190,28 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
     # the relative pixel coordinates for the detection box
     mask[nHalf,nHalf] = 0
     pixels -= 1
-    xx, yy = numpy.where(mask)
+    xx, yy = np.where(mask)
     xx, yy = xx - nHalf, yy - nHalf
     
     # Find all of the pixels above the threshold and run a simple "de-duplication"
     # to get the maximum inside the detection box
-    ix, iy = numpy.where( convImage >= threshold )
+    ix, iy = np.where( convImage >= threshold )
     for i in range(pixels):
         ox = ix + xx[i]
         oy = iy + yy[i]
-        stars, = numpy.where( convImage[ix,iy] >= convImage[ox,oy] )
+        stars, = np.where( convImage[ix,iy] >= convImage[ox,oy] )
         ix, iy = ix[stars], iy[stars]
     nGood = len(ix)       
     
     # Setup the output arrays
     ## Position
-    x = numpy.zeros(nGood)
-    y = numpy.zeros(nGood)
+    x = np.zeros(nGood)
+    y = np.zeros(nGood)
     ## Peak flux
-    flux = numpy.zeros(nGood)
+    flux = np.zeros(nGood)
     ## Shape statistics
-    sharpness = numpy.zeros(nGood)
-    roundness = numpy.zeros(nGood)
+    sharpness = np.zeros(nGood)
+    roundness = np.zeros(nGood)
     
     # Loop over the source positions and compute the various statistics
     nStar = 0

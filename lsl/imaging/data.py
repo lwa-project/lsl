@@ -4,7 +4,7 @@ Classes to hold visibility data that are used internally with LSL.
 
 import aipy
 import copy
-import numpy
+import numpy as np
 
 from lsl import astro
 
@@ -26,14 +26,14 @@ class PolarizationDataSet(object):
         if data is not None:
             self.data = data
         else:
-            self.data = numpy.array([], dtype=numpy.complex64)
+            self.data = np.array([], dtype=np.complex64)
             
         if weight is None:
-            weight = numpy.ones(self.data.shape, dtype=numpy.float32)
+            weight = np.ones(self.data.shape, dtype=np.float32)
         self.weight = weight
         
         if mask is None:
-            mask = numpy.zeros(self.data.shape, dtype=bool)
+            mask = np.zeros(self.data.shape, dtype=bool)
         self.mask = mask
             
     @property
@@ -65,31 +65,31 @@ class PolarizationDataSet(object):
             self.data = data
             
             if weight is None:
-                weight = numpy.ones(data.shape, dtype=numpy.float32)
+                weight = np.ones(data.shape, dtype=np.float32)
             if self.weight.shape != data.shape:
                 raise ValueError("weight shape does not match the data shape")
             self.weight = weight
             
             if mask is None:
-                mask = numpy.zeros(data.shape, dtype=bool)
+                mask = np.zeros(data.shape, dtype=bool)
             if self.mask.shape != data.shape:
                 raise ValueError("mask shape does not match the data shape")
             self.mask = mask
             
         else:
-            self.data = numpy.vstack([self.data, data])
+            self.data = np.vstack([self.data, data])
             
             if weight is None:
-                weight = numpy.ones(data.shape, dtype=numpy.float32)
+                weight = np.ones(data.shape, dtype=np.float32)
             if self.weight.shape != data.shape:
                 raise ValueError("weight shape does not match the data shape")
-            self.weight = numpy.vstack([self.weight, weight])
+            self.weight = np.vstack([self.weight, weight])
             
             if mask is None:
-                mask = numpy.zeros(data.shape, dtype=bool)
+                mask = np.zeros(data.shape, dtype=bool)
             if self.mask.shape != data.shape:
                 raise ValueError("mask shape does not match the data shape")
-            self.mask = numpy.vstack([self.mask, mask])
+            self.mask = np.vstack([self.mask, mask])
             
     def extend(self, data, weight=None, mask=None):
         """
@@ -110,9 +110,9 @@ class PolarizationDataSet(object):
         
         if len(order) != self.data.shape[0]:
             raise ValueError("order length does not match data length")
-        self.data = numpy.take(self.data, order, axis=0)
-        self.weight = numpy.take(self.weight, order, axis=0)
-        self.mask = numpy.take(self.mask, order, axis=0)
+        self.data = np.take(self.data, order, axis=0)
+        self.weight = np.take(self.weight, order, axis=0)
+        self.mask = np.take(self.mask, order, axis=0)
         
     def subset(self, selection):
         """
@@ -120,9 +120,9 @@ class PolarizationDataSet(object):
         """
         
         new_pol = PolarizationDataSet(self.polarization, 
-                                      data=numpy.take(self.data, selection, axis=0),
-                                      weight=numpy.take(self.weight, selection, axis=0), 
-                                      mask=numpy.take(self.mask, selection, axis=0))
+                                      data=np.take(self.data, selection, axis=0),
+                                      weight=np.take(self.weight, selection, axis=0), 
+                                      mask=np.take(self.mask, selection, axis=0))
         return new_pol
 
 
@@ -250,7 +250,7 @@ class VisibilityDataSet(object):
             order = self._baseline_order
             
         self.baselines = [self.baselines[i] for i in order]
-        self.uvw = numpy.take(self.uvw, order, axis=0)
+        self.uvw = np.take(self.uvw, order, axis=0)
         for pds in self:
             pds.sort(order)
             
@@ -275,7 +275,7 @@ class VisibilityDataSet(object):
             
         # Go!
         for pds in self:
-            pds.data = pds.data.astype(numpy.complex128)
+            pds.data = pds.data.astype(np.complex128)
             ## Loop over baselines
             for k in range(self.nbaseline):
                 ### Load in the data
@@ -297,7 +297,7 @@ class VisibilityDataSet(object):
         # Update the phase center
         self.phase_center = new_phase_center
         
-    def get_uv_range(self, min_uv=0.0, max_uv=numpy.inf):
+    def get_uv_range(self, min_uv=0.0, max_uv=np.inf):
         """
         Return a copy of the data containing only baselines with the (u,v)
         distances allowed by the 'min_uv' and 'max_uv' cuts.
@@ -311,8 +311,8 @@ class VisibilityDataSet(object):
             
         # Find out the baseline lengths and create a list of good ones
         center_uvw = self.uvw[:,:2,self.nchan//2]
-        center_uvw = numpy.sqrt( (center_uvw**2).sum(axis=1) ).ravel()
-        selection = numpy.where( (center_uvw >= min_uv) & (center_uvw < max_uv) )[0]
+        center_uvw = np.sqrt( (center_uvw**2).sum(axis=1) ).ravel()
+        selection = np.where( (center_uvw >= min_uv) & (center_uvw < max_uv) )[0]
         
         # Create the new data set
         new_baselines = [self.baselines[b] for b in selection]
@@ -595,7 +595,7 @@ class VisibilityData(object):
                 if not ignore_errors:
                     raise e
                     
-    def get_uv_range(self, min_uv=0.0, max_uv=numpy.inf):
+    def get_uv_range(self, min_uv=0.0, max_uv=np.inf):
         """
         Return a copy of the data containing only baselines with the (u,v)
         distances allowed by the 'min_uv' and 'max_uv' cuts.

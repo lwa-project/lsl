@@ -43,7 +43,7 @@ import dbm
 import aipy
 import math
 import pytz
-import numpy
+import numpy as np
 import ctypes
 import struct
 from datetime import datetime
@@ -917,17 +917,17 @@ def _get_rotation_matrix(theta, phi, psi, degrees=True):
     """
     
     if degrees:
-        theta = theta * numpy.pi/180.0
-        phi   = phi * numpy.pi/180.0
-        psi   = psi * numpy.pi/180.0
+        theta = theta * np.pi/180.0
+        phi   = phi * np.pi/180.0
+        psi   = psi * np.pi/180.0
         
     # Axis
-    u = numpy.array([numpy.cos(phi)*numpy.sin(theta), numpy.sin(phi)*numpy.sin(theta), numpy.cos(theta)])
+    u = np.array([np.cos(phi)*np.sin(theta), np.sin(phi)*np.sin(theta), np.cos(theta)])
     
     # Rotation matrix
-    rot  = numpy.eye(3)*numpy.cos(psi) 
-    rot += numpy.sin(psi)*numpy.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]]) 
-    rot += (1-numpy.cos(psi))*numpy.tensordot(u, u, axes=0)
+    rot  = np.eye(3)*np.cos(psi) 
+    rot += np.sin(psi)*np.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]]) 
+    rot += (1-np.cos(psi))*np.tensordot(u, u, axes=0)
     
     return rot
 
@@ -945,17 +945,17 @@ def apply_pointing_correction(az, el, theta, phi, psi, lat=34.070, degrees=True)
     
     # Convert the az,alt coordinates to the unit vector
     if degrees:
-        xyz = aipy.coord.azalt2top((az*numpy.pi/180.0, el*numpy.pi/180.0))
+        xyz = aipy.coord.azalt2top((az*np.pi/180.0, el*np.pi/180.0))
     else:
         xyz = aipy.coord.azalt2top((az, el))
         
     # Rotate
-    xyzP = numpy.dot(rot, xyz)
+    xyzP = np.dot(rot, xyz)
     
     azP, elP = aipy.coord.top2azalt(xyzP)
     if degrees:
-        azP *= 180/numpy.pi
-        elP *= 180/numpy.pi
+        azP *= 180/np.pi
+        elP *= 180/np.pi
         
     return azP, elP
 

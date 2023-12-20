@@ -50,7 +50,7 @@ import os
 import aipy
 import math
 import ephem
-import numpy
+import numpy as np
 import warnings
 from scipy.interpolate import interp1d
 from astropy.constants import c as speedOfLight
@@ -165,10 +165,10 @@ class RadioEarthSatellite(object):
         # Setup
         r = self.Body.range				# m
         v = self.Body.range_velocity		# m/s
-        self.jys = numpy.zeros_like(afreqs)
+        self.jys = np.zeros_like(afreqs)
         
         # Compute the flux coming from the satellite assuming isotropic emission
-        self._jys = self.tpower / (4*numpy.pi*r**2) / self.tbw		# W / m^2 / Hz
+        self._jys = self.tpower / (4*np.pi*r**2) / self.tbw		# W / m^2 / Hz
         self._jys /= 10**-26								# Jy
         
         try:
@@ -181,8 +181,8 @@ class RadioEarthSatellite(object):
             
             ## Figure out which frequency bin is within one channel of the
             ## shifted signal.  If it's close, set it to a 
-            diff = numpy.abs(fPrime - afreqs)*1e9
-            good = numpy.where( diff <= self.tbw/2.0 )
+            diff = np.abs(fPrime - afreqs)*1e9
+            good = np.where( diff <= self.tbw/2.0 )
             self.jys[good] = self._jys * min([1.0, dFreq*1e9/self.tbw])
                 
     def get_jys(self):
@@ -227,22 +227,22 @@ class BeamAlm(aipy.amp.BeamAlm):
             produces, and computes the beam response at all points
         """
         
-        test = numpy.array(top)
+        test = np.array(top)
         x,y,z = top
         
         if len(test.shape) == 1:
             temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
+                temp[:,i] = np.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = np.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError(f"Cannot compute response for {str(test.shape)}")
@@ -286,22 +286,22 @@ class Beam2DGaussian(aipy.amp.Beam2DGaussian):
             produces, and computes the beam response at all points
         """
         
-        test = numpy.array(top)
+        test = np.array(top)
         x,y,z = top
         
         if len(test.shape) == 1:
             temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
+                temp[:,i] = np.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = np.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError(f"Cannot compute response for {str(test.shape)}")
@@ -341,22 +341,22 @@ class BeamPolynomial(aipy.amp.BeamPolynomial):
             produces, and computes the beam response at all points
         """
         
-        test = numpy.array(top)
+        test = np.array(top)
         x,y,z = top
         
         if len(test.shape) == 1:
             temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
+                temp[:,i] = np.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = np.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError(f"Cannot compute response for {str(test.shape)}")
@@ -393,22 +393,22 @@ class Beam(aipy.amp.Beam):
             produces, and computes the beam response at all points
         """
         
-        test = numpy.array(top)
+        test = np.array(top)
         x,y,z = top
         
         if len(test.shape) == 1:
             temp = self._response_primitive((x,y,z))
             
         elif len(test.shape) == 2:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
-                temp[:,i] = numpy.squeeze(self._response_primitive((x[i],y[i],z[i])))
+                temp[:,i] = np.squeeze(self._response_primitive((x[i],y[i],z[i])))
                 
         elif len(test.shape) == 3:
-            temp = numpy.zeros((self.afreqs.size,)+test.shape[1:])
+            temp = np.zeros((self.afreqs.size,)+test.shape[1:])
             for i in range(temp.shape[1]):
                 for j in range(temp.shape[2]):
-                    temp[:,i,j] = numpy.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
+                    temp[:,i,j] = np.squeeze(self._response_primitive((x[i,j],y[i,j],z[i,j])))
                     
         else:
             raise ValueError(f"Cannot compute response for {str(test.shape)}")
@@ -423,7 +423,7 @@ class Antenna(aipy.amp.Antenna):
     attribute that pulls in the old vis.getBeamShape function.
     """
 
-    def __init__(self, x, y, z, beam, phsoff=[0.,0.], bp_r=numpy.array([1]), bp_i=numpy.array([0]), amp=1, pointing=(0.,numpy.pi/2,0), stand=0, **kwargs):
+    def __init__(self, x, y, z, beam, phsoff=[0.,0.], bp_r=np.array([1]), bp_i=np.array([0]), amp=1, pointing=(0.,np.pi/2,0), stand=0, **kwargs):
         """
         New init function that include stand ID number support.  From aipy.amp.Antenna:
           * x,y z = antenna coordinates in equatorial (ns) coordinates
@@ -454,7 +454,7 @@ class Antenna(aipy.amp.Antenna):
             topocentric coordinates, similar to what img.ImgW.get_top() 
             produces, and computes the beam response at all points.
         """
-        top = numpy.array(top)
+        top = np.array(top)
         pol = pol.lower()
         
         def _robust_dot(a, b):
@@ -463,18 +463,18 @@ class Antenna(aipy.amp.Antenna):
             """
             
             if len(b.shape) == 1:
-                temp = numpy.dot(a, b)
+                temp = np.dot(a, b)
                 
             elif len(b.shape) == 2:
-                temp = numpy.zeros_like(b)
+                temp = np.zeros_like(b)
                 for i in range(b.shape[1]):
-                    temp[:,i] = numpy.dot(a, b[:,i])
+                    temp[:,i] = np.dot(a, b[:,i])
                     
             elif len(b.shape) == 3:
-                temp = numpy.zeros_like(b)
+                temp = np.zeros_like(b)
                 for i in range(b.shape[1]):
                     for j in range(top.shape[2]):
-                        temp[:,i,j] = numpy.dot(a, b[:,i,j])
+                        temp[:,i,j] = np.dot(a, b[:,i,j])
                         
             else:
                 raise ValueError(f"Cannot dot a ({str(a.shape)}) with b ({str(b.shape)})")
@@ -498,23 +498,23 @@ class Antenna(aipy.amp.Antenna):
         """
         
         # Build azimuth and altitude arrays.  Be sure to convert to radians
-        az = numpy.zeros((360,90))
+        az = np.zeros((360,90))
         for i in range(360):
-            az[i,:] = i*numpy.pi/180.0
-        alt = numpy.zeros((360,90))
+            az[i,:] = i*np.pi/180.0
+        alt = np.zeros((360,90))
         for i in range(90):
-            alt[:,i] = i*numpy.pi/180.0
+            alt[:,i] = i*np.pi/180.0
             
         # The beam model is computed in terms of topocentric coordinates, so make that
         # conversion right quick using the aipy.coord module.
-        xyz = aipy.coord.azalt2top(numpy.concatenate([[az],[alt]]))
+        xyz = aipy.coord.azalt2top(np.concatenate([[az],[alt]]))
         
         # I cannot figure out how to do this all at once, so loop through azimuth/
         # altitude pairs
-        resp = numpy.zeros((360,90,len(self.beam.freqs)))
+        resp = np.zeros((360,90,len(self.beam.freqs)))
         for i in range(360):
             for j in range(90):
-                resp[i,j,:] = numpy.squeeze( self.bm_response(numpy.squeeze(xyz[:,i,j]), pol=pol) )
+                resp[i,j,:] = np.squeeze( self.bm_response(np.squeeze(xyz[:,i,j]), pol=pol) )
                 
         return resp
 
@@ -532,7 +532,7 @@ class AntennaArray(aipy.amp.AntennaArray):
     """
     
     def __str__(self):
-        return "AntennaArray at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.ants))
+        return f"AntennaArray at lat: {self.lat*180/np.pi:.3f}, lng: {self.long*180/np.pi:3f}, elev: {self.elev:.1f} m with {len(self.ants)} antennas"
         
     def __repr__(self):
         return str(self)
@@ -555,7 +555,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         for ant in self.ants:
             stands.append(ant.stand)
         
-        return numpy.array(stands)
+        return np.array(stands)
 
     def set_unixtime(self, timestamp):
         """
@@ -595,7 +595,7 @@ class AntennaArray(aipy.amp.AntennaArray):
             
         if filter == 'none' or filter is None:
             # Build up the bandpass - of ones
-            resp = numpy.ones(freqs.size)
+            resp = np.ones(freqs.size)
             
         else:
             # Load in the LWA antennas so we can grab some data.  If we don't know
@@ -617,7 +617,7 @@ class AntennaArray(aipy.amp.AntennaArray):
             arxIntp = interp1d(arxf, arxr, kind='cubic', bounds_error=False)
             
             # Build up the bandpass
-            resp = numpy.ones(freqs.size)
+            resp = np.ones(freqs.size)
             resp *= immIntp(freqs)
             resp *= arxIntp(freqs)
             
@@ -635,9 +635,9 @@ class AntennaArray(aipy.amp.AntennaArray):
         
         if type(src) == str:
             if src == 'e':
-                return numpy.dot(self._eq2now, bl)
+                return np.dot(self._eq2now, bl)
             elif src == 'z':
-                return numpy.dot(self._eq2zen, bl)
+                return np.dot(self._eq2zen, bl)
             elif src == 'r':
                 return bl
             else:
@@ -652,7 +652,7 @@ class AntennaArray(aipy.amp.AntennaArray):
                 m = aipy.coord.eq2top_m(self.sidereal_time() - ra, dec)
             else:
                 m = map
-        return numpy.dot(m, bl).transpose()
+        return np.dot(m, bl).transpose()
         
     def gen_uvw_fast(self, i, j, src='z', w_only=False, map=None):
         """Compute uvw coordinates of baseline relative to provided RadioBody, 
@@ -662,20 +662,20 @@ class AntennaArray(aipy.amp.AntennaArray):
         x,y,z = self.get_baseline_fast(i,j, src=src, map=map)
         
         afreqs = self.get_afreqs()
-        afreqs = numpy.reshape(afreqs, (1,afreqs.size))
+        afreqs = np.reshape(afreqs, (1,afreqs.size))
         if len(x.shape) == 0:
             if w_only:
                 return z*afreqs
             else:
-                return numpy.array([x*afreqs, y*afreqs, z*afreqs])
+                return np.array([x*afreqs, y*afreqs, z*afreqs])
                 
-        #afreqs = numpy.reshape(afreqs, (1,afreqs.size))
+        #afreqs = np.reshape(afreqs, (1,afreqs.size))
         x.shape += (1,); y.shape += (1,); z.shape += (1,)
         
         if w_only:
-            out = numpy.dot(z,afreqs)
+            out = np.dot(z,afreqs)
         else:
-            out = numpy.array([numpy.dot(x,afreqs), numpy.dot(y,afreqs), numpy.dot(z,afreqs)])
+            out = np.array([np.dot(x,afreqs), np.dot(y,afreqs), np.dot(z,afreqs)])
             
         return out
         
@@ -695,7 +695,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         if ionref is not None:
             w += self.refract(u, v, mfreq=mfreq, ionref=ionref)
         o = self.get_phs_offset(i,j)
-        phs = numpy.exp(-1j*2*numpy.pi*(w + o))
+        phs = np.exp(-1j*2*np.pi*(w + o))
         if resolve_src:
             if srcshape is None:
                 try:
@@ -722,7 +722,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         if self._cache is None:
             raise RuntimeError('sim_cache() must be called before the first sim() call at each time step.')
         elif self._cache == {}:
-            return numpy.zeros_like(self.passband(i,j))
+            return np.zeros_like(self.passband(i,j))
             
         s_eqs = self._cache['s_eqs']
         try:
@@ -741,10 +741,10 @@ class AntennaArray(aipy.amp.AntennaArray):
             # Older versions of AIPY
             Bij_sf = self.bm_response(i, j, pol=pol)
         if len(Bij_sf.shape) == 2:
-            Gij_sf = numpy.reshape(Gij_sf, (1, Gij_sf.size))
+            Gij_sf = np.reshape(Gij_sf, (1, Gij_sf.size))
             
         # Get the phase of each src vs. freq, also does resolution effects
-        E_sf = numpy.conjugate( self.gen_phs_fast(s_eqs, i, j, mfreq=self._cache['mfreq'], resolve_src=False, w=w) )
+        E_sf = np.conjugate( self.gen_phs_fast(s_eqs, i, j, mfreq=self._cache['mfreq'], resolve_src=False, w=w) )
         try:
             E_sf.shape = I_sf.shape
         except(AttributeError):
@@ -794,7 +794,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     try:
         freqs = freq.copy()
     except AttributeError:
-        freqs = numpy.array(freq)
+        freqs = np.array(freq)
         if freqs.shape == ():
             freqs.shape = (1,)
     if freqs.min() > 1e6:
@@ -811,15 +811,15 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
             yw = 1.0*xw
             
         # FWHM to sigma
-        xw /= 2.0*numpy.sqrt(2.0*numpy.log(2.0))
-        yw /= 2.0*numpy.sqrt(2.0*numpy.log(2.0))
+        xw /= 2.0*np.sqrt(2.0*np.log(2.0))
+        yw /= 2.0*np.sqrt(2.0*np.log(2.0))
         
         # Degrees to radians
-        xw *= numpy.pi/180
-        yw *= numpy.pi/180
+        xw *= np.pi/180
+        yw *= np.pi/180
         
         if verbose:
-            print("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/numpy.pi, yw*180/numpy.pi))
+            print("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/np.pi, yw*180/np.pi))
         beam = Beam2DGaussian(freqs, xw, yw)
         
     elif force_flat:
@@ -829,14 +829,14 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         
     else:
         if os.path.exists(os.path.join(dataPath, 'beam-shape.npz')):
-            dd = numpy.load(os.path.join(dataPath, 'beam-shape.npz'))
+            dd = np.load(os.path.join(dataPath, 'beam-shape.npz'))
             coeffs = dd['coeffs']
             
             deg = coeffs.shape[0]-1
             lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
             beamShapeDict = {}
             for i in range(deg+1):
-                beamShapeDict[i] = numpy.squeeze(coeffs[-1-i,:])
+                beamShapeDict[i] = np.squeeze(coeffs[-1-i,:])
             try:
                 dd.close()
             except AttributeError:
@@ -856,14 +856,14 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     # Build an array of AIPY Antenna objects
     ants = []
     for antenna in antennas:
-        top = numpy.array([antenna.stand.x, antenna.stand.y, antenna.stand.z])
-        top += (2*pos_error*numpy.random.rand(3)-pos_error)	# apply a random positional error if needed
+        top = np.array([antenna.stand.x, antenna.stand.y, antenna.stand.z])
+        top += (2*pos_error*np.random.rand(3)-pos_error)	# apply a random positional error if needed
         top.shape = (3,)
-        eq = numpy.dot( aipy.coord.top2eq_m(0.0, station.lat), top )
+        eq = np.dot( aipy.coord.top2eq_m(0.0, station.lat), top )
         eq /= speedOfLight	# m -> s
         eq *= 1e9	# s -> ns
         
-        delayCoeff = numpy.zeros(2)
+        delayCoeff = np.zeros(2)
         
         amp = 0*antenna.cable.gain(freqs*1e9) + 1
         
@@ -930,7 +930,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     def Bij_sf(xyz, pol):
         Bi = aa[0].bm_response(xyz, pol=pol[0]).transpose()
         Bj = aa[1].bm_response(xyz, pol=pol[1]).transpose()
-        Bij = numpy.sqrt( Bi*Bj.conj() )
+        Bij = np.sqrt( Bi*Bj.conj() )
         return Bij.squeeze()
     if flat_response:
         Gij_sf *= 0.0
@@ -986,23 +986,23 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         srcs_fq.append( frq )
         
         ## Source shape parameters
-        shp = numpy.array(src.srcshape)
+        shp = np.array(src.srcshape)
         shp.shape = (3,1)
         srcs_sh.append( shp )
         
     # Build the simulation cache
-    aa.sim_cache( numpy.concatenate(srcs_eq, axis=1), 
-                jys=numpy.concatenate(srcs_jy, axis=0),
-                mfreqs=numpy.concatenate(srcs_fq, axis=0),
-                srcshapes=numpy.concatenate(srcs_sh, axis=1) )
-    aa._cache['s_top'] = numpy.concatenate(srcs_tp, axis=0)
-    aa._cache['s_ha'] = numpy.concatenate(srcs_ha, axis=0)
-    aa._cache['s_dec'] = numpy.concatenate(srcs_dc, axis=0)
+    aa.sim_cache( np.concatenate(srcs_eq, axis=1), 
+                jys=np.concatenate(srcs_jy, axis=0),
+                mfreqs=np.concatenate(srcs_fq, axis=0),
+                srcshapes=np.concatenate(srcs_sh, axis=1) )
+    aa._cache['s_top'] = np.concatenate(srcs_tp, axis=0)
+    aa._cache['s_ha'] = np.concatenate(srcs_ha, axis=0)
+    aa._cache['s_dec'] = np.concatenate(srcs_dc, axis=0)
     
     # Build the simulated data.  If no baseline list is provided, build all 
     # baselines available
     if baselines is None:
-        baselines = uvutils.get_baselines(numpy.zeros(len(aa.ants)), indicies=True)
+        baselines = uvutils.get_baselines(np.zeros(len(aa.ants)), indicies=True)
         
     # Define output data structure
     freq = aa.get_afreqs()*1e9
@@ -1013,8 +1013,8 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     # Go!
     if phase_center != 'z':
         phase_center.compute(aa)
-        pcAz = phase_center.az*180/numpy.pi
-        pcEl = phase_center.alt*180/numpy.pi
+        pcAz = phase_center.az*180/np.pi
+        pcEl = phase_center.alt*180/np.pi
     else:
         pcAz = 0.0
         pcEl = 90.0
@@ -1123,10 +1123,10 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
     
     cGains = []
     for i in range(len(amps)):
-        gain = 2j*numpy.pi*fq*delays[i]
+        gain = 2j*np.pi*fq*delays[i]
         if phase_offsets is not None:
             gain += 1j*phase_offsets[i]
-        cGains.append( amps[i]*numpy.exp(gain) )
+        cGains.append( amps[i]*np.exp(gain) )
 
     # Apply the scales and delays for all polarization pairs found in the original data
     for pds in sclData:
@@ -1206,13 +1206,13 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
             raise RuntimeError("Mis-match between the number of SEFDs supplied and the number of antennas in the data")
             
     except TypeError:
-        SEFD = numpy.ones(nAnts)*SEFD
+        SEFD = np.ones(nAnts)*SEFD
         
     # Calculate the standard deviation of the real/imaginary noise
-    visNoiseSigma = numpy.zeros((len(dataSet.baselines), len(dataSet.freq)))
+    visNoiseSigma = np.zeros((len(dataSet.baselines), len(dataSet.freq)))
     for k,(i,j) in enumerate(dataSet.baselines):
-        visNoiseSigma[k,:] = numpy.sqrt(SEFD[i]*SEFD[j])
-    visNoiseSigma *= 1 / efficiency / numpy.sqrt(2.0*bandwidth*tInt)
+        visNoiseSigma[k,:] = np.sqrt(SEFD[i]*SEFD[j])
+    visNoiseSigma *= 1 / efficiency / np.sqrt(2.0*bandwidth*tInt)
     
     # Build the VisibilityDataSet to hold the data with noise added
     bnData = dataSet.copy(include_pols=True)
@@ -1222,15 +1222,15 @@ def add_baseline_noise(dataSet, SEFD, tInt, bandwidth=None, efficiency=1.0):
         if isinstance(pds, VisibilityDataSet):
             for ppds in pds:
                 ## Calculate the expected noise
-                visNoise = visNoiseSigma * (numpy.random.randn(*ppds.data.shape) \
-                           + 1j*numpy.random.randn(*ppds.data.shape))
+                visNoise = visNoiseSigma * (np.random.randn(*ppds.data.shape) \
+                           + 1j*np.random.randn(*ppds.data.shape))
                 
                 ## Apply
                 ppds.data += visNoise
         else:
             ## Calculate the expected noise
-            visNoise = visNoiseSigma * (numpy.random.randn(*pds.data.shape) \
-                       + 1j*numpy.random.randn(*pds.data.shape))
+            visNoise = visNoiseSigma * (np.random.randn(*pds.data.shape) \
+                       + 1j*np.random.randn(*pds.data.shape))
             
             ## Apply
             pds.data += visNoise

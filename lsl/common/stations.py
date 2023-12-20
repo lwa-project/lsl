@@ -4,7 +4,7 @@ Module for creating object oriented representations of the LWA stations.
 
 import os
 import re
-import numpy
+import numpy as np
 import ephem
 import struct
 import weakref
@@ -213,8 +213,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         ephem.Observer.__init__(self)
         LWAStationBase.__init__(self, name, id=id, antennas=antennas, interface=interface)
         
-        self.lat = lat * numpy.pi/180.0
-        self.long = long * numpy.pi/180.0
+        self.lat = lat * np.pi/180.0
+        self.long = long * np.pi/180.0
         self.elev = elev
         self.pressure = 0.0
         self.horizon = 0.0
@@ -223,7 +223,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         self.beamformer_min_delay_samples = None
         
     def __str__(self):
-        return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
+        return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/np.pi, self.long*180.0/np.pi, self.elev, len(self.antennas))
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -240,7 +240,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return tw_fill(_build_repr(n, a), subsequent_indent='    ')
         
     def __reduce__(self):
-        return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, tuple(self.antennas), self.interface))
+        return (LWAStation, (self.name, self.lat*180/np.pi, self.long*180/np.pi, self.elev, self.id, tuple(self.antennas), self.interface))
         
     def __hash__(self):
         return hash(self.__reduce__()[1])
@@ -309,9 +309,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         function in the lwda_fits-dev library.
         """
         
-        return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
+        return np.array([[0.0, -np.sin(self.lat), np.cos(self.lat)], 
                             [1.0, 0.0,                  0.0], 
-                            [0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
+                            [0.0, np.cos(self.lat),  np.sin(self.lat)]])
         
     @property
     def eci_inverse_transform_matrix(self):
@@ -321,9 +321,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         elevation] for that baseline.
         """
         
-        return numpy.array([[ 0.0,                 1.0, 0.0                ],
-                            [-numpy.sin(self.lat), 0.0, numpy.cos(self.lat)],
-                            [ numpy.cos(self.lat), 0.0, numpy.sin(self.lat)]])
+        return np.array([[ 0.0,                 1.0, 0.0                ],
+                            [-np.sin(self.lat), 0.0, np.cos(self.lat)],
+                            [ np.cos(self.lat), 0.0, np.sin(self.lat)]])
                         
     def get_enz_offset(self, locTo):
         """
@@ -335,9 +335,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         
         az, alt, dist = self.get_pointing_and_distance(locTo)
-        return numpy.array([numpy.sin(az)*numpy.cos(alt),
-                            numpy.cos(az)*numpy.cos(alt),
-                            numpy.sin(alt)])*dist
+        return np.array([np.sin(az)*np.cos(alt),
+                            np.cos(az)*np.cos(alt),
+                            np.sin(alt)])*dist
         
     def get_pointing_and_distance(self, locTo):
         """
@@ -508,7 +508,7 @@ class Antenna(object):
         filename = os.path.join(dataPath, 'BurnsZ.txt')
         
         # Read in the data
-        data = numpy.loadtxt(filename)
+        data = np.loadtxt(filename)
         freq = data[:,0]*1e6
         ime = data[:,3]
         if dB:
@@ -690,7 +690,7 @@ class FEE(object):
         filename = os.path.join(dataPath, 'fee.txt')
         
         # Read in the data
-        data = numpy.loadtxt(filename)
+        data = np.loadtxt(filename)
         freq = data[:,0]*1e6
         gai = data[:,1]
         if not dB:
@@ -766,7 +766,7 @@ class Cable(object):
         bulkDelay = self.length*self.stretch / (self.vf * speedOfLight)
         
         # Dispersion delay
-        dispDelay = self.dd * (self.length*self.stretch / 100.0) / numpy.sqrt(frequency / numpy.array(self.ref_freq))
+        dispDelay = self.dd * (self.length*self.stretch / 100.0) / np.sqrt(frequency / np.array(self.ref_freq))
         
         totlDelay = bulkDelay + dispDelay + self.clock_offset
         
@@ -785,9 +785,9 @@ class Cable(object):
             Added the `dB' keyword to allow dB to be returned.
         """
     
-        atten = 2 * self.a0 * self.length*self.stretch * numpy.sqrt(frequency / numpy.array(self.ref_freq)) 
-        atten += self.a1 * self.length*self.stretch * (frequency / numpy.array(self.ref_freq))
-        atten = numpy.exp(atten)
+        atten = 2 * self.a0 * self.length*self.stretch * np.sqrt(frequency / np.array(self.ref_freq)) 
+        atten += self.a1 * self.length*self.stretch * (frequency / np.array(self.ref_freq))
+        atten = np.exp(atten)
         
         if dB:
             atten = to_dB(atten)
@@ -820,7 +820,7 @@ class Cable(object):
         """
         
         # Generate the frequencies to use
-        freq = numpy.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+        freq = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
         freq = freq*1e6
         
         # Compute the attenuation
@@ -910,7 +910,7 @@ class ARX(object):
         
         # Read in the file and convert it to a numpy array
         try:
-            dataDict = numpy.load(filename)
+            dataDict = np.load(filename)
         except IOError:
             raise RuntimeError(f"Could not find the response data for ARX board #{self.id}, channel {self.channel}")
             

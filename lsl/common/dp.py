@@ -11,7 +11,7 @@ words and functions for calculating the magnitude response of the TBN and DRX
 filters and a software version of DP.
 """
 
-import numpy
+import numpy as np
 from scipy.signal import freqz, lfilter
 from scipy.interpolate import interp1d
 
@@ -396,23 +396,23 @@ def tbn_filter(sample_rate=1e5, npts=_N_PTS):
     R = decimationCIC
     
     # Part 1 - CIC filter
-    h = numpy.linspace(0, numpy.pi/decimationCIC/2, num=npts, endpoint=True)
-    wCIC = (numpy.sin(h*R)/numpy.sin(h/2))**N
+    h = np.linspace(0, np.pi/decimationCIC/2, num=npts, endpoint=True)
+    wCIC = (np.sin(h*R)/np.sin(h/2))**N
     wCIC[0] = (2*R)**N
     
     # Part 2 - FIR filter
     h, wFIR = freqz(_TBN_FIR, 1, npts)
     
     # Cascade
-    w = numpy.abs(wCIC) * numpy.abs(wFIR)
+    w = np.abs(wCIC) * np.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= fS / decimation / numpy.pi
-    w = numpy.abs(w)**2
+    h *= fS / decimation / np.pi
+    w = np.abs(w)**2
     
     # Mirror
-    h = numpy.concatenate([-h[::-1], h[1:]])
-    w = numpy.concatenate([ w[::-1], w[1:]])
+    h = np.concatenate([-h[::-1], h[1:]])
+    w = np.concatenate([ w[::-1], w[1:]])
     
     # Return the interpolating function
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
@@ -434,23 +434,23 @@ def drx_filter(sample_rate=19.6e6, npts=_N_PTS):
     R = decimationCIC
         
     # Part 1 - CIC filter
-    h = numpy.linspace(0, numpy.pi/decimationCIC/2, num=npts, endpoint=True)
-    wCIC = (numpy.sin(h*R)/numpy.sin(h/2))**N
+    h = np.linspace(0, np.pi/decimationCIC/2, num=npts, endpoint=True)
+    wCIC = (np.sin(h*R)/np.sin(h/2))**N
     wCIC[0] = (2*R)**N
     
     # Part 2 - FIR filter
     h, wFIR = freqz(_DRX_FIR, 1, npts)
     
     # Cascade
-    w = numpy.abs(wCIC) * numpy.abs(wFIR)
+    w = np.abs(wCIC) * np.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= fS / decimation / numpy.pi
-    w = numpy.abs(w)**2
+    h *= fS / decimation / np.pi
+    w = np.abs(w)**2
     
     # Mirror
-    h = numpy.concatenate([-h[::-1], h[1:]])
-    w = numpy.concatenate([w[::-1], w[1:]])
+    h = np.concatenate([-h[::-1], h[1:]])
+    w = np.concatenate([w[::-1], w[1:]])
     
     # Return the interpolating function
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
@@ -462,16 +462,16 @@ def _process_stream_filter(time, data, filter_pack, central_freq):
     """
     
     # Mix with the NCO
-    temp = data*numpy.exp(-2j*numpy.pi*central_freq*(time/fS))
+    temp = data*np.exp(-2j*np.pi*central_freq*(time/fS))
 
     # CIC filter + decimation
     temp = lfilter(filter_pack['CIC'], 1, temp)[::filter_pack['cicD']] / filter_pack['cicD']
-    scale = numpy.round( numpy.log10(numpy.array(filter_pack['CIC']).sum()) / numpy.log10(2.0) )
+    scale = np.round( np.log10(np.array(filter_pack['CIC']).sum()) / np.log10(2.0) )
     temp /= 2**scale
     
     # FIR filter + decimation
     temp = lfilter(filter_pack['FIR'], 1, temp)[::filter_pack['firD']] / filter_pack['firD']
-    scale = numpy.round( numpy.log10(numpy.array(filter_pack['FIR']).sum()) / numpy.log10(2.0) )
+    scale = np.round( np.log10(np.array(filter_pack['FIR']).sum()) / np.log10(2.0) )
     temp /= 2**scale
     
     return temp
@@ -609,10 +609,10 @@ class SoftwareDP(object):
         form a beam.  Returns a two-element tuple, one for each beam polarization.
         """
         
-        filters = numpy.array(self.delayFIRs, dtype=numpy.int16)
-        course  = numpy.array(course_delays, dtype=numpy.int16)
-        fine    = numpy.array(fine_delays, dtype=numpy.int16)
-        gain    = (numpy.array(gains)*32767).astype(numpy.int16)		
+        filters = np.array(self.delayFIRs, dtype=np.int16)
+        course  = np.array(course_delays, dtype=np.int16)
+        fine    = np.array(fine_delays, dtype=np.int16)
+        gain    = (np.array(gains)*32767).astype(np.int16)		
         return _fir.integerBeamformer(data, filters, course, fine, gain)
 
         
@@ -673,6 +673,6 @@ class SoftwareDP(object):
                 # Destroy the taskPool
                 del(taskPool)
                 
-            output = numpy.array(output)
+            output = np.array(output)
             
         return output

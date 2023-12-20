@@ -253,14 +253,20 @@ class Time(object):
         Time value formatted as UTC calendar datetime.datetime object.
         """
         
-        return self.date_ln_to_py(self.utc_ln_date)
+        lnDate = astro.get_date(self._time)
+        (usec, sec) = math.modf(lnDate.seconds)
+        pyDate = datetime.datetime(lnDate.years, lnDate.months, lnDate.days,
+            lnDate.hours, lnDate.minutes, int(sec), int(usec * 1e6))
+        return pyDate
         
     @utc_py_date.setter
     def utc_py_date(self, value):
         if not isinstance(value, datetime.datetime):
             raise ValueError("value must be type datetime.datetime")
             
-        self.utc_ln_date = self.date_py_to_ln(value)
+        lnDate = astro.date(pyDate.year, pyDate.month, pyDate.day, pyDate.hour, pyDate.minute)
+        lnDate.seconds = float(pyDate.second) + (pyDate.microsecond * 1e-6)
+        self._time = astro.get_julian_day(lnDate)
         
     @property
     def utc_str(self):

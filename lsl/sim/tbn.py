@@ -3,7 +3,7 @@ Python module for creating creating, validating, and writing simulated
 TBN frames to a file.
 """
 
-import numpy
+import numpy as np
 
 from lsl.common.dp import fS
 from lsl.reader import tbn
@@ -23,7 +23,7 @@ def frame_to_frame(tbn_frame):
     """
 
     # The raw frame
-    rawFrame = numpy.zeros(tbn.FRAME_SIZE, dtype=numpy.uint8)
+    rawFrame = np.zeros(tbn.FRAME_SIZE, dtype=np.uint8)
 
     # Part 1: The header
     ## Sync. words (0xDEC0DE5C)
@@ -59,16 +59,16 @@ def frame_to_frame(tbn_frame):
     rawFrame[23] = tbn_frame.payload.timetag & 255
     ## Data
     if tbn_frame.payload.data.dtype == CI8:
-        iq = tbn_frame.payload.data.view(numpy.int8).ravel().copy()
+        iq = tbn_frame.payload.data.view(np.int8).ravel().copy()
     else:
         iq = tbn_frame.payload.data
         iq.real
         ### Round and convert to unsigned integers
-        iq = numpy.round(iq)
-        if iq.dtype == numpy.complex128:
-            iq = iq.astype(numpy.complex64)
-        iq = iq.view(numpy.float32)
-        iq = iq.astype(numpy.int8)
+        iq = np.round(iq)
+        if iq.dtype == np.complex128:
+            iq = iq.astype(np.complex64)
+        iq = iq.view(np.float32)
+        iq = iq.astype(np.int8)
         
     rawFrame[24:] = iq
     

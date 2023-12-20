@@ -59,8 +59,6 @@ get_frames_per_obs
     Support for ECR 11 TBN header format change.
 """
 
-import numpy
-
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbn, read_tbn_ci8

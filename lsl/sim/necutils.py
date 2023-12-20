@@ -9,7 +9,7 @@ dipoles.  See the `README.NEC` file included in the LSL data directory for
 more information about what is included.
 """
 
-from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
+import numpy as np
 from lsl.misc.mathutils import regrid
 from lsl.common.color import colorfy
 import os
@@ -35,7 +35,7 @@ def close_to( x, y, epsilon=0.005 ):
     parameter with a default of 0.005.
     """
     
-    return ( 2.0*abs(x-y)/(x+y) < epsilon )
+    return ( 2.0*np.abs(x-y)/(x+y) < epsilon )
 
 
 def open_and_get_nec_freq(fname):
@@ -116,7 +116,7 @@ def calculate_ime(necname, myfreqs = None, zpre = 100):
 
     ant = NECImpedance(necname)
     gamma = (zpre - ant.z)/(zpre + ant.z)
-    ime = (1 - abs(gamma)**2)
+    ime = (1 - np.abs(gamma)**2)
     if myfreqs is None:
         return (ant.freqs, ime)
     else:
@@ -198,8 +198,8 @@ class NECImpedance:
                 freqs.append(freq)
                 impedances.append(complex(re_z, im_z))
                 
-            self.freqs = array(freqs)
-            self.z = array(impedances)
+            self.freqs = np.array(freqs)
+            self.z = np.array(impedances)
 
 
 class NECPattern:
@@ -229,8 +229,8 @@ class NECPattern:
         # 0 to 359, where 0 is North and alt (altitude) runs from 0 to 89 , 
         # where 0 is the horizon The default pattern is all zeros (isotropic 
         # response)
-        self.antenna_pat_dB = zeros(shape=(360,90),dtype=float32)
-        self.antenna_pat_complex = zeros(shape=(360,90),dtype=complex64)
+        self.antenna_pat_dB = np.zeros(shape=(360,90),dtype=np.float32)
+        self.antenna_pat_complex = np.zeros(shape=(360,90),dtype=np.complex64)
         
         outname = os.path.splitext(necname)[0] + '.out'
         try:
@@ -315,7 +315,7 @@ class NECPattern:
             phsgain = float(cols[6])
             #print phi, theta, powgain
             self.antenna_pat_dB[phi,theta] = powgain
-            self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*exp(1j*phsgain*180/pi)
+            self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*np.exp(1j*phsgain*180/pi)
             n += 1
             #print("theta %d phi %d gain %f @ %f deg" % (theta, phi, powgain, phsgain))
 
@@ -349,11 +349,11 @@ class NECPattern:
                 else:
                     # Get the absolute value and put it on a dB scale
                     powcurr = float(fieldsCurrent[8])
-                    powcurr = 10.0*log10(powcurr)
+                    powcurr = 10.0*np.log10(powcurr)
                     phscurr = float(fieldsCurrent[9])
                     #print phi, theta, powcurr
                     self.antenna_pat_dB[phi,theta] = powcurr
-                    self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*exp(1j*phscurr*pi/180)
+                    self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*np.exp(1j*phscurr*pi/180)
                     n += 1
                     #print("theta %d phi %d current %f @ %f deg" % (theta, phi, powcurr, phscurr))
 

@@ -12,7 +12,7 @@ Classes and methods to model sky brightness and visibility.
 
 import os
 import abc
-from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty, arange, compress, clip, where, load
+import numpy as np
 
 from scipy.interpolate import interp1d
 
@@ -49,7 +49,7 @@ class SkyMapBase(object):
     __metaclass__ = abc.ABCMeta
     
     # Class data 
-    degToRad = (pi/180.)             # Usual conversion factor
+    degToRad = (np.pi/180.)             # Usual conversion factor
     
     def __init__(self, filename=None, freq_MHz=73.9):
         self.filename = filename
@@ -116,7 +116,7 @@ class SkyMapGSM(SkyMapBase):
     def _load(self):
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(self.filename)
+        dataDict = np.load(self.filename)
         
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
@@ -130,17 +130,17 @@ class SkyMapGSM(SkyMapBase):
         maps = dataDict['maps']
         ## Build the scale and spectral component interpolation functions so that we can
         ## move from the surveys to an arbitrary frequency.  This is done using cubic 
-        ## interpolation across log(freq)
-        scaleFunc = interp1d(log(freqs), log(sigmas), kind='cubic')
+        ## interpolation across np.log(freq)
+        scaleFunc = interp1d(np.log(freqs), np.log(sigmas), kind='cubic')
         compFuncs = []
         for i in range(comps.shape[1]):
-            compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
+            compFuncs.append( interp1d(np.log(freqs), comps[:,i], kind='cubic') )
         ## Actually create the realization by running the interplation and adding up the
         ## compnent maps
         output = maps[:,0]*0.0
         for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(self.freq_MHz))*maps[:,i]
-        output *= exp(scaleFunc(log(self.freq_MHz)))
+            output += compFunc(np.log(self.freq_MHz))*maps[:,i]
+        output *= np.exp(scaleFunc(np.log(self.freq_MHz)))
         ## Save
         self._power = output
         
@@ -176,7 +176,7 @@ class SkyMapLFSM(SkyMapGSM):
     def _load(self):
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(self.filename)
+        dataDict = np.load(self.filename)
         
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
@@ -191,17 +191,17 @@ class SkyMapLFSM(SkyMapGSM):
         ## Build the scale and spectral component interpolation functions so that we can
         ## move from the surveys to an arbitrary frequency.  This is done using spline
         ## interpolation for the scale factor and cubic for the 2-D structure.
-        ## interpolation across log(freq)
-        scaleFunc = interp1d(log(freqs), log(sigmas), kind='slinear')
+        ## interpolation across np.log(freq)
+        scaleFunc = interp1d(np.log(freqs), np.log(sigmas), kind='slinear')
         compFuncs = []
         for i in range(comps.shape[1]):
-            compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
+            compFuncs.append( interp1d(np.log(freqs), comps[:,i], kind='cubic') )
         ## Actually create the realization by running the interplation and adding up the
         ## compnent maps
         output = maps[:,0]*0.0
         for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(self.freq_MHz))*maps[:,i]
-        output *= exp(scaleFunc(log(self.freq_MHz)))
+            output += compFunc(np.log(self.freq_MHz))*maps[:,i]
+        output *= np.exp(scaleFunc(np.log(self.freq_MHz)))
         ## Save
         self._power = output
         
@@ -251,22 +251,22 @@ class ProjectedSkyMap(object):
         visibleMask = self.alt > 0.0
         
         #Compress arrays to hide non-visible sources
-        self.visibleAlt = compress(visibleMask, self.alt)
-        self.visibleAz = compress(visibleMask, self.az)
-        self.visiblePower = compress(visibleMask, self.skymap_object._power)
+        self.visibleAlt = np.compress(visibleMask, self.alt)
+        self.visibleAz = np.compress(visibleMask, self.az)
+        self.visiblePower = np.compress(visibleMask, self.skymap_object._power)
         try:
-            pixelSolidAngle = (2.0 * pi)**2/(self.skymap_object.numPixelsX*self.skymap_object.numPixelsY)
+            pixelSolidAngle = (2.0 * np.pi)**2/(self.skymap_object.numPixelsX*self.skymap_object.numPixelsY)
         except AttributeError:
             pixelSolidAngle = 2.5566346e-4
-        fractionSolidAngle = (1.0/4.0*pi) * pixelSolidAngle
+        fractionSolidAngle = (1.0/4.0*np.pi) * pixelSolidAngle
         
         # The cosine term is the projection of the receiving area onto the direction 
         # of the source
         normalizedPower = self.skymap_object.normalize_power() * fractionSolidAngle  
-        self.visibleNormalizedPower = compress(visibleMask, normalizedPower)
-        #self.visibleNormalizedPower = self.visiblePower*cos(self.visibleAlt * self.skymap_object.degToRad)
-        self.visibleRa = compress(visibleMask, self.skymap_object.ra)
-        self.visibleDec = compress(visibleMask, self.skymap_object.dec)
+        self.visibleNormalizedPower = np.compress(visibleMask, normalizedPower)
+        #self.visibleNormalizedPower = self.visiblePower*np.cos(self.visibleAlt * self.skymap_object.degToRad)
+        self.visibleRa = np.compress(visibleMask, self.skymap_object.ra)
+        self.visibleDec = np.compress(visibleMask, self.skymap_object.dec)
         
     def get_direction_cosines(self):
         """
@@ -275,9 +275,9 @@ class ProjectedSkyMap(object):
         
         altRad = self.visibleAlt*self.skymap_object.degToRad
         azRad = self.visibleAz*self.skymap_object.degToRad
-        l = cos(altRad)*sin(azRad)
-        m = cos(altRad)*cos(azRad)
-        n = sin(altRad)
+        l = np.cos(altRad)*np.sin(azRad)
+        m = np.cos(altRad)*np.cos(azRad)
+        n = np.sin(altRad)
         return (l, m, n)
         
     def compute_visible_power(self):

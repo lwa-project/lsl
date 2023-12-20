@@ -4,7 +4,7 @@ spectra as an alternative to a simple FFT.  The implementation here is based
 on:  http://www.scribd.com/doc/20561850/6/Polyphase-Filter-Coef%EF%AC%81cients
 """
 
-import numpy
+import numpy as np
 
 from lsl.correlator.fx import null_window
 
@@ -21,8 +21,8 @@ def __filterCoeff(N, P):
     channels using P taps.
     """
 
-    t = numpy.arange(N*P)
-    return numpy.sinc((t - N*P/2.0 + 0.5)/N)
+    t = np.arange(N*P)
+    return np.sinc((t - N*P/2.0 + 0.5)/N)
 
 
 def fft(signal, N, P=1, window=null_window):
@@ -36,7 +36,7 @@ def fft(signal, N, P=1, window=null_window):
     filteredSignal = signal[0:N*P]*window(N*P)*__filterCoeff(N, P)
     
     for i in range(0, P):
-        fbTemp = numpy.fft.fft(filteredSignal[i*N:(i+1)*N])
+        fbTemp = np.fft.fft(filteredSignal[i*N:(i+1)*N])
         try:
             fbOutput += fbTemp
         except NameError:

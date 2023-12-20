@@ -21,7 +21,7 @@ coverage and time delays.  The functions in the module:
 """
 
 import ephem
-import numpy
+import numpy as np
 from astropy.constants import c as speedOfLight
 from astropy.coordinates import Angle as AstroAngle
 from astropy.coordinates import EarthLocation as AstroEarthLocation
@@ -150,12 +150,12 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
         freq.size
         assert(freq.shape != ())
     except (AttributeError, AssertionError):
-        freq = numpy.array(freq, ndmin=1)
+        freq = np.array(freq, ndmin=1)
         
     baselines = get_baselines(antennas, include_auto=include_auto, indicies=True)
     Nbase = len(baselines)
     Nfreq = freq.size
-    uvw = numpy.zeros((Nbase,3,Nfreq))
+    uvw = np.zeros((Nbase,3,Nfreq))
 
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
@@ -164,31 +164,31 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
     elif isinstance(HA, AstroAngle):
         HA2 = HA.radian
     else:
-        HA2 = HA * 15.0 * numpy.pi/180
+        HA2 = HA * 15.0 * np.pi/180
     if isinstance(dec, ephem.Angle):
         dec2 = dec*1.0
     elif isinstance(dec, AstroAngle):
         dec2 = dec.radian
     else:
-        dec2 = dec * numpy.pi/180
+        dec2 = dec * np.pi/180
     if isinstance(site, AstroEarthLocation):
         lat2 = site.lat.radian
     else:
         lat2 = site.lat
     
     # Coordinate transformation matrices
-    trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+    trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
                            [1,  0,               0],
-                           [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-    trans2 = numpy.matrix([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                           [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                           [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                           [0,  np.cos(lat2), np.sin(lat2)]])
+    trans2 = np.matrix([[ np.sin(HA2),                  np.cos(HA2),                 0],
+                           [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
+                           [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
                     
     for k,(i,j) in enumerate(baselines):
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
         xyzPrime = antennas[i].stand - antennas[j].stand
-        xyz = trans1*numpy.matrix([[xyzPrime[0]], [xyzPrime[1]], [xyzPrime[2]]])
+        xyz = trans1*np.matrix([[xyzPrime[0]], [xyzPrime[1]], [xyzPrime[2]]])
         
         # Go from CE, east, NCP to u, v, w
         temp = trans2*xyz
@@ -225,7 +225,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     
     N = len(antennas)
     Nbase = N*(N-1)//2
-    uvTrack = numpy.zeros((Nbase,2,512))
+    uvTrack = np.zeros((Nbase,2,512))
     
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
@@ -234,33 +234,33 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     elif isinstance(dec, AstroAngle):
         dec2 = dec.radian
     else:
-        dec2 = dec * numpy.pi/180
+        dec2 = dec * np.pi/180
     if isinstance(site, AstroEarthLocation):
         lat2 = site.lat.radian
     else:
         lat2 = site.lat
     
     # Coordinate transformation matrices
-    trans1 = numpy.matrix([[0, -numpy.sin(lat2), numpy.cos(lat2)],
+    trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
                            [1,  0,               0],
-                           [0,  numpy.cos(lat2), numpy.sin(lat2)]])
+                           [0,  np.cos(lat2), np.sin(lat2)]])
                     
     count = 0
     for i,j in get_baselines(antennas, indicies=True):
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
         xyzPrime = antennas[i].stand - antennas[j].stand
-        xyz = trans1*numpy.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
-        xyz = numpy.ravel(xyz)
+        xyz = trans1*np.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+        xyz = np.ravel(xyz)
         
-        uRange = numpy.linspace(-numpy.sqrt(xyz[0]**2 + xyz[1]**2), numpy.sqrt(xyz[0]**2 + xyz[1]**2), num=256)
-        vRange1 = numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*numpy.sin(dec2) + xyz[2]*numpy.cos(dec2)
-        vRange2 = -numpy.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*numpy.sin(dec2) + xyz[2]*numpy.cos(dec2)
+        uRange = np.linspace(-np.sqrt(xyz[0]**2 + xyz[1]**2), np.sqrt(xyz[0]**2 + xyz[1]**2), num=256)
+        vRange1 = np.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*np.sin(dec2) + xyz[2]*np.cos(dec2)
+        vRange2 = -np.sqrt(xyz[0]**2 + xyz[1]**2 - uRange**2)*np.sin(dec2) + xyz[2]*np.cos(dec2)
         
-        uvTrack[count,0,0:256] = uRange * freq / numpy.array(speedOfLight)
-        uvTrack[count,1,0:256] = vRange1 * freq / numpy.array(speedOfLight)
-        uvTrack[count,0,256:512] = uRange[::-1] * freq / numpy.array(speedOfLight)
-        uvTrack[count,1,256:512] = vRange2[::-1] * freq / numpy.array(speedOfLight)
+        uvTrack[count,0,0:256] = uRange * freq / np.array(speedOfLight)
+        uvTrack[count,1,0:256] = vRange1 * freq / np.array(speedOfLight)
+        uvTrack[count,0,256:512] = uRange[::-1] * freq / np.array(speedOfLight)
+        uvTrack[count,1,256:512] = vRange2[::-1] * freq / np.array(speedOfLight)
         count = count + 1
         
     return uvTrack

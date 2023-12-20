@@ -2,7 +2,7 @@
 Deconvolution support for images made with :func:`lsl.imaging.utils.build_gridded_image`.
 """
 
-import numpy
+import numpy as np
 from aipy.coord import eq2radec, top2azalt
 from aipy.fit import RadioFixedBody
 from scipy.signal import fftconvolve as convolve
@@ -62,7 +62,7 @@ def _fit_gaussian(data):
         
         width_x = float(width_x)
         width_y = float(width_y)
-        return lambda x,y: height*numpy.exp(
+        return lambda x,y: height*np.exp(
                     -(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
 
     def moments(data):
@@ -74,13 +74,13 @@ def _fit_gaussian(data):
         """
         
         total = data.sum()
-        X, Y = numpy.indices(data.shape)
+        X, Y = np.indices(data.shape)
         x = (X*data).sum()/total
         y = (Y*data).sum()/total
         col = data[:, int(y)]
-        width_x = numpy.sqrt(abs((numpy.arange(col.size)-y)**2*col).sum()/col.sum())
+        width_x = np.sqrt(abs((np.arange(col.size)-y)**2*col).sum()/col.sum())
         row = data[int(x), :]
-        width_y = numpy.sqrt(abs((numpy.arange(row.size)-x)**2*row).sum()/row.sum())
+        width_y = np.sqrt(abs((np.arange(row.size)-x)**2*row).sum()/row.sum())
         height = data.max()
         return height, x, y, width_x, width_y
 
@@ -94,7 +94,7 @@ def _fit_gaussian(data):
         
         if params is None:
             params = moments(data)
-        errorfunction = lambda p: numpy.ravel(gaussian(*p)(*numpy.indices(data.shape)) -
+        errorfunction = lambda p: np.ravel(gaussian(*p)(*np.indices(data.shape)) -
                                 data)
         p, success = leastsq(errorfunction, params)
         return p
@@ -102,14 +102,14 @@ def _fit_gaussian(data):
     level = 0.5
     params = None
     while level > 0.1:
-        data_clipped = numpy.where(data/data.max() > level, data, 0)
+        data_clipped = np.where(data/data.max() > level, data, 0)
         params = fitgaussian(data_clipped, params=params)
         level /= 2.0
         
     #fit = gaussian(*params)
     #import pylab
     #pylab.matshow(data, cmap=pylab.cm.gist_earth_r)
-    #pylab.contour(fit(*numpy.indices(data.shape)), cmap=pylab.cm.copper)
+    #pylab.contour(fit(*np.indices(data.shape)), cmap=pylab.cm.copper)
     #pylab.show()
     
     return params
@@ -140,7 +140,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     xyz = aipyImg.get_eq(0.0, aa.lat, center=(size,size))
     RA, dec = eq2radec(xyz)
     RA += aa.sidereal_time()
-    RA %= (2*numpy.pi)
+    RA %= (2*np.pi)
     top = aipyImg.get_top(center=(size,size))
     az,alt = top2azalt(top)
     
@@ -154,8 +154,8 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
         img = input_image*1.0
         
     # Setup the arrays to hold the point sources and the residual.
-    cleaned = numpy.zeros_like(img)
-    working = numpy.zeros_like(img)
+    cleaned = np.zeros_like(img)
+    working = np.zeros_like(img)
     working += img
     
     # Setup the dictionary that will hold the beams as they are computed
@@ -170,10 +170,10 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+    beamCutout = np.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
-    FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
+    FWHM = int( round( (sx+sy)/2.0 * 2.0*np.sqrt(2.0*np.log(2.0)) ) )
     beamClean = psf * 0.0
     for i in range(beamClean.shape[0]):
         for j in range(beamClean.shape[1]):
@@ -191,7 +191,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     exitStatus = 'iteration limit'
     for i in range(max_iter):
         # Find the location of the peak in the flux density
-        peak = numpy.where( working == working.max() )
+        peak = np.where( working == working.max() )
         peak_x = peak[0][0]
         peak_y = peak[1][0]
         peakV = working[peak_x,peak_y]
@@ -228,12 +228,12 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
             peakEl = alt[peak_x, peak_y]
             
         if verbose:
-            currRA  = deg_to_hms(peakRA * 180/numpy.pi)
-            currDec = deg_to_dms(peakDec * 180/numpy.pi)
-            currAz  = deg_to_dms(peakAz * 180/numpy.pi)
-            currEl  = deg_to_dms(peakEl * 180/numpy.pi)
+            currRA  = deg_to_hms(peakRA * 180/np.pi)
+            currDec = deg_to_dms(peakDec * 180/np.pi)
+            currAz  = deg_to_dms(peakAz * 180/np.pi)
+            currEl  = deg_to_dms(peakEl * 180/np.pi)
             
-            print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, numpy.log10(peakV), peak_x, peak_y))
+            print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, np.log10(peakV), peak_x, peak_y))
             print("               -> RA: %s, Dec: %s" % (currRA, currDec))
             print("               -> az: %s, el: %s" % (currAz, currEl))
             
@@ -313,7 +313,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
-    conv = numpy.ma.array(conv, mask=convMask)
+    conv = np.ma.array(conv, mask=convMask)
     conv *= ((img-working).max() / conv.max())
     
     if plot:
@@ -380,7 +380,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     xyz = aipyImg.get_eq(0.0, aa.lat, center=(size,size))
     RA, dec = eq2radec(xyz)
     RA += aa.sidereal_time()
-    RA %= (2*numpy.pi)
+    RA %= (2*np.pi)
     top = aipyImg.get_top(center=(size,size))
     az,alt = top2azalt(top)
     
@@ -394,8 +394,8 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         img = input_image*1.0
         
     # Setup the arrays to hold the point sources and the residual.
-    cleaned = numpy.zeros_like(img)
-    working = numpy.zeros_like(img)
+    cleaned = np.zeros_like(img)
+    working = np.zeros_like(img)
     working += img
     
     # Setup the dictionary that will hold the beams as they are computed
@@ -410,10 +410,10 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+    beamCutout = np.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
-    FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
+    FWHM = int( round( (sx+sy)/2.0 * 2.0*np.sqrt(2.0*np.log(2.0)) ) )
     beamClean = psf * 0.0
     for i in range(beamClean.shape[0]):
         for j in range(beamClean.shape[1]):
@@ -433,12 +433,12 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         src.compute(aa)
         if verbose:
             print('Source: %s @ %s degrees elevation' % (name, src.alt))
-        if src.alt <= 10*numpy.pi/180.0:
+        if src.alt <= 10*np.pi/180.0:
             continue
             
         # Locate the approximate position of the source
         srcDist = (src.ra-RA)**2 + (src.dec-dec)**2
-        srcPeak = numpy.where( srcDist == srcDist.min() )
+        srcPeak = np.where( srcDist == srcDist.min() )
         
         # Define the clean box - this is fixed at 2*FWHM in width on each side
         rx0 = max([0, srcPeak[0][0] - FWHM//2])
@@ -448,13 +448,13 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         
         # Define the background box - this lies outside the clean box and serves
         # as a reference for the background
-        X, Y = numpy.indices(working.shape)
-        R = numpy.sqrt( (X-srcPeak[0][0])**2 + (Y-srcPeak[1][0])**2 )
+        X, Y = np.indices(working.shape)
+        R = np.sqrt( (X-srcPeak[0][0])**2 + (Y-srcPeak[1][0])**2 )
         bpad = 3
-        background = numpy.where( (R <= FWHM+bpad) & (R > FWHM) )
+        background = np.where( (R <= FWHM+bpad) & (R > FWHM) )
         while len(background[0]) == 0 and bpad < img.shape[0]:
             bpad += 1
-            background = numpy.where( (R <= FWHM+bpad) & (R > FWHM) )
+            background = np.where( (R <= FWHM+bpad) & (R > FWHM) )
             
         px0 = min(background[0])-1
         px1 = max(background[0])+2
@@ -464,7 +464,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         exitStatus = 'iteration'
         for i in range(max_iter):
             # Find the location of the peak in the flux density
-            peak = numpy.where( working[rx0:rx1,ry0:ry1] == working[rx0:rx1,ry0:ry1].max() )
+            peak = np.where( working[rx0:rx1,ry0:ry1] == working[rx0:rx1,ry0:ry1].max() )
             peak_x = peak[0][0] + rx0
             peak_y = peak[1][0] + ry0
             peakV = working[peak_x,peak_y]
@@ -506,12 +506,12 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
                 peakEl = alt[peak_x, peak_y]
                 
             if verbose:
-                currRA  = deg_to_hms(peakRA * 180/numpy.pi)
-                currDec = deg_to_dms(peakDec * 180/numpy.pi)
-                currAz  = deg_to_dms(peakAz * 180/numpy.pi)
-                currEl  = deg_to_dms(peakEl * 180/numpy.pi)
+                currRA  = deg_to_hms(peakRA * 180/np.pi)
+                currDec = deg_to_dms(peakDec * 180/np.pi)
+                currAz  = deg_to_dms(peakAz * 180/np.pi)
+                currEl  = deg_to_dms(peakEl * 180/np.pi)
                 
-                print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, numpy.log10(peakV), peak_x, peak_y))
+                print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, np.log10(peakV), peak_x, peak_y))
                 print("               -> RA: %s, Dec: %s" % (currRA, currDec))
                 print("               -> az: %s, el: %s" % (currAz, currEl))
                 
@@ -589,7 +589,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
                     st = pylab.suptitle('%s @ %i' % (name, i+1))
                 pylab.draw()
                 
-            if numpy.abs(numpy.max(working[rx0:rx1,ry0:ry1])-numpy.median(working[background]))/rStd(working[background]) <= sigma:
+            if np.abs(np.max(working[rx0:rx1,ry0:ry1])-np.median(working[background]))/rStd(working[background]) <= sigma:
                 exitStatus = 'peak is less than %.3f-sigma' % sigma
                 
                 break
@@ -599,7 +599,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
-    conv = numpy.ma.array(conv, mask=convMask)
+    conv = np.ma.array(conv, mask=convMask)
     conv *= ((img-working).max() / conv.max())
     
     if plot:
@@ -645,18 +645,18 @@ def _minor_cycle(img, beam, gain=0.2, max_iter=150):
     
     for i in range(max_iter):
         # Find the location of the peak in the flux density
-        aw = numpy.abs( working )
-        peak = numpy.where( aw == aw.max() )
+        aw = np.abs( working )
+        peak = np.where( aw == aw.max() )
         peak_x = peak[0][0]
         peak_y = peak[1][0]
         peakV = working[peak_x,peak_y]
         
-        if numpy.abs(peakV - working.mean()) < 2*working.std():
+        if np.abs(peakV - working.mean()) < 2*working.std():
             break
             
         # Build the beam
-        beam2 = numpy.roll(beam,  peak_x-beam.shape[0]//2, axis=0)
-        beam2 = numpy.roll(beam2, peak_y-beam.shape[1]//2, axis=1) 
+        beam2 = np.roll(beam,  peak_x-beam.shape[0]//2, axis=0)
+        beam2 = np.roll(beam2, peak_y-beam.shape[1]//2, axis=1) 
         
         # Calculate how much signal needs to be removed...
         toRemove = gain*peakV*beam2
@@ -699,10 +699,10 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     
     # Fit a Guassian to the zenith beam response and use that for the restore beam
     beamCutout = psf[size//2:3*size//2, size//2:3*size//2]
-    beamCutout = numpy.where( beamCutout > 0.0, beamCutout, 0.0 )
+    beamCutout = np.where( beamCutout > 0.0, beamCutout, 0.0 )
     h, cx, cy, sx, sy = _fit_gaussian( beamCutout )
     gauGen = gaussian2d(1.0, size/2+cx, size/2+cy, sx, sy)
-    FWHM = int( round( (sx+sy)/2.0 * 2.0*numpy.sqrt(2.0*numpy.log(2.0)) ) )
+    FWHM = int( round( (sx+sy)/2.0 * 2.0*np.sqrt(2.0*np.log(2.0)) ) )
     beamClean = psf * 0.0
     for i in range(beamClean.shape[0]):
         for j in range(beamClean.shape[1]):
@@ -718,8 +718,8 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
         
     # Build the initial model
     mdl = img*0 + img.max()
-    mdl[numpy.where(mdl < 0)] = 0
-    mdl[numpy.where(ra.mask == 1)] = 0
+    mdl[np.where(mdl < 0)] = 0
+    mdl[np.where(ra.mask == 1)] = 0
     
     # Determine the overall image->model scale factor
     bSrcs = {}
@@ -751,7 +751,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     for k in range(max_iter):
         ## Update the model image but don't allow negative flux
         mdl += diffScaled * gain
-        mdl[numpy.where( mdl <= 0 )] = 0.0
+        mdl[np.where( mdl <= 0 )] = 0.0
         
         ## Convert the model image to an ensemble of point sources for forward 
         ## modeling
@@ -838,7 +838,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     
     # Restore
     conv = convolve(mdl2, beamClean, mode='same')
-    conv = numpy.ma.array(conv, mask=convMask)
+    conv = np.ma.array(conv, mask=convMask)
     
     if plot:
         # Make an image for comparison purposes if we are verbose

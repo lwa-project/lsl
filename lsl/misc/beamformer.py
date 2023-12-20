@@ -7,8 +7,7 @@ beamforming for TBN time series data (delayAndSum).
 import os
 import sys
 import aipy
-import math
-import numpy
+import numpy as np
 from astropy.constants import c as speedOfLight
 
 from lsl.common.paths import DATA as dataPath
@@ -34,7 +33,7 @@ def _load_stand_response(freq=49.0e6):
     
     # Read in the spherical harmonic representation of the beam distributed with
     # LSL
-    dd = numpy.load(os.path.join(dataPath, 'beam-shape.npz'))
+    dd = np.load(os.path.join(dataPath, 'beam-shape.npz'))
     coeffs = dd['coeffs']
     try:
         dd.close()
@@ -44,13 +43,13 @@ def _load_stand_response(freq=49.0e6):
     # Calculate how many harmonics are stored in the data set and reorder the data
     # to AIPY's liking
     deg = coeffs.shape[0]-1
-    lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
+    lmax = int((np.sqrt(1+8*coeffs.shape[1])-3)/2)
     beam_shapeDict = {}
     for i in range(deg+1):
-        beam_shapeDict[i] = numpy.squeeze(coeffs[-1-i,:])
+        beam_shapeDict[i] = np.squeeze(coeffs[-1-i,:])
         
     # Build the beam object and done
-    return aipy.amp.BeamAlm(numpy.array([freq/1e9]), lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beam_shapeDict)
+    return aipy.amp.BeamAlm(np.array([freq/1e9]), lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beam_shapeDict)
 
 
 def calc_delay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
@@ -70,7 +69,7 @@ def calc_delay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
         raise ValueError(f"Pointing azimuth ({azimuth:.2f} deg) is out of range [0, 360]")
         
     # Get the positions of the stands and compute the mean center of the array
-    xyz = numpy.zeros((len(antennas),3))
+    xyz = np.zeros((len(antennas),3))
     i = 0
     good = []
     for ant in antennas:
@@ -87,18 +86,18 @@ def calc_delay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
     arrayZ = xyz[good,2].mean()
     
     # Build up a unit vector that points in the direction azimuth,elevation
-    rAz = azimuth*numpy.pi/180.0
-    rEl = elevation*numpy.pi/180.0
-    source = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
-                        numpy.cos(rEl)*numpy.cos(rAz), 
-                        numpy.sin(rEl)])
+    rAz = azimuth*np.pi/180.0
+    rEl = elevation*np.pi/180.0
+    source = np.array([np.cos(rEl)*np.sin(rAz), 
+                        np.cos(rEl)*np.cos(rAz), 
+                        np.sin(rEl)])
                         
     # Compute the stand positions relative to the average and loop over stands
     # to compute the time delays in seconds
-    arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
-    delays = numpy.zeros((len(antennas),))
+    arrayXYZ = xyz - np.array([arrayX, arrayY, arrayZ])
+    delays = np.zeros((len(antennas),))
     for i in list(range(len(antennas))):
-        delays[i] = numpy.dot(source, arrayXYZ[i,:]) / speedOfLight
+        delays[i] = np.dot(source, arrayXYZ[i,:]) / speedOfLight
         
     # Get the cable delays for each stand and add that in as well
     for i in list(range(len(antennas))):
@@ -140,19 +139,19 @@ def int_delay_and_sum(antennas, data, sample_rate=dp_common.fS, freq=49e6, azimu
     
     # Get the stand delays and convert the delay times from seconds to samples
     delays = calc_delay(antennas, freq=freq, azimuth=azimuth, elevation=elevation)
-    delays = numpy.round(delays*sample_rate).astype(numpy.int16)
+    delays = np.round(delays*sample_rate).astype(np.int16)
     
     # Figure out the polarizations
-    pols = numpy.array([ant.pol for ant in antennas])
-    pol0 = numpy.where( pols == 0 )[0]
-    pol1 = numpy.where( pols == 1 )[0]
+    pols = np.array([ant.pol for ant in antennas])
+    pol0 = np.where( pols == 0 )[0]
+    pol1 = np.where( pols == 1 )[0]
     
     # Make the delays into something meaningful for the shifting of the data 
     # streams
     delays -= delays.min()
     
     # Delay and sum by looping over stands inside of looping over times
-    output = numpy.zeros((2, (data.shape[1]-delays.max())), dtype=data.dtype)
+    output = np.zeros((2, (data.shape[1]-delays.max())), dtype=data.dtype)
     for s,p in zip(range(len(antennas)), pols):
         if antennas[s].combined_status != 33:
             continue
@@ -182,24 +181,24 @@ def _int_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_sh
     """
     
     # Convert from degrees to radian
-    rAz = azimuth*numpy.pi/180.0
-    rEl = elevation*numpy.pi/180.0
+    rAz = azimuth*np.pi/180.0
+    rEl = elevation*np.pi/180.0
     
     # Unit vector for the currect on-sky location
-    currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
-                        numpy.cos(rEl)*numpy.cos(rAz), 
-                        numpy.sin(rEl)])
+    currPos = np.array([np.cos(rEl)*np.sin(rAz), 
+                        np.cos(rEl)*np.cos(rAz), 
+                        np.sin(rEl)])
     # Stand response in this direction
     currResponse = beam_shape
     
     # Loop over stands to build the simulated singnals
-    signals = currResponse * numpy.exp(2j*numpy.pi*freq*t).astype(numpy.complex64)
+    signals = currResponse * np.exp(2j*np.pi*freq*t).astype(np.complex64)
     signals.shape = (1,signals.size)
-    signals = numpy.repeat(signals, len(antennas), axis=0)
-    delays = numpy.zeros((len(antennas),1), dtype=numpy.complex64)
+    signals = np.repeat(signals, len(antennas), axis=0)
+    delays = np.zeros((len(antennas),1), dtype=np.complex64)
     for i in range(len(antennas)):
-        currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / speedOfLight
-        delays[i,0] = numpy.exp(-2j*numpy.pi*freq*currDelay)
+        currDelay = antennas[i].cable.delay(freq) - np.dot(currPos, arrayXYZ[i,:]) / speedOfLight
+        delays[i,0] = np.exp(-2j*np.pi*freq*currDelay)
     signals *= delays
         
     # Beamform with delay-and-sum and store the RMS result
@@ -209,7 +208,7 @@ def _int_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_sh
     beamHere = beamHere[0,:]
     
     # Return
-    sigHere = (numpy.abs(beamHere)**2).mean()
+    sigHere = (np.abs(beamHere)**2).mean()
     return sigHere
 
 
@@ -231,8 +230,8 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
     
     # Build up a base time array, load in the cable delays, and get the stand 
     # positions for geometric delay calculations.
-    t = numpy.arange(0,1500)/sample_rate
-    xyz = numpy.zeros((len(antennas),3))
+    t = np.arange(0,1500)/sample_rate
+    xyz = np.zeros((len(antennas),3))
     i = 0
     good = []
     for ant in antennas:
@@ -247,7 +246,7 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
     arrayX = xyz[good,0].mean()
     arrayY = xyz[good,1].mean()
     arrayZ = xyz[good,2].mean()
-    arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
+    arrayXYZ = xyz - np.array([arrayX, arrayY, arrayZ])
     
     # Load in the response of a single isolated stand
     standBeam = _load_stand_response(freq)
@@ -273,15 +272,15 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
             pass
             
     # Build up the beam shape over all azimuths and elevations
-    beam_shape =  numpy.zeros((360,90))
+    beam_shape =  np.zeros((360,90))
     for az in list(range(360)):
-        rAz = az*numpy.pi/180.0
+        rAz = az*np.pi/180.0
         for el in list(range(90)):
-            rEl = el*numpy.pi/180.0
-            beam_shape[az,el] = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
+            rEl = el*np.pi/180.0
+            beam_shape[az,el] = standBeam.response(aipy.coord.azalt2top(np.concatenate([[rAz], [rEl]])))[0][0]
             
     # Build the output array and loop over all azimuths and elevations
-    output = numpy.zeros((360,90))
+    output = np.zeros((360,90))
     for az in list(range(360)):
         for el in list(range(90)):
             # Display the progress meter if the `progress' keyword is set to True.  The
@@ -342,20 +341,20 @@ def phase_and_sum(antennas, data, sample_rate=dp_common.fS, central_freq=49.0e6,
     # streams.  Then, get the beamforming coefficients (b^l_n (a la Steve's 
     # "Fun with TBN" memo).
     delays -= delays.min()
-    bln = numpy.exp(2j*numpy.pi*central_freq*delays)
+    bln = np.exp(2j*np.pi*central_freq*delays)
     
     # Figure out the polarizations
-    pols = numpy.array([ant.pol for ant in antennas])
-    stat = numpy.array([ant.combined_status for ant in antennas])
-    pol0 = numpy.where( (pols == 0) & (stat == 33) )[0]
-    pol1 = numpy.where( (pols == 1) & (stat == 33) )[0]
+    pols = np.array([ant.pol for ant in antennas])
+    stat = np.array([ant.combined_status for ant in antennas])
+    pol0 = np.where( (pols == 0) & (stat == 33) )[0]
+    pol1 = np.where( (pols == 1) & (stat == 33) )[0]
     
     # Loop over stands to compute the formed beam
-    output = numpy.zeros((2, data.shape[1]), dtype=numpy.complex64)
+    output = np.zeros((2, data.shape[1]), dtype=np.complex64)
     if len(pol0):
-        output[0,:] = numpy.dot(bln[pol0], data[pol0,:]) / len(pol0)
+        output[0,:] = np.dot(bln[pol0], data[pol0,:]) / len(pol0)
     if len(pol1):
-        output[1,:] = numpy.dot(bln[pol1], data[pol1,:]) / len(pol1)
+        output[1,:] = np.dot(bln[pol1], data[pol1,:]) / len(pol1)
         
     # Check for empty polarization data.  Always return a 3-D array for the data
     if len(pol0) == 0:
@@ -378,24 +377,24 @@ def _phase_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_
     """
     
     # Convert from degrees to radian
-    rAz = azimuth*numpy.pi/180.0
-    rEl = elevation*numpy.pi/180.0
+    rAz = azimuth*np.pi/180.0
+    rEl = elevation*np.pi/180.0
         
     # Unit vector for the current on-sky location
-    currPos = numpy.array([numpy.cos(rEl)*numpy.sin(rAz), 
-                    numpy.cos(rEl)*numpy.cos(rAz), 
-                    numpy.sin(rEl)])
+    currPos = np.array([np.cos(rEl)*np.sin(rAz), 
+                    np.cos(rEl)*np.cos(rAz), 
+                    np.sin(rEl)])
     # Stand response in this direction
     currResponse = beam_shape
     
     # Loop over stands to build the simulated signals
-    signals = currResponse * numpy.exp(2j*numpy.pi*freq*t).astype(numpy.complex64)
+    signals = currResponse * np.exp(2j*np.pi*freq*t).astype(np.complex64)
     signals.shape = (1,signals.size)
-    signals = numpy.repeat(signals, len(antennas), axis=0)
-    delays = numpy.zeros((len(antennas),1), dtype=numpy.complex64)
+    signals = np.repeat(signals, len(antennas), axis=0)
+    delays = np.zeros((len(antennas),1), dtype=np.complex64)
     for i in range(len(antennas)):
-        currDelay = antennas[i].cable.delay(freq) - numpy.dot(currPos, arrayXYZ[i,:]) / speedOfLight
-        delays[i,0] = numpy.exp(-2j*numpy.pi*freq*currDelay)
+        currDelay = antennas[i].cable.delay(freq) - np.dot(currPos, arrayXYZ[i,:]) / speedOfLight
+        delays[i,0] = np.exp(-2j*np.pi*freq*currDelay)
     signals *= delays
         
     # Beamform with delay-and-sum and store the RMS result
@@ -403,7 +402,7 @@ def _phase_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_
                          azimuth=direction[0], elevation=direction[1])
                         
     # Return
-    sigHere = (numpy.abs(beam)**2).mean()
+    sigHere = (np.abs(beam)**2).mean()
     return sigHere
 
 
@@ -426,8 +425,8 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
     
     # Build up a base time array, load in the cable delays, and get the stand 
     # positions for geometric delay calculations.
-    t = numpy.arange(0,1500)/sample_rate
-    xyz = numpy.zeros((len(antennas),3))
+    t = np.arange(0,1500)/sample_rate
+    xyz = np.zeros((len(antennas),3))
     i = 0
     good = []
     for ant in antennas:
@@ -442,21 +441,21 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
     arrayX = xyz[good,0].mean()
     arrayY = xyz[good,1].mean()
     arrayZ = xyz[good,2].mean()
-    arrayXYZ = xyz - numpy.array([arrayX, arrayY, arrayZ])
+    arrayXYZ = xyz - np.array([arrayX, arrayY, arrayZ])
     
     # Load in the response of a single isolated stand
     standBeam = _load_stand_response(freq=central_freq)
     
     # Build up the beam shape over all azimuths and elevations
-    beam_shape =  numpy.zeros((360,90))
+    beam_shape =  np.zeros((360,90))
     for az in range(360):
-        rAz = az*numpy.pi/180.0
+        rAz = az*np.pi/180.0
         for el in range(90):
-            rEl = el*numpy.pi/180.0
-            beam_shape[az,el] = standBeam.response(aipy.coord.azalt2top(numpy.concatenate([[rAz], [rEl]])))[0][0]
+            rEl = el*np.pi/180.0
+            beam_shape[az,el] = standBeam.response(aipy.coord.azalt2top(np.concatenate([[rAz], [rEl]])))[0][0]
             
     # Build the output array and loop over all azimuths and elevations
-    output = numpy.zeros((360,90))
+    output = np.zeros((360,90))
     for az in range(360):
         for el in range(90):
             # Display the progress meter if the `progress' keyword is set to True.  The
@@ -498,8 +497,8 @@ def circularize(x, y, iau=True):
         lrSign = -1.0
         
     # Compute the circular terms
-    l = (x + lrSign*1.0j*y) / numpy.sqrt(2)
-    r = (x - lrSign*1.0j*y) / numpy.sqrt(2)
+    l = (x + lrSign*1.0j*y) / np.sqrt(2)
+    r = (x - lrSign*1.0j*y) / np.sqrt(2)
     
     # Done
     return l, r
