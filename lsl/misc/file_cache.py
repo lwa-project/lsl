@@ -13,6 +13,7 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from io import StringIO, BytesIO
+from collections import namedtuple
     
 from lsl.misc.file_lock import FileLock, MemoryLock
 
@@ -127,6 +128,38 @@ class FileCache(object):
             pass
         finally:
             self._lock.release()
+            
+    def getsize(self, filename):
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            size = os.path.getsize(os.path.join(self.cache_dir, filename))
+        except OSError as e:
+            raise e
+        finally:
+            self._lock.release()
+            
+        return size
+        
+    def stat(self, filename):
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            fstat = os.stat(os.path.join(self.cache_dir, filename))
+        except OSError as e:
+            raise e
+        finally:
+            self._lock.release()
+            
+        return fstat
+
+
+#: os.stat_result - like namedtuple for stat-ing a MemoryFile
+mf_stat_result = namedtuple('ms_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
+                                               'st_uid', 'st_gid', 'st_size',
+                                               'st_atime', 'st_mtime', 'st_ctime'])
 
 
 class MemoryFile(object):
@@ -152,6 +185,11 @@ class MemoryFile(object):
         self._closed = True
         self._is_binary = False
         
+        self._mode = ''
+        self._ctime = 0.0
+        self._atime = 0.0
+        self._mtime = 0.0
+        
     def __iter__(self):
         contents = self.readline()
         if len(contents) > 0:
@@ -173,6 +211,15 @@ class MemoryFile(object):
         
         return len(self._buffer)
         
+    @property
+    def stat(self):
+        """
+        """
+        
+        return mf_stat_result(st_mode=0, st_ino=0, st_dev=0, st_nlink=1,
+                              st_uid=0, st_gid=0, st_size=self.size,
+                              st_atime=int(self._atime), st_mtime=int(self._mtime), st_ctime=int(self._ctime))
+    
     def open(self, mode='r'):
         """
         Prepare the buffer and lock it for access. 
@@ -183,7 +230,10 @@ class MemoryFile(object):
             
         self._lock.acquire(True)
         
-        self.mtime = time.time()
+        self._mode = mode
+        self._atime = time.time()
+        if mode.startswith('w'):
+            self._ctime = time.time()
         self._closed = False
         self._is_binary = (mode.find('b') != -1)
         
@@ -286,7 +336,9 @@ class MemoryFile(object):
             raise IOError("MemoryFile:%s is closed" % self.name)
             
         self._buffer.flush()
-        
+        if self._mode.startswith('w') or self._mode.startswith('a'):
+            self._mtime = time.time()
+            
     def close(self):
         """
         Close the buffer and release the access lock.
@@ -388,3 +440,31 @@ class MemoryCache(object):
             pass
         finally:
             self._lock.release()
+            
+    def getsize(self, filename):
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            size = self._cache[filename].size
+        except KeyError:
+            size = 0
+        finally:
+            self._lock.release()
+            
+        return size
+        
+    def stat(self, filename):
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            fstat = self._cache[filename].stat
+        except KeyError:
+            fstat = mf_stat_result(st_mode=0, st_ino=0, st_dev=0, st_nlink=0,
+                                   st_uid=0, st_gid=0, st_size=0,
+                                   st_atime=0, st_mtime=0, st_ctime=0)
+        finally:
+            self._lock.release()
+            
+        return fstat
