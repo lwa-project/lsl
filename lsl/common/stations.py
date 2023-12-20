@@ -534,7 +534,7 @@ class Antenna(object):
         """
         
         # Find the filename to use
-        filename = 'BurnsZ.txt'
+        filename = 'antenna/BurnsZ.txt'
         
         # Read in the data
         with DataAccess.open(filename, 'r') as fh:
@@ -715,7 +715,7 @@ class FEE(object):
         """
         
         # Find the filename to use
-        filename = 'fee.txt'
+        filename = 'frontend/fee.txt'
         
         # Read in the data
         with DataAccess.open(filename, 'r') as fh:

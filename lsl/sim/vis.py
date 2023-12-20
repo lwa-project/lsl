@@ -834,7 +834,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         beam = Beam(freqs)
         
     else:
-        with DataAccess.open('beam-shape.npz', 'rb') as fh:
+        with DataAccess.open('antenna/beam-shape.npz', 'rb') as fh:
             dd = numpy.load(fh)
             coeffs = dd['coeffs']
             

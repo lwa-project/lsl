@@ -43,7 +43,7 @@ def main(args):
     
     # Get the emperical model of the beam and compute it for the correct frequencies
     i = 0
-    with DataAccess.open('lwa1-dipole-emp.npz', 'rb') as fh:
+    with DataAccess.open('antenna/lwa1-dipole-emp.npz', 'rb') as fh:
         beamDict = numpy.load(fh)
         for beamCoeff in (beamDict['fitX'], beamDict['fitY']):
             alphaE = numpy.polyval(beamCoeff[0,0,:], args.frequency)
@@ -59,7 +59,7 @@ def main(args):
                 print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
                 
             if args.empirical:
-                with DataAccess.open('lwa1-dipole-cor.npz', 'rb') as fh:
+                with DataAccess.open('antenna/lwa1-dipole-cor.npz', 'rb') as fh:
                     corrDict = numpy.load(fh)
                     cFreqs = corrDict['freqs']
                     cAlts  = corrDict['alts']

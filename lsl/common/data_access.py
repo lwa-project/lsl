@@ -150,4 +150,5 @@ class _DataAccess(object):
             yield fh
 
 
+#: DataAccess instance
 DataAccess = _DataAccess()

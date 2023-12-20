@@ -61,7 +61,7 @@ def main(args):
             print("Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
     
     # Get the emperical model of the beam and compute it for the correct frequencies
-    with DataAccess.open('lwa1-dipole-emp.npz', 'rb') as fh:
+    with DataAccess.open('antenna/lwa1-dipole-emp.npz', 'rb') as fh:
         beamDict = numpy.load(fh)
         if args.pol == 'EW':
             beamCoeff = beamDict['fitX']
@@ -80,7 +80,7 @@ def main(args):
         print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
         
     if args.empirical:
-        with DataAccess.open('lwa1-dipole-cor.npz', 'rb') as fh:
+        with DataAccess.open('antenna/lwa1-dipole-cor.npz', 'rb') as fh:
             corrDict = numpy.load(fh)
             cFreqs = corrDict['freqs']
             cAlts  = corrDict['alts']
