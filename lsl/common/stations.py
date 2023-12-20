@@ -17,10 +17,6 @@ except ImportError:
 import numpy
 import ephem
 import struct
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 from textwrap import fill as tw_fill
 from functools import total_ordering
     
@@ -30,12 +26,7 @@ from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as DATA_PATH
 from lsl.common import dp, mcs as mcsDP, adp, mcsADP
 from lsl.misc.mathutils import to_dB, from_dB
-from lsl.common.progress import DownloadBar
-from lsl.misc.file_cache import FileCache
-from lsl.common.color import colorfy
-
-from lsl.config import LSL_CONFIG
-DOWN_CONFIG = LSL_CONFIG.view('download')
+from lsl.misc.data_access import DataAccess
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -50,14 +41,6 @@ _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
 
 
 speedOfLight = speedOfLight.to('m/s').value
-
-
-# Create the cache directory
-try:
-    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'arx_cache'), max_size=0)
-except OSError:
-    _CACHE_DIR = MemoryCache(max_size=0)
-    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
 
 
 def geo_to_ecef(lat, lon, elev):
@@ -874,62 +857,6 @@ class Cable(object):
         return (freq, attn)
 
 
-def _download_worker(url, filename):
-    """
-    Download the URL and save it to a file.
-    """
-    
-    is_interactive = sys.__stdin__.isatty()
-    
-    # Attempt to download the data
-    print("Downloading %s" % url)
-    try:
-        uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        remote_size = 1
-        try:
-            remote_size = int(uh.headers["Content-Length"])
-        except AttributeError:
-            pass
-        try:
-            meta = uh.info()
-            remote_size = int(meta.getheaders("Content-Length")[0])
-        except AttributeError:
-            pass
-        pbar = DownloadBar(max=remote_size)
-        received = 0
-        with _CACHE_DIR.open(filename, 'wb') as fh:
-            while True:
-                data = uh.read(DOWN_CONFIG.get('block_size'))
-                if len(data) == 0:
-                    break
-                received += len(data)
-                pbar.inc(len(data))
-                
-                fh.write(data)
-                
-            if is_interactive:
-                sys.stdout.write(pbar.show()+'\r')
-                sys.stdout.flush()
-        uh.close()
-        if is_interactive:
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
-    except IOError as e:
-        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
-        received = 0
-    except socket.timeout:
-        received = 0
-        
-    # Did we get anything or, at least, enough of something like it looks like 
-    # a real file?
-    if received < 3:
-        ## Fail
-        _CACHE_DIR.remove(filename)
-        return False
-        
-    return True
-
-
 class ARX(object):
     """
     Object to store information about a ARX board/channel combination.  Stores ARX:
@@ -1005,14 +932,10 @@ class ARX(object):
         """
         
         # Find the filename to use
-        filename = 'ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
-        if filename not in _CACHE_DIR:
-            status = _download_worker('https://fornax.phys.unm.edu/lwa/data/lsl/arx/'+filename, filename)
-            if not status:
-                raise RuntimeError("Failed to download data for ARX board #%s, channel %i" % (self.id, self.channel))
-                
+        filename = 'arx/ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
+        
         # Read in the file and convert it to a numpy array
-        with _CACHE_DIR.open(filename, 'rb') as fh:
+        with DataCache.open(filename, 'rb') as fh:
             try:
                 dataDict = numpy.load(fh)
             except IOError:
