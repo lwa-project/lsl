@@ -1,19 +1,13 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 Predict driftcurve for a given site using a given antenna model.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import math
-import numpy
+import numpy as np
 import pylab
 import argparse
 
@@ -61,7 +55,7 @@ def main(args):
             print("Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
     
     # Get the emperical model of the beam and compute it for the correct frequencies
-    beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
+    beamDict = np.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
     if args.pol == 'EW':
         beamCoeff = beamDict['fitX']
     else:
@@ -70,24 +64,24 @@ def main(args):
         beamDict.close()
     except AttributeError:
         pass
-    alphaE = numpy.polyval(beamCoeff[0,0,:], args.frequency)
-    betaE =  numpy.polyval(beamCoeff[0,1,:], args.frequency)
-    gammaE = numpy.polyval(beamCoeff[0,2,:], args.frequency)
-    deltaE = numpy.polyval(beamCoeff[0,3,:], args.frequency)
-    alphaH = numpy.polyval(beamCoeff[1,0,:], args.frequency)
-    betaH =  numpy.polyval(beamCoeff[1,1,:], args.frequency)
-    gammaH = numpy.polyval(beamCoeff[1,2,:], args.frequency)
-    deltaH = numpy.polyval(beamCoeff[1,3,:], args.frequency)
+    alphaE = np.polyval(beamCoeff[0,0,:], args.frequency)
+    betaE =  np.polyval(beamCoeff[0,1,:], args.frequency)
+    gammaE = np.polyval(beamCoeff[0,2,:], args.frequency)
+    deltaE = np.polyval(beamCoeff[0,3,:], args.frequency)
+    alphaH = np.polyval(beamCoeff[1,0,:], args.frequency)
+    betaH =  np.polyval(beamCoeff[1,1,:], args.frequency)
+    gammaH = np.polyval(beamCoeff[1,2,:], args.frequency)
+    deltaH = np.polyval(beamCoeff[1,3,:], args.frequency)
     if args.verbose:
         print("Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH))
         print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
         
     if args.empirical:
-        corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
+        corrDict = np.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
         cFreqs = corrDict['freqs']
         cAlts  = corrDict['alts']
         if corrDict['degrees'].item():
-            cAlts *= numpy.pi / 180.0
+            cAlts *= np.pi / 180.0
         cCorrs = corrDict['corrs']
         corrDict.close()
         
@@ -105,22 +99,22 @@ def main(args):
         corrFnc = None
         
     def compute_beam_pattern(az, alt, corr=corrFnc):
-        zaR = numpy.pi/2 - alt*numpy.pi / 180.0 
-        azR = az*numpy.pi / 180.0
+        zaR = np.pi/2 - alt*np.pi / 180.0 
+        azR = az*np.pi / 180.0
         
         c = 1.0
         if corrFnc is not None:
-            c = corrFnc(alt*numpy.pi / 180.0)
-            c = numpy.where(numpy.isfinite(c), c, 1.0)
+            c = corrFnc(alt*np.pi / 180.0)
+            c = np.where(np.isfinite(c), c, 1.0)
             
-        pE = (1-(2*zaR/numpy.pi)**alphaE)*numpy.cos(zaR)**betaE + gammaE*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaE
-        pH = (1-(2*zaR/numpy.pi)**alphaH)*numpy.cos(zaR)**betaH + gammaH*(2*zaR/numpy.pi)*numpy.cos(zaR)**deltaH
+        pE = (1-(2*zaR/np.pi)**alphaE)*np.cos(zaR)**betaE + gammaE*(2*zaR/np.pi)*np.cos(zaR)**deltaE
+        pH = (1-(2*zaR/np.pi)**alphaH)*np.cos(zaR)**betaH + gammaH*(2*zaR/np.pi)*np.cos(zaR)**deltaH
 
-        return c*numpy.sqrt((pE*numpy.cos(azR))**2 + (pH*numpy.sin(azR))**2)
+        return c*np.sqrt((pE*np.cos(azR))**2 + (pH*np.sin(azR))**2)
 
     if args.do_plot:
-        az = numpy.zeros((90,360))
-        alt = numpy.zeros((90,360))
+        az = np.zeros((90,360))
+        alt = np.zeros((90,360))
         for i in range(360):
             az[:,i] = i
         for i in range(90):
@@ -137,7 +131,7 @@ def main(args):
     t0 = astro.get_julian_from_sys()
     lst = astro.get_local_sidereal_time(sta.long*180.0/math.pi, t0) / 24.0
     t0 -= lst*(23.933/24.0) # Compensate for shorter sidereal days
-    times = numpy.arange(0.0, 1.0, args.time_step/1440.0) + t0
+    times = np.arange(0.0, 1.0, args.time_step/1440.0) + t0
     
     lstList = []
     powListAnt = [] 

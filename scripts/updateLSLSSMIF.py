@@ -1,24 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Utility for updating/changing the LWA station SSMIF files in between LSL 
 releases.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    input = raw_input
-    
 import os
 import re
 import sys
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
 import hashlib
 import argparse
 from datetime import datetime
@@ -43,10 +33,7 @@ def _parse_index(index):
     """
     
     from xml.etree import ElementTree as ET
-    try:
-        from BeautifulSoup import BeautifulSoup
-    except ImportError:
-        from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup
     
     # Find the table
     start = index.find('<table>')

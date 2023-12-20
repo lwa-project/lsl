@@ -1,18 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Read and plot the NOSTA_MAPPER table in a FITS IDI file writen by 
 lsl.writer.fitsidi if it exists.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import sys
-import numpy
+import numpy as np
 from astropy.io import fits as astrofits
 
 from lsl.common import stations
@@ -58,7 +52,7 @@ def main(args):
         print("  %3i -> %s (stand %3i)" % (sta, name, act))
     
     # Load in the positions of all of the stands
-    xyz = numpy.zeros((len(antennas), 3))
+    xyz = np.zeros((len(antennas), 3))
     i = 0
     for ant in antennas:
         xyz[i,0] = ant.stand.x
@@ -101,7 +95,7 @@ def main(args):
     #dx = xyz[i,0] - x0
     #dy = xyz[i,1] - y0
     #ax1.arrow(x0, y0, dx*8/dx, dy*8/dx, linewidth=2.0)
-    #ax1.text(x0+5, y0, '(%i m)' % numpy.sqrt(dx**2 + dy**2))
+    #ax1.text(x0+5, y0, '(%i m)' % np.sqrt(dx**2 + dy**2))
 
     plt.show()
 

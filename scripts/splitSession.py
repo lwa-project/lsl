@@ -1,17 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Script for splitting a DRX file based on the information contained in a MCS
 metadata tarball.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    input = raw_input
-    
 import os
 import sys
 import time

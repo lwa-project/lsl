@@ -28,6 +28,8 @@ MST = pytz.timezone('US/Mountain')
 UTC = pytz.UTC
 
 
+NPIX_SIDE = 350
+
 
 def main(args):
     filename = args.filename
@@ -80,7 +82,7 @@ def main(args):
         print("    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6))
         
         # Prune out what needs to go
-        if args.include != 'any' or args.exclude != 'none':
+        if args.include != 'all' or args.exclude != 'none':
             print("    Processing include/exclude lists")
             dataDict = dataDict.get_antenna_subset(include=args.include, 
                                                    exclude=args.exclude, 
@@ -96,7 +98,7 @@ def main(args):
         lbl1 = 'XX'
         for p in ('XX', 'RR', 'I'):
             try:
-                img1 = utils.build_gridded_image(dataDict, im_size=args.npix_side, im_res=args.image_res, pol=p, chan=toWork)
+                img1 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl1 = p.upper()
             except:
                 pass
@@ -105,7 +107,7 @@ def main(args):
         lbl2 = 'YY'
         for p in ('YY', 'LL', 'Q'):
             try:
-                img2 = utils.build_gridded_image(dataDict, im_size=args.npix_side, im_res=args.image_res, pol=p, chan=toWork)
+                img2 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl2 = p.upper()
             except:
                 pass
@@ -114,7 +116,7 @@ def main(args):
         lbl3 = 'XY'
         for p in ('XY', 'RL', 'U'):
             try:
-                img3 = utils.build_gridded_image(dataDict, im_size=args.npix_side, im_res=args.image_res, pol=p, chan=toWork)
+                img3 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl3 = p.upper()
             except:
                 pass
@@ -123,7 +125,7 @@ def main(args):
         lbl4 = 'YX'
         for p in ('YX', 'LR', 'V'):
             try:
-                img4 = utils.build_gridded_image(dataDict, im_size=args.npix_side, im_res=args.image_res, pol=p, chan=toWork)
+                img4 = utils.build_gridded_image(dataDict, size=NPIX_SIDE//2, res=0.5, pol=p, chan=toWork)
                 lbl4 = p.upper()
             except:
                 pass
@@ -149,17 +151,15 @@ def main(args):
                     ax.set_title("%s @ %s UTC" % (pol, utc))
                 continue
                 
-            # Display the image, save the limits, and label with the polarization/LST
+            # Display the image and label with the polarization/LST
             cb = utils.plot_gridded_image(ax, img)
-            xlim = ax.get_xlim()
-            ylim = ax.get_ylim()
             fig.colorbar(cb, ax=ax)
             if not args.utc:
                 ax.set_title("%s @ %s LST" % (pol, lst))
             else:
                 ax.set_title("%s @ %s UTC" % (pol, utc))
                 
-            junk = img.image(center=(img.shape[0]//2,img.shape[1]//2))
+            junk = img.image(center=(NPIX_SIDE//2,NPIX_SIDE//2))
             print("%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean()))
             
             # Turn off tick marks
@@ -178,20 +178,10 @@ def main(args):
                     overlay.graticule_radec(ax, aa)
                 else:
                     overlay.graticule_azalt(ax, aa)
-
-            # Reset the axes
-            ax.set_xlim(xlim)
-            ax.set_ylim(ylim)
+                    
         plt.show()
         
         if args.fits is not None:
-            ## Load in the coordinates for the phase center
-            pc_ra = np.degrees(dataDict.phase_center._ra)
-            pc_dec = np.degrees(dataDict.phase_center._dec)
-            
-            ### Poll the ImgWPlus object for the proper pixel scale
-            pixel_size = img1.pixel_size
-        
             ## Loop over the images to build up the FITS file
             hdulist = [astrofits.PrimaryHDU(),]
             for img,pol in zip((img1,img2,img3,img4), (lbl1,lbl2,lbl3,lbl4)):
@@ -200,20 +190,20 @@ def main(args):
                     
                 ### Create the HDU
                 try:
-                    hdu = astrofits.ImageHDU(data=img.image(center=(img.shape[0]//2,img.shape[1]//2)), name=pol)
+                    hdu = astrofits.ImageHDU(data=img.image(center=(NPIX_SIDE//2,NPIX_SIDE//2)), name=pol)
                 except AttributeError:
                     hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
                 hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
                 hdu.header['CTYPE1'] = 'RA---SIN'
-                hdu.header['CRPIX1'] = img.shape[0]//2+1
-                hdu.header['CDELT1'] = -1 * np.degrees(pixel_size)
-                hdu.header['CRVAL1'] = pc_ra
+                hdu.header['CRPIX1'] = NPIX_SIDE//2+1
+                hdu.header['CDELT1'] = -360.0/NPIX_SIDE/np.pi
+                hdu.header['CRVAL1'] = lo.sidereal_time()*180/np.pi	# pylint:disable=no-member
                 hdu.header['CTYPE2'] = 'DEC--SIN'
-                hdu.header['CRPIX2'] = img.shape[1]//2+1
-                hdu.header['CDELT2'] = np.degrees(pixel_size)
-                hdu.header['CRVAL2'] = pc_dec
+                hdu.header['CRPIX2'] = NPIX_SIDE//2+1
+                hdu.header['CDELT2'] = 360.0/NPIX_SIDE/np.pi
+                hdu.header['CRVAL2'] = lo.lat*180/np.pi
                 hdu.header['LONPOLE'] = 180.0
                 hdu.header['LATPOLE'] = 90.0
                 
@@ -247,10 +237,6 @@ if __name__ == "__main__":
                         help='first frequency to analyze in MHz')
     parser.add_argument('-2', '--freq-stop', type=aph.frequency, default='88.0', 
                         help='last frequency to analyze in MHz')
-    parser.add_argument('-p', '--npix-side', type=int, default=350,
-                        help='number of pixels per side in image plane')
-    parser.add_argument('-r', '--image-res', type=float, default=0.37142,
-                        help='resolution in the image plane as degrees/pix')
     parser.add_argument('-s', '--dataset', type=int, default=-1, 
                         help='data set to image')
     parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
