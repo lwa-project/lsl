@@ -40,7 +40,7 @@ def _load_stand_response(freq=49.0e6):
     
     # Read in the spherical harmonic representation of the beam distributed with
     # LSL
-    with DataAccess('beam-shape.npz', 'rb') as fh:
+    with DataAccess.open('beam-shape.npz', 'rb') as fh:
         dd = numpy.load(fh)
     coeffs = dd['coeffs']
     

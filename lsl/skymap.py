@@ -121,31 +121,31 @@ class SkyMapGSM(SkyMapBase):
         with DataAccess.open(self.filename, 'rb') as fh:
             dataDict = load(fh)
             
-        # RA and dec. are stored in the dictionary as radians
-        self.ra = dataDict['ra'].ravel() / self.degToRad
-        self.dec = dataDict['dec'].ravel() / self.degToRad
-        
-        # Compute the temperature for the current frequency
-        ## Load in the data
-        freqs = dataDict['freqs']
-        sigmas = dataDict['sigmas']
-        comps = dataDict['comps']
-        maps = dataDict['maps']
-        ## Build the scale and spectral component interpolation functions so that we can
-        ## move from the surveys to an arbitrary frequency.  This is done using cubic 
-        ## interpolation across log(freq)
-        scaleFunc = interp1d(log(freqs), log(sigmas), kind='cubic')
-        compFuncs = []
-        for i in range(comps.shape[1]):
-            compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
-        ## Actually create the realization by running the interplation and adding up the
-        ## compnent maps
-        output = maps[:,0]*0.0
-        for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(self.freq_MHz))*maps[:,i]
-        output *= exp(scaleFunc(log(self.freq_MHz)))
-        ## Save
-        self._power = output
+            # RA and dec. are stored in the dictionary as radians
+            self.ra = dataDict['ra'].ravel() / self.degToRad
+            self.dec = dataDict['dec'].ravel() / self.degToRad
+            
+            # Compute the temperature for the current frequency
+            ## Load in the data
+            freqs = dataDict['freqs']
+            sigmas = dataDict['sigmas']
+            comps = dataDict['comps']
+            maps = dataDict['maps']
+            ## Build the scale and spectral component interpolation functions so that we can
+            ## move from the surveys to an arbitrary frequency.  This is done using cubic 
+            ## interpolation across log(freq)
+            scaleFunc = interp1d(log(freqs), log(sigmas), kind='cubic')
+            compFuncs = []
+            for i in range(comps.shape[1]):
+                compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
+            ## Actually create the realization by running the interplation and adding up the
+            ## compnent maps
+            output = maps[:,0]*0.0
+            for i,compFunc in enumerate(compFuncs):
+                output += compFunc(log(self.freq_MHz))*maps[:,i]
+            output *= exp(scaleFunc(log(self.freq_MHz)))
+            ## Save
+            self._power = output
 
 
 class SkyMapLFSM(SkyMapGSM):
@@ -176,32 +176,32 @@ class SkyMapLFSM(SkyMapGSM):
         with DataAccess.open(self.filename, 'rb') as fh:
             dataDict = load(fh)
             
-        # RA and dec. are stored in the dictionary as radians
-        self.ra = dataDict['ra'].ravel() / self.degToRad
-        self.dec = dataDict['dec'].ravel() / self.degToRad
-        
-        # Compute the temperature for the current frequency
-        ## Load in the data
-        freqs = dataDict['freqs']
-        sigmas = dataDict['sigmas']
-        comps = dataDict['comps']
-        maps = dataDict['maps']
-        ## Build the scale and spectral component interpolation functions so that we can
-        ## move from the surveys to an arbitrary frequency.  This is done using spline
-        ## interpolation for the scale factor and cubic for the 2-D structure.
-        ## interpolation across log(freq)
-        scaleFunc = interp1d(log(freqs), log(sigmas), kind='slinear')
-        compFuncs = []
-        for i in range(comps.shape[1]):
-            compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
-        ## Actually create the realization by running the interplation and adding up the
-        ## compnent maps
-        output = maps[:,0]*0.0
-        for i,compFunc in enumerate(compFuncs):
-            output += compFunc(log(self.freq_MHz))*maps[:,i]
-        output *= exp(scaleFunc(log(self.freq_MHz)))
-        ## Save
-        self._power = output
+            # RA and dec. are stored in the dictionary as radians
+            self.ra = dataDict['ra'].ravel() / self.degToRad
+            self.dec = dataDict['dec'].ravel() / self.degToRad
+            
+            # Compute the temperature for the current frequency
+            ## Load in the data
+            freqs = dataDict['freqs']
+            sigmas = dataDict['sigmas']
+            comps = dataDict['comps']
+            maps = dataDict['maps']
+            ## Build the scale and spectral component interpolation functions so that we can
+            ## move from the surveys to an arbitrary frequency.  This is done using spline
+            ## interpolation for the scale factor and cubic for the 2-D structure.
+            ## interpolation across log(freq)
+            scaleFunc = interp1d(log(freqs), log(sigmas), kind='slinear')
+            compFuncs = []
+            for i in range(comps.shape[1]):
+                compFuncs.append( interp1d(log(freqs), comps[:,i], kind='cubic') )
+            ## Actually create the realization by running the interplation and adding up the
+            ## compnent maps
+            output = maps[:,0]*0.0
+            for i,compFunc in enumerate(compFuncs):
+                output += compFunc(log(self.freq_MHz))*maps[:,i]
+            output *= exp(scaleFunc(log(self.freq_MHz)))
+            ## Save
+            self._power = output
 
 
 class ProjectedSkyMap(object):
