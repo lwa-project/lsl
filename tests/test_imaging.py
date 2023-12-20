@@ -632,10 +632,13 @@ class imaging_tests(unittest.TestCase):
                 # Go for it!
                 aa = idi.get_antennaarray()
                 ds = idi.get_data_set(1)
+                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
                 
