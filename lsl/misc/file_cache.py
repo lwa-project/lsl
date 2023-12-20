@@ -142,6 +142,19 @@ class FileCache(object):
             
         return size
         
+    def getmtime(self, filename):
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            mtime = os.path.getmtime(os.path.join(self.cache_dir, filename))
+        except OSError as e:
+            raise e
+        finally:
+            self._lock.release()
+            
+        return mtime
+        
     def stat(self, filename):
         self._lock.acquire()
         assert(self._lock.locked())
@@ -174,7 +187,7 @@ class MemoryFile(object):
     
     def __init__(self, name):
         self.name = name
-        self.mtime = 0
+        self.mode = ''
         
         try:
             kls = BytesIO
@@ -185,7 +198,6 @@ class MemoryFile(object):
         self._closed = True
         self._is_binary = False
         
-        self._mode = ''
         self._ctime = 0.0
         self._atime = 0.0
         self._mtime = 0.0
@@ -230,7 +242,7 @@ class MemoryFile(object):
             
         self._lock.acquire(True)
         
-        self._mode = mode
+        self.mode = mode
         self._atime = time.time()
         if mode.startswith('w'):
             self._ctime = time.time()
@@ -336,7 +348,7 @@ class MemoryFile(object):
             raise IOError("MemoryFile:%s is closed" % self.name)
             
         self._buffer.flush()
-        if self._mode.startswith('w') or self._mode.startswith('a'):
+        if self.mode.startswith('w') or self.mode.startswith('a'):
             self._mtime = time.time()
             
     def close(self):
@@ -383,7 +395,7 @@ class MemoryCache(object):
         if max_size > 0:
             filenames = list(self._cache.keys())
             sizes = [self._cache[filename].size for filename in filenames]
-            mtimes = [self._cache[filename].mtime for filename in filenames]
+            mtimes = [self._cache[filename]._mtime for filename in filenames]
             
             # Delete until we mee the cache size limit or until there is only one
             # file left (the most recent one)
@@ -453,6 +465,19 @@ class MemoryCache(object):
             self._lock.release()
             
         return size
+        
+    def getmtime(self, filename):
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            mtime = self._cache[filename].stat['st_mtime']
+        except KeyError:
+            mtime = 0
+        finally:
+            self._lock.release()
+            
+        return mtime
         
     def stat(self, filename):
         self._lock.acquire()
