@@ -1041,7 +1041,7 @@ class LSLInterface(object):
         return self._cache[which]
 
 
-def _parse_ssmif_text(filename):
+def _parse_ssmif_text(filename_or_fh):
     """
     Given a human-readable (text) SSMIF file and return a collection of
     variables via locals() containing the files data.
@@ -1050,7 +1050,16 @@ def _parse_ssmif_text(filename):
     kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?')
     
     # Loop over the lines in the file
-    with open(filename, 'r') as fh:
+    try:
+        fh = open(filename_or_fh, 'r')
+        close_at_end = True
+    except TypeError:
+        fh = filename_or_fh
+        close_at_end = False
+        if fh.mode.find('b') != -1:
+            raise RuntimeError("Expected the file handle to be opened without binary access")
+            
+    try:
         for line in fh:
             line = line.replace('\n', '')
             line = line.replace('\r', '')
@@ -1549,6 +1558,14 @@ def _parse_ssmif_text(filename):
                 drDP[ids[0]-1] = int(value)
                 continue
                 
+    except Exception as e:
+        if close_at_end:
+            fh.close()
+        raise e
+        
+    if close_at_end:
+        fh.close()
+        
     return locals()
 
 
@@ -1558,7 +1575,17 @@ def _parse_ssmif_binary(filename):
     variables via locals() containing the files data.
     """
     
-    with open(filename, 'rb') as fh:
+    # Loop over the lines in the file
+    try:
+        fh = open(filename_or_fh, 'rb')
+        close_at_end = True
+    except TypeError:
+        fh = filename_or_fh
+        close_at_end = False
+        if fh.mode.find('b') == -1:
+            raise RuntimeError("Expected the file handle to be opened with binary access")
+            
+    try:
         # Read in the first four bytes to get the version code and go from there
         version = fh.read(4)
         version = struct.unpack('<i', version)[0]
@@ -1705,10 +1732,18 @@ def _parse_ssmif_binary(filename):
         
         fh.readinto(bsettings)
         
+    except Exception as e:
+        if close_at_end:
+            fh.close()
+        raise e
+        
+    if close_at_end:
+        fh.close()
+        
     return locals()
 
 
-def parse_ssmif(filename):
+def parse_ssmif(filename_or_fh):
     """
     Given a SSMIF file, return a fully-filled LWAStation instance.  This function
     supports both human-readable files (filenames with '.txt' extensions) or 
@@ -1716,13 +1751,16 @@ def parse_ssmif(filename):
     """
     
     # Find out if we have a .txt or .dat file and process accordingly
-    base, ext = os.path.splitext(filename)
-    
+    try:
+        base, ext = os.path.splitext(filename_or_fh.name)
+    except AttributeError:
+        base, ext = os.path.splitext(filename_or_fh)
+        
     # Read in the ssmif to a dictionary of variables
     if ext == '.dat':
-        ssmifDataDict = _parse_ssmif_binary(filename)
+        ssmifDataDict = _parse_ssmif_binary(filename_or_fh)
     elif ext == '.txt':
-        ssmifDataDict = _parse_ssmif_text(filename)
+        ssmifDataDict = _parse_ssmif_text(filename_or_fh)
     else:
         raise ValueError("Unknown file extension '%s', cannot tell if it is text or binary" % ext)
         
