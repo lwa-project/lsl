@@ -2,6 +2,7 @@
 import os
 import sys
 import shutil
+import warnings
 import contextlib
 try:
     from urllib2 import urlopen
@@ -21,6 +22,11 @@ __all__ = ['DataAccess']
 
 
 class _DataAccess(object):
+    """
+    Class to streamline LSL data access whether on disk as part of the LSL
+    install or remotely hosted.
+    """
+    
     # Base URL for remote data downloads
     _BASE_URL = 'https://fornax.phys.unm.edu/lwa/data/lsl'
     
@@ -118,6 +124,11 @@ class _DataAccess(object):
         return True
         
     def establish_data_file(self, filename):
+        """
+        Make sure that a LSL data file exists.  If it does not copy the file
+        from the base LSL installation or download it.
+        """
+        
         if filename not in self._CACHE_DIR:
             status = self._local_copy_worker(filename, filename)
             if not status:
@@ -127,8 +138,14 @@ class _DataAccess(object):
                 
     @contextlib.contextmanager
     def open(self, filename, mode='r'):
+        """
+        Open a file with the given mode and return the file handle.
+        """
+        
+        # Make sure we have a file
         self.establish_data_file(filename)
         
+        # Open the file
         fh = self._CACHE_DIR.open(filename, mode=mode)
         try:
             yield fh

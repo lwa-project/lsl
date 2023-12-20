@@ -62,7 +62,7 @@ from scipy.interpolate import interp1d
 from astropy.constants import c as speedOfLight
 
 from lsl import astro
-from lsl.common.paths import DATA as DATA_PATH
+from lsl.common.data_access import DataAccess
 from lsl.correlator import uvutils
 from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -834,8 +834,8 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         beam = Beam(freqs)
         
     else:
-        if os.path.exists(os.path.join(DATA_PATH, 'beam-shape.npz')):
-            dd = numpy.load(os.path.join(DATA_PATH, 'beam-shape.npz'))
+        with DataAccess.open('beam-shape.npz', 'rb') as fh:
+            dd = numpy.load(fh)
             coeffs = dd['coeffs']
             
             deg = coeffs.shape[0]-1
@@ -851,10 +851,6 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
             if verbose:
                 print("Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax))
             beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
-        else:
-            if verbose:
-                print("Using flat beam model")
-            beam = Beam(freqs)
             
     if pos_error != 0:
         warnings.warn(colorfy("{{%%yellow Creating array with positional errors between %.3f and %.3f m}}" % (-pos_error, pos_error)), RuntimeWarning)

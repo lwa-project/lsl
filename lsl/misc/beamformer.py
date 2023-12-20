@@ -17,7 +17,7 @@ import math
 import numpy
 from astropy.constants import c as speedOfLight
 
-from lsl.common.paths import DATA as DATA_PATH
+from lsl.common.data_access import DataAccess
 from lsl.common import dp as dp_common
 
 from lsl.misc import telemetry
@@ -40,13 +40,10 @@ def _load_stand_response(freq=49.0e6):
     
     # Read in the spherical harmonic representation of the beam distributed with
     # LSL
-    dd = numpy.load(os.path.join(DATA_PATH, 'beam-shape.npz'))
+    with DataAccess('beam-shape.npz', 'rb') as fh:
+        dd = numpy.load(fh)
     coeffs = dd['coeffs']
-    try:
-        dd.close()
-    except AttributeError:
-        pass
-        
+    
     # Calculate how many harmonics are stored in the data set and reorder the data
     # to AIPY's liking
     deg = coeffs.shape[0]-1

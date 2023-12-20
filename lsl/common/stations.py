@@ -26,7 +26,7 @@ from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as DATA_PATH
 from lsl.common import dp, mcs as mcsDP, adp, mcsADP
 from lsl.misc.mathutils import to_dB, from_dB
-from lsl.misc.data_access import DataAccess
+from lsl.common.data_access import DataAccess
 
 from lsl.misc import telemetry
 telemetry.track_module()

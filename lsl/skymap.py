@@ -23,7 +23,7 @@ from numpy import pi, float32, log, exp, log10, sin, cos, arcsin, arccos, empty,
 from scipy.interpolate import interp1d
 
 from lsl import astro
-from lsl.common.paths import DATA as DATA_PATH
+from lsl.common.data_access import DataAccess
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -103,7 +103,7 @@ class SkyMapGSM(SkyMapBase):
         downsampled to 64 sides rather than the fit.
     """
     
-    _input = os.path.join(DATA_PATH, 'skymap', 'gsm-408locked.npz')
+    _input = os.path.join('skymap', 'gsm-408locked.npz')
     
     def __init__(self, filename=None, freq_MHz=73.9):
         """
@@ -118,8 +118,9 @@ class SkyMapGSM(SkyMapBase):
     def _load(self):
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(self.filename)
-        
+        with DataAccess.open(self.filename, 'rb') as fh:
+            dataDict = load(fh)
+            
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
         self.dec = dataDict['dec'].ravel() / self.degToRad
@@ -145,12 +146,6 @@ class SkyMapGSM(SkyMapBase):
         output *= exp(scaleFunc(log(self.freq_MHz)))
         ## Save
         self._power = output
-        
-        # Close out the dictionary
-        try:
-            dataDict.close()
-        except AttributeError:
-            pass
 
 
 class SkyMapLFSM(SkyMapGSM):
@@ -163,7 +158,7 @@ class SkyMapLFSM(SkyMapGSM):
     .. versionadded:: 1.2.0
     """
     
-    _input = os.path.join(DATA_PATH, 'skymap', 'lfsm-5.1deg.npz')
+    _input = os.path.join('skymap', 'lfsm-5.1deg.npz')
     
     def __init__(self, filename=None, freq_MHz=73.9):
         """
@@ -178,8 +173,9 @@ class SkyMapLFSM(SkyMapGSM):
     def _load(self):
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
-        dataDict = load(self.filename)
-        
+        with DataAccess.open(self.filename, 'rb') as fh:
+            dataDict = load(fh)
+            
         # RA and dec. are stored in the dictionary as radians
         self.ra = dataDict['ra'].ravel() / self.degToRad
         self.dec = dataDict['dec'].ravel() / self.degToRad
@@ -206,12 +202,6 @@ class SkyMapLFSM(SkyMapGSM):
         output *= exp(scaleFunc(log(self.freq_MHz)))
         ## Save
         self._power = output
-        
-        # Close out the dictionary
-        try:
-            dataDict.close()
-        except AttributeError:
-            pass
 
 
 class ProjectedSkyMap(object):
