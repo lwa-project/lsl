@@ -534,10 +534,11 @@ class Antenna(object):
         """
         
         # Find the filename to use
-        filename = os.path.join(DATA_PATH, 'BurnsZ.txt')
+        filename = 'BurnsZ.txt'
         
         # Read in the data
-        data = numpy.loadtxt(filename)
+        with DataAccess.open(filename, 'r') as fh:
+            data = numpy.loadtxt(fh)
         freq = data[:,0]*1e6
         ime = data[:,3]
         if dB:
@@ -714,10 +715,11 @@ class FEE(object):
         """
         
         # Find the filename to use
-        filename = os.path.join(DATA_PATH, 'fee.txt')
+        filename = 'fee.txt'
         
         # Read in the data
-        data = numpy.loadtxt(filename)
+        with DataAccess.open(filename, 'r') as fh:
+            data = numpy.loadtxt(fh)
         freq = data[:,0]*1e6
         gai = data[:,1]
         if not dB:
@@ -935,7 +937,7 @@ class ARX(object):
         filename = 'arx/ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
         
         # Read in the file and convert it to a numpy array
-        with DataCache.open(filename, 'rb') as fh:
+        with DataAccess.open(filename, 'rb') as fh:
             try:
                 dataDict = numpy.load(fh)
             except IOError:
