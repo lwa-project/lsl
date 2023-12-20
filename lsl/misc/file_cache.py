@@ -96,6 +96,13 @@ class FileCache(object):
         self._lock.acquire()
         assert(self._lock.locked())
         
+        if mode.startswith('w') or mode.startswith('a'):
+            parent_dirs = os.path.dirname(filename)
+            if parent_dirs != '':
+                parent_dirs = os.path.join(self.cache_dir, parent_dirs)
+                if not os.path.exists(parent_dirs):
+                    os.makedirs(parent_dirs, exist_ok=True)
+                    
         fh = open(os.path.join(self.cache_dir, filename), mode)
         if mode.startswith('w') or mode.startswith('a'):
             self._cache_management()
