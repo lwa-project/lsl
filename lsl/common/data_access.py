@@ -34,8 +34,8 @@ class _DataAccess(object):
     # Backup URL for remote data downloads
     _BACKUP_URL = 'https://leo.phys.unm.edu/data/lsl'
     
-    # Max age before checking for an update
-    _MAX_AGE_SEC = 14*86400
+    # Minimum age before checking for an update
+    _MIN_AGE_SEC = 14*86400
     
     def __init__(self):
         # Create the cache directory
@@ -174,7 +174,7 @@ class _DataAccess(object):
         else:
             # There is a file.  Make sure that it is up to date.
             cache_mtime = self._CACHE_DIR.getmtime(filename)
-            if time.time() - cache_mtime > self._MAX_AGE_SEC:
+            if time.time() - cache_mtime > self._MIN_AGE_SEC:
                 ## Yep, looks like it could be in need of a refresh.  See
                 ## what our options are.
                 local_mtime = self._local_copy_mtime(filename)
