@@ -175,18 +175,16 @@ def get_fftw():
                 
             if len(outVersion) > 0:
                 found = True
-                print("Found FFTW3, version %s" % str(outVersion[0]))
+                print("Found FFTW3%s, version %s" % (precision.upper(), str(outVersion[0])))
                 if precision == '':
                     outCFLAGS.append('-DUSE_FFTW_DOUBLE=1')
-                
-            if found:
                 break
                 
         except (OSError, subprocess.CalledProcessError):
             pass
             
     if not found:
-        print("WARNING:  FFTW3 cannot be found, using defaults")
+        print("WARNING: FFTW3 cannot be found, using defaults for single precision")
         outCFLAGS = []
         outLIBS = ['-lfftw3f', '-lm']
         
