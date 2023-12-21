@@ -1,64 +1,59 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <complex.h>
+#include <cmath>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
 #include "numpy/arrayobject.h"
 
-#include "readers.h"
+#include "readers.hpp"
 
 /*
   DRX Reader
 */
 
-#pragma pack(push)
-#pragma pack(1)
-typedef struct {
-    unsigned int sync_word;
+typedef struct __attribute__((packed)) {
+    uint32_t sync_word;
     union {
         struct {
-            unsigned int frame_count:24;
-            unsigned char id:8;
+            uint32_t frame_count:24;
+            uint8_t id:8;
         };
         /* Also: 
             struct {
-                unsigned int frame_count:24;
-                unsigned char beam:3;
-                unsigned char tune:3;
-                unsigned char reserved:1;
-                unsigned char pol:1;
+                uint32_t frame_count:24;
+                uint8_t  beam:3;
+                uint8_t  tune:3;
+                uint8_t  reserved:1;
+                uint8_t  pol:1;
             };
         */
-        unsigned int frame_count_word;
+        uint32_t frame_count_word;
     };
-    unsigned int second_count;
-    unsigned short int decimation;
-    unsigned short int time_offset;
+    uint32_t second_count;
+    uint16_t decimation;
+    uint16_t time_offset;
 } DRXHeader;
 
 
-typedef struct {
-    unsigned long long timetag;
-    unsigned int tuning_word;
-    unsigned int flags;
-    unsigned char bytes[4096];
+typedef struct __attribute__((packed)) {
+    uint64_t timetag;
+    uint32_t tuning_word;
+    uint32_t flags;
+    uint8_t  bytes[4096];
 } DRXPayload;
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     DRXHeader header;
     DRXPayload payload;
 } DRXFrame;
-#pragma pack(pop)
 
 
 PyObject *drx_method = NULL;
 PyObject *drx_size   = NULL;
 
 
+template<typename T, NPY_TYPES N>
 PyObject *read_drx(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data;
@@ -73,7 +68,8 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
     // Create the output data array
     npy_intp dims[1];
     dims[0] = (npy_intp) 4096;
-    data = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_COMPLEX64, 0);
+    if( N == NPY_INT8) dims[0] *= 2;
+    data = (PyArrayObject*) PyArray_ZEROS(1, dims, N, 0);
     if(data == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
         Py_XDECREF(data);
@@ -115,12 +111,22 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
     cFrame.payload.flags = __bswap_32(cFrame.payload.flags);
     
     // Fill the data array
-    const float *fp;
-    float complex *a;
-    a = (float complex *) PyArray_DATA(data);
-    for(i=0; i<4096; i++) {
+    const int8_t *fp;
+    T *a;
+    a = (T *) PyArray_DATA(data);
+    for(i=0; i<4096; i+=4) {
         fp = drxLUT[ cFrame.payload.bytes[i] ];
-        *(a + i) = fp[0] + _Complex_I * fp[1];
+        *(a + 2*i + 0) = fp[0];
+        *(a + 2*i + 1) = fp[1];
+        fp = drxLUT[ cFrame.payload.bytes[i+1] ];
+        *(a + 2*i + 2) = fp[0];
+        *(a + 2*i + 3) = fp[1];
+        fp = drxLUT[ cFrame.payload.bytes[i+2] ];
+        *(a + 2*i + 4) = fp[0];
+        *(a + 2*i + 5) = fp[1];
+        fp = drxLUT[ cFrame.payload.bytes[i+3] ];
+        *(a + 2*i + 6) = fp[0];
+        *(a + 2*i + 7) = fp[1];
     }
     
     Py_END_ALLOW_THREADS
@@ -185,7 +191,29 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
     return output;
 }
 
-char read_drx_doc[] = PyDoc_STR(\
+
+PyObject *read_drx_cf32(PyObject *self, PyObject *args) {
+    return read_drx<float,NPY_COMPLEX64>(self, args);
+}
+
+char read_drx_cf32_doc[] = PyDoc_STR(\
 "Function to read in a single DRX frame (header+payload) and store the contents\n\
 as a Frame object.\n\
+");
+
+
+PyObject *read_drx_ci8(PyObject *self, PyObject *args) {
+    return read_drx<int8_t,NPY_INT8>(self, args);
+}
+
+char read_drx_ci8_doc[] = PyDoc_STR(\
+"Function to read in a single DRX frame (header+payload) and store the contents\n\
+as a Frame object.\n\
+\n\
+.. note::\n\
+    This function differs from `read_drx` in that it returns a\n\
+    `lsl.drx.FramePayload` containing a 2-D numpy.int8 array (samples by real/\n\
+    complex) rather than a 1-D numpy.complex64 array.\n\
+\n\
+.. versionadded:: 2.1.3\n\
 ");

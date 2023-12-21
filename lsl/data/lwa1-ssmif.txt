@@ -1,6 +1,9 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2022 Nov 15 by J. Dowell
+#  -- Updated for the final ARX board swaps
+#  -- Cleaned up some typos
 # 2022 Mar 07 by J. Dowell
 #  -- Updated for re-cabling the rack 4 and rack 5 PDUs
 # 2018 Oct 22 by J. Dowell
@@ -14,7 +17,7 @@
 #     with #203.
 #  -- Swapped the ARX_ANT/DP1_ANT values for stand #257 (LEDA Outrigger #1)
 #     with #198.
-#  -- The FEE installed Stand #9 *may* be bad.
+#  -- The FEE installed in Stand #9 *may* be bad.
 # 2013 Aug 15 by J. Dowell
 #  -- Marked stand #86 as suspect (promoted from bad).
 #  -- Swapped the ARX_ANT/DP1_ANT values for stands #257 and #260 
@@ -22,7 +25,7 @@
 # 2013 Mar 10 by J. Dowell
 #  -- Updated the pointing correction terms
 # 2013 Mar 06 by J. Dowell
-#  -- Looks like there was a mixup in the prevous version with the lengths of
+#  -- Looks like there was a mixup in the previous version with the lengths of
 #     the LEDA outrigger cables.  This corrects that.
 # 2013 Mar 05 by J. Dowell
 #  -- Updated the stretch factors to take into account the LEDA64 spitter
@@ -51,7 +54,7 @@
 # 2012 Aug 06 by J. Dowell
 #  -- Set the "PC_" values to something that works for CygA
 #  -- Updated the ARB_ID listings for the ARX board swaps
-#  -- Updated the ANT_STAT listsings for antennas that have no signal and/or 
+#  -- Updated the ANT_STAT listings for antennas that have no signal and/or 
 #     calibration
 # 2012 July 02 by S. Ellingson 
 #  -- Added "PC_" (pointing correction) keywords, set to defaults
@@ -1010,7 +1013,7 @@ ANT_PHI[508] +15.0
 # -------------------------------------------------------
 N_FEE 260
 
-# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identifiedf
+# This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identified
 # *** FEE_ID[fee_id] goes here:
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
@@ -3881,13 +3884,13 @@ N_ARBCH 16
 # *** ARB_ID[arb#] goes here:
 ARB_ID[1] 0127
 ARB_ID[2] 0139
-ARB_ID[3] 0127
+ARB_ID[3] 0111
 ARB_ID[4] 0123
 ARB_ID[5] 0101
 ARB_ID[6] 0137
 ARB_ID[7] 0136
 ARB_ID[8] 0141
-ARB_ID[9] 0130
+ARB_ID[9] 0142
 ARB_ID[10] 0132
 ARB_ID[11] 0103
 ARB_ID[12] 0116
@@ -3901,7 +3904,7 @@ ARB_ID[19] 0133
 ARB_ID[20] 0115
 ARB_ID[21] 0128
 ARB_ID[22] 0121
-ARB_ID[23] 0139
+ARB_ID[23] 0134
 ARB_ID[24] 0138
 ARB_ID[25] 0122
 ARB_ID[26] 0124
@@ -6911,7 +6914,7 @@ DR_DP[5] 5
 # ...   Port 1:  DRSUs, DR4-DR5
 # ...   Port 2:  ASP-MCS (Updated by J. Dowell on December 16, 2012)
 # ...   Port 3:  Fans
-# ...   Port4:  DRSUs DR1-DR3
+# ...   Port 4:  DRSUs DR1-DR3
 # ...   Port 5:  Timing Distribution
 # ...   Port 6:  Wall warts
 # ...   Port 7:  KVM

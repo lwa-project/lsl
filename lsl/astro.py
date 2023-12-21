@@ -3168,15 +3168,22 @@ def _parse_tai_file():
                     
     # download as needed
     if download:
+        is_interactive = sys.__stdin__.isatty()
+        
         url = ASTRO_CONFIG.get('leapsec_url')
         
         print("Downloading %s" % url)
         lsFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        meta = lsFH.info()
+        remote_size = 1
         try:
+            remote_size = int(lsFH.headers["Content-Length"])
+        except AttributeError:
+            pass
+        try:
+            meta = lsFH.info()
             remote_size = int(meta.getheaders("Content-Length")[0])
         except AttributeError:
-            remote_size = 1
+            pass
         pbar = DownloadBar(max=remote_size)
         while True:
             new_data = lsFH.read(DOWN_CONFIG.get('block_size'))
@@ -3187,12 +3194,14 @@ def _parse_tai_file():
                 data += new_data
             except NameError:
                 data = new_data
-            sys.stdout.write(pbar.show()+'\r')
-            sys.stdout.flush()
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
         lsFH.close()
-        sys.stdout.write(pbar.show()+'\n')
-        sys.stdout.flush()
-        
+        if is_interactive:
+            sys.stdout.write(pbar.show()+'\n')
+            sys.stdout.flush()
+            
         with _CACHE_DIR.open('Leap_Second.dat', 'wb') as fh:
             fh.write(data)
             

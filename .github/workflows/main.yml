@@ -1,5 +1,5 @@
 name: "Build and Test"
-on: [push, pull_request]
+on: [push, pull_request, release]
 jobs:
   pre_build:
     runs-on: ubuntu-latest
@@ -9,7 +9,7 @@ jobs:
       - id: skip_check
         uses: fkirc/skip-duplicate-actions@v5
         with:
-          concurrent_skipping: 'same_content'
+          concurrent_skipping: 'never'
           skip_after_successful_duplicate: 'true'
           do_not_skip: '["pull_request", "release", "workflow_dispatch", "schedule"]'
   build:
@@ -18,12 +18,17 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
-        python-version: ['2.7', '3.6', '3.8', '3.10']
+        os: [ubuntu-20.04, macos-latest]
+        python-version: ['3.8', '3.10', '3.12']
+        include:
+          - os: ubuntu-20.04
+            python-version: '3.6'
+          - os: macos-latest
+            python-version: '3.6'
       fail-fast: false
     steps:
       - name: "Software Install - Ubuntu"
-        if: ${{ matrix.os == 'ubuntu-latest' }}
+        if: ${{ matrix.os == 'ubuntu-latest' || matrix.os == 'ubuntu-20.04' }}
         run: |
           sudo apt-get install -y \
             build-essential \
@@ -41,13 +46,14 @@ jobs:
             libgsl-dev \
             pkg-config \
             software-properties-common
-          sudo add-apt-repository -y ppa:kernsuite/kern-7
+          sudo add-apt-repository -y ppa:kernsuite/kern-8
           sudo apt-get -q update
           sudo apt-get -y install casacore-dev wcslib-dev
       - name: "Software Install - MacOS"
         if: ${{ matrix.os == 'macos-latest' }}
         run: |
           brew install \
+            gdbm \
             fftw \
             gsl \
             pkg-config
@@ -62,7 +68,7 @@ jobs:
             numpy \
             matplotlib \
             scipy \
-            "ephem<4.1.1" \
+            ephem \
             jupyterlab \
             jupyter_client \
             nbformat \

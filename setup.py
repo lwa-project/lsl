@@ -10,7 +10,11 @@ import glob
 import tempfile
 import subprocess
 
-from setuptools import setup, Extension, find_packages
+from setuptools import setup, Extension
+try:
+    from setuptools import find_namespace_packages
+except ImportError:
+    from setuptools import find_packages as find_namespace_packages
 from distutils import log
 from distutils.command.build import build
 try:
@@ -106,7 +110,8 @@ return 0;
     elif os.path.basename(cc[0]).find('clang') != -1:
         ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
     try:
-        output = subprocess.check_call(ccmd)
+        with open('/dev/null', 'wb') as devnull:
+            output = subprocess.check_call(ccmd, stderr=devnull)
         outCFLAGS = ['-fopenmp',]
         outLIBS = []
         if os.path.basename(cc[0]).find('gcc') != -1:
@@ -171,24 +176,39 @@ def get_fftw():
         subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0].rstrip().split()
+        outVersion = p.communicate()[0]
+        try:
+            outVersion = outVersion.decode()
+        except AttributeError:
+            pass
+        outVersion = outVersion.strip().split()
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0].rstrip().split()
+        outCFLAGS = p.communicate()[0]
         try:
-            outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
+            outCFLAGS = outCFLAGS.decode()
+        except AttributeError:
+            pass
+        outCFLAGS = outCFLAGS.rstrip().split()
+        try:
+            outCFLAGS = [str(v) for v in outCFLAGS]
         except TypeError:
             pass
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0].rstrip().split()
+        outLIBS = p.communicate()[0]
         try:
-            outLIBS = [str(v, 'utf-8') for v in outLIBS]
+            outLIBS = outLIBS.decode()
+        except AttributeError:
+            pass
+        outLIBS = outLIBS.rstrip().split()
+        try:
+            outLIBS = [str(v) for v in outLIBS]
         except TypeError:
             pass
             
         if len(outVersion) > 0:
-            print("Found FFTW3, version %s" % outVersion[0])
+            print("Found FFTW3, version %s" % str(outVersion[0]))
             
     except (OSError, subprocess.CalledProcessError):
         print("WARNING:  single precision FFTW3 cannot be found, using defaults")
@@ -246,10 +266,9 @@ short_version = '%s'
 
 """ % (lslVersion, lslVersion, shortVersion)
     
-    fh = open('lsl/version/__init__.py', 'w')
-    fh.write(contents)
-    fh.close()
-    
+    with open('lsl/version/__init__.py', 'w') as fh:
+        fh.write(contents)
+        
     return True
 
 
@@ -339,7 +358,10 @@ class lsl_build_ext(build_ext):
                     
         ## HACK: Update the log verbosity - for some reason this gets set to 
         ##       WARN when I replace build_ext
-        log.set_threshold(min([log.INFO, log._global_log.threshold]))
+        try:
+            log.set_threshold(min([log.INFO, log._global_log.threshold]))
+        except AttributeError:
+            pass
 
 
 coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
@@ -348,7 +370,7 @@ coreExtraLibs = []
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
-ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.c', 'lsl/reader/tbw.c', 'lsl/reader/tbn.c', 'lsl/reader/drx.c', 'lsl/reader/drspec.c', 'lsl/reader/vdif.c', 'lsl/reader/tbf.c', 'lsl/reader/cor.c'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
+ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/reader/tbw.cpp', 'lsl/reader/tbn.cpp', 'lsl/reader/drx.cpp', 'lsl/reader/drspec.cpp', 'lsl/reader/vdif.cpp', 'lsl/reader/tbf.cpp', 'lsl/reader/cor.cpp'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
             Extension('common._fir', ['lsl/common/fir.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._spec', ['lsl/correlator/spec.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
@@ -384,11 +406,11 @@ setup(
                    'Programming Language :: Python :: 3.8',
                    'Operating System :: MacOS :: MacOS X',
                    'Operating System :: POSIX :: Linux'],
-    packages = find_packages(), 
+    packages = find_namespace_packages(), 
     scripts = glob.glob('scripts/*.py'), 
     python_requires='>=2.7', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = [ASTROPY_VERSION, HEALPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c', 'unlzw>=0.1.1'],
+    install_requires = [ASTROPY_VERSION, HEALPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,

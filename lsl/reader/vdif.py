@@ -37,7 +37,7 @@ from datetime import datetime
 
 from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.reader.base import *
-from lsl.reader._gofast import read_vdif
+from lsl.reader._gofast import read_vdif, read_vdif_i8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -48,10 +48,10 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.4'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'has_guppi_header', 'read_guppi_header', 
-           'read_frame', 'get_frame_size', 'get_thread_count', 'get_frames_per_second', 
-           'get_sample_rate']
+__version__ = '0.5'
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'has_guppi_header', 'read_guppi_header',
+           'read_frame', 'read_frame_i8', 'get_frame_size', 'get_thread_count',
+           'get_frames_per_second', 'get_sample_rate']
 
 
 
@@ -411,6 +411,43 @@ def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
     # New _vdif method
     try:
         newFrame = read_vdif(filehandle, Frame(), central_freq=central_freq, sample_rate=sample_rate)
+    except gSyncError:
+        mark = filehandle.tell()
+        raise SyncError(type='VDIF', location=mark)
+    except gEOFError:
+        raise EOFError
+        
+    return newFrame
+
+
+def read_frame_i8(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
+    """
+    Function to read in a single VDIF frame (header+data) and store the 
+    contents as a Frame object.  This function wraps the _readerHeader and 
+    _readData functions.
+    
+    .. note::
+        This function differs from `read_vdif` in that it returns a
+        `lsl.vdif.FramePayload` containing numpy.int8 array rather than a
+        numpy.float32 array for real data.  Complex data is always returned as
+        numpy.complex64.
+        
+    .. note::
+         The unpacking to integer does not match that for float for 2-, 4-, and
+         8-bit data.  Specifically:
+          * For 2-bit data:
+            (-3.3359, -1, 1, 3.3359) -> (-3, -1, 1, 3)
+          * For 4-bit data:
+            (-8/2.95, -7/2.95, ..., 7/2.95) -> (-8, -7, ..., 7)
+          * For 8-bit data:
+            (-255/256, -253/256, ..., 255/256) -> (-128, -127, ... 127)
+    
+    .. versionadded:: 2.1.3
+    """
+    
+    # New _vdif method
+    try:
+        newFrame = read_vdif_i8(filehandle, Frame(), central_freq=central_freq, sample_rate=sample_rate)
     except gSyncError:
         mark = filehandle.tell()
         raise SyncError(type='VDIF', location=mark)

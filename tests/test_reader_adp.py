@@ -12,7 +12,6 @@ import os
 import numpy
 import unittest
 
-from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbf
 from lsl.reader import cor
 from lsl.reader import errors
@@ -22,8 +21,8 @@ __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
-tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-test.dat')
-corFile = os.path.join(DATA_BUILD, 'tests', 'cor-test.dat')
+tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-test.dat')
+corFile = os.path.join(os.path.dirname(__file__), 'data', 'cor-test.dat')
 
 
 class reader_adp_tests(unittest.TestCase):
@@ -46,6 +45,29 @@ class reader_adp_tests(unittest.TestCase):
         self.assertEqual(frame2.header.first_chan, 2360)
         fh.close()
         
+    def test_tbf_read_ci8(self):
+        """Test reading in a frame from a TBF file, ci8 style."""
+        
+        fh = open(tbfFile, 'rb')
+        frame1 = tbf.read_frame(fh)
+        frame2 = tbf.read_frame(fh)
+        fh.close()
+        
+        fh = open(tbfFile, 'rb')
+        frame3 = tbf.read_frame_ci8(fh)
+        frame4 = tbf.read_frame_ci8(fh)
+        fh.close()
+        
+        # Compare
+        data1 = frame3.payload.data['re'] + 1j*frame3.payload.data['im']
+        data2 = frame4.payload.data['re'] + 1j*frame4.payload.data['im']
+        for i in range(800):
+            c = i // 2 // 256
+            s = i // 2 % 256
+            p = i % 2
+            self.assertAlmostEqual(frame1.payload.data[c,s,p], data1[c,s,p], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[c,s,p], data2[c,s,p], 1e-6)
+            
     def test_tbf_errors(self):
         """Test TBF reading errors."""
         

@@ -19,13 +19,12 @@ import unittest
 import subprocess
 
 from lsl import astro
-from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import analysis
 from lsl.imaging import deconv
 from lsl.imaging import selfcal
 from lsl.imaging import overlay
-from lsl.imaging.data import VisibilityData
+from lsl.imaging.data import VisibilityData, PolarizationDataSet
 from lsl.writer.fitsidi import Idi, NUMERIC_STOKES
 from lsl.sim import vis
 from lsl.common.stations import lwa1, parse_ssmif
@@ -50,14 +49,14 @@ except ImportError:
     pass
 
 
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
-uvFile = os.path.join(DATA_BUILD, 'tests', 'uv-test.fits')
-idiFile = os.path.join(DATA_BUILD, 'tests', 'idi-test.fits')
-idiAltFile = os.path.join(DATA_BUILD, 'tests', 'idi-test-alt.fits')
-idiSSMIFFile = os.path.join(DATA_BUILD, 'tests', 'idi-test-alt.txt')
+uvFile = os.path.join(os.path.dirname(__file__), 'data', 'uv-test.fits')
+idiFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test.fits')
+idiAltFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.fits')
+idiSSMIFFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.txt')
 
 
 class imaging_tests(unittest.TestCase):
@@ -516,6 +515,71 @@ class imaging_tests(unittest.TestCase):
                 
                 idi.close()
                 
+    def test_convert_to_stokes(self):
+        """Test the utils.convert_to_stokes function."""
+        
+        # Open the file
+        idi = utils.CorrelatedData(idiFile)
+        
+        # Get some data to sort
+        ds = idi.get_data_set(1)
+        new_pol = PolarizationDataSet('YY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('XY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('YX', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        
+        # Convert
+        ds2 = utils.convert_to_stokes(ds)
+        
+        # Check
+        self.assertTrue(getattr(ds2, 'I', None) is not None)
+        self.assertTrue(getattr(ds2, 'Q', None) is not None)
+        self.assertTrue(getattr(ds2, 'U', None) is not None)
+        self.assertTrue(getattr(ds2, 'V', None) is not None)
+        
+        numpy.testing.assert_allclose(ds2.I.data, 2*ds.XX.data)
+        numpy.testing.assert_allclose(ds2.Q.data, 0*ds.XX.data)
+        numpy.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
+        numpy.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
+        
+        idi.close()
+        
+    def test_convert_to_linear(self):
+        """Test the utils.convert_to_linear function."""
+        
+        # Open the file
+        idi = utils.CorrelatedData(idiFile)
+        
+        # Get some data to sort
+        ds = idi.get_data_set(1)
+        new_pol = PolarizationDataSet('YY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('XY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('YX', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        
+        # Convert
+        ds2 = utils.convert_to_stokes(ds)
+        
+        # Convert back
+        ds3 = utils.convert_to_linear(ds2)
+        
+        # Check
+        self.assertTrue(getattr(ds3, 'XX', None) is not None)
+        self.assertTrue(getattr(ds3, 'YY', None) is not None)
+        self.assertTrue(getattr(ds3, 'XY', None) is not None)
+        self.assertTrue(getattr(ds3, 'YX', None) is not None)
+        
+        numpy.testing.assert_allclose(ds3.XX.data, ds.XX.data)
+        numpy.testing.assert_allclose(ds3.YY.data, ds.XX.data)
+        numpy.testing.assert_allclose(ds3.XY.data, ds.XX.data)
+        numpy.testing.assert_allclose(ds3.YX.data, ds.XX.data)
+        
+        idi.close()
+        
     def test_gridding(self):
         """Test building a image from a visibility data set."""
         
@@ -568,10 +632,13 @@ class imaging_tests(unittest.TestCase):
                 # Go for it!
                 aa = idi.get_antennaarray()
                 ds = idi.get_data_set(1)
+                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
                 

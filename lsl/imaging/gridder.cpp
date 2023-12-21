@@ -19,7 +19,7 @@
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
-#include "../correlator/common.h"
+#include "../correlator/common.hpp"
 
 
 // Maximum number of w-planes to project
@@ -135,8 +135,9 @@ void compute_kernel_correction(long nPixSide,
                                OutType *corr) {
     long i, j;
     OutType temp, temp2;
-    OutType *corr_full;
-    corr_full = (OutType*) calloc(nPixSide*GRID_KERNEL_OVERSAMPLE, sizeof(OutType));
+    float *corr_full;
+    corr_full = (float*) aligned64_malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(float));
+    memset(corr_full, 0, sizeof(float)*nPixSide*GRID_KERNEL_OVERSAMPLE);
     
     // Copy the kernel over
     for(i=0; i<nPixSide*GRID_KERNEL_OVERSAMPLE; i++) {
@@ -175,7 +176,7 @@ void compute_kernel_correction(long nPixSide,
     }
     
     // Cleanup
-    free(corr_full);
+    aligned64_free(corr_full);
 }
 
 
@@ -206,7 +207,7 @@ void compute_gridding(long nVis,
     
     // Fill in the 1-D gridding kernel
     double *kernel1D;
-    kernel1D = (double *) malloc((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1)*sizeof(double));
+    kernel1D = (double *) aligned64_malloc((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1)*sizeof(double));
     kaiser_bessel_1d_kernel_filler(kernel1D);
     
     long secStart, secStop;
@@ -347,7 +348,7 @@ void compute_gridding(long nVis,
     fftwf_destroy_plan(pR);
     fftwf_free(inP);
     
-    free(kernel1D);
+    aligned64_free(kernel1D);
     
     free(planeStart);
     free(planeStop);
@@ -359,12 +360,12 @@ void compute_gridding(long nVis,
 static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     PyObject *uVec, *vVec, *wVec, *visVec, *wgtVec, *output;
     PyArrayObject *uu=NULL, *vv=NULL, *ww=NULL, *vd=NULL, *wd=NULL, *uvPlane=NULL, *bmPlane=NULL, *kernCorr=NULL;
-    long uvSize = 80;
+    double uvSize = 80;
     double uvRes = 0.5;
     double wRes = 0.1;
     
     char const* kwlist[] = {"u", "v", "w", "data", "wgt", "uvSize", "uvRes", "wRes", NULL};
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOOOO|ldd", const_cast<char **>(kwlist), &uVec, &vVec, &wVec, &visVec, &wgtVec, &uvSize, &uvRes, &wRes)) {
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "OOOOO|ddd", const_cast<char **>(kwlist), &uVec, &vVec, &wVec, &visVec, &wgtVec, &uvSize, &uvRes, &wRes)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         goto fail;
     }
@@ -460,6 +461,8 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     Py_XDECREF(uu);
     Py_XDECREF(vv);
     Py_XDECREF(ww);
+    Py_XDECREF(vd);
+    Py_XDECREF(wd);
     
     output = Py_BuildValue("(OOO)", PyArray_Return(uvPlane), PyArray_Return(bmPlane), PyArray_Return(kernCorr));
     Py_XDECREF(uvPlane);

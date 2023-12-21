@@ -78,8 +78,8 @@ def main(args):
             
         # Plot
         print("    Plotting the first 50 baselines")
-        pols = dataDict['jd'].keys()
-        nBL = len(dataDict['bls'][pols[0]])
+        pols = dataDict.pols
+        nBL = len(dataDict.baselines)
         pb = ProgressBar(max=nBL)
         i = 0
         for k in range(2):
@@ -87,10 +87,10 @@ def main(args):
 
             for j in range(25):
                 try:
-                    stnd1, stnd2 = dataDict['bls'][pols[0]][i]
+                    stnd1, stnd2 = dataDict.baselines[i]
                     stnd1 = idi.stands[stnd1]
                     stnd2 = idi.stands[stnd2]
-                    vis = dataDict['vis'][pols[0]][i]
+                    vis = getattr(dataDict, pols[0]).data[i]
                     i += 1
                 except IndexError:
                     plt.draw()

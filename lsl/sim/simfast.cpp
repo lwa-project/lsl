@@ -17,21 +17,7 @@
 #include "numpy/npy_math.h"
 
 #include "../common/py3_compat.h"
-
-
-/*
-  Complex types
-*/
-
-typedef std::complex<float> Complex32;
-typedef std::complex<double> Complex64;
-
-
-/*
-  Macro for 2*pi
-*/
-
-#define TPI (2*NPY_PI*Complex64(0,1))
+#include "../correlator/common.hpp"
 
 
 template<typename FluxType, typename OutType>
@@ -75,7 +61,7 @@ void compute_visibility(long nBL,
         #pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempA0, tempA1, tempTheta, tempX, tempVis, x, y, z, u, v, w, i, j, k)
     #endif
     {
-        tempVis = (Complex64 *) malloc(nChan*sizeof(Complex64));
+        tempVis = (Complex64 *) aligned64_malloc(nChan*sizeof(Complex64));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -155,7 +141,7 @@ void compute_visibility(long nBL,
             }
         }
         
-        free(tempVis);
+        aligned64_free(tempVis);
     }
     
     Py_END_ALLOW_THREADS
@@ -238,10 +224,13 @@ static PyObject *FastVis(PyObject *self, PyObject *args, PyObject *kwds) {
     pcEl *= NPY_PI / 180.0;
     if( pcEl == NPY_PI/2 ) {
         pcEl -= 1e-8;
+    } else if( pcEl == -NPY_PI/2 ) {
+        pcEl += 1e-8;
     }
     /** Conversion to hour angle and declination **/
-    pcHA = atan2(sin(pcAz-NPY_PI), (cos(pcAz-NPY_PI)*sin(lat) + tan(pcEl)*cos(lat)));
-    pcDec = asin(sin(lat)*sin(pcEl) - cos(lat)*cos(pcEl)*cos(pcAz-NPY_PI));
+    pcDec = asin(sin(lat)*sin(pcEl) + cos(lat)*cos(pcEl)*cos(pcAz));
+    pcHA = atan2(-sin(pcAz)*cos(pcEl)/cos(pcDec),
+                 (sin(pcEl) - sin(pcDec)*sin(lat))/(cos(pcDec)*cos(lat)));
     
     // Check data dimensions
     if(PyArray_DIM(ha, 0) != PyArray_DIM(dec, 0)) {

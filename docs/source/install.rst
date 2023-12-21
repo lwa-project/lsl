@@ -10,7 +10,6 @@ Requirements
  * ephem >= 3.7.5.3
  * aipy >= 3.0.1
  * pytz >= 2012c
- * unlzw >= 0.1.1
  * matplotlib >= 1.1 [1]_
  * BeautifulSoup [1]_
  * casacore [2]_

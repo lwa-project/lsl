@@ -332,7 +332,10 @@ class FrameBufferBase(object):
             output = []
             frameIDs = []
             for frame in self.buffer[key_to_return]:
-                newID = frame.id
+                try:
+                    newID = frame.id
+                except AttributeError:
+                    newID = frame.header.first_chan
                 if newID not in frameIDs:
                     output.append(frame)
                     frameIDs.append(newID)
@@ -523,8 +526,11 @@ class TBNFrameBuffer(FrameBufferBase):
         fillFrame.header.tbn_id = 2*(stand-1) + pol + 1
         
         # Zero the data for the fill packet
-        fillFrame.payload._data *= 0
-        
+        try:
+            fillFrame.payload._data *= 0
+        except TypeError:
+            fillFrame.payload._data[...] = 0
+            
         # Invalidate the frame
         fillFrame.valid = False
         
@@ -624,7 +630,10 @@ class DRXFrameBuffer(FrameBufferBase):
         fillFrame.header.drx_id = (beam & 7) | ((tune & 7) << 3) | ((pol & 1) << 7)
         
         # Zero the data for the fill packet
-        fillFrame.payload._data *= 0
+        try:
+            fillFrame.payload._data *= 0
+        except TypeError:
+            fillFrame.payload._data[...] = 0
         
         # Invalidate the frame
         fillFrame.valid = False
@@ -709,8 +718,11 @@ class TBFFrameBuffer(FrameBufferBase):
         fillFrame.header.first_chan = chan
         
         # Zero the data for the fill packet
-        fillFrame.payload._data *= 0
-        
+        try:
+            fillFrame.payload._data *= 0
+        except TypeError:
+            fillFrame.payload._data[...] = 0
+            
         # Invalidate the frame
         fillFrame.valid = False
         
