@@ -145,9 +145,9 @@ void compute_kernel_correction(long nPixSide,
                                OutType *corr) {
     long i, j;
     OutType temp, temp2;
-    OutType *corr_full;
-    corr_full = (OutType*) aligned64_malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(OutType));
-    memset(corr_full, 0, sizeof(OutType)*nPixSide*GRID_KERNEL_OVERSAMPLE);
+    float *corr_full;
+    corr_full = (float*) aligned64_malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(float));
+    memset(corr_full, 0, sizeof(float)*nPixSide*GRID_KERNEL_OVERSAMPLE);
     
     // Copy the kernel over
     for(i=0; i<nPixSide*GRID_KERNEL_OVERSAMPLE; i++) {
