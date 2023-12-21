@@ -33,6 +33,9 @@ class _DataAccess(object):
     # Backup URL for remote data downloads
     _BACKUP_URL = 'https://leo.phys.unm.edu/data/lsl'
     
+    # Max age before checking for an update
+    _MAX_AGE_SEC = 14*86400
+    
     def __init__(self):
         # Create the cache directory
         try:
@@ -41,6 +44,15 @@ class _DataAccess(object):
             self._CACHE_DIR = MemoryCache(max_size=0)
             warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
             
+    def _local_copy_mtime(self, relative_url):
+        local_path = os.path.join(DATA_PATH, relative_url)
+        
+        mtime = 0
+        if os.path.exists(local_path):
+            mtime = os.path.getmtime(local_path)
+            
+        return mtime
+        
     def _local_copy_worker(self, relative_url, filename):
         """
         Look for a local copy of the file in lsl.common.paths.DATA and save it to a
@@ -69,6 +81,20 @@ class _DataAccess(object):
             return False
             
         return True
+        
+    def _download_mtime(self, relative_url, use_backup=False):
+        url = self._BASE_URL+'/'+relative_url
+        if use_backup:
+            url = self._BACKUP_URL+'/'+relative_url
+            
+        mtime = 0
+        try:
+            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')):
+                mtime = uh.headers['etag']
+        except socket.timeout:
+            pass
+            
+        return mtime
         
     def _download_worker(self, relative_url, filename, use_backup=False):
         """
@@ -135,6 +161,7 @@ class _DataAccess(object):
         """
         
         if filename not in self._CACHE_DIR:
+            # No file, go get one.
             status = self._local_copy_worker(filename, filename)
             if not status:
                 status = self._download_worker(filename, filename, use_backup=False)
@@ -143,6 +170,23 @@ class _DataAccess(object):
             if not status:
                 raise RuntimeError("Failed to download '%s'" % filename)
                 
+        else:
+            # There is a file.  Make sure that it is up to date.
+            cache_mtime = self._CACHE_DIR.getmtime(filename)
+            if time.time() - cache_mtime > self._MAX_AGE_SEC:
+                ## Yep, looks like it could be in need of a refresh.  See
+                ## what our options are.
+                local_mtime = self._local_copy_mtime(filename)
+                remote_mtime = self._download_mtime(filename, backup=False)
+                if remote_mtime == 0:
+                    remote_mtime = self._download_mtime(filename, backup=True)
+                    
+                if max([local_mtime, remote_mtime]) > cache_mtime:
+                    ## Found something newer.  Delete the current version and
+                    ## copy/download again.
+                    self._CACHE_DIR.remove(filename)
+                    self.establish_data_file(filename)
+                    
     @contextlib.contextmanager
     def open(self, filename, mode='r'):
         """
