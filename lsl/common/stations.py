@@ -1569,7 +1569,7 @@ def _parse_ssmif_text(filename_or_fh):
     return locals()
 
 
-def _parse_ssmif_binary(filename):
+def _parse_ssmif_binary(filename_or_fh):
     """
     Given a binary packed SSMIF file and return a collection of
     variables via locals() containing the files data.
