@@ -1057,7 +1057,8 @@ def _parse_ssmif_text(filename_or_fh):
         fh = filename_or_fh
         close_at_end = False
         if fh.mode.find('b') != -1:
-            raise RuntimeError("Expected the file handle to be opened without binary access")
+            contents = fh.read().decode()
+            fh = contents.split('\n')
             
     try:
         for line in fh:
