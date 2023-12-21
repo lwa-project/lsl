@@ -32,9 +32,9 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     PyObject *output;
     int fftlen;
     FILE *fh;
-    fftwf_plan plan;
-    Complex32 *inout;
-    float *inR;
+    LSL_fft_plan plan;
+    LSL_fft_ctype *inout;
+    LSL_fft_rtype *inR;
     char *filename;
     
     if(!PyArg_ParseTuple(args, "s", &filename)) {
@@ -44,7 +44,7 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     
     Py_BEGIN_ALLOW_THREADS
     
-    if(!fftwf_import_system_wisdom()) {
+    if(!LSL_fft_import_system_wisdom()) {
         std::cout << "Warning: system wisdom file not found, continuing" << std::endl;
     }
     
@@ -52,19 +52,19 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     fftlen = 2;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inR = (float*) fftwf_malloc(sizeof(float) * 2*fftlen);
-        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * (fftlen+1));
+        inR = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*fftlen);
+        inout = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (fftlen+1));
         
         // Forward
-        plan = fftwf_plan_dft_r2c_1d(2*fftlen, \
-                                     inR, \
-                                     reinterpret_cast<fftwf_complex*>(inout), \
-                                     FFTW_PATIENT);
-        fftwf_destroy_plan(plan);
+        plan = LSL_fft_plan_dft_r2c_1d(2*fftlen, \
+                                       inR, \
+                                       reinterpret_cast<LSL_fft_complex*>(inout), \
+                                       FFTW_PATIENT);
+        LSL_fft_destroy_plan(plan);
         
         // Teardown
-        fftwf_free(inR);
-        fftwf_free(inout);
+        LSL_fft_free(inR);
+        LSL_fft_free(inout);
         
         // Next
         fftlen *= 2;
@@ -74,19 +74,19 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     fftlen = 10;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inR = (float*) fftwf_malloc(sizeof(float) * 2*fftlen);
-        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * (fftlen+1));
+        inR = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*fftlen);
+        inout = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (fftlen+1));
         
         // Forward
-        plan = fftwf_plan_dft_r2c_1d(2*fftlen, \
-                                     inR, \
-                                     reinterpret_cast<fftwf_complex*>(inout), \
-                                     FFTW_PATIENT);
-        fftwf_destroy_plan(plan);
+        plan = LSL_fft_plan_dft_r2c_1d(2*fftlen, \
+                                       inR, \
+                                       reinterpret_cast<LSL_fft_complex*>(inout), \
+                                       FFTW_PATIENT);
+        LSL_fft_destroy_plan(plan);
         
         // Teardown
-        fftwf_free(inR);
-        fftwf_free(inout);
+        LSL_fft_free(inR);
+        LSL_fft_free(inout);
         
         // Next
         fftlen *= 10;
@@ -96,24 +96,24 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     fftlen = 2;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * fftlen);
+        inout = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * fftlen);
         
         // Forward
-        plan = fftwf_plan_dft_1d(fftlen, \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 FFTW_FORWARD, FFTW_PATIENT);
-        fftwf_destroy_plan(plan);
+        plan = LSL_fft_plan_dft_1d(fftlen, \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   FFTW_FORWARD, FFTW_PATIENT);
+        LSL_fft_destroy_plan(plan);
         
         // Backward
-        plan = fftwf_plan_dft_1d(fftlen, \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 FFTW_BACKWARD, FFTW_PATIENT);
-        fftwf_destroy_plan(plan);
+        plan = LSL_fft_plan_dft_1d(fftlen, \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   FFTW_BACKWARD, FFTW_PATIENT);
+        LSL_fft_destroy_plan(plan);
         
         // Teardown
-        fftwf_free(inout);
+        LSL_fft_free(inout);
         
         // Next
         fftlen *= 2;
@@ -123,24 +123,24 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
     fftlen = 10;
     while(fftlen <= MAXTRANSFORM) {
         // Setup
-        inout = (Complex32*) fftwf_malloc(sizeof(Complex32) * fftlen);
+        inout = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * fftlen);
         
         // Forward
-        plan = fftwf_plan_dft_1d(fftlen, \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 FFTW_FORWARD, FFTW_PATIENT);
-        fftwf_destroy_plan(plan);
+        plan = LSL_fft_plan_dft_1d(fftlen, \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   FFTW_FORWARD, FFTW_PATIENT);
+        LSL_fft_destroy_plan(plan);
         
         // Backward
-        plan = fftwf_plan_dft_1d(fftlen, \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 reinterpret_cast<fftwf_complex*>(inout), \
-                                 FFTW_BACKWARD, FFTW_PATIENT);
-        fftwf_destroy_plan(plan);
+        plan = LSL_fft_plan_dft_1d(fftlen, \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   reinterpret_cast<LSL_fft_complex*>(inout), \
+                                   FFTW_BACKWARD, FFTW_PATIENT);
+        LSL_fft_destroy_plan(plan);
         
         // Teardown
-        fftwf_free(inout);
+        LSL_fft_free(inout);
         
         // Next
         fftlen *= 10;
@@ -152,7 +152,7 @@ static PyObject *buildWisdom(PyObject *self, PyObject *args) {
         PyErr_Format(PyExc_IOError, "An error occurred while opening the file for writing");
         return NULL;
     }
-    fftwf_export_wisdom_to_file(fh);
+    LSL_fft_export_wisdom_to_file(fh);
     fclose(fh);
     
     Py_END_ALLOW_THREADS

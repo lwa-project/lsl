@@ -50,16 +50,16 @@ void compute_stokes_real(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan                          
-    float *inP, *inX, *inY;                          
-    Complex32 *outP, *outX, *outY;
-    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
-    fftwf_plan p;
+    LSL_fft_rtype *inP, *inX, *inY;                          
+    LSL_fft_ctype *outP, *outX, *outY;
+    inP = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
+    outP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
+    LSL_fft_plan p;
     int n[] = {2*nChan,};
-    p = fftwf_plan_many_dft_r2c(1, n, nTap, \
-                                inP, NULL, 1, 2*nChan, \
-                                reinterpret_cast<fftwf_complex*>(outP), NULL, 1, nChan+1, \
-                                FFTW_ESTIMATE);
+    p = LSL_fft_plan_many_dft_r2c(1, n, nTap, \
+                                  inP, NULL, 1, 2*nChan, \
+                                  reinterpret_cast<LSL_fft_complex*>(outP), NULL, 1, nChan+1, \
+                                  FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -72,10 +72,10 @@ void compute_stokes_real(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, l, secStart, cleanFactor, nActFFT)
     #endif
     {
-        inX = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-        inY = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-        outX = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
-        outY = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
+        inX = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
+        inY = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
+        outX = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
+        outY = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -92,19 +92,19 @@ void compute_stokes_real(long nStand,
                         inX[k] = 0.0;
                         inY[k] = 0.0;
                     } else {
-                        inX[k] = (float) *(dataX + secStart - 2*nChan*(nTap-1) + k);
-                        inY[k] = (float) *(dataY + secStart - 2*nChan*(nTap-1) + k);
+                        inX[k] = (LSL_fft_rtype) *(dataX + secStart - 2*nChan*(nTap-1) + k);
+                        inY[k] = (LSL_fft_rtype) *(dataY + secStart - 2*nChan*(nTap-1) + k);
                     }
                     if( secStart - 2*nChan*(nTap-1) + k + 1 < nSamps*i ) {
                         inX[k+1] = 0.0;
                         inY[k+1] = 0.0;
                     } else {
-                        inX[k+1] = (float) *(dataX + secStart - 2*nChan*(nTap-1) + k + 1);
-                        inY[k+1] = (float) *(dataY + secStart - 2*nChan*(nTap-1) + k + 1);
+                        inX[k+1] = (LSL_fft_rtype) *(dataX + secStart - 2*nChan*(nTap-1) + k + 1);
+                        inY[k+1] = (LSL_fft_rtype) *(dataY + secStart - 2*nChan*(nTap-1) + k + 1);
                     }
                     
-                    if( Clip && (   fabs(inX[k]) >= Clip || fabs(inY[k]) >= Clip \
-                                 || fabs(inX[k+1]) >= Clip || fabs(inY[k+1]) >= Clip) ) {
+                    if( Clip && (   abs(inX[k]) >= Clip || abs(inY[k]) >= Clip \
+                                 || abs(inX[k+1]) >= Clip || abs(inY[k+1]) >= Clip) ) {
                         cleanFactor = 0.0;
                     }
                     
@@ -116,12 +116,12 @@ void compute_stokes_real(long nStand,
                     }
                 }
                 
-                fftwf_execute_dft_r2c(p, \
-                                      inX, \
-                                      reinterpret_cast<fftwf_complex*>(outX));
-                fftwf_execute_dft_r2c(p, \
-                                      inY, \
-                                      reinterpret_cast<fftwf_complex*>(outY));
+                LSL_fft_execute_dft_r2c(p, \
+                                        inX, \
+                                        reinterpret_cast<LSL_fft_complex*>(outX));
+                LSL_fft_execute_dft_r2c(p, \
+                                        inY, \
+                                        reinterpret_cast<LSL_fft_complex*>(outY));
                 
                 for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
@@ -157,14 +157,14 @@ void compute_stokes_real(long nStand,
             }
         }
         
-        fftwf_free(inX);
-        fftwf_free(inY);
-        fftwf_free(outX);
-        fftwf_free(outY);
+        LSL_fft_free(inX);
+        LSL_fft_free(inY);
+        LSL_fft_free(outX);
+        LSL_fft_free(outY);
     }
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
-    fftwf_free(outP);
+    LSL_fft_destroy_plan(p);
+    LSL_fft_free(inP);
+    LSL_fft_free(outP);
     
     Py_END_ALLOW_THREADS
 }
@@ -188,14 +188,14 @@ void compute_stokes_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    Complex32 *inP, *inX, *inY;
-    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
-    fftwf_plan p;
+    LSL_fft_ctype *inP, *inX, *inY;
+    inP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
+    LSL_fft_plan p;
     int n[] = {nChan,};
-    p = fftwf_plan_many_dft(1, n, nTap, \
-                            reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
-                            reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
-                            FFTW_FORWARD, FFTW_ESTIMATE);
+    p = LSL_fft_plan_many_dft(1, n, nTap, \
+                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
+                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
+                              FFTW_FORWARD, FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -209,8 +209,8 @@ void compute_stokes_complex(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, i, j, k, l, secStart, cleanFactor, nActFFT, temp2)
     #endif
     {
-        inX = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
-        inY = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
+        inX = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
+        inY = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
         temp2 = (double*) aligned64_malloc(sizeof(double) * (nChan/2+nChan%2));
         
         #ifdef _OPENMP
@@ -228,10 +228,10 @@ void compute_stokes_complex(long nStand,
                         inX[k] = 0.0;
                         inY[k] = 0.0;
                     } else {
-                        inX[k] = Complex32(*(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
-                                           *(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
-                        inY[k] = Complex32(*(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
-                                           *(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
+                        inX[k] = LSL_fft_ctype(*(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
+                                               *(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
+                        inY[k] = LSL_fft_ctype(*(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
+                                               *(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
                     }
                     
                     if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
@@ -244,12 +244,12 @@ void compute_stokes_complex(long nStand,
                     }
                 }
                 
-                fftwf_execute_dft(p, \
-                                  reinterpret_cast<fftwf_complex*>(inX), \
-                                  reinterpret_cast<fftwf_complex*>(inX));
-                fftwf_execute_dft(p,  \
-                                  reinterpret_cast<fftwf_complex*>(inY), \
-                                  reinterpret_cast<fftwf_complex*>(inY));
+                LSL_fft_execute_dft(p, \
+                                    reinterpret_cast<LSL_fft_complex*>(inX), \
+                                    reinterpret_cast<LSL_fft_complex*>(inX));
+                LSL_fft_execute_dft(p,  \
+                                    reinterpret_cast<LSL_fft_complex*>(inY), \
+                                    reinterpret_cast<LSL_fft_complex*>(inY));
                 
                 for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
@@ -290,12 +290,12 @@ void compute_stokes_complex(long nStand,
             }
         }
         
-        fftwf_free(inX);
-        fftwf_free(inY);
+        LSL_fft_free(inX);
+        LSL_fft_free(inY);
         aligned64_free(temp2);
     }
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
+    LSL_fft_destroy_plan(p);
+    LSL_fft_free(inP);
     
     Py_END_ALLOW_THREADS
 }
@@ -857,7 +857,7 @@ MOD_INIT(_stokes) {
     if( pModule != NULL ) {
         pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
-            sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
+            sprintf(filename, "%s/fftw_wisdom.txt", PyString_AsString(pDataPath));
             read_wisdom(filename, m);
         }
     } else {

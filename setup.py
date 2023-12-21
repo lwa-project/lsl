@@ -133,49 +133,60 @@ return 0;
 
 def get_fftw():
     """Use pkg-config (if installed) to figure out the C flags and linker flags
-    needed to compile a C program with single precision FFTW3.  If FFTW3 cannot 
-    be found via pkg-config, some 'sane' values are returned."""
+    needed to compile a C program with FFTW3.  If FFTW3 cannot be found via
+    pkg-config, some 'sane' values are returned."""
     
-    try:
-        subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
-        
-        p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0]
+    found = False
+    for precision in ('f', ''):
         try:
-            outVersion = outVersion.decode()
-        except AttributeError:
-            pass
-        outVersion = outVersion.strip().split()
-        
-        p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0]
-        try:
-            outCFLAGS = outCFLAGS.decode()
-        except AttributeError:
-            pass
-        outCFLAGS = outCFLAGS.rstrip().split()
-        try:
-            outCFLAGS = [str(v) for v in outCFLAGS]
-        except TypeError:
-            pass
-        
-        p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0]
-        try:
-            outLIBS = outLIBS.decode()
-        except AttributeError:
-            pass
-        outLIBS = outLIBS.rstrip().split()
-        try:
-            outLIBS = [str(v) for v in outLIBS]
-        except TypeError:
+            subprocess.check_call(['pkg-config', 'fftw3%s' % precision, '--exists'])
+            
+            p = subprocess.Popen(['pkg-config', 'fftw3%s' % precision, '--modversion'], stdout=subprocess.PIPE)
+            outVersion = p.communicate()[0]
+            try:
+                outVersion = outVersion.decode()
+            except AttributeError:
+                pass
+            outVersion = outVersion.strip().split()
+            
+            p = subprocess.Popen(['pkg-config', 'fftw3%s' % precision, '--cflags'], stdout=subprocess.PIPE)
+            outCFLAGS = p.communicate()[0]
+            try:
+                outCFLAGS = outCFLAGS.decode()
+            except AttributeError:
+                pass
+            outCFLAGS = outCFLAGS.rstrip().split()
+            try:
+                outCFLAGS = [str(v) for v in outCFLAGS]
+            except TypeError:
+                pass
+            
+            p = subprocess.Popen(['pkg-config', 'fftw3%s' % precision, '--libs'], stdout=subprocess.PIPE)
+            outLIBS = p.communicate()[0]
+            try:
+                outLIBS = outLIBS.decode()
+            except AttributeError:
+                pass
+            outLIBS = outLIBS.rstrip().split()
+            try:
+                outLIBS = [str(v) for v in outLIBS]
+            except TypeError:
+                pass
+                
+            if len(outVersion) > 0:
+                found = True
+                print("Found FFTW3, version %s" % str(outVersion[0]))
+                if precision == '':
+                    outCFLAGS.append('-DUSE_FFTW_DOUBLE=1')
+                
+            if found:
+                break
+                
+        except (OSError, subprocess.CalledProcessError):
             pass
             
-        if len(outVersion) > 0:
-            print("Found FFTW3, version %s" % str(outVersion[0]))
-            
-    except (OSError, subprocess.CalledProcessError):
-        print("WARNING:  single precision FFTW3 cannot be found, using defaults")
+    if not found:
+        print("WARNING:  FFTW3 cannot be found, using defaults")
         outCFLAGS = []
         outLIBS = ['-lfftw3f', '-lm']
         

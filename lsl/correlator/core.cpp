@@ -134,22 +134,22 @@ void compute_fengine_real(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan     
-    float *inP, *in;                          
-    Complex32 *outP, *out;
-    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
-    fftwf_plan p;
+    LSL_fft_rtype *inP, *in;                          
+    LSL_fft_ctype *outP, *out;
+    inP = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
+    outP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
+    LSL_fft_plan p;
     int n[] = {2*nChan,};
-    p = fftwf_plan_many_dft_r2c(1, n, nTap, \
-                                inP, NULL, 1, 2*nChan, \
-                                reinterpret_cast<fftwf_complex*>(outP), NULL, 1, nChan+1, \
-                                FFTW_ESTIMATE);
+    p = LSL_fft_plan_many_dft_r2c(1, n, nTap, \
+                                  inP, NULL, 1, 2*nChan, \
+                                  reinterpret_cast<LSL_fft_complex*>(outP), NULL, 1, nChan+1, \
+                                  FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
     
     // Time-domain blanking control
-    typename OutType::value_type cleanFactor;
+    LSL_fft_rtype cleanFactor;
     
     // Pre-compute the phase rotation and scaling factor
     OutType* rot;
@@ -160,8 +160,8 @@ void compute_fengine_real(long nStand,
         #pragma omp parallel default(shared) private(in, out, i, j, k, l, secStart, cleanFactor)
     #endif
     {
-        in = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-        out = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
+        in = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
+        out = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -177,15 +177,15 @@ void compute_fengine_real(long nStand,
                 if( secStart - 2*nChan*(nTap-1) + k < nSamps*i ) {
                     in[k] = 0.0;
                 } else {
-                    in[k] = (float) *(data + secStart - 2*nChan*(nTap-1) + k);
+                    in[k] = (LSL_fft_rtype) *(data + secStart - 2*nChan*(nTap-1) + k);
                 }
                 if( secStart - 2*nChan*(nTap-1) + k + 1 < nSamps*i ) {
                     in[k+1] = 0.0;
                 } else {
-                    in[k+1] = (float) *(data + secStart - 2*nChan*(nTap-1) + k + 1);
+                    in[k+1] = (LSL_fft_rtype) *(data + secStart - 2*nChan*(nTap-1) + k + 1);
                 }
                 
-                if( Clip && (fabs(in[k]) >= Clip || abs(in[k+1]) >= Clip) ) {
+                if( Clip && (abs(in[k]) >= Clip || abs(in[k+1]) >= Clip) ) {
                     cleanFactor = 0.0;
                 }
                 
@@ -195,9 +195,9 @@ void compute_fengine_real(long nStand,
                 }
             }
             
-            fftwf_execute_dft_r2c(p, \
-                                  in, \
-                                  reinterpret_cast<fftwf_complex*>(out));
+            LSL_fft_execute_dft_r2c(p, \
+                                    in, \
+                                    reinterpret_cast<LSL_fft_complex*>(out));
             
             for(l=1; l<nTap; l++) { 
                 for(k=0; k<nChan; k++) {
@@ -213,14 +213,14 @@ void compute_fengine_real(long nStand,
             *(valid + nFFT*i + j) = (unsigned char) cleanFactor;
         }
         
-        fftwf_free(in);
-        fftwf_free(out);
+        LSL_fft_free(in);
+        LSL_fft_free(out);
     }
     aligned64_free(rot);
     
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
-    fftwf_free(outP);
+    LSL_fft_destroy_plan(p);
+    LSL_fft_free(inP);
+    LSL_fft_free(outP);
     
     Py_END_ALLOW_THREADS
     
@@ -249,20 +249,20 @@ void compute_fengine_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    Complex32 *inP, *in;
-    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
-    fftwf_plan p;
+    LSL_fft_ctype *inP, *in;
+    inP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
+    LSL_fft_plan p;
     int n[] = {nChan,};
-    p = fftwf_plan_many_dft(1, n, nTap, \
-                          reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
-                          reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
-                          FFTW_FORWARD, FFTW_ESTIMATE);
+    p = LSL_fft_plan_many_dft(1, n, nTap, \
+                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
+                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
+                              FFTW_FORWARD, FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
     
     // Time-domain blanking control
-    typename OutType::value_type cleanFactor;
+    LSL_fft_rtype cleanFactor;
     
     // Pre-compute the phase rotation and scaling factor
     OutType* rot;
@@ -273,7 +273,7 @@ void compute_fengine_complex(long nStand,
         #pragma omp parallel default(shared) private(in, i, j, k, l, secStart, cleanFactor)
     #endif
     {
-        in = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
+        in = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -289,8 +289,8 @@ void compute_fengine_complex(long nStand,
                 if( secStart - nChan*(nTap-1) + k < nSamps*i ) {
                     in[k] = 0.0;
                 } else {
-                    in[k] = Complex32(*(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
-                                      *(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
+                    in[k] = LSL_fft_ctype(*(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
+                                          *(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
                 }
                 
                 if( Clip && abs(in[k]) >= Clip ) {
@@ -302,9 +302,9 @@ void compute_fengine_complex(long nStand,
                 }
             }
             
-            fftwf_execute_dft(p, \
-                              reinterpret_cast<fftwf_complex*>(in), \
-                              reinterpret_cast<fftwf_complex*>(in));
+            LSL_fft_execute_dft(p, \
+                                reinterpret_cast<LSL_fft_complex*>(in), \
+                                reinterpret_cast<LSL_fft_complex*>(in));
             
             for(l=1; l<nTap; l++) {
                 for(k=0; k<nChan; k++) {
@@ -324,12 +324,12 @@ void compute_fengine_complex(long nStand,
             *(valid + nFFT*i + j) = (unsigned char) cleanFactor;
         }
         
-        fftwf_free(in);
+        LSL_fft_free(in);
     }
     aligned64_free(rot);
     
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
+    LSL_fft_destroy_plan(p);
+    LSL_fft_free(inP);
     
     Py_END_ALLOW_THREADS
 }
@@ -1161,7 +1161,7 @@ MOD_INIT(_core) {
     if( pModule != NULL ) {
         pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
-            sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
+            sprintf(filename, "%s/fftw_wisdom.txt", PyString_AsString(pDataPath));
             read_wisdom(filename, m);
         }
     } else {

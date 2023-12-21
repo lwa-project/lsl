@@ -145,9 +145,9 @@ void compute_kernel_correction(long nPixSide,
                                OutType *corr) {
     long i, j;
     OutType temp, temp2;
-    OutType *corr_full;
-    corr_full = (OutType*) aligned64_malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(OutType));
-    memset(corr_full, 0, sizeof(OutType)*nPixSide*GRID_KERNEL_OVERSAMPLE);
+    LSL_fft_rtype *corr_full;
+    corr_full = (LSL_fft_rtype*) aligned64_malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(LSL_fft_rtype));
+    memset(corr_full, 0, sizeof(LSL_fft_rtype)*nPixSide*GRID_KERNEL_OVERSAMPLE);
     
     // Copy the kernel over
     for(i=0; i<nPixSide*GRID_KERNEL_OVERSAMPLE; i++) {
@@ -159,12 +159,12 @@ void compute_kernel_correction(long nPixSide,
     }
     
     // Inverse transform
-    fftwf_plan pB;
-    pB = fftwf_plan_r2r_1d(nPixSide*GRID_KERNEL_OVERSAMPLE/2,
-                           corr_full, corr_full,
-                           FFTW_REDFT01, FFTW_ESTIMATE);
-    fftwf_execute(pB);
-    fftwf_destroy_plan(pB);
+    LSL_fft_plan pB;
+    pB = LSL_fft_plan_r2r_1d(nPixSide*GRID_KERNEL_OVERSAMPLE/2,
+                             corr_full, corr_full,
+                             FFTW_REDFT01, FFTW_ESTIMATE);
+    LSL_fft_execute(pB);
+    LSL_fft_destroy_plan(pB);
     
     // Select what to keep
     for(i=0; i<nPixSide; i++) {
@@ -223,21 +223,21 @@ void compute_gridding(long nVis,
     long secStart, secStop;
     double avgW, ci, cj, temp, temp2;
     long pi, pj, gi, gj;
-    Complex32 *suv, *sbm, *kern;
-    static float norm = (float) 1.0 / (nPixSide * nPixSide);
+    LSL_fft_ctype *suv, *sbm, *kern;
+    static LSL_fft_rtype norm = (LSL_fft_rtype) 1.0 / (nPixSide * nPixSide);
     
     // FFT setup
-    Complex32* inP;
-    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
-    fftwf_plan pF, pR;
-    pF = fftwf_plan_dft_2d(nPixSide, nPixSide, \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           FFTW_FORWARD, FFTW_ESTIMATE);
-    pR = fftwf_plan_dft_2d(nPixSide, nPixSide, \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           FFTW_BACKWARD, FFTW_ESTIMATE);
+    LSL_fft_ctype* inP;
+    inP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nPixSide*nPixSide);
+    LSL_fft_plan pF, pR;
+    pF = LSL_fft_plan_dft_2d(nPixSide, nPixSide, \
+                             reinterpret_cast<LSL_fft_complex*>(inP), \
+                             reinterpret_cast<LSL_fft_complex*>(inP), \
+                             FFTW_FORWARD, FFTW_ESTIMATE);
+    pR = LSL_fft_plan_dft_2d(nPixSide, nPixSide, \
+                             reinterpret_cast<LSL_fft_complex*>(inP), \
+                             reinterpret_cast<LSL_fft_complex*>(inP), \
+                             FFTW_BACKWARD, FFTW_ESTIMATE);
     
     // Go!
     #ifdef _OPENMP
@@ -245,17 +245,17 @@ void compute_gridding(long nVis,
     #endif
     {
         // Initialize the sub-grids and the w projection kernel
-        suv  = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
-        sbm  = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
-        kern = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
+        suv  = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nPixSide*nPixSide);
+        sbm  = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nPixSide*nPixSide);
+        kern = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nPixSide*nPixSide);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
         #endif
         for(j=0; j<nPlanes; j++) {
             // Zero out the sub-grids
-            memset(suv, 0, sizeof(Complex32)*nPixSide*nPixSide);
-            memset(sbm, 0, sizeof(Complex32)*nPixSide*nPixSide);
+            memset(suv, 0, sizeof(LSL_fft_ctype)*nPixSide*nPixSide);
+            memset(sbm, 0, sizeof(LSL_fft_ctype)*nPixSide*nPixSide);
             
             // Extract the plane index boundaries
             secStart = *(planeStart + j);
@@ -306,8 +306,8 @@ void compute_gridding(long nVis,
                             pj -= nPixSide;
                         }
                         
-                        *(suv + nPixSide*pi + pj) += (Complex32) *(vis + i) * (float) temp2;
-                        *(sbm + nPixSide*pi + pj) += (Complex32) *(wgt + i) * (float) temp2;
+                        *(suv + nPixSide*pi + pj) += (LSL_fft_ctype) *(vis + i) * (LSL_fft_rtype) temp2;
+                        *(sbm + nPixSide*pi + pj) += (LSL_fft_ctype) *(wgt + i) * (LSL_fft_rtype) temp2;
                     }
                 }
             }
@@ -317,22 +317,22 @@ void compute_gridding(long nVis,
             w_projection_kernel(nPixSide, uvRes, avgW, kern);
             
             // Project
-            fftwf_execute_dft(pF, \
-                              reinterpret_cast<fftwf_complex*>(suv), \
-                              reinterpret_cast<fftwf_complex*>(suv));
-            fftwf_execute_dft(pF, \
-                              reinterpret_cast<fftwf_complex*>(sbm), \
-                              reinterpret_cast<fftwf_complex*>(sbm));
+            LSL_fft_execute_dft(pF, \
+                                reinterpret_cast<LSL_fft_complex*>(suv), \
+                                reinterpret_cast<LSL_fft_complex*>(suv));
+            LSL_fft_execute_dft(pF, \
+                                reinterpret_cast<LSL_fft_complex*>(sbm), \
+                                reinterpret_cast<LSL_fft_complex*>(sbm));
             for(i=0; i<nPixSide*nPixSide; i++) {
                 *(suv + i) *= *(kern + i) * norm;
                 *(sbm + i) *= *(kern + i) * norm;
             }
-            fftwf_execute_dft(pR, \
-                              reinterpret_cast<fftwf_complex*>(suv), \
-                              reinterpret_cast<fftwf_complex*>(suv));
-            fftwf_execute_dft(pR, \
-                              reinterpret_cast<fftwf_complex*>(sbm), \
-                              reinterpret_cast<fftwf_complex*>(sbm));
+            LSL_fft_execute_dft(pR, \
+                                reinterpret_cast<LSL_fft_complex*>(suv), \
+                                reinterpret_cast<LSL_fft_complex*>(suv));
+            LSL_fft_execute_dft(pR, \
+                                reinterpret_cast<LSL_fft_complex*>(sbm), \
+                                reinterpret_cast<LSL_fft_complex*>(sbm));
             
             #ifdef _OPENMP
             #pragma omp critical
@@ -345,18 +345,18 @@ void compute_gridding(long nVis,
             }
         }
         
-        fftwf_free(suv);
-        fftwf_free(sbm);
-        fftwf_free(kern);
+        LSL_fft_free(suv);
+        LSL_fft_free(sbm);
+        LSL_fft_free(kern);
     }
     
     // Correct for the kernel
     compute_kernel_correction(nPixSide, kernel1D, corr);
     
     // Cleanup
-    fftwf_destroy_plan(pF);
-    fftwf_destroy_plan(pR);
-    fftwf_free(inP);
+    LSL_fft_destroy_plan(pF);
+    LSL_fft_destroy_plan(pR);
+    LSL_fft_free(inP);
     
     aligned64_free(kernel1D);
     
@@ -424,21 +424,21 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     dims[0] = (npy_intp) nPixSide;
     dims[1] = (npy_intp) nPixSide;
     /* uv plane */
-    uvPlane = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_COMPLEX64);
+    uvPlane = (PyArrayObject *) PyArray_SimpleNew(2, dims, LSL_fft_np_ctype);
     if( uvPlane == NULL ) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array - uv data");
         goto fail;
     }
     PyArray_FILLWBYTE(uvPlane, 0);
     /* beam */
-    bmPlane = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_COMPLEX64);
+    bmPlane = (PyArrayObject *) PyArray_SimpleNew(2, dims, LSL_fft_np_ctype);
     if( bmPlane == NULL ) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array - beam data");
         goto fail;
     }
     PyArray_FILLWBYTE(bmPlane, 0);
     /* kernel correction */
-    kernCorr = (PyArrayObject *) PyArray_SimpleNew(2, dims, NPY_FLOAT32);
+    kernCorr = (PyArrayObject *) PyArray_SimpleNew(2, dims, LSL_fft_np_rtype);
     if( kernCorr == NULL ) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array - kernel correction");
         goto fail;
@@ -453,13 +453,13 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Grid
 #define LAUNCH_GRIDDER(IterType) \
-    compute_gridding<IterType,Complex32,float>(nVis, nPixSide, uvRes, wRes, \
-                                               u, v, w, \
-                                               (IterType*) PyArray_DATA(vd), \
-                                               (IterType*) PyArray_DATA(wd), \
-                                               (Complex32*) PyArray_DATA(uvPlane), \
-                                               (Complex32*) PyArray_DATA(bmPlane), \
-                                               (float*) PyArray_DATA(kernCorr))
+    compute_gridding<IterType,LSL_fft_ctype,LSL_fft_rtype>(nVis, nPixSide, uvRes, wRes, \
+                                                           u, v, w, \
+                                                           (IterType*) PyArray_DATA(vd), \
+                                                           (IterType*) PyArray_DATA(wd), \
+                                                           (LSL_fft_ctype*) PyArray_DATA(uvPlane), \
+                                                           (LSL_fft_ctype*) PyArray_DATA(bmPlane), \
+                                                           (LSL_fft_rtype*) PyArray_DATA(kernCorr))
     switch( PyArray_TYPE(vd) ) {
       case( NPY_COMPLEX64  ): LAUNCH_GRIDDER(Complex32); break;
       case( NPY_COMPLEX128 ): LAUNCH_GRIDDER(Complex64); break;
@@ -571,7 +571,7 @@ MOD_INIT(_gridder) {
     if( pModule != NULL ) {
         pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
-            sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
+            sprintf(filename, "%s/fftw_wisdom.txt", PyString_AsString(pDataPath));
             read_wisdom(filename, m);
         }
     } else {
