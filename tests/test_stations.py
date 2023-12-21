@@ -161,9 +161,19 @@ class stations_tests(unittest.TestCase):
         sites = ['LWA1', 'LWA-SV', 'LWA1', 'LWA-SV']
         types = ['text', 'text', 'binary', 'binary']
         for filename,site,type in zip(filenames, sites, types):
-            with self.subTest(station=site, type=type):
+            with self.subTest(station=site, type=type, mode='filename'):
                 out = stations.parse_ssmif(filename)
                 
+        for filename,site,type in zip(filenames, sites, types):
+            fmode = 'r' if type == 'text' else 'rb'
+            with self.subTest(station=site, type=type, mode='filehandle'):
+                with open(filename, fmode) as fh:
+                    out = stations.parse_ssmif(fh)
+                    
+                fmode = 'rb'
+                with open(filename, fmode) as fh:
+                    out = stations.parse_ssmif(fh)
+                    
     def test_responses(self):
         """Test the various frequency responses."""
         
