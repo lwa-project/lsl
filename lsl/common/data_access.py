@@ -155,7 +155,7 @@ class _DataAccess(object):
             
         return True
         
-    def establish_data_file(self, filename):
+    def fetch_data_file(self, filename):
         """
         Make sure that a LSL data file exists.  If it does not copy the file
         from the base LSL installation or download it.
@@ -186,7 +186,7 @@ class _DataAccess(object):
                     ## Found something newer.  Delete the current version and
                     ## copy/download again.
                     self._CACHE_DIR.remove(filename)
-                    self.establish_data_file(filename)
+                    self.fetch_data_file(filename)
                     
     @contextlib.contextmanager
     def open(self, filename, mode='r'):
@@ -195,7 +195,7 @@ class _DataAccess(object):
         """
         
         # Make sure we have a file
-        self.establish_data_file(filename)
+        self.fetch_data_file(filename)
         
         # Open the file
         with self._CACHE_DIR.open(filename, mode=mode) as fh:
