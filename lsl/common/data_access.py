@@ -37,9 +37,9 @@ class _DataAccess(object):
     def __init__(self):
         # Create the cache directory
         try:
-            self._CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'data_cache'), max_size=0)
+            self._data_cache = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'data_cache'), max_size=0)
         except OSError:
-            self._CACHE_DIR = MemoryCache(max_size=0)
+            self._data_cache = MemoryCache(max_size=0)
             warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
             
     def _local_copy_mtime(self, relative_url):
@@ -62,7 +62,7 @@ class _DataAccess(object):
         received = 0
         if os.path.exists(local_path):
             with open(local_path, 'rb') as uh:
-                with self._CACHE_DIR.open(filename, 'wb') as fh:
+                with self._data_cache.open(filename, 'wb') as fh:
                     while True:
                         data = uh.read(DOWN_CONFIG.get('block_size'))
                         if len(data) == 0:
@@ -75,7 +75,7 @@ class _DataAccess(object):
         # a real file?
         if received < 3:
             ## Fail
-            self._CACHE_DIR.remove(filename)
+            self._data_cache.remove(filename)
             return False
             
         return True
@@ -120,7 +120,7 @@ class _DataAccess(object):
                 pass
             pbar = DownloadBar(max=remote_size)
             received = 0
-            with self._CACHE_DIR.open(filename, 'wb') as fh:
+            with self._data_cache.open(filename, 'wb') as fh:
                 while True:
                     data = uh.read(DOWN_CONFIG.get('block_size'))
                     if len(data) == 0:
@@ -147,7 +147,7 @@ class _DataAccess(object):
         # a real file?
         if received < 3:
             ## Fail
-            self._CACHE_DIR.remove(filename)
+            self._data_cache.remove(filename)
             return False
             
         return True
@@ -158,7 +158,7 @@ class _DataAccess(object):
         from the base LSL installation or download it.
         """
         
-        if filename not in self._CACHE_DIR:
+        if filename not in self._data_cache:
             # No file, go get one.
             status = self._local_copy_worker(filename, filename)
             if not status:
@@ -170,7 +170,7 @@ class _DataAccess(object):
                 
         else:
             # There is a file.  Make sure that it is up to date.
-            cache_mtime = self._CACHE_DIR.getmtime(filename)
+            cache_mtime = self._data_cache.getmtime(filename)
             
             if time.time() - cache_mtime > DOWN_CONFIG.get('refresh_age')*86400:
                 ## Yep, looks like it could be in need of a refresh.  See
@@ -183,7 +183,7 @@ class _DataAccess(object):
                 if max([local_mtime, remote_mtime]) > cache_mtime:
                     ## Found something newer.  Delete the current version and
                     ## copy/download again.
-                    self._CACHE_DIR.remove(filename)
+                    self._data_cache.remove(filename)
                     self.fetch_data_file(filename)
                     
     @contextlib.contextmanager
@@ -196,7 +196,7 @@ class _DataAccess(object):
         self.fetch_data_file(filename)
         
         # Open the file
-        with self._CACHE_DIR.open(filename, mode=mode) as fh:
+        with self._data_cache.open(filename, mode=mode) as fh:
             yield fh
             
     def remove(self, filename):
@@ -204,8 +204,15 @@ class _DataAccess(object):
         Remove a file from the data cache.
         """
         
-        self._CACHE_DIR.remove(filename)
+        self._data_cache.remove(filename)
+        
+    def getmtime(self, filename):
+        """
+        Return the last modification time of a file in the cache.
+        """
+        
+        return self._data_cache.getmtime(filename)
 
 
-#: DataAccess instance
+#: DataAccess instance for accessing LSL software data
 DataAccess = _DataAccess()

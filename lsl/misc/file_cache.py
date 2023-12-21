@@ -130,6 +130,10 @@ class FileCache(object):
             self._lock.release()
             
     def getsize(self, filename):
+        """
+        Return the size of a file in the cache.
+        """
+        
         self._lock.acquire()
         assert(self._lock.locked())
         
@@ -143,6 +147,10 @@ class FileCache(object):
         return size
         
     def getmtime(self, filename):
+        """
+        Return the last modificaton time of a file in the cache.
+        """
+        
         self._lock.acquire()
         assert(self._lock.locked())
         
@@ -156,6 +164,10 @@ class FileCache(object):
         return mtime
         
     def stat(self, filename):
+        """
+        Return the os.stat_result value for a file in the cache.
+        """
+        
         self._lock.acquire()
         assert(self._lock.locked())
         
@@ -226,6 +238,7 @@ class MemoryFile(object):
     @property
     def stat(self):
         """
+        The os.stat_result-like (really a mf_stat_result) value for the buffer.
         """
         
         return mf_stat_result(st_mode=0, st_ino=0, st_dev=0, st_nlink=1,
@@ -454,6 +467,10 @@ class MemoryCache(object):
             self._lock.release()
             
     def getsize(self, filename):
+        """
+        Return the size of a file in the cache.
+        """
+        
         self._lock.acquire()
         assert(self._lock.locked())
         
@@ -467,6 +484,10 @@ class MemoryCache(object):
         return size
         
     def getmtime(self, filename):
+        """
+        Return the last modification time of a file in the cache.
+        """
+        
         self._lock.acquire()
         assert(self._lock.locked())
         
@@ -480,6 +501,10 @@ class MemoryCache(object):
         return mtime
         
     def stat(self, filename):
+        """
+        Return the mf_stat_result value for a file in the cache.
+        """
+        
         self._lock.acquire()
         assert(self._lock.locked())
         
