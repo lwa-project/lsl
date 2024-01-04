@@ -161,9 +161,19 @@ class stations_tests(unittest.TestCase):
         sites = ['LWA1', 'LWA-SV', 'LWA1', 'LWA-SV']
         types = ['text', 'text', 'binary', 'binary']
         for filename,site,type in zip(filenames, sites, types):
-            with self.subTest(station=site, type=type):
+            with self.subTest(station=site, type=type, mode='filename'):
                 out = stations.parse_ssmif(filename)
                 
+        for filename,site,type in zip(filenames, sites, types):
+            fmode = 'r' if type == 'text' else 'rb'
+            with self.subTest(station=site, type=type, mode='filehandle'):
+                with open(filename, fmode) as fh:
+                    out = stations.parse_ssmif(fh)
+                    
+                fmode = 'rb'
+                with open(filename, fmode) as fh:
+                    out = stations.parse_ssmif(fh)
+                    
     def test_responses(self):
         """Test the various frequency responses."""
         
@@ -175,6 +185,13 @@ class stations_tests(unittest.TestCase):
             for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
                 with self.subTest(station=station.name, filter=filt):
                     station[0].arx.response(filt)
+                    
+    def test_arx_revisions(self):
+        """Test the various ARX revision lookups."""
+        
+        for station in (stations.lwa1, stations.lwasv):
+            with self.subTest(station=station.name):
+                station[0].arx.revision()
 
 
 class stations_test_suite(unittest.TestSuite):

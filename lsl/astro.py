@@ -3135,9 +3135,9 @@ def _parse_tai_file():
     # get path to almanac data file
     download = True
     if not 'Leap_Second.dat' in _CACHE_DIR:
-        from lsl.common.paths import DATA
-        oldName = os.path.join(DATA, 'astro', 'Leap_Second.dat')
-        with open(oldName, 'rb') as oh:
+        from lsl.common.data_access import DataAccess
+        oldName = os.path.join('astro', 'Leap_Second.dat')
+        with DataAccess.open(oldName, 'rb') as oh:
             with _CACHE_DIR.open('Leap_Second.dat', 'wb') as dh:
                 dh.write(oh.read())
                 

@@ -106,6 +106,8 @@ DEFAULTS_DOWNLOAD['block_size'] = {'value': 8192,
                                    'help':  'download block size in bytes'}
 DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
                                 'help':  'download timeout in seconds'}
+DEFAULTS_DOWNLOAD['refresh_age'] = {'value': 14,
+                                    'help':  'data cache refresh age in days'}
 
 ## Everything
 DEFAULTS_ALL = OrderedDict()

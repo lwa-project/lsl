@@ -533,6 +533,8 @@ def polyfit(inputX, inputY, order, max_iter=25):
         u = x - x0
         v = y - y0
     else:
+        x0 = 0.0
+        y0 = 0.0
         u = x
         v = y
         

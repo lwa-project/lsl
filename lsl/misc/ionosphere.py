@@ -25,7 +25,7 @@ from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
 
 from lsl.common.stations import geo_to_ecef
-from lsl.common.paths import DATA as dataPath
+from lsl.common.data_access import DataAccess
 from lsl.common.progress import DownloadBar
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.misc.file_cache import FileCache, MemoryCache
@@ -60,10 +60,10 @@ _ONLINE_CACHE = {}
 _RADIUS_EARTH = 6371.2*1e3
 
 
-def _load_igrf(filename):
+def _load_igrf(fh):
     """
-    Given a filename pointing to a list of IGRF coefficients, load in the 
-    data and return a dictionary containing the raw coefficients.
+    Given an open file handle pointing to a list of IGRF coefficients, load in
+    the data and return a dictionary containing the raw coefficients.
     
     The dictionary keys are:
      * years - list of years for each of the models
@@ -76,44 +76,42 @@ def _load_igrf(filename):
     term.
     """
     
-    # Open the file
-    with open(filename, 'r') as fh:
-        # Go!
-        dataCos = {}
-        dataSin = {}
-        for line in fh:
-            ## Is this line a comment?
-            line = line.replace('\n', '')
-            if line.find('#') != -1:
-                continue
-                
-            ## Is it a header?
-            if line.find('IGRF') != -1:
-                continue
-            if line.find('g/h') != -1:
-                fields = line.split(None)
-                years = [float(value) for value in fields[3:-1]]
-                continue
-                
-            ## Must be data...  parse it
-            fields = line.split(None)
-            t, n, m = fields[0], int(fields[1]), int(fields[2])
-            c = np.array([float(v) for v in fields[3:]])
+    # Go!
+    dataCos = {}
+    dataSin = {}
+    for line in fh:
+        ## Is this line a comment?
+        line = line.replace('\n', '')
+        if line.find('#') != -1:
+            continue
             
-            ## Sort out cosine (g) vs. sine (h)
-            if t == 'g':
-                try:
-                    dataCos[n][m] = c
-                except KeyError:
-                    dataCos[n] = [np.zeros(len(years)+1) for i in range(n+1)]
-                    dataCos[n][m] = c
-            else:
-                try:
-                    dataSin[n][m] = c
-                except KeyError:
-                    dataSin[n] = [np.zeros(len(years)+1) for i in range(n+1)]
-                    dataSin[n][m] = c
-                    
+        ## Is it a header?
+        if line.find('IGRF') != -1:
+            continue
+        if line.find('g/h') != -1:
+            fields = line.split(None)
+            years = [float(value) for value in fields[3:-1]]
+            continue
+            
+        ## Must be data...  parse it
+        fields = line.split(None)
+        t, n, m = fields[0], int(fields[1]), int(fields[2])
+        c = np.array([float(v) for v in fields[3:]])
+        
+        ## Sort out cosine (g) vs. sine (h)
+        if t == 'g':
+            try:
+                dataCos[n][m] = c
+            except KeyError:
+                dataCos[n] = [np.zeros(len(years)+1) for i in range(n+1)]
+                dataCos[n][m] = c
+        else:
+            try:
+                dataSin[n][m] = c
+            except KeyError:
+                dataSin[n] = [np.zeros(len(years)+1) for i in range(n+1)]
+                dataSin[n][m] = c
+                
     # Build the output
     output = {'years': years, 'g': dataCos, 'h': dataSin}
     
@@ -285,9 +283,9 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     try:
         coeffs = _ONLINE_CACHE['IGRF']
     except KeyError:
-        filename = os.path.join(dataPath, 'igrf13coeffs.txt')
-        _ONLINE_CACHE['IGRF'] = _load_igrf(filename)
-        
+        with DataAccess.open('geo/igrf13coeffs.txt', 'r') as fh:
+            _ONLINE_CACHE['IGRF'] = _load_igrf(fh)
+            
         coeffs = _ONLINE_CACHE['IGRF']
         
     # Compute the coefficients for the epoch

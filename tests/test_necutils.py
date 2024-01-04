@@ -18,7 +18,7 @@ except ImportError:
     from io import StringIO
 
 from lsl.sim import necutils
-from lsl.common.paths import DATA_BUILD
+from lsl.common.data_access import DataAccess
 
 
 __version__   = "0.1"
@@ -52,8 +52,10 @@ class necutils_tests(unittest.TestCase):
         
         testPath = tempfile.mkdtemp(prefix='test-necutils-', suffix='.tmp')
         for freq in (25.6, 38.7, 54.6, 75.02):
-            shutil.copy(os.path.join(DATA_BUILD, 'lwa1_xep_1.nec'), testPath)
-        
+            with DataAccess.open('antenna/nec/lwa1_xep_1.nec', 'r') as fh:
+                with open(os.path.join(testPath, 'lwa1_xep_1.nec'), 'w') as oh:
+                    oh.write(fh.read())
+                    
             filename = os.path.join(testPath, 'lwa1_xep_1.nec')
             necutils.change_nec_freq(filename, freq)
         

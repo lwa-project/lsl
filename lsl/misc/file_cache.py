@@ -10,6 +10,7 @@ import time
 import contextlib
 from threading import Lock
 from io import StringIO, BytesIO
+from collections import namedtuple
     
 from lsl.misc.file_lock import FileLock, MemoryLock
 
@@ -93,6 +94,13 @@ class FileCache(object):
         self._lock.acquire()
         assert(self._lock.locked())
         
+        if mode.startswith('w') or mode.startswith('a'):
+            parent_dirs = os.path.dirname(filename)
+            if parent_dirs != '':
+                parent_dirs = os.path.join(self.cache_dir, parent_dirs)
+                if not os.path.exists(parent_dirs):
+                    os.makedirs(parent_dirs, exist_ok=True)
+                    
         fh = open(os.path.join(self.cache_dir, filename), mode)
         if mode.startswith('w') or mode.startswith('a'):
             self._cache_management()
@@ -117,6 +125,63 @@ class FileCache(object):
             pass
         finally:
             self._lock.release()
+            
+    def getsize(self, filename):
+        """
+        Return the size of a file in the cache.
+        """
+        
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            size = os.path.getsize(os.path.join(self.cache_dir, filename))
+        except OSError as e:
+            raise e
+        finally:
+            self._lock.release()
+            
+        return size
+        
+    def getmtime(self, filename):
+        """
+        Return the last modificaton time of a file in the cache.
+        """
+        
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            mtime = os.path.getmtime(os.path.join(self.cache_dir, filename))
+        except OSError as e:
+            raise e
+        finally:
+            self._lock.release()
+            
+        return mtime
+        
+    def stat(self, filename):
+        """
+        Return the os.stat_result value for a file in the cache.
+        """
+        
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            fstat = os.stat(os.path.join(self.cache_dir, filename))
+        except OSError as e:
+            raise e
+        finally:
+            self._lock.release()
+            
+        return fstat
+
+
+#: os.stat_result - like namedtuple for stat-ing a MemoryFile
+mf_stat_result = namedtuple('ms_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
+                                               'st_uid', 'st_gid', 'st_size',
+                                               'st_atime', 'st_mtime', 'st_ctime'])
 
 
 class MemoryFile(object):
@@ -131,7 +196,7 @@ class MemoryFile(object):
     
     def __init__(self, name):
         self.name = name
-        self.mtime = 0
+        self.mode = ''
         
         try:
             kls = BytesIO
@@ -141,6 +206,10 @@ class MemoryFile(object):
         self._lock = Lock()
         self._closed = True
         self._is_binary = False
+        
+        self._ctime = 0.0
+        self._atime = 0.0
+        self._mtime = 0.0
         
     def __iter__(self):
         contents = self.readline()
@@ -163,6 +232,16 @@ class MemoryFile(object):
         
         return len(self._buffer)
         
+    @property
+    def stat(self):
+        """
+        The os.stat_result-like (really a mf_stat_result) value for the buffer.
+        """
+        
+        return mf_stat_result(st_mode=0, st_ino=0, st_dev=0, st_nlink=1,
+                              st_uid=0, st_gid=0, st_size=self.size,
+                              st_atime=int(self._atime), st_mtime=int(self._mtime), st_ctime=int(self._ctime))
+    
     def open(self, mode='r'):
         """
         Prepare the buffer and lock it for access. 
@@ -173,7 +252,10 @@ class MemoryFile(object):
             
         self._lock.acquire(True)
         
-        self.mtime = time.time()
+        self.mode = mode
+        self._atime = time.time()
+        if mode.startswith('w'):
+            self._ctime = time.time()
         self._closed = False
         self._is_binary = (mode.find('b') != -1)
         
@@ -276,7 +358,9 @@ class MemoryFile(object):
             raise IOError(f"MemoryFile:{self.name} is closed")
             
         self._buffer.flush()
-        
+        if self.mode.startswith('w') or self.mode.startswith('a'):
+            self._mtime = time.time()
+            
     def close(self):
         """
         Close the buffer and release the access lock.
@@ -321,7 +405,7 @@ class MemoryCache(object):
         if max_size > 0:
             filenames = list(self._cache.keys())
             sizes = [self._cache[filename].size for filename in filenames]
-            mtimes = [self._cache[filename].mtime for filename in filenames]
+            mtimes = [self._cache[filename]._mtime for filename in filenames]
             
             # Delete until we mee the cache size limit or until there is only one
             # file left (the most recent one)
@@ -378,3 +462,56 @@ class MemoryCache(object):
             pass
         finally:
             self._lock.release()
+            
+    def getsize(self, filename):
+        """
+        Return the size of a file in the cache.
+        """
+        
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            size = self._cache[filename].size
+        except KeyError:
+            size = 0
+        finally:
+            self._lock.release()
+            
+        return size
+        
+    def getmtime(self, filename):
+        """
+        Return the last modification time of a file in the cache.
+        """
+        
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            mtime = self._cache[filename].stat['st_mtime']
+        except KeyError:
+            mtime = 0
+        finally:
+            self._lock.release()
+            
+        return mtime
+        
+    def stat(self, filename):
+        """
+        Return the mf_stat_result value for a file in the cache.
+        """
+        
+        self._lock.acquire()
+        assert(self._lock.locked())
+        
+        try:
+            fstat = self._cache[filename].stat
+        except KeyError:
+            fstat = mf_stat_result(st_mode=0, st_ino=0, st_dev=0, st_nlink=0,
+                                   st_uid=0, st_gid=0, st_size=0,
+                                   st_atime=0, st_mtime=0, st_ctime=0)
+        finally:
+            self._lock.release()
+            
+        return fstat

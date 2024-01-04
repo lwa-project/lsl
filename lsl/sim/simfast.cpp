@@ -11,12 +11,12 @@
     #endif
 #endif
 
+#include <gsl/gsl_sf.h>
+
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
 #include "../correlator/common.hpp"
-
-#include "protos.h"
 
 
 template<typename FluxType, typename OutType>
@@ -106,7 +106,7 @@ void compute_visibility(long nBL,
                         tempX = 2.0*NPY_PI * sqrt(tempX);
                         
                         if( tempX != 0.0 ) {
-                            tempX = 2.0 * j1(tempX)/tempX;
+                            tempX = 2.0 * gsl_sf_bessel_J1(tempX)/tempX;
                         } else {
                             tempX = 1.0;
                         }

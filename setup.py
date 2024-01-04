@@ -113,6 +113,42 @@ return 0;
     return outCFLAGS, outLIBS
 
 
+def get_gsl():
+    """Use pkg-config (if installed) to figure out the C flags and linker flags
+    needed to compile a C program with GSL.  If GSL cannot be found via
+    pkg-config, some 'sane' values are returned."""
+    
+    try:
+        subprocess.check_call(['pkg-config', 'gsl', '--exists'])
+        
+        p = subprocess.Popen(['pkg-config', 'gsl', '--modversion'], stdout=subprocess.PIPE)
+        outVersion = p.communicate()[0].rstrip().split()
+        
+        p = subprocess.Popen(['pkg-config', 'gsl', '--cflags'], stdout=subprocess.PIPE)
+        outCFLAGS = p.communicate()[0].rstrip().split()
+        try:
+            outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
+        except TypeError:
+            pass
+        
+        p = subprocess.Popen(['pkg-config', 'gsl', '--libs'], stdout=subprocess.PIPE)
+        outLIBS = p.communicate()[0].rstrip().split()
+        try:
+            outLIBS = [str(v, 'utf-8') for v in outLIBS]
+        except TypeError:
+            pass
+            
+        if len(outVersion) > 0:
+            print("Found GSL, version %s" % outVersion[0])
+            
+    except (OSError, subprocess.CalledProcessError):
+        print("WARNING:  GSL cannot be found, using defaults")
+        outCFLAGS = []
+        outLIBS = ['-lgsl', '-lm']
+        
+    return outCFLAGS, outLIBS
+
+
 def get_fftw():
     """Use pkg-config (if installed) to figure out the C flags and linker flags
     needed to compile a C program with single precision FFTW3.  If FFTW3 cannot 
@@ -220,10 +256,13 @@ short_version = '{shortVersion}'
 # problems on Mac
 class lsl_build(build):
     user_options = build.user_options \
+                   + [('with-gsl=', None, 'Installation path for GSL'),] \
                    + [('with-fftw=', None, 'Installation path for single precision FFTW3'),]
+                   
     
     def initialize_options(self, *args, **kwargs):
         build.initialize_options(self, *args, **kwargs)
+        self.with_gsl = None
         self.with_fftw = None
         
     def finalize_options(self, *args, **kwargs):
@@ -232,6 +271,12 @@ class lsl_build(build):
         if self.distribution.has_ext_modules():
             ## Grab the 'build_ext' command
             beco = self.distribution.get_command_obj('build_ext')
+            
+            ## Grab the GSL flags
+            if os.getenv('WITH_GSL', None) is not None:
+                self.with_gsl = os.getenv('WITH_GSL')
+            if self.with_gsl is not None:
+                beco.with_gsl = self.with_gsl
             
             ## Grab the FFTW flags
             if os.getenv('WITH_FFTW', None) is not None:
@@ -242,10 +287,12 @@ class lsl_build(build):
 
 class lsl_build_ext(build_ext):
     user_options = build_ext.user_options \
+                   + [('with-gls=', None, 'Installation path for GSL'),] \
                    + [('with-fftw=', None, 'Installation path for single precision FFTW3'),]
     
     def initialize_options(self, *args, **kwargs):
         build_ext.initialize_options(self, *args, **kwargs)
+        self.with_gsl = None
         self.with_fftw = None
         
     def finalize_options(self, *args, **kwargs):
@@ -254,6 +301,15 @@ class lsl_build_ext(build_ext):
         
         ## Grab the OpenMP flags
         openmpFlags, openmpLibs = get_openmp()
+        
+        ## Grab the GSL flags
+        if os.getenv('WITH_GSL', None) is not None:
+            self.with_gsl = os.getenv('WITH_GSL')
+        if self.with_gsl is not None:
+            gslFlags = ['-I%s/include' % self.with_gsl,]
+            gslLibs = ['-L%s/lib' % self.with_gsl, '-lgsl']
+        else:
+            gslFlags, gslLibs = get_gsl()
         
         ## Grab the FFTW flags
         if os.getenv('WITH_FFTW', None) is not None:
@@ -267,13 +323,13 @@ class lsl_build_ext(build_ext):
         ## Update the extensions with the additional compilier/linker flags
         for ext in self.extensions:
             ### Compiler flags
-            for cflags in (openmpFlags, fftwFlags):
+            for cflags in (openmpFlags, gslFlags, fftwFlags):
                 try:
                     ext.extra_compile_args.extend( cflags )
                 except TypeError:
                     ext.extra_compile_args = cflags
             ### Linker flags
-            for ldflags in (openmpLibs, fftwLibs):
+            for ldflags in (openmpLibs, gslLibs, fftwLibs):
                 try:
                     ext.extra_link_args.extend( ldflags )
                 except TypeError:
@@ -299,7 +355,7 @@ ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/r
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._core', ['lsl/correlator/core.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('imaging._gridder', ['lsl/imaging/gridder.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
-            Extension('sim._simfast', ['lsl/sim/simfast.cpp', 'lsl/sim/const.c', 'lsl/sim/j1.c', 'lsl/sim/polevl.c', 'lsl/sim/mtherr.c', 'lsl/sim/sf_error.c'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
+            Extension('sim._simfast', ['lsl/sim/simfast.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('misc._wisdom', ['lsl/misc/wisdom.cpp'],include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), ]
 
 # Update the version information

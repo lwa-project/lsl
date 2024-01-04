@@ -17,9 +17,10 @@ from astropy.coordinates import EarthLocation, AltAz
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
-from lsl.common.paths import DATA as dataPath
+from lsl.common.paths import DATA as DATA_PATH
 from lsl.common import dp, mcs as mcsDP, adp, mcsADP
 from lsl.misc.mathutils import to_dB, from_dB
+from lsl.common.data_access import DataAccess
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -505,10 +506,11 @@ class Antenna(object):
         """
         
         # Find the filename to use
-        filename = os.path.join(dataPath, 'BurnsZ.txt')
+        filename = 'antenna/BurnsZ.txt'
         
         # Read in the data
-        data = np.loadtxt(filename)
+        with DataAccess.open(filename, 'r') as fh:
+            data = np.loadtxt(fh)
         freq = data[:,0]*1e6
         ime = data[:,3]
         if dB:
@@ -687,10 +689,11 @@ class FEE(object):
         """
         
         # Find the filename to use
-        filename = os.path.join(dataPath, 'fee.txt')
+        filename = 'frontend/fee.txt'
         
         # Read in the data
-        data = np.loadtxt(filename)
+        with DataAccess.open(filename, 'r') as fh:
+            data = np.loadtxt(fh)
         freq = data[:,0]*1e6
         gai = data[:,1]
         if not dB:
@@ -877,6 +880,26 @@ class ARX(object):
         else:
             raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
+    def revision(self):
+        """
+        Return the revision name for the current board/channel or 'unknown' if
+        the board revision is not known.
+        
+        .. versionadded:: 3.0.0
+        """
+        
+        revision = 'unknown'
+        try:
+            id = int(self.id, 10)
+            if id >= 100 and id < 200:
+                revision = 'D'
+            elif id >= 200 and id <= 300:
+                revision = 'G'
+        except ValueError:
+            pass
+            
+        return revision
+        
     def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
@@ -906,21 +929,21 @@ class ARX(object):
         
         # Find the filename to use
         filename = f"ARX_board_{self.id:4s}_filters_ch{self.channel}.npz"
-        filename = os.path.join(dataPath, 'arx', filename)
         
         # Read in the file and convert it to a numpy array
-        try:
-            dataDict = np.load(filename)
-        except IOError:
-            raise RuntimeError(f"Could not find the response data for ARX board #{self.id}, channel {self.channel}")
-            
-        freq = dataDict['freq']
-        data = dataDict['data']
-        try:
-            dataDict.close()
-        except AttributeError:
-            pass
-            
+        with DataAccess.open(filename, 'rb') as fh:
+            try:
+                dataDict = np.load(fh)
+            except IOError:
+                raise RuntimeError(f"Could not find the response data for ARX board #{self.id}, channel {self.channel}")
+                
+            freq = dataDict['freq']
+            data = dataDict['data']
+            try:
+                dataDict.close()
+            except AttributeError:
+                pass
+                
         if not dB:
             data = from_dB(data)
             
@@ -1006,7 +1029,7 @@ class LSLInterface(object):
         return self._cache[which]
 
 
-def _parse_ssmif_text(filename):
+def _parse_ssmif_text(filename_or_fh):
     """
     Given a human-readable (text) SSMIF file and return a collection of
     variables via locals() containing the files data.
@@ -1015,7 +1038,17 @@ def _parse_ssmif_text(filename):
     kwdRE = re.compile(r'(?P<keyword>[A-Z_0-9]+)(\[(?P<id1>[0-9]+?)\])?(\[(?P<id2>[0-9]+?)\])?(\[(?P<id3>[0-9]+?)\])?')
     
     # Loop over the lines in the file
-    with open(filename, 'r') as fh:
+    try:
+        fh = open(filename_or_fh, 'r')
+        close_at_end = True
+    except TypeError:
+        fh = filename_or_fh
+        close_at_end = False
+        if fh.mode.find('b') != -1:
+            contents = fh.read().decode()
+            fh = contents.split('\n')
+            
+    try:
         for line in fh:
             line = line.replace('\n', '')
             line = line.replace('\r', '')
@@ -1514,16 +1547,34 @@ def _parse_ssmif_text(filename):
                 drDP[ids[0]-1] = int(value)
                 continue
                 
+    except Exception as e:
+        if close_at_end:
+            fh.close()
+        raise e
+        
+    if close_at_end:
+        fh.close()
+        
     return locals()
 
 
-def _parse_ssmif_binary(filename):
+def _parse_ssmif_binary(filename_or_fh):
     """
     Given a binary packed SSMIF file and return a collection of
     variables via locals() containing the files data.
     """
     
-    with open(filename, 'rb') as fh:
+    # Loop over the lines in the file
+    try:
+        fh = open(filename_or_fh, 'rb')
+        close_at_end = True
+    except TypeError:
+        fh = filename_or_fh
+        close_at_end = False
+        if fh.mode.find('b') == -1:
+            raise RuntimeError("Expected the file handle to be opened with binary access")
+            
+    try:
         # Read in the first four bytes to get the version code and go from there
         version = fh.read(4)
         version = struct.unpack('<i', version)[0]
@@ -1670,10 +1721,18 @@ def _parse_ssmif_binary(filename):
         
         fh.readinto(bsettings)
         
+    except Exception as e:
+        if close_at_end:
+            fh.close()
+        raise e
+        
+    if close_at_end:
+        fh.close()
+        
     return locals()
 
 
-def parse_ssmif(filename):
+def parse_ssmif(filename_or_fh):
     """
     Given a SSMIF file, return a fully-filled LWAStation instance.  This function
     supports both human-readable files (filenames with '.txt' extensions) or 
@@ -1681,13 +1740,16 @@ def parse_ssmif(filename):
     """
     
     # Find out if we have a .txt or .dat file and process accordingly
-    base, ext = os.path.splitext(filename)
-    
+    try:
+        base, ext = os.path.splitext(filename_or_fh.name)
+    except AttributeError:
+        base, ext = os.path.splitext(filename_or_fh)
+        
     # Read in the ssmif to a dictionary of variables
     if ext == '.dat':
-        ssmifDataDict = _parse_ssmif_binary(filename)
+        ssmifDataDict = _parse_ssmif_binary(filename_or_fh)
     elif ext == '.txt':
-        ssmifDataDict = _parse_ssmif_text(filename)
+        ssmifDataDict = _parse_ssmif_text(filename_or_fh)
     else:
         raise ValueError(f"Unknown file extension '{ext}', cannot tell if it is text or binary")
         
@@ -1847,19 +1909,19 @@ def parse_ssmif(filename):
 
 
 #: LWAVL
-_ssmifvl = os.path.join(dataPath, 'lwa1-ssmif.txt')
-lwavl = parse_ssmif(_ssmifvl)
+with DataAccess.open('lwa1-ssmif.txt', 'r') as fh:
+    lwavl = parse_ssmif(fh)
 
 #: LWAVL is also known as LWA1
 lwa1 = lwavl
 
 #: LWANA
-_ssmifna = os.path.join(dataPath, 'lwana-ssmif.txt')
-lwana = parse_ssmif(_ssmifna)
+with DataAccess.open('lwana-ssmif.txt', 'r') as fh:
+    lwana = parse_ssmif(fh)
 
 #: LWASV
-_ssmifsv = os.path.join(dataPath, 'lwasv-ssmif.txt')
-lwasv = parse_ssmif(_ssmifsv)
+with DataAccess.open('lwasv-ssmif.txt', 'r') as fh:
+    lwasv = parse_ssmif(fh)
 
 
 def get_full_stations():
