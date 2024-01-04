@@ -1941,19 +1941,19 @@ def parse_ssmif(filename_or_fh):
 
 
 #: LWAVL
-_ssmifvl = os.path.join(DATA_PATH, 'lwa1-ssmif.txt')
-lwavl = parse_ssmif(_ssmifvl)
+with DataAccess.open('lwa1-ssmif.txt', 'r') as fh:
+    lwavl = parse_ssmif(fh)
 
 #: LWAVL is also known as LWA1
 lwa1 = lwavl
 
 #: LWANA
-_ssmifna = os.path.join(DATA_PATH, 'lwana-ssmif.txt')
-lwana = parse_ssmif(_ssmifna)
+with DataAccess.open('lwana-ssmif.txt', 'r') as fh:
+    lwana = parse_ssmif(fh)
 
 #: LWASV
-_ssmifsv = os.path.join(DATA_PATH, 'lwasv-ssmif.txt')
-lwasv = parse_ssmif(_ssmifsv)
+with DataAccess.open('lwasv-ssmif.txt', 'r') as fh:
+    lwasv = parse_ssmif(fh)
 
 
 def get_full_stations():
