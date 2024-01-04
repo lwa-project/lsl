@@ -394,7 +394,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
     sinAlt = numpy.sin(rAlt)
     
     if real_only:
-        nTerms = (lmax*(lmax+3)+2)/2
+        nTerms = (lmax*(lmax+3)+2)//2
         terms = numpy.zeros(nTerms, dtype=numpy.complex64)
         
         t = 0
