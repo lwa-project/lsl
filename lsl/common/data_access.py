@@ -57,6 +57,8 @@ class _DataAccess(object):
         file.
         """
         
+        metaname = filename+'_meta'
+        
         local_path = os.path.join(DATA_PATH, relative_url)
         
         received = 0
@@ -71,11 +73,18 @@ class _DataAccess(object):
                         
                         fh.write(data)
                         
+            with self._data_cache.open(metaname, 'w') as fh:
+                fh.write("created: %.0f\n" % time.time())
+                fh.write("source: %s\n" % local_path)
+                fh.write("source size: %i B\n" % os.path.getsize(local_path))
+                fh.write("source last modified: %.0f" % os.path.getmtime(local_path))
+                
         # Did we get anything or, at least, enough of something like it looks like 
         # a real file?
         if received < 3:
             ## Fail
             self._data_cache.remove(filename)
+            self._data_cache.remove(metaname)
             return False
             
         return True
@@ -88,7 +97,15 @@ class _DataAccess(object):
         mtime = 0
         try:
             with urlopen(url, timeout=DOWN_CONFIG.get('timeout')):
-                mtime = uh.headers['etag']
+                try:
+                    mtime = float(uh.headers['etag'])
+                except AttributeError:
+                    pass
+                try:
+                    meta = uh.info()
+                    mtime = float(meta.getheaders("etag")[0])
+                except AttributeError:
+                    pass
         except socket.timeout:
             pass
             
@@ -101,21 +118,26 @@ class _DataAccess(object):
         
         is_interactive = sys.__stdin__.isatty()
         
+        metaname = filename+'_meta'
+        
         # Attempt to download the data
         url = self._BASE_URL+'/'+relative_url
         if use_backup:
             url = self._BACKUP_URL+'/'+relative_url
         print("Downloading %s" % url)
         try:
+            mtime = 0.0
             uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
             remote_size = 1
             try:
                 remote_size = int(uh.headers["Content-Length"])
+                mtime = float(uh.headers['etag'])
             except AttributeError:
                 pass
             try:
                 meta = uh.info()
                 remote_size = int(meta.getheaders("Content-Length")[0])
+                mtime = float(meta.getheaders("etag")[0])
             except AttributeError:
                 pass
             pbar = DownloadBar(max=remote_size)
@@ -143,11 +165,18 @@ class _DataAccess(object):
         except socket.timeout:
             received = 0
             
+        with self._data_cache.open(metaname, 'w') as fh:
+            fh.write("created: %.0f\n" % time.time())
+            fh.write("source: %s\n" % url)
+            fh.write("source size: %i B" % remote_size)
+            fh.write("source last modified: %.0f" % mtime)
+            
         # Did we get anything or, at least, enough of something like it looks like 
         # a real file?
         if received < 3:
             ## Fail
             self._data_cache.remove(filename)
+            self._data_cache.remove(metaname)
             return False
             
         return True
