@@ -1,3 +1,8 @@
+3.0.0
+ * Switch to the GNU scientific library for internal Bessel functions
+ * Fixed an undefined variable error in lsl.statistics.robust.polyfit
+ * Fixed a division error in lsl.misc.mathutils.sphfit when real_only=True
+
 2.2.0
  * Add a keyword to lsl.imaging.selfcal functions that will return whether or not a call converged
  * Made lsl.readers.buffer.TBFFrameBuffer more robust
