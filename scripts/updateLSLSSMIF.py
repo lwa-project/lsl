@@ -208,7 +208,7 @@ def main(args):
             sys.stdout.flush()
             ah.close()
         except Exception as e:
-            print("Error:  Cannot download SSMIF, %s" % str(e))
+            raise RuntimeError("Cannot download SSMIF: %s" % str(e))
             
         ## Save
         try:
@@ -220,7 +220,7 @@ def main(args):
                 fh.write("source size: %i B\n" % remote_size)
                 fh.write("source last modified: %.0f\n" % mtime))
         except Exception as e:
-            print("Error:  Cannot %s SSMIF, %s" % ('update' if args.update else 'revert', str(e)))
+            raise RuntimeError("Cannot %s SSMIF: %s" % ('update' if args.update else 'revert', str(e)))
             
     # Summarize the SSMIF
     ## Filesystem information
