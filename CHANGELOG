@@ -1,3 +1,6 @@
+3.0.0
+ * Switched to a "download on demand and cache" method of distributing data for LSL
+
 2.1.8
  * Added polarization basis conversions functions to lsl.imaging.utils
  * Improved TBF frame count reliability
