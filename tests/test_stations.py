@@ -185,6 +185,12 @@ class stations_tests(unittest.TestCase):
             for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
                 with self.subTest(station=station.name, filter=filt):
                     station[0].arx.response(filt)
+                    
+    def test_arx_revisions(self):
+        """Test the various ARX revision lookups."""
+        for station in (stations.lwa1, stations.lwasv):
+            with self.subTest(station=station.name):
+                station[0].arx.revision()
 
 
 class stations_test_suite(unittest.TestSuite):
