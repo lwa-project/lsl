@@ -188,6 +188,7 @@ class stations_tests(unittest.TestCase):
                     
     def test_arx_revisions(self):
         """Test the various ARX revision lookups."""
+        
         for station in (stations.lwa1, stations.lwasv):
             with self.subTest(station=station.name):
                 station[0].arx.revision()
