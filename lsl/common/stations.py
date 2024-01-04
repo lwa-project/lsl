@@ -906,6 +906,26 @@ class ARX(object):
         else:
             raise TypeError("Unsupported type: '%s'" % type(other).__name__)
             
+    def revision(self):
+        """
+        Return the revision name for the current board/channel or 'unknown' if
+        the board revision is not known.
+        
+        .. versionadded:: 3.0.0
+        """
+        
+        revision = 'unknown'
+        try:
+            id = int(self.id, 10)
+            if id >= 100 and id < 200:
+                revision = 'D'
+            elif id >= 200 and id <= 300:
+                revision = 'G'
+        except ValueError:
+            pass
+            
+        return revision
+        
     def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
