@@ -78,6 +78,7 @@ class FileLock(object):
                     self._our_lock = fh
                 else:
                     ## If we do already own it then there is nothing else to do.
+                    fh.close()
                     self._our_lock = None
                 self._locked = True
                 
@@ -100,6 +101,7 @@ class FileLock(object):
             self._our_lock.truncate(0)
             self._our_lock.flush()
             fcntl.flock(self._our_lock, fcntl.LOCK_UN)
+            self._our_lock.close()
             self._our_lock = None
         self._locked = False
         return True

@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d
 
 from lsl import skymap, astro
 from lsl.common import stations
-from lsl.common.paths import DATA as dataPath
+from lsl.common.data_access import DataAccess
 from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
@@ -61,15 +61,12 @@ def main(args):
             print("Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
     
     # Get the emperical model of the beam and compute it for the correct frequencies
-    beamDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-emp.npz'))
-    if args.pol == 'EW':
-        beamCoeff = beamDict['fitX']
-    else:
-        beamCoeff = beamDict['fitY']
-    try:
-        beamDict.close()
-    except AttributeError:
-        pass
+    with DataAccess.open('antenna/lwa1-dipole-emp.npz', 'rb') as fh:
+        beamDict = numpy.load(fh)
+        if args.pol == 'EW':
+            beamCoeff = beamDict['fitX']
+        else:
+            beamCoeff = beamDict['fitY']
     alphaE = numpy.polyval(beamCoeff[0,0,:], args.frequency)
     betaE =  numpy.polyval(beamCoeff[0,1,:], args.frequency)
     gammaE = numpy.polyval(beamCoeff[0,2,:], args.frequency)
@@ -83,14 +80,14 @@ def main(args):
         print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
         
     if args.empirical:
-        corrDict = numpy.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
-        cFreqs = corrDict['freqs']
-        cAlts  = corrDict['alts']
-        if corrDict['degrees'].item():
-            cAlts *= numpy.pi / 180.0
-        cCorrs = corrDict['corrs']
-        corrDict.close()
-        
+        with DataAccess.open('antenna/lwa1-dipole-cor.npz', 'rb') as fh:
+            corrDict = numpy.load(fh)
+            cFreqs = corrDict['freqs']
+            cAlts  = corrDict['alts']
+            if corrDict['degrees'].item():
+                cAlts *= numpy.pi / 180.0
+            cCorrs = corrDict['corrs']
+            
         if args.frequency/1e6 < cFreqs.min() or args.frequency/1e6 > cFreqs.max():
             print("WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,))
             corrFnc = None
