@@ -15,12 +15,14 @@ if sys.version_info < (3,):
 import os
 import re
 import sys
+import time
 try:
     from urllib2 import urlopen
 except ImportError:
     from urllib.request import urlopen
 import hashlib
 import argparse
+import calendar
 from datetime import datetime
 
 from lsl.common.data_access import DataAccess
@@ -173,17 +175,23 @@ def main(args):
         ## Retrieve
         try:
             print("Downloading %s" % urlToDownload)
-            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
+            mtime = 0.0
             remote_size = 1
+            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
             try:
                 remote_size = int(ah.headers["Content-Length"])
+                mtime = ah.headers["Last-Modified"]
             except AttributeError:
                 pass
             try:
                 meta = ah.info()
                 remote_size = int(meta.getheaders("Content-Length")[0])
+                mtime = meta.getheaders("Last-Modified")[0]
             except AttributeError:
                 pass
+            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+            mtime = calendar.timegm(mtime.timetuple())
+            
             pbar = DownloadBar(max=remote_size)
             while True:
                 new_data = ah.read(LSL_CONFIG.get('download.block_size'))
@@ -206,6 +214,11 @@ def main(args):
         try:
             with DataAccess.open(_ssmif, 'wb') as fh:
                 fh.write(newSSMIF)
+            with DataAccess.open(_ssmif+"_meta", 'w') as fh:
+                fh.write("created: %.0f\n" % time.time())
+                fh.write("source: %s\n" % urlToDownload)
+                fh.write("source size: %i B\n" % remote_size)
+                fh.write("source last modified: %.0f\n" % mtime))
         except Exception as e:
             print("Error:  Cannot %s SSMIF, %s" % ('update' if args.update else 'revert', str(e)))
             
