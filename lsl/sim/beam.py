@@ -25,9 +25,11 @@ __all__ = ['mueller_matrix', 'beam_response', 'get_avaliable_models']
 
 _MODELS = OrderedDict()
 _MODELS['empirical'] = os.path.join(dataPath, 'lwa1-dipole-emp.npz')
-_MODELS['nec']       = 'test.hdf5'
-_MODELS['feko']      = 'OVRO_LWA-FEKO_er-3p5_sig-0p002.h5'
-_MODELS['cst']       = 'OVRO_LWA-CST_er-3p5_sig-0p002.h5'
+_MODELS['nec_002']   = 'NEC_er-3p0_sig-0p002.hdf5'
+_MODELS['nec_004']   = 'NEC_er-3p0_sig-0p004.hdf5'
+_MODELS['nec_008']   = 'NEC_er-3p0_sig-0p008.hdf5'
+_MODELS['nec_015']   = 'NEC_er-3p0_sig-0p015.hdf5'
+_MODELS['nec_030']   = 'NEC_er-3p0_sig-0p030.hdf5'
 
 
 # Create the cache directory
@@ -199,10 +201,6 @@ def _load_response_full(frequency, model='feko'):
         raise ValueError(f"Unknown dipole model source '{model}'")
         
     for pol in ('X', 'Y'):
-        if model == 'feko':
-            ## Apparent polarization swap
-            pol = {'X': 'Y', 'Y': 'X'}[pol]
-            
         # Make sure we have the file
         if filename not in _CACHE_DIR:
             status = _download_worker('https://fornax.phys.unm.edu/lwa/data/'+filename, filename)
@@ -211,7 +209,7 @@ def _load_response_full(frequency, model='feko'):
                 
         # Open the file and select the mode relevant frequencies
         h = h5py.File(os.path.join(_CACHE_DIR.cache_dir, filename))
-        mfreq = h['Freq(Hz)'][...]*1e6
+        mfreq = h['Freq(MHz)'][...]*1e6
         best = np.where(np.abs(mfreq - frequency) < 10e6)[0]
         maz = h['phi_pts'][...]
         malt = 90 - h['theta_pts'][...] # zenith angle -> elevation
