@@ -3,8 +3,11 @@ import os
 import sys
 import time
 import shutil
+import socket
+import calendar
 import warnings
 import contextlib
+from datetime import datetime
 try:
     from urllib2 import urlopen
 except ImportError:
@@ -77,7 +80,7 @@ class _DataAccess(object):
                 fh.write("created: %.0f\n" % time.time())
                 fh.write("source: %s\n" % local_path)
                 fh.write("source size: %i B\n" % os.path.getsize(local_path))
-                fh.write("source last modified: %.0f" % os.path.getmtime(local_path))
+                fh.write("source last modified: %.0f\n" % os.path.getmtime(local_path))
                 
         # Did we get anything or, at least, enough of something like it looks like 
         # a real file?
@@ -98,14 +101,17 @@ class _DataAccess(object):
         try:
             with urlopen(url, timeout=DOWN_CONFIG.get('timeout')):
                 try:
-                    mtime = float(uh.headers['etag'])
+                    mtime = uh.headers['Last-Modified']
                 except AttributeError:
                     pass
                 try:
                     meta = uh.info()
-                    mtime = float(meta.getheaders("etag")[0])
+                    mtime = meta.getheaders("Last-Modified")[0]
                 except AttributeError:
                     pass
+                    
+                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+                mtime = calendar.timegm(mtime.timetuple())
         except socket.timeout:
             pass
             
@@ -131,15 +137,17 @@ class _DataAccess(object):
             remote_size = 1
             try:
                 remote_size = int(uh.headers["Content-Length"])
-                mtime = float(uh.headers['etag'])
+                mtime = uh.headers['Last-Modified']
             except AttributeError:
                 pass
             try:
                 meta = uh.info()
                 remote_size = int(meta.getheaders("Content-Length")[0])
-                mtime = float(meta.getheaders("etag")[0])
+                mtime = meta.getheaders("Last-Modified")[0]
             except AttributeError:
                 pass
+            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+            mtime = calendar.timegm(mtime.timetuple())
             pbar = DownloadBar(max=remote_size)
             received = 0
             with self._data_cache.open(filename, 'wb') as fh:
@@ -168,8 +176,8 @@ class _DataAccess(object):
         with self._data_cache.open(metaname, 'w') as fh:
             fh.write("created: %.0f\n" % time.time())
             fh.write("source: %s\n" % url)
-            fh.write("source size: %i B" % remote_size)
-            fh.write("source last modified: %.0f" % mtime)
+            fh.write("source size: %i B\n" % remote_size)
+            fh.write("source last modified: %.0f\n" % mtime)
             
         # Did we get anything or, at least, enough of something like it looks like 
         # a real file?
