@@ -17,7 +17,7 @@ import math
 import numpy
 from astropy.constants import c as speedOfLight
 
-from lsl.common.paths import DATA as dataPath
+from lsl.common.data_access import DataAccess
 from lsl.common import dp as dp_common
 
 from lsl.misc import telemetry
@@ -40,21 +40,18 @@ def _load_stand_response(freq=49.0e6):
     
     # Read in the spherical harmonic representation of the beam distributed with
     # LSL
-    dd = numpy.load(os.path.join(dataPath, 'beam-shape.npz'))
-    coeffs = dd['coeffs']
-    try:
-        dd.close()
-    except AttributeError:
-        pass
+    with DataAccess.open('antenna/beam-shape.npz', 'rb') as fh:
+        dd = numpy.load(fh)
+        coeffs = dd['coeffs']
         
-    # Calculate how many harmonics are stored in the data set and reorder the data
-    # to AIPY's liking
-    deg = coeffs.shape[0]-1
-    lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
-    beam_shapeDict = {}
-    for i in range(deg+1):
-        beam_shapeDict[i] = numpy.squeeze(coeffs[-1-i,:])
-        
+        # Calculate how many harmonics are stored in the data set and reorder the data
+        # to AIPY's liking
+        deg = coeffs.shape[0]-1
+        lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
+        beam_shapeDict = {}
+        for i in range(deg+1):
+            beam_shapeDict[i] = numpy.squeeze(coeffs[-1-i,:])
+            
     # Build the beam object and done
     return aipy.amp.BeamAlm(numpy.array([freq/1e9]), lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beam_shapeDict)
 

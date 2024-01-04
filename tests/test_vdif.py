@@ -15,7 +15,6 @@ import tempfile
 import shutil
 import numpy
 
-from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbw, tbn, vdif as vrdr, errors
 from lsl.writer import vdif
 
@@ -23,8 +22,8 @@ from lsl.writer import vdif
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
-tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-test.dat')
-tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
+tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
+tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
 
 
 class vdif_tests(unittest.TestCase):

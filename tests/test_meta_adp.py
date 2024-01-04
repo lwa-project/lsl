@@ -12,19 +12,18 @@ import os
 import unittest
 
 from lsl.common import metabundleADP
-from lsl.common.paths import DATA_BUILD
 
 
 __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
-mdbFile = os.path.join(DATA_BUILD, 'tests', 'metadata.tgz')
-mdbFileOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-0.tgz')
-mdbFileOld1 = os.path.join(DATA_BUILD, 'tests', 'metadata-old-1.tgz')
-mdbFileADP = os.path.join(DATA_BUILD, 'tests', 'metadata-adp.tgz')
-mdbFileNDP = os.path.join(DATA_BUILD, 'tests', 'metadata-ndp.tgz')
-mdbFileGDB = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb.tgz')
-mdbFileGDBOld0 = os.path.join(DATA_BUILD, 'tests', 'metadata-gdb-old-0.tgz')
+mdbFile = os.path.join(os.path.dirname(__file__), 'data', 'metadata.tgz')
+mdbFileOld0 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-old-0.tgz')
+mdbFileOld1 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-old-1.tgz')
+mdbFileADP = os.path.join(os.path.dirname(__file__), 'data', 'metadata-adp.tgz')
+mdbFileNDP = os.path.join(os.path.dirname(__file__), 'data', 'metadata-ndp.tgz')
+mdbFileGDB = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb.tgz')
+mdbFileGDBOld0 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb-old-0.tgz')
 
 
 class metabundle_tests_adp(unittest.TestCase):

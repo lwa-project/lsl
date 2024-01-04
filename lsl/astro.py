@@ -3151,9 +3151,9 @@ def _parse_tai_file():
     # get path to almanac data file
     download = True
     if not 'Leap_Second.dat' in _CACHE_DIR:
-        from lsl.common.paths import DATA
-        oldName = os.path.join(DATA, 'astro', 'Leap_Second.dat')
-        with open(oldName, 'rb') as oh:
+        from lsl.common.data_access import DataAccess
+        oldName = os.path.join('astro', 'Leap_Second.dat')
+        with DataAccess.open(oldName, 'rb') as oh:
             with _CACHE_DIR.open('Leap_Second.dat', 'wb') as dh:
                 dh.write(oh.read())
                 
@@ -3168,6 +3168,8 @@ def _parse_tai_file():
                     
     # download as needed
     if download:
+        is_interactive = sys.__stdin__.isatty()
+        
         url = ASTRO_CONFIG.get('leapsec_url')
         
         print("Downloading %s" % url)
@@ -3192,12 +3194,14 @@ def _parse_tai_file():
                 data += new_data
             except NameError:
                 data = new_data
-            sys.stdout.write(pbar.show()+'\r')
-            sys.stdout.flush()
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\r')
+                sys.stdout.flush()
         lsFH.close()
-        sys.stdout.write(pbar.show()+'\n')
-        sys.stdout.flush()
-        
+        if is_interactive:
+            sys.stdout.write(pbar.show()+'\n')
+            sys.stdout.flush()
+            
         with _CACHE_DIR.open('Leap_Second.dat', 'wb') as fh:
             fh.write(data)
             

@@ -1,3 +1,22 @@
+3.0.0
+ * Switch to the GNU scientific library for internal Bessel functions
+ * Fixed an undefined variable error in lsl.statistics.robust.polyfit
+ * Fixed a division error in lsl.misc.mathutils.sphfit when real_only=True
+ * Switched to a "download on demand and cache" method of distributing data for LSL
+ * Added a lsl.common.stations.ARX.revision() method to find the revision name for an ARX board
+
+2.2.0
+ * Add a keyword to lsl.imaging.selfcal functions that will return whether or not a call converged
+ * Made lsl.readers.buffer.TBFFrameBuffer more robust
+ * Fixed reference counting in lsl.imaging._gridder
+ * Moved data used for unit tests from lsl/data to tests/data to keep them out of the install
+ * Various cleanups to internal regular expressions
+ * Changed the file downloaders to only show progress for interactive sessions
+ * Updated possm.py to works with the current version of LSL
+ * Removed aipy code in lsl.sim.vis in favor of direct calls to aipy
+ * Added support to the lsl.readers for returning DRX, TBN, and TBF data as "ci8" data
+ * Added support to the lsl.readers for returning VDIF data as "i8" data
+
 2.1.8
  * Added polarization basis conversions functions to lsl.imaging.utils
  * Improved TBF frame count reliability
@@ -21,8 +40,6 @@
  * Updated the LWA-SV SSMIF to 2022/11/15
  * Updated the LWA1 SSMIF to 2022/11/15
  * Fixed a build problem on Python 3.8+
- * Added support to the lsl.readers for returning DRX, TBN, and TBF data as "ci8" data
- * Added support to the lsl.readers for returning VDIF data as "i8" data
 
 2.1.6
   * Updated for Python 3.10

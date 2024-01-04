@@ -36,12 +36,12 @@ class paths_tests(unittest.TestCase):
     def test_data_path(self):
         """Test the paths.data variable."""
         
-        dataPath = paths.DATA_BUILD
+        DATA_PATH = paths.DATA_BUILD
 
-        ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+        ssmif = os.path.join(DATA_PATH, 'lwa1-ssmif.txt')
         self.assertTrue(os.path.exists(ssmif))
 
-        timeFile = os.path.join(dataPath, 'astro', 'Leap_Second.dat')
+        timeFile = os.path.join(DATA_PATH, 'astro', 'Leap_Second.dat')
         self.assertTrue(os.path.exists(timeFile))
 
 

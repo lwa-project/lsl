@@ -332,7 +332,10 @@ class FrameBufferBase(object):
             output = []
             frameIDs = []
             for frame in self.buffer[key_to_return]:
-                newID = frame.id
+                try:
+                    newID = frame.id
+                except AttributeError:
+                    newID = frame.header.first_chan
                 if newID not in frameIDs:
                     output.append(frame)
                     frameIDs.append(newID)

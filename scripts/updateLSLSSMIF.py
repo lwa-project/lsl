@@ -15,15 +15,17 @@ if sys.version_info < (3,):
 import os
 import re
 import sys
+import time
 try:
     from urllib2 import urlopen
 except ImportError:
     from urllib.request import urlopen
 import hashlib
 import argparse
+import calendar
 from datetime import datetime
 
-from lsl.common.paths import DATA as dataPath
+from lsl.common.data_access import DataAccess
 from lsl.common.progress import DownloadBar
 
 from lsl.config import LSL_CONFIG
@@ -94,12 +96,10 @@ def _parse_index(index):
     return versions
 
 
-def _compute_md5(filename, block_size=262144):
+def _compute_md5(fh, block_size=262144):
     """
-    Compute the MD5 checksum of a file.
+    Compute the MD5 checksum of an open file handle.
     """
-    
-    fh = open(filename, 'rb')
     
     m = hashlib.md5()
     while True:
@@ -108,8 +108,6 @@ def _compute_md5(filename, block_size=262144):
             break
         m.update(block)
         
-    fh.close()
-    
     return m.hexdigest()
 
 
@@ -117,7 +115,7 @@ def main(args):
     # Current LSL SSMIF
     if args.lwasv:
         _name = 'LWA-SV'
-        _ssmif = os.path.join(dataPath, 'lwasv-ssmif.txt')
+        _ssmif = 'lwasv-ssmif.txt'
         _url = "https://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
     elif args.lwana:
         _name = 'LWA-NA'
@@ -125,7 +123,7 @@ def main(args):
         _url = "https://lda10g.alliance.unm.edu/metadata/lwana/ssmif/"
     else:
         _name = 'LWA1'
-        _ssmif = os.path.join(dataPath, 'lwa1-ssmif.txt')
+        _ssmif = 'lwa1-ssmif.txt'
         _url = "https://lda10g.alliance.unm.edu/metadata/lwa1/ssmif/"
         
     urlToDownload = None
@@ -181,17 +179,23 @@ def main(args):
         ## Retrieve
         try:
             print("Downloading %s" % urlToDownload)
-            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
+            mtime = 0.0
             remote_size = 1
+            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
             try:
                 remote_size = int(ah.headers["Content-Length"])
+                mtime = ah.headers["Last-Modified"]
             except AttributeError:
                 pass
             try:
                 meta = ah.info()
                 remote_size = int(meta.getheaders("Content-Length")[0])
+                mtime = meta.getheaders("Last-Modified")[0]
             except AttributeError:
                 pass
+            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+            mtime = calendar.timegm(mtime.timetuple())
+            
             pbar = DownloadBar(max=remote_size)
             while True:
                 new_data = ah.read(LSL_CONFIG.get('download.block_size'))
@@ -208,30 +212,34 @@ def main(args):
             sys.stdout.flush()
             ah.close()
         except Exception as e:
-            print("Error:  Cannot download SSMIF, %s" % str(e))
+            raise RuntimeError("Cannot download SSMIF: %s" % str(e))
             
         ## Save
         try:
-            fh = open(_ssmif, 'wb')
-            fh.write(newSSMIF)
-            fh.close()
+            with DataAccess.open(_ssmif, 'wb') as fh:
+                fh.write(newSSMIF)
+            with DataAccess.open(_ssmif+"_meta", 'w') as fh:
+                fh.write("created: %.0f\n" % time.time())
+                fh.write("source: %s\n" % urlToDownload)
+                fh.write("source size: %i B\n" % remote_size)
+                fh.write("source last modified: %.0f\n" % mtime))
         except Exception as e:
-            print("Error:  Cannot %s SSMIF, %s" % ('update' if args.update else 'revert', str(e)))
+            raise RuntimeError("Cannot %s SSMIF: %s" % ('update' if args.update else 'revert', str(e)))
             
     # Summarize the SSMIF
     ## Filesystem information
-    size = os.path.getsize(_ssmif)
-    mtime = datetime.utcfromtimestamp(os.stat(_ssmif)[8])
+    size = DataAccess.getsize(_ssmif)
+    mtime = datetime.utcfromtimestamp(DataAccess.stat(_ssmif)[8])
     age = datetime.utcnow() - mtime
     
     ## MD5 checksum
-    md5 = _compute_md5(_ssmif)
-    
+    with DataAccess.open(_ssmif, 'rb') as fh:
+        md5 = _compute_md5(fh)
+        
     ## SSMIF version (date)
-    fh = open(_ssmif, 'r')
-    lines = [fh.readline() for i in range(10)]
-    fh.close()
-    
+    with DataAccess.open(_ssmif, 'r') as fh:
+        lines = [fh.readline() for i in range(10)]
+        
     version = None
     for line in lines:
         mtch = versionRE.search(line)
