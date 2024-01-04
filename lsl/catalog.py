@@ -20,7 +20,7 @@ except AttributeError:
 
 from lsl import astro
 from lsl import transform
-from lsl.common.paths import DATA
+from lsl.common.data_access import DataAccess
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -109,7 +109,7 @@ class Catalog(Mapping):
         Returns the path to the catalog data file directory.
         """
             
-        return os.path.join(DATA, 'catalog')
+        return 'catalog'
         
     def __repr__(self):   
         """
@@ -183,7 +183,7 @@ class LWA_Catalog(Catalog):
         
         # open data file 
         fileName = os.path.join(self.get_directory(), 'lwa_catalog.dat')
-        with open(fileName, 'r') as catFile:
+        with DataAccess.open(fileName, 'r') as catFile:
             # read source info
             lineNum = 0
             for line in catFile:
@@ -244,7 +244,7 @@ class PSR_Catalog(Catalog):
         debug = False
         # open data file 
         fileName = os.path.join(self.get_directory(), 'psrcat.db')
-        with open(fileName, 'r') as catFile:
+        with DataAccess.open(fileName, 'r') as catFile:
             # read source info
             psrb = None
             psrj = None
@@ -364,7 +364,7 @@ class PKS_Catalog(Catalog):
         
         # open data file 
         fileName = os.path.join(self.get_directory(), 'pkscat.txt')
-        with open(fileName, 'r') as catFile:
+        with DataAccess.open(fileName, 'r') as catFile:
             # read source info
             lineNum = 1
             line = catFile.readline()
@@ -427,7 +427,7 @@ class PKS90_Catalog(Catalog):
         
         # open data file 
         fileName = os.path.join(self.get_directory(), 'PKS90.txt')
-        with open(fileName, 'r') as catFile:
+        with DataAccess.open(fileName, 'r') as catFile:
             # read source info
             lineNum = 1
             line = catFile.readline()
@@ -494,7 +494,7 @@ class C3C_Catalog(Catalog):
         
         # open data file 
         fileName = os.path.join(self.get_directory(), '3c.dat')
-        with open(fileName, 'r') as catFile:
+        with DataAccess.open(fileName, 'r') as catFile:
             # read source info
             lineNum = 1
             line = catFile.readline()
@@ -548,7 +548,7 @@ class C4C_Catalog(Catalog):
         
         # open data file 
         fileName = os.path.join(self.get_directory(), '4c.dat')
-        with open(fileName, 'r') as catFile:
+        with DataAccess.open(fileName, 'r') as catFile:
             # read source info
             lineNum = 1
             line = catFile.readline()
@@ -614,56 +614,55 @@ class F2FGL_Catalog(Catalog):
         
         # open data file
         fileName = os.path.join(self.get_directory(), 'gll_psc_v08.fit')
-        catFile = astrofits.open(fileName)
-        
-        # read source info
-        sourceTable = catFile['LAT_POINT_SOURCE_CATALOG'].data
-        
-        for row in sourceTable:
-            name = str(row.field('Source_Name')).replace(' ', '_')
-            ra = float(row.field('RAJ2000'))
-            dec = float(row.field('DEJ2000'))
-            entry = CatalogEntry(name, 
-            transform.CelestialPosition((ra, dec), name=name))
-            self.source_map[name] = entry
+        with DataAccess.open(fileName, 'rb') as fh:
+            catFile = astrofits.open(fh)
             
-            alias = str(row.field('0FGL_Name'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
+            # read source info
+            sourceTable = catFile['LAT_POINT_SOURCE_CATALOG'].data
+            
+            for row in sourceTable:
+                name = str(row.field('Source_Name')).replace(' ', '_')
+                ra = float(row.field('RAJ2000'))
+                dec = float(row.field('DEJ2000'))
+                entry = CatalogEntry(name, 
+                transform.CelestialPosition((ra, dec), name=name))
+                self.source_map[name] = entry
                 
-            alias = str(row.field('1FGL_Name'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC_GAM1'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC_GAM2'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC1'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-            alias = str(row.field('ASSOC2'))
-            if len(alias):
-                alias = alias.replace(' ', '_')
-                self.alias_map[alias] = entry
-                entry.alias_list.append(alias)
-                
-        catFile.close()
+                alias = str(row.field('0FGL_Name'))
+                if len(alias):
+                    alias = alias.replace(' ', '_')
+                    self.alias_map[alias] = entry
+                    entry.alias_list.append(alias)
+                    
+                alias = str(row.field('1FGL_Name'))
+                if len(alias):
+                    alias = alias.replace(' ', '_')
+                    self.alias_map[alias] = entry
+                    entry.alias_list.append(alias)
+                    
+                alias = str(row.field('ASSOC_GAM1'))
+                if len(alias):
+                    alias = alias.replace(' ', '_')
+                    self.alias_map[alias] = entry
+                    entry.alias_list.append(alias)
+                    
+                alias = str(row.field('ASSOC_GAM2'))
+                if len(alias):
+                    alias = alias.replace(' ', '_')
+                    self.alias_map[alias] = entry
+                    entry.alias_list.append(alias)
+                    
+                alias = str(row.field('ASSOC1'))
+                if len(alias):
+                    alias = alias.replace(' ', '_')
+                    self.alias_map[alias] = entry
+                    entry.alias_list.append(alias)
+                    
+                alias = str(row.field('ASSOC2'))
+                if len(alias):
+                    alias = alias.replace(' ', '_')
+                    self.alias_map[alias] = entry
+                    entry.alias_list.append(alias)
 
 
 class CatalogFactory(object):

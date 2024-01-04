@@ -13,7 +13,6 @@ import numpy
 import unittest
 from datetime import timedelta
 
-from lsl.common.paths import DATA_BUILD
 from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
@@ -27,11 +26,11 @@ __version__  = "0.9"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-test.dat')
-tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-test.dat')
-drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-test.dat')
-vdifFile = os.path.join(DATA_BUILD, 'tests', 'vdif-test.dat')
-drspecFile = os.path.join(DATA_BUILD, 'tests', 'drspec-test.dat')
+tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
+tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
+drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
+vdifFile = os.path.join(os.path.dirname(__file__), 'data', 'vdif-test.dat')
+drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
 
 
 class reader_tests(unittest.TestCase):

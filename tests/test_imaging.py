@@ -19,7 +19,6 @@ import unittest
 import subprocess
 
 from lsl import astro
-from lsl.common.paths import DATA_BUILD
 from lsl.imaging import utils
 from lsl.imaging import analysis
 from lsl.imaging import deconv
@@ -54,10 +53,10 @@ __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
-uvFile = os.path.join(DATA_BUILD, 'tests', 'uv-test.fits')
-idiFile = os.path.join(DATA_BUILD, 'tests', 'idi-test.fits')
-idiAltFile = os.path.join(DATA_BUILD, 'tests', 'idi-test-alt.fits')
-idiSSMIFFile = os.path.join(DATA_BUILD, 'tests', 'idi-test-alt.txt')
+uvFile = os.path.join(os.path.dirname(__file__), 'data', 'uv-test.fits')
+idiFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test.fits')
+idiAltFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.fits')
+idiSSMIFFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.txt')
 
 
 class imaging_tests(unittest.TestCase):
@@ -633,10 +632,13 @@ class imaging_tests(unittest.TestCase):
                 # Go for it!
                 aa = idi.get_antennaarray()
                 ds = idi.get_data_set(1)
+                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
+                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
                 junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
                 junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
                 

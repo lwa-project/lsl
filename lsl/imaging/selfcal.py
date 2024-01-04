@@ -28,7 +28,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['phase_only', 'delay_only', 'delay_and_phase']
 
 
@@ -373,10 +373,14 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
     # Frequency in GHz so that the delays can be in ns
     fq = dataSet.freq[chan] / 1e9
     
+    converged = False
     tempGains = numpy.ones(N)
     tempDelays = numpy.zeros(N)
     tempPhaseOffsets = numpy.zeros(N)
     for i in range(max_iter):
+        if converged:
+            break
+            
         #
         # Amplitude
         #
@@ -403,6 +407,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 print('    ', metric)
             if metric < amplitude_cutoff:
                 amplitude = False
+                converged = True
                 
             dataSet = _scale_data(dataSet, bestGains, numpy.zeros_like(bestGains), numpy.zeros_like(bestGains))
         
@@ -435,6 +440,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 print('    ', metric)
             if metric < phase_cutoff:
                 phase_only = False
+                converged = True
                 
             dataSet = _scale_data(dataSet, numpy.ones_like(bestPhaseOffsets), numpy.zeros_like(bestPhaseOffsets), bestPhaseOffsets)
             
@@ -464,6 +470,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 print('    ', metric)
             if metric < delay_cutoff:
                 delay_only = False
+                converged = True
                 
             dataSet = _scale_data(dataSet, numpy.ones_like(bestDelays), bestDelays, numpy.zeros_like(bestDelays))
             
@@ -499,6 +506,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 print('    ', metric1, metric2)
             if metric1 < delay_cutoff and metric2 < phase_cutoff:
                 delay_and_phase = False
+                converged = True
                 
             dataSet = _scale_data(dataSet, numpy.ones_like(bestDelays), bestDelays, bestPhaseOffsets)
             
@@ -521,10 +529,10 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         print('Best Phase Offsets: ', tempPhaseOffsets)
     bestPhaseOffsets = tempPhaseOffsets
     
-    return dataSet, bestGains, bestDelays, bestPhaseOffsets
+    return dataSet, bestGains, bestDelays, bestPhaseOffsets, converged
 
 
-def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, verbose=True):
+def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, return_convergence=False, verbose=True):
     """
     Function to apply a phase-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -537,18 +545,23 @@ def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
         rather than the standard two-element tuple.
     """
     
-    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
-                                            amplitude=amplitude, phase_only=True, 
-                                            amplitude_cutoff=amplitude_cutoff, phase_cutoff=phase_cutoff, 
-                                            verbose=verbose)
-                                            
+    caldDict, gains, delays, phaseOffsets, converged = \
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+                amplitude=amplitude, phase_only=True, 
+                amplitude_cutoff=amplitude_cutoff, phase_cutoff=phase_cutoff, 
+                verbose=verbose)
+    
+                           
     if amplitude:
-        return caldDict, gains, phaseOffsets
+        output = (caldDict, gains, phaseOffsets)
     else:
-        return caldDict, phaseOffsets
+        output = (caldDict, phaseOffsets)
+    if return_convergence:
+        output = output+(converged,)
+    return output
 
 
-def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, verbose=True):
+def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, return_convergence=False, verbose=True):
     """
     Function to apply a delay-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -561,18 +574,22 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
         than the standard two-element tuple.
     """
     
-    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
-                                            amplitude=amplitude, delay_only=True, 
-                                            amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff,
-                                            verbose=verbose)
+    caldDict, gains, delays, phaseOffsets, converged = \
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+                amplitude=amplitude, delay_only=True, 
+                amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff,
+                verbose=verbose)
                                             
     if amplitude:
-        return caldDict, gains, delays
+        output = (caldDict, gains, delays)
     else:
-        return caldDict, delays
+        output = (caldDict, delays)
+    if return_convergence:
+        output = output+(converged,)
+    return output
 
 
-def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, verbose=True):
+def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, return_convergence=False, verbose=True):
     """
     Function to apply a delay and phase offset (and, optionally, a amplitude)
     self-calibration to data stored in a readUVData dictionary and a model 
@@ -585,12 +602,16 @@ def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, ampl
         is returned rather than the standard three-element tuple.
     """
     
-    caldDict, gains, delays, phaseOffsets = _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
-                                            amplitude=amplitude, delay_and_phase=True, 
-                                            amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff, phase_cutoff=phase_cutoff, 
-                                            verbose=verbose)
+    caldDict, gains, delays, phaseOffsets, converged = \
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+                amplitude=amplitude, delay_and_phase=True, 
+                amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff, phase_cutoff=phase_cutoff, 
+                verbose=verbose)
                                             
     if amplitude:
-        return caldDict, gains, delays, phaseOffsets
+        output = (caldDict, gains, delays, phaseOffsets)
     else:
-        return caldDict, delays, phaseOffsets
+        output = (caldDict, delays, phaseOffsets)
+    if return_convergence:
+        output = output+(converged,)
+    return output
