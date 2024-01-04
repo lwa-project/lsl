@@ -133,8 +133,8 @@ class _DataAccess(object):
         print("Downloading %s" % url)
         try:
             mtime = 0.0
-            uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
             remote_size = 1
+            uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
             try:
                 remote_size = int(uh.headers["Content-Length"])
                 mtime = uh.headers['Last-Modified']
@@ -148,6 +148,7 @@ class _DataAccess(object):
                 pass
             mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
             mtime = calendar.timegm(mtime.timetuple())
+            
             pbar = DownloadBar(max=remote_size)
             received = 0
             with self._data_cache.open(filename, 'wb') as fh:
