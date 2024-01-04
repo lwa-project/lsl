@@ -2,99 +2,25 @@ import os
 import sys
 import h5py
 import numpy as np
-import socket
-import warnings
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
 from collections import OrderedDict
 from scipy.interpolate import interp1d, RegularGridInterpolator
 
-from lsl.common.paths import DATA as dataPath
-from lsl.common.progress import DownloadBar
-from lsl.misc.file_cache import FileCache, MemoryCache
-from lsl.common.color import colorfy
+from lsl.common.data_access import DataAccess
 
-from lsl.config import LSL_CONFIG
-DOWN_CONFIG = LSL_CONFIG.view('download')
+from lsl.misc import telemetry
+telemetry.track_module()
 
 __version__ = '0.1'
 __all__ = ['mueller_matrix', 'beam_response', 'get_avaliable_models']
 
 
 _MODELS = OrderedDict()
-_MODELS['empirical'] = os.path.join(dataPath, 'lwa1-dipole-emp.npz')
-_MODELS['nec_002']   = 'NEC_er-3p0_sig-0p002.hdf5'
-_MODELS['nec_004']   = 'NEC_er-3p0_sig-0p004.hdf5'
-_MODELS['nec_008']   = 'NEC_er-3p0_sig-0p008.hdf5'
-_MODELS['nec_015']   = 'NEC_er-3p0_sig-0p015.hdf5'
-_MODELS['nec_030']   = 'NEC_er-3p0_sig-0p030.hdf5'
-
-
-# Create the cache directory
-try:
-    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'beam_cache'),
-                           max_size=0)
-except OSError:
-    _CACHE_DIR = MemoryCache(max_size=0)
-    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
-
-
-def _download_worker(url, filename):
-    """
-    Download the URL and save it to a file.
-    """
-    
-    is_interactive = sys.__stdin__.isatty()
-    
-    # Attempt to download the data
-    print("Downloading %s" % url)
-    try:
-        uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        remote_size = 1
-        try:
-            remote_size = int(uh.headers["Content-Length"])
-        except AttributeError:
-            pass
-        try:
-            meta = uh.info()
-            remote_size = int(meta.getheaders("Content-Length")[0])
-        except AttributeError:
-            pass
-        pbar = DownloadBar(max=remote_size)
-        received = 0
-        with _CACHE_DIR.open(filename, 'wb') as fh:
-            while True:
-                data = uh.read(DOWN_CONFIG.get('block_size'))
-                if len(data) == 0:
-                    break
-                received += len(data)
-                pbar.inc(len(data))
-                
-                fh.write(data)
-                
-            if is_interactive:
-                sys.stdout.write(pbar.show()+'\r')
-                sys.stdout.flush()
-        uh.close()
-        if is_interactive:
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
-    except IOError as e:
-        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
-        received = 0
-    except socket.timeout:
-        received = 0
-        
-    # Did we get anything or, at least, enough of something like it looks like 
-    # a real file?
-    if received < 3:
-        ## Fail
-        _CACHE_DIR.remove(filename)
-        return False
-        
-    return True
+_MODELS['empirical'] = 'antenna/lwa1-dipole-emp.npz'
+_MODELS['nec_002']   = 'antenna/NEC_er-3p0_sig-0p002.hdf5'
+_MODELS['nec_004']   = 'antenna/NEC_er-3p0_sig-0p004.hdf5'
+_MODELS['nec_008']   = 'antenna/NEC_er-3p0_sig-0p008.hdf5'
+_MODELS['nec_015']   = 'antenna/NEC_er-3p0_sig-0p015.hdf5'
+_MODELS['nec_030']   = 'antenna/NEC_er-3p0_sig-0p030.hdf5'
 
 
 def _load_response_fitted(frequency, corrected=False):
@@ -118,26 +44,27 @@ def _load_response_fitted(frequency, corrected=False):
     
     for pol in ('X', 'Y'):
         # Get the empirical model of the beam and compute it for the correct frequencies
-        beamDict = np.load(_MODELS['empirical'])
-        beamCoeff = beamDict[f"fit{pol.upper()}"]
-        alphaE = np.polyval(beamCoeff[0,0,:], frequency)
-        betaE =  np.polyval(beamCoeff[0,1,:], frequency)
-        gammaE = np.polyval(beamCoeff[0,2,:], frequency)
-        deltaE = np.polyval(beamCoeff[0,3,:], frequency)
-        alphaH = np.polyval(beamCoeff[1,0,:], frequency)
-        betaH =  np.polyval(beamCoeff[1,1,:], frequency)
-        gammaH = np.polyval(beamCoeff[1,2,:], frequency)
-        deltaH = np.polyval(beamCoeff[1,3,:], frequency)
-        
-        if corrected:
-            corrDict = np.load(os.path.join(dataPath, 'lwa1-dipole-cor.npz'))
-            cFreqs = corrDict['freqs']
-            cAlts  = corrDict['alts']
-            if corrDict['degrees'].item():
-                cAlts *= np.pi / 180.0
-            cCorrs = corrDict['corrs']
-            corrDict.close()
+        with DataAccess.open(_MODELS['empirical'], 'rb') as fh:
+            beamDict = np.load(fh)
+            beamCoeff = beamDict[f"fit{pol.upper()}"]
+            alphaE = np.polyval(beamCoeff[0,0,:], frequency)
+            betaE =  np.polyval(beamCoeff[0,1,:], frequency)
+            gammaE = np.polyval(beamCoeff[0,2,:], frequency)
+            deltaE = np.polyval(beamCoeff[0,3,:], frequency)
+            alphaH = np.polyval(beamCoeff[1,0,:], frequency)
+            betaH =  np.polyval(beamCoeff[1,1,:], frequency)
+            gammaH = np.polyval(beamCoeff[1,2,:], frequency)
+            deltaH = np.polyval(beamCoeff[1,3,:], frequency)
             
+        if corrected:
+            with DataAccess.open('antennas/lwa1-dipole-cor.npz', 'rb') as fh:
+                corrDict = np.load(fh)
+                cFreqs = corrDict['freqs'][...]
+                cAlts  = corrDict['alts'][...]
+                if corrDict['degrees'].item():
+                    cAlts *= np.pi / 180.0
+                cCorrs = corrDict['corrs'][...]
+                
             if frequency/1e6 < cFreqs.min() or frequency/1e6 > cFreqs.max():
                 print("WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (frequency/1e6,))
                 corrFnc = None
@@ -201,25 +128,20 @@ def _load_response_full(frequency, model='feko'):
         raise ValueError(f"Unknown dipole model source '{model}'")
         
     for pol in ('X', 'Y'):
-        # Make sure we have the file
-        if filename not in _CACHE_DIR:
-            status = _download_worker('https://fornax.phys.unm.edu/lwa/data/'+filename, filename)
-            if not status:
-                raise RuntimeError(f"Failed to download data for dipole model source '{model}'")
-                
         # Open the file and select the mode relevant frequencies
-        h = h5py.File(os.path.join(_CACHE_DIR.cache_dir, filename))
-        mfreq = h['Freq(MHz)'][...]*1e6
-        best = np.where(np.abs(mfreq - frequency) < 10e6)[0]
-        maz = h['phi_pts'][...]
-        malt = 90 - h['theta_pts'][...] # zenith angle -> elevation
-        mflds = h[f"{pol.upper()}-pol_Efields"]
-        E = mflds['Etheta(Mag)'][best,:,:maz.size]*np.exp(1j*mflds['Etheta(Phase)'][best,:,:maz.size])
-        H = mflds['Ephi(Mag)'][best,:,:maz.size]*np.exp(1j*mflds['Ephi(Phase)'][best,:,:maz.size])
-        s = max([E.max(), H.max()])
-        E /= s
-        H /= s
-        
+        with DataAccess.open(filename, 'rb') as fh:
+            h = h5py.File(fh)
+            mfreq = h['Freq(MHz)'][...]*1e6
+            best = np.where(np.abs(mfreq - frequency) < 10e6)[0]
+            maz = h['phi_pts'][...]
+            malt = 90 - h['theta_pts'][...] # zenith angle -> elevation
+            mflds = h[f"{pol.upper()}-pol_Efields"]
+            E = mflds['Etheta(Mag)'][best,:,:maz.size]*np.exp(1j*mflds['Etheta(Phase)'][best,:,:maz.size])
+            H = mflds['Ephi(Mag)'][best,:,:maz.size]*np.exp(1j*mflds['Ephi(Phase)'][best,:,:maz.size])
+            s = max([E.max(), H.max()])
+            E /= s
+            H /= s
+            
         if maz.max() < 360:
             ## Catch to make sure we can wrap around the north
             maz = np.append(maz, 360)
