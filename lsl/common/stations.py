@@ -928,7 +928,7 @@ class ARX(object):
         """
         
         # Find the filename to use
-        filename = f"antenna/ARX_board_{self.id:4s}_filters_ch{self.channel}.npz"
+        filename = f"arx/ARX_board_{self.id:4s}_filters_ch{self.channel}.npz"
         
         # Read in the file and convert it to a numpy array
         with DataAccess.open(filename, 'rb') as fh:
