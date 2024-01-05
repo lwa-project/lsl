@@ -40,7 +40,7 @@ def _load_stand_response(freq=49.0e6):
         # Calculate how many harmonics are stored in the data set and reorder the data
         # to AIPY's liking
         deg = coeffs.shape[0]-1
-        lmax = int((math.sqrt(1+8*coeffs.shape[1])-3)/2)
+        lmax = int((np.sqrt(1+8*coeffs.shape[1])-3)/2)
         beam_shapeDict = {}
         for i in range(deg+1):
             beam_shapeDict[i] = np.squeeze(coeffs[-1-i,:])
