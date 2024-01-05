@@ -597,8 +597,8 @@ class Fermi_LAT_Catalog(Catalog):
         Create a Fermi LAT catalog instance.
         """
         
-        Catalog.__init__(self, name)
         self._filename = filename
+        Catalog.__init__(self, name)
         
     def parse_file(self):
         """
@@ -642,7 +642,7 @@ class F2FGL_Catalog(Fermi_LAT_Catalog):
     """
     
     def __init__(self):
-        super(F2FGL_Catalog, self).__init__('2FGL', 'gll_psc_v08.fit')
+        Fermi_LAT_Catalog.__init__(self, '2FGL', 'gll_psc_v08.fit')
 
 
 class F3FGL_Catalog(Fermi_LAT_Catalog):
@@ -651,7 +651,7 @@ class F3FGL_Catalog(Fermi_LAT_Catalog):
     """
     
     def __init__(self):
-        super(F3FGL_Catalog, self).__init__('3FGL', 'gll_psc_v16.fit')
+        Fermi_LAT_Catalog.__init__(self, '3FGL', 'gll_psc_v16.fit')
 
 
 class F4FGL_Catalog(Fermi_LAT_Catalog):
@@ -660,7 +660,7 @@ class F4FGL_Catalog(Fermi_LAT_Catalog):
     """
     
     def __init__(self):
-        super(F4FGL_Catalog, self).__init__('4FGL', 'gll_psc_v22.fit')
+        Fermi_LAT_Catalog.__init__(self, '4FGL', 'gll_psc_v22.fit')
 
 
 class F4FGLDR4_Catalog(Fermi_LAT_Catalog):
@@ -669,7 +669,7 @@ class F4FGLDR4_Catalog(Fermi_LAT_Catalog):
     """
     
     def __init__(self):
-        super(F4FGLDR4_Catalog, self).__init__('4FGL-DR4', 'gll_psc_v33.fit')
+        Fermi_LAT_Catalog.__init__(self, '4FGL-DR4', 'gll_psc_v33.fit')
 
 
 class CatalogFactory(object):
