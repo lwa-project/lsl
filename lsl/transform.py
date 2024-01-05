@@ -621,7 +621,7 @@ class PlanetaryPosition(SkyPosition):
         
         # check parameters
         if name not in self.known_names:
-            raise ValueError("unknown name %s" % name)
+            raise ValueError(f"unknown name {name}")
             
         self.name = name
         

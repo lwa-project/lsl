@@ -416,7 +416,7 @@ def _download_worker_cddis(url, filename):
     is_interactive = sys.__stdin__.isatty()
     
     # Attempt to download the data
-    print("Downloading %s" % url)
+    print(f"Downloading {url}")
     ## Login
     ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))
     status = ftps.login("anonymous", "lwa@unm.edu")
@@ -447,7 +447,7 @@ def _download_worker_cddis(url, filename):
                 sys.stdout.write(pbar.show()+'\r')
                 sys.stdout.flush()
                 
-        status = ftps.retrbinary('RETR %s' % remote_path, write, blocksize=DOWN_CONFIG.get('block_size'))
+        status = ftps.retrbinary(f"RETR {remote_path}", write, blocksize=DOWN_CONFIG.get('block_size'))
         if is_interactive:
             sys.stdout.write(pbar.show()+'\n')
             sys.stdout.flush()
@@ -475,7 +475,7 @@ def _download_worker_standard(url, filename):
     is_interactive = sys.__stdin__.isatty()
     
     # Attempt to download the data
-    print("Downloading %s" % url)
+    print(f"Downloading {url}")
     try:
         tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
         remote_size = int(tecFH.headers["Content-Length"])
@@ -745,7 +745,7 @@ def _download_ustec(mjd):
     month = dt.month
     dateStr = dt.strftime("%Y%m%d")
     # Build up the filename
-    filename = '%s_ustec.tar.gz' % dateStr
+    filename = f"{dateStr}_ustec.tar.gz"
     
     # Attempt to download the data
     return _download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, filename), filename)
