@@ -260,7 +260,7 @@ class PSR_Catalog(Catalog):
                         raSeconds = 0.0
                     else:
                         if debug:
-                            print('Bad format for RAJ line : '+line)
+                            print(f"Bad format for RAJ line: {line}")
                         bad = True
                     raHours = int(raHours)
                     raMinutes = int(raMinutes)
@@ -269,7 +269,7 @@ class PSR_Catalog(Catalog):
                         ra = astro.hms(raHours, raMinutes, raSeconds)
                     except:
                         if debug:
-                            print('PSRCAT: Bad RA for ', psrj, " : ", rastr)
+                            print(f"PSRCAT: Bad RA for {psrj}: {rastr}")
                         bad = True
                 if line.startswith('DECJ'):
                     decstr = line.split()[1]
@@ -281,7 +281,7 @@ class PSR_Catalog(Catalog):
                         decSeconds = 0.0
                     else:
                         if debug:
-                            print('PSRCAT: Bad format for DECJ line : '+line)
+                            print(f"PSRCAT: Bad format for DECJ line: {line}")
                         bad = True
                         continue
                     if decDegrees.startswith('-'):
@@ -296,7 +296,7 @@ class PSR_Catalog(Catalog):
                         dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
                     except:
                         if debug:
-                            print('PSRCAT: Bad DEC for ', psrj, " : ", decstr)
+                            print(f"PSRCAT: Bad DEC for {psrj}: {decstr}")
                         bad = True
                         
                 if line.startswith('@-'):
