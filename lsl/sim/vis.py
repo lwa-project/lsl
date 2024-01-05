@@ -843,7 +843,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
                 pass
                 
             if verbose:
-                print("Using Alm beam model with %i-order freq. polynomial and %i-order sph. harmonics" % (deg, lmax))
+                print(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
             beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
             
     if pos_error != 0:
@@ -918,9 +918,9 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     else:
         if verbose:
             if count is not None and max is not None:
-                print("Setting Julian Date to %.5f (%i of %i)" % (jd, count, max))
+                print(f"Setting Julian Date to {jd:.5f} ({count} of {max})")
             else:
-                print("Setting Julian Date to %.5f" % jd)
+                print(f"Setting Julian Date to {jd:.5f}")
         aa.set_jultime(jd)
     Gij_sf = aa.passband(0,1)
     def Bij_sf(xyz, pol):
@@ -952,7 +952,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         srcAzAlt = aipy.coord.top2azalt(srcTop)
         if srcAzAlt[1] < 0:
             if verbose:
-                print("  %s: below horizon" % name)
+                print(f"  {name}: below horizon")
             continue
             
         ## Topocentric coordinates for the gain pattern calculations
