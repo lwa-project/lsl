@@ -390,7 +390,7 @@ setup(
     scripts = glob.glob('scripts/*.py'), 
     python_requires='>=3.6', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = ['astropy>=3.0', 'healpy', 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
+    install_requires = ['astropy>=3.0', 'jplephem', 'healpy', 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,

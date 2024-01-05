@@ -16,6 +16,7 @@ import tempfile
 import shutil
 from astropy.io import fits as astrofits
 
+from lsl.astro import unix_to_taimjd
 from lsl.common import stations as lwa_common
 from lsl.writer import sdfits
 
@@ -70,7 +71,7 @@ class sdfits_tests(unittest.TestCase):
         fits.set_frequency(data['freq'])
         fits.add_comment('This is a comment')
         fits.add_history('This is history')
-        fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['antennas'], data['spec'])
         fits.write()
         fits.close()
 
@@ -99,7 +100,7 @@ class sdfits_tests(unittest.TestCase):
         fits = sdfits.Sd(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
-        fits.add_data_set(testTime, 6.0, data['antennas'], data['spec'])
+        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['antennas'], data['spec'])
         fits.write()
         fits.close()
 

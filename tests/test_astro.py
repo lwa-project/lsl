@@ -504,7 +504,7 @@ class astro_tests(unittest.TestCase):
             astro.hms(13, 36, 49.8490).to_sec() / 3600.0, 
             astro.hms(20, 42, 37.8288).to_sec() / 3600.0,
             astro.hms( 1, 14, 40.1492).to_sec() / 3600.0,
-            astro.hms(10, 28, 52.7540).to_sec() / 3600.0)
+            astro.hms(10, 28, 53.2476).to_sec() / 3600.0)
             
         igmst = iter(gmst_aa)
         for t in self.times:
@@ -967,98 +967,6 @@ class astro_tests(unittest.TestCase):
                                    (chk.ra,chk.dec),
                                    degrees=True, decimal=ACCURACY_DIST)
             
-    def test_nutation_init(self):
-        """Test astro.nutation constructor."""
-        
-        n = astro.nutation(0.0234, -0.0421, 23.5656)
-        self.assertAlmostEqual(n.longitude, 0.0234)
-        self.assertAlmostEqual(n.obliquity, -0.0421)
-        self.assertAlmostEqual(n.ecliptic, 23.5656)
-        
-        self.assertRaises(ValueError, astro.nutation, 400, 0, 0)
-        self.assertRaises(ValueError, astro.nutation, -400, 0, 0)
-        self.assertRaises(ValueError, astro.nutation, 0, 100, 0)
-        self.assertRaises(ValueError, astro.nutation, 0, -100, 0)
-        self.assertRaises(ValueError, astro.nutation, 0, 0, 100)
-        self.assertRaises(ValueError, astro.nutation, 0, 0, -100)
-        
-    def test_nutation_string(self):
-        """Test astro.nutation string representations."""
-        
-        n = astro.nutation(0.0234, -0.0421, 23.5656)
-        str(n)
-        repr(n)
-        
-    def test_get_nutation(self):
-        """Test astro.get_nutation() function."""
-        
-        ACCURACY_LNG = 4
-        ACCURACY_OBL = 4
-        ACCURACY_ECL = 4
-        
-        lng_aa = (\
-            astro.dms(True,  0, 0, 15.453).to_deg(),
-            astro.dms(True,  0, 0, 17.708).to_deg(),
-            astro.dms(True,  0, 0, 15.856).to_deg(),
-            astro.dms(True,  0, 0, 18.075).to_deg(),
-            astro.dms(True,  0, 0,  2.557).to_deg())
-            
-        obl_aa = (\
-            astro.dms(True,  0, 0, 2.569).to_deg(),
-            astro.dms(True,  0, 0, 1.241).to_deg(),
-            astro.dms(True,  0, 0, 0.797).to_deg(),
-            astro.dms(False, 0, 0, 0.339).to_deg(),
-            astro.dms(True,  0, 0, 8.606).to_deg())
-            
-        ecl_aa = (\
-            astro.dms(False, 23, 26, 18.384).to_deg(),
-            astro.dms(False, 23, 26, 19.604).to_deg(),
-            astro.dms(False, 23, 26, 19.909).to_deg(),
-            astro.dms(False, 23, 26, 20.957).to_deg(),
-            astro.dms(False, 23, 26, 22.569).to_deg())
-            
-        ilng = iter(lng_aa)
-        iobl = iter(obl_aa)
-        iecl = iter(ecl_aa)
-        for t in self.times:
-            lng = next(ilng)
-            obl = next(iobl)
-            ecl = next(iecl)
-            
-            j = t.to_jd()
-            nut = astro.get_nutation(j)
-            self.assertAlmostEqual(nut.longitude, lng, ACCURACY_LNG)      
-            self.assertAlmostEqual(nut.obliquity, obl, ACCURACY_OBL)
-            self.assertAlmostEqual(nut.ecliptic, ecl, ACCURACY_ECL)
-            
-    def test_get_equ_nut(self):
-        """Test astro.get_equ_nut() function."""
-        
-        body = astro.equ_posn(41.547213, 49.348483)
-        JD = 2462088.7
-        
-        ACCURACY = 3
-        deltaRA = 15.842766509979356
-        deltaDec = 6.2164102884679551
-        
-        body2 = astro.get_equ_nut(body, JD)
-        self.assertAlmostEqual((body2.ra -body.ra )*3600, deltaRA,  ACCURACY)
-        self.assertAlmostEqual((body2.dec-body.dec)*3600, deltaDec, ACCURACY)
-        
-    def get_equ_aber(self):
-        """Test astro.get_equ_aber() funciton."""
-        
-        body = astro.equ_posn(41.547213, 49.348483)
-        JD = 2462088.7
-        
-        ACCURACY = 3
-        deltaRA = 30.09128661282716
-        deltaDec = 6.621256621590987
-        
-        body2 = astro.get_equ_aber(body, JD)
-        self.assertAlmostEqual((body2.ra -body.ra )*3600, deltaRA,  ACCURACY)
-        self.assertAlmostEqual((body2.dec-body.dec)*3600, deltaDec, ACCURACY)
-        
     def test_rst_time_init(self):
         """Test astro.rst_time constructor method."""
         
@@ -1399,21 +1307,22 @@ class astro_tests(unittest.TestCase):
         ACCURACY_DIST = 4
         
         # Data set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+        # Ecliptic J2000 -> Equatorial J2000
         lng_aa = (302.1000, 26.3000, 129.5000, 196.7000, 338.9000)
         lat_aa = (  0.0000, -1.0000,   3.0000,  -5.0000,   7.0000)
         
         ra_aa = (\
-            astro.hms(20, 17, 26.98).to_deg(),
-            astro.hms( 1, 39,  1.88).to_deg(),
-            astro.hms( 8, 51, 10.38).to_deg(),
-            astro.hms(12, 53, 44.69).to_deg(),
-            astro.hms(22, 31, 32.27).to_deg())
+            astro.hms(20, 17, 26.67).to_deg(),
+            astro.hms( 1, 39,  2.11).to_deg(),
+            astro.hms( 8, 51,  9.97).to_deg(),
+            astro.hms(12, 53, 44.99).to_deg(),
+            astro.hms(22, 31, 32.23).to_deg())
         dec_aa = (\
-            astro.dms(True,  19, 41, 50.94).to_deg(),
-            astro.dms(False,  9, 13, 17.35).to_deg(),
-            astro.dms(False, 20, 46, 10.16).to_deg(),
-            astro.dms(True,  11, 10, 41.32).to_deg(),
-            astro.dms(True,   1, 44, 23.34).to_deg())  
+            astro.dms(True,  19, 41, 31.63).to_deg(),
+            astro.dms(False,  9, 13,  7.56).to_deg(),
+            astro.dms(False, 20, 45, 56.00).to_deg(),
+            astro.dms(True,  11, 10, 35.89).to_deg(),
+            astro.dms(True,   1, 44, 14.53).to_deg())  
             
         ilng = iter(lng_aa)
         ilat = iter(lat_aa)
@@ -1438,21 +1347,22 @@ class astro_tests(unittest.TestCase):
         ACCURACY_DIST = 4
         
         # Data set generated at http://ned.ipac.caltech.edu/forms/calculator.html
+        # Ecliptic J2000 -> Equatorial J2000
         lng_aa = (302.1000, 26.3000, 129.5000, 196.7000, 338.9000)
         lat_aa = (  0.0000, -1.0000,   3.0000,  -5.0000,   7.0000)
         
         ra_aa = (\
-            astro.hms(20, 17, 26.98).to_deg(),
-            astro.hms( 1, 39,  1.88).to_deg(),
-            astro.hms( 8, 51, 10.38).to_deg(),
-            astro.hms(12, 53, 44.69).to_deg(),
-            astro.hms(22, 31, 32.27).to_deg())
+            astro.hms(20, 17, 26.67).to_deg(),
+            astro.hms( 1, 39,  2.11).to_deg(),
+            astro.hms( 8, 51,  9.97).to_deg(),
+            astro.hms(12, 53, 44.99).to_deg(),
+            astro.hms(22, 31, 32.23).to_deg())
         dec_aa = (\
-            astro.dms(True,  19, 41, 50.94).to_deg(),
-            astro.dms(False,  9, 13, 17.35).to_deg(),
-            astro.dms(False, 20, 46, 10.16).to_deg(),
-            astro.dms(True,  11, 10, 41.32).to_deg(),
-            astro.dms(True,   1, 44, 23.34).to_deg()) 
+            astro.dms(True,  19, 41, 31.63).to_deg(),
+            astro.dms(False,  9, 13,  7.56).to_deg(),
+            astro.dms(False, 20, 45, 56.00).to_deg(),
+            astro.dms(True,  11, 10, 35.89).to_deg(),
+            astro.dms(True,   1, 44, 14.53).to_deg()) 
             
         ilng = iter(lng_aa)
         ilat = iter(lat_aa)
@@ -1477,7 +1387,7 @@ class astro_tests(unittest.TestCase):
         
         ACCURACY_DIST = 4
         
-        # Test set generated at http://fuse.pha.jhu.edu/support/tools/eqtogal.html
+        # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         ra_4c = (\
             astro.hms(13, 35, 31.41).to_deg(),
             astro.hms(15, 56,  3.01).to_deg(),
@@ -1489,8 +1399,8 @@ class astro_tests(unittest.TestCase):
             astro.dms(False, 22, 46,  3.9).to_deg(),
             astro.dms(False, 78, 37,  8.5).to_deg())
             
-        l_4c = (323.3000, 11.5000, 136.7000, 110.9000)  
-        b_4c = ( 54.7000, 38.5000, -38.6000,  24.1000)
+        l_4c = (322.3585, 11.1982, 135.9796, 110.8142)  
+        b_4c = ( 55.1396, 39.1055, -38.9896,  23.9482)
         
         ira = iter(ra_4c)
         idec = iter(dec_4c)
@@ -1513,7 +1423,7 @@ class astro_tests(unittest.TestCase):
         
         ACCURACY_DIST = 4
         
-        # Test set generated at http://fuse.pha.jhu.edu/support/tools/eqtogal.html
+        # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
         ra_4c = (\
             astro.hms(13, 35, 31.41).to_deg(),
             astro.hms(15, 56,  3.01).to_deg(),
@@ -1525,8 +1435,8 @@ class astro_tests(unittest.TestCase):
             astro.dms(False, 22, 46,  3.9).to_deg(),
             astro.dms(False, 78, 37,  8.5).to_deg())
             
-        l_4c = (323.3000, 11.5000, 136.7000, 110.9000)  
-        b_4c = ( 54.7000, 38.5000, -38.6000,  24.1000)
+        l_4c = (322.3585, 11.1982, 135.9796, 110.8142)  
+        b_4c = ( 55.1396, 39.1055, -38.9896,  23.9482)
         
         ira = iter(ra_4c)
         idec = iter(dec_4c)
@@ -1540,78 +1450,6 @@ class astro_tests(unittest.TestCase):
             
             gal = astro.gal_posn(l, b)
             equ = astro.get_equ_from_gal(gal)
-            assert_spatially_close((equ.ra,equ.dec),
-                                   (ra,dec),
-                                   degrees=True, decimal=ACCURACY_DIST)
-            
-    def test_get_gal_from_equ2000(self):
-        """Test astro.get_gal_from_equ2000() function."""
-        
-        ACCURACY_DIST = 4
-        
-        # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
-        ra_4c = (\
-            astro.hms(13, 35, 31.41).to_deg(),
-            astro.hms(15, 56,  3.01).to_deg(),
-            astro.hms( 1, 35, 19.19).to_deg(),
-            astro.hms(19, 45, 35.25).to_deg())  
-        dec_4c = (\
-            astro.dms(True,   6,  3, 38.0).to_deg(),
-            astro.dms(False,  1, 49, 36.9).to_deg(),
-            astro.dms(False, 22, 46,  3.9).to_deg(),
-            astro.dms(False, 78, 37,  8.5).to_deg())
-            
-        l_4c = (322.3585, 11.1982, 135.9796, 110.8142)  
-        b_4c = ( 55.1396, 39.1055, -38.9896,  23.9482)
-        
-        ira = iter(ra_4c)
-        idec = iter(dec_4c)
-        il = iter(l_4c)
-        ib = iter(b_4c)
-        for i in range(len(ra_4c)):
-            ra = next(ira)
-            dec = next(idec)
-            l = next(il)
-            b = next(ib)
-            
-            equ = astro.equ_posn(ra, dec)
-            gal = astro.get_gal_from_equ2000(equ)
-            assert_spatially_close((gal.l,gal.b),
-                                   (l,b),
-                                   degrees=True, decimal=ACCURACY_DIST)
-            
-    def test_get_equ2000_from_gal(self):
-        """Test astro.get_equ2000_from_gal() function."""
-        
-        ACCURACY_DIST = 4
-        
-        # Test set generated at http://ned.ipac.caltech.edu/forms/calculator.html
-        ra_4c = (\
-            astro.hms(13, 35, 31.41).to_deg(),
-            astro.hms(15, 56,  3.01).to_deg(),
-            astro.hms( 1, 35, 19.19).to_deg(),
-            astro.hms(19, 45, 35.25).to_deg())  
-        dec_4c = (\
-            astro.dms(True,   6,  3, 38.0).to_deg(),
-            astro.dms(False,  1, 49, 36.9).to_deg(),
-            astro.dms(False, 22, 46,  3.9).to_deg(),
-            astro.dms(False, 78, 37,  8.5).to_deg())
-            
-        l_4c = (322.3585, 11.1982, 135.9796, 110.8142)  
-        b_4c = ( 55.1396, 39.1055, -38.9896,  23.9482)
-        
-        ira = iter(ra_4c)
-        idec = iter(dec_4c)
-        il = iter(l_4c)
-        ib = iter(b_4c)
-        for i in range(len(ra_4c)):
-            ra = next(ira)
-            dec = next(idec)
-            l = next(il)
-            b = next(ib)
-            
-            gal = astro.gal_posn(l, b)
-            equ = astro.get_equ2000_from_gal(gal)
             assert_spatially_close((equ.ra,equ.dec),
                                    (ra,dec),
                                    degrees=True, decimal=ACCURACY_DIST)

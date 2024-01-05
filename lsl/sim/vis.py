@@ -878,7 +878,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     else:
         try:
             simAA.set_jultime(jd[0])
-        except TypeError:
+        except (TypeError, IndexError):
             simAA.set_jultime(jd)
             
     return simAA

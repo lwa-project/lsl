@@ -30,42 +30,23 @@ __all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt"]
 
 
 def _radec_of(antennaarray, az, alt):
-    # az/el -> HA/dec
-    HA = np.arctan2(np.sin(az-np.pi), (np.cos(az-np.pi)*np.sin(antennaarray.lat) + np.tan(alt)*np.cos(antennaarray.lat)))
-    dec = np.arcsin(np.sin(antennaarray.lat)*np.sin(alt) - np.cos(antennaarray.lat)*np.cos(alt)*np.cos(az-np.pi))
-    
-    # HA -> RA
-    RA = antennaarray.sidereal_time() - HA
-    
+    hrz = astro.hrz_posn()
     # radians -> degrees
-    RA = RA * 180.0/np.pi
-    RA %= 360.0
-    dec = dec * 180.0/np.pi
+    hrz.alt = alt*180/np.pi
+    hrz.az = az*180/np.pi
     
-    # RA/dec -> astro.eqn_posn()
-    pos = astro.equ_posn(RA, dec)
+    geo = astro.geo_posn()
+    # radians -> degrees
+    geo.lat = antennaarray.lat*180/np.pi
+    geo.lng = antennaarray.lon*180/np.pi
+    geo.elv = antennaarray.elev
     
-    # Correct for aberration
-    pos2 = astro.get_equ_aber(pos, antennaarray.date+astro.DJD_OFFSET)
-    dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
-    pos.ra = (pos.ra - dRA) % 360.0
-    pos.ra %= 360.0
-    pos.dec = pos.dec - dDec
-    
-    # Correct for nutation
-    pos2 = astro.get_equ_nut(pos, antennaarray.date+astro.DJD_OFFSET)
-    dRA, dDec = pos2.ra - pos.ra, pos2.dec - pos.dec
-    pos.ra = (pos.ra - dRA) % 360.0
-    pos.ra %= 360.0
-    pos.dec = pos.dec - dDec
-    
-    # Precess back to J2000
-    pos = astro.get_precession(antennaarray.date+astro.DJD_OFFSET, pos, ephem.J2000+astro.DJD_OFFSET)
-    RA, dec = pos.ra, pos.dec
+    # az/el -> RA/dec
+    equ = astro.get_equ_from_hrz(hrz, geo, antennaarray.date+astro.DJD_OFFSET)
     
     # degrees -> radians
-    RA = RA * np.pi/180.0
-    dec = dec * np.pi/180.0
+    RA = equ.ra * np.pi/180.0
+    dec = equ.dec * np.pi/180.0
     
     return RA, dec 
 

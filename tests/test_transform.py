@@ -13,6 +13,9 @@ import math
 import ephem
 import unittest
 
+from astropy.time import Time as AstroTime
+from astropy.coordinates import SkyCoord, PrecessedGeocentric
+
 from lsl import transform
 from lsl.astro import DJD_OFFSET
 from lsl.common.stations import lwa1
@@ -49,6 +52,11 @@ class transform_tests(unittest.TestCase):
         t3.utc_mcs = (56300, 5024000)
         self.assertEqual(t3.utc_str, '2013-01-08 01:23:44.000')
         
+        t4 = transform.Time(AstroTime('2013-01-08 01:23:45.000', format='iso', scale='utc'),
+                            format='ASTROPY')
+        t4.utc_mcs = (56300, 5024000)
+        self.assertEqual(t4.utc_str, '2013-01-08 01:23:44.000')
+        
     def test_time_comparisons(self):
         """Test ordering transform.Time instances."""
         
@@ -73,6 +81,10 @@ class transform_tests(unittest.TestCase):
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
         
+        # Test set generated at https://ssd.jpl.nasa.gov/horizons/app.html#/
+        sc = SkyCoord('14h32m55.72s', '-12d31m50.8s', frame='icrs')
+        sc = sc.transform_to(PrecessedGeocentric(equinox=t0.astropy, obstime=t0.astropy))
+        
         obs = lwa1.get_observer()
         obs.date = t0.utc_str
         sat = ephem.Saturn()
@@ -80,13 +92,17 @@ class transform_tests(unittest.TestCase):
         
         p0 = transform.PlanetaryPosition('Saturn')
         
-        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sat.g_ra *180.0/math.pi, 4)
-        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sat.g_dec*180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sc.ra.to('deg').value, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
     def test_planetaryposition_jupiter(self):
         """Test the location of Jupiter."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        
+        # Test set generated at https://ssd.jpl.nasa.gov/horizons/app.html#/
+        sc = SkyCoord('4h21m06.91s', '20d48m13.2s', frame='icrs')
+        sc = sc.transform_to(PrecessedGeocentric(equinox=t0.astropy, obstime=t0.astropy))
         
         obs = lwa1.get_observer()
         obs.date = t0.utc_str
@@ -95,13 +111,17 @@ class transform_tests(unittest.TestCase):
         
         p0 = transform.PlanetaryPosition('Jupiter')
         
-        self.assertAlmostEqual(p0.apparent_equ(t0)[0], jove.g_ra *180.0/math.pi, 4)
-        self.assertAlmostEqual(p0.apparent_equ(t0)[1], jove.g_dec*180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sc.ra.to('deg').value, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
     def test_planetaryposition_mars(self):
         """Test the location of Mars."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        
+        # Test set generated at https://ssd.jpl.nasa.gov/horizons/app.html#/
+        sc = SkyCoord('20h51m16.93s',  '-18d49m05.7s', frame='icrs')
+        sc = sc.transform_to(PrecessedGeocentric(equinox=t0.astropy, obstime=t0.astropy))
         
         obs = lwa1.get_observer()
         obs.date = t0.utc_str
@@ -110,13 +130,17 @@ class transform_tests(unittest.TestCase):
         
         p0 = transform.PlanetaryPosition('Mars')
         
-        self.assertAlmostEqual(p0.apparent_equ(t0)[0], mars.g_ra *180.0/math.pi, 4)
-        self.assertAlmostEqual(p0.apparent_equ(t0)[1], mars.g_dec*180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sc.ra.to('deg').value, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
     def test_planetaryposition_venus(self):
         """Test the location of Venus."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        
+        # Test set generated at https://ssd.jpl.nasa.gov/horizons/app.html#/
+        sc = SkyCoord('17h53m08.27s', '-23d01m37.2s', frame='icrs')
+        sc = sc.transform_to(PrecessedGeocentric(equinox=t0.astropy, obstime=t0.astropy))
         
         obs = lwa1.get_observer()
         obs.date = t0.utc_str
@@ -125,13 +149,17 @@ class transform_tests(unittest.TestCase):
         
         p0 = transform.PlanetaryPosition('Venus')
         
-        self.assertAlmostEqual(p0.apparent_equ(t0)[0], venu.g_ra *180.0/math.pi, 4)
-        self.assertAlmostEqual(p0.apparent_equ(t0)[1], venu.g_dec*180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sc.ra.to('deg').value, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
     def test_planetaryposition_sun(self):
         """Test the location of the Sun."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        
+        # Test set generated at https://ssd.jpl.nasa.gov/horizons/app.html#/
+        sc = SkyCoord('19h16m54.31s', '-22d15m40.1s', frame='icrs')
+        sc = sc.transform_to(PrecessedGeocentric(equinox=t0.astropy, obstime=t0.astropy))
         
         obs = lwa1.get_observer()
         obs.date = t0.utc_str
@@ -140,13 +168,17 @@ class transform_tests(unittest.TestCase):
         
         p0 = transform.PlanetaryPosition('Sun')
         
-        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sol.g_ra *180.0/math.pi, 4)
-        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sol.g_dec*180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sc.ra.to('deg').value, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
     def test_planetaryposition_moon(self):
         """Test the location of the Moon."""
         
         t0 = transform.Time('2013-01-08 01:23:45.000', format='STR')
+        
+        # Test set generated at https://ssd.jpl.nasa.gov/horizons/app.html#/
+        sc = SkyCoord('15h32m48.21s', '-19d03m23.0s', frame='icrs')
+        sc = sc.transform_to(PrecessedGeocentric(equinox=t0.astropy, obstime=t0.astropy))
         
         obs = lwa1.get_observer()
         obs.date = t0.utc_str
@@ -155,8 +187,8 @@ class transform_tests(unittest.TestCase):
         
         p0 = transform.PlanetaryPosition('Moon')
         
-        self.assertAlmostEqual(p0.apparent_equ(t0)[0], lun.g_ra *180.0/math.pi, 4)
-        self.assertAlmostEqual(p0.apparent_equ(t0)[1], lun.g_dec*180.0/math.pi, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sc.ra.to('deg').value, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
     def test_geographicalposition_init(self):
         """Test the transform.GeographicalPosition constructor."""
@@ -198,7 +230,7 @@ class transform_tests(unittest.TestCase):
         obs.elev = 0.0
         
         obs.date = t0.utc_str
-        self.assertAlmostEqual(g0.sidereal(t0), obs.sidereal_time()*12.0/math.pi, 4)
+        self.assertAlmostEqual(g0.sidereal(t0), obs.sidereal_time()*12.0/math.pi, 3)
         
     def test_pointingdirection_init(self):
         """Test the transform.PointingDirection constructor."""

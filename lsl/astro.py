@@ -6,13 +6,18 @@ import os
 import sys
 import time
 import math
-import ephem
 import numpy as np
 import warnings
 from urllib.request import urlopen
 from calendar import timegm
 from datetime import datetime
-from functools import total_ordering    
+from functools import total_ordering
+
+from scipy.interpolate import interp1d
+
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK4, FK5, Galactic, GeocentricTrueEcliptic, PrecessedGeocentric, CartesianRepresentation, AltAz, solar_system_ephemeris, get_body
 
 from lsl.common.progress import DownloadBar
 from lsl.misc.file_cache import FileCache, MemoryCache
@@ -26,9 +31,9 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__   = '0.5'
+__version__   = '0.6'
 __all__ = ['dms', 'hms', 'date', 'zonedate', 'rst_time', 'hrz_posn', 'equ_posn', 
-           'gal_posn', 'rect_posn', 'lnlat_posn', 'ecl_posn', 'nutation', 
+           'gal_posn', 'rect_posn', 'lnlat_posn', 'ecl_posn', 
            'get_gmtoff', 'date_to_zonedate', 'zonedate_to_date', 'rad_to_deg', 
            'deg_to_rad', 'dms_to_rad', 'dms_to_deg', 'deg_to_dms', 'rad_to_dms', 
            'hms_to_deg', 'hms_to_rad', 'deg_to_hms', 'rad_to_hms', 'add_secs_hms', 
@@ -37,11 +42,9 @@ __all__ = ['dms', 'hms', 'date', 'zonedate', 'rst_time', 'hrz_posn', 'equ_posn',
            'get_julian_from_sys', 'get_date_from_sys', 'get_julian_from_timet', 
            'get_timet_from_julian', 'get_hrz_from_equ', 'get_equ_from_hrz', 
            'get_ecl_from_rect', 'get_equ_from_ecl', 'get_ecl_from_equ', 
-           'get_equ_from_gal', 'get_gal_from_equ', 'get_equ2000_from_gal', 
-           'get_gal_from_equ2000', 'get_apparent_sidereal_time', 
+           'get_equ_from_gal', 'get_gal_from_equ', 'get_apparent_sidereal_time', 
            'get_mean_sidereal_time', 'get_angular_separation', 'get_rel_posn_angle', 
-           'get_apparent_posn', 'get_equ_prec', 'get_equ_prec2', 'get_nutation', 
-           'get_equ_nut', 'get_equ_aber', 'get_equ_pm', 'get_object_rst', 
+           'get_apparent_posn', 'get_equ_prec', 'get_equ_prec2', 'get_object_rst', 
            'get_solar_equ_coords', 'get_solar_rst', 'get_jupiter_equ_coords', 
            'get_jupiter_rst', 'get_saturn_equ_coords', 'get_saturn_rst', 
            'get_lunar_equ_coords', 'get_lunar_rst', 'get_venus_equ_coords', 
@@ -683,7 +686,7 @@ class hrz_posn(object):
       hrz_posn[1] = alt 
     """
     
-    def __init__(self, az = 0.0, alt = 0.0):
+    def __init__(self, az = 0.0, alt = 0.0, astropy = None):
         """
         Create a hrz_posn object.
         
@@ -700,6 +703,25 @@ class hrz_posn(object):
             if alt < -90.0 or alt > 90.0:
                 raise ValueError(f"alt paramerer range is [-90.0, 90.0], is set to {alt:0.3f}")
             self.alt = alt
+            
+        self.astropy = astropy
+        
+    @property
+    def astropy(self):
+        return self._astropy
+        
+    @astropy.setter
+    def astropy(self, value):
+        if not isinstance(value, (type(None), SkyCoord)):
+            raise TypeError("Expected an object of type None or SkyCoord")
+            
+        if value is not None and not isinstance(value.frame, AltAz):
+            raise TypeError("Expected a SkyCoord in the frame of AltAz")
+            
+        self._astropy = value
+        if self._astropy is not None:
+            self.az = self._astropy.az.deg
+            self.alt = self._astropy.alt.deg
             
     def zen(self, value = None):
         """
@@ -817,7 +839,7 @@ class equ_posn(object):
       equ_posn[1] = dec
     """
     
-    def __init__(self, ra = 0.0, dec = 0.0):
+    def __init__(self, ra = 0.0, dec = 0.0, astropy = None):
         """
         Create a equ_posn object.
         
@@ -840,6 +862,26 @@ class equ_posn(object):
             if dec < -90.0 or dec > 90.0:
                 raise ValueError(f"dec paramerer range is [-90.0, 90.0], is set to {dec:0.3f}")
             self.dec = dec
+            
+        self.astropy = astropy
+        
+    @property
+    def astropy(self):
+        return self._astropy
+        
+    @astropy.setter
+    def astropy(self, value):
+        if not isinstance(value, (type(None), SkyCoord, ICRS, FK4, FK5)):
+            raise TypeError("Expected an object of type None, SkyCoord, ICRS, FK4, or FK5")
+            
+        if isinstance(value, SkyCoord):
+            if not isinstance(value.frame, (ICRS, FK4, FK5, PrecessedGeocentric)):
+                raise TypeError("Expected a SkyCoord in the frame of ICRS, FK4, FK5, or PrecessedGeocentric")
+                
+        self._astropy = value
+        if self._astropy is not None:
+            self.ra = self._astropy.ra.deg
+            self.dec = self._astropy.dec.deg
             
     def __str__(self):
         """
@@ -922,7 +964,7 @@ class equ_posn(object):
         """
         
         equ = get_equ_prec2(self, jD, J2000_UTC_JD)
-        return get_gal_from_equ2000(equ)
+        return get_gal_from_equ(equ)
         
     def to_ecl(self, jD):
         """
@@ -987,7 +1029,7 @@ class gal_posn(object):
       gal_posn[1] = b
     """
     
-    def __init__(self, l = 0.0, b = 0.0):
+    def __init__(self, l = 0.0, b = 0.0, astropy = None):
         """
         Create a gal_posn object.
         
@@ -1010,6 +1052,25 @@ class gal_posn(object):
             if b < -90.0 or b > 90.0:
                 raise ValueError(f"b paramerer range is [-90.0, 90.0], is set to {b:0.3f}")
             self.b = b
+            
+        self.astropy = astropy
+        
+    @property
+    def astropy(self):
+        return self._astropy
+        
+    @astropy.setter
+    def astropy(self, value):
+        if not isinstance(value, (type(None), SkyCoord)):
+            raise TypeError("Expected an object of type None or SkyCoord")
+            
+        if value is not None and not isinstance(value.frame, Galactic):
+            raise TypeError("Expected a SkyCoord in the frame of Galactic")
+            
+        self._astropy = value
+        if self._astropy is not None:
+            self.l = self._astropy.l.deg
+            self.b = self._astropy.b.deg
             
     def __str__(self):
         """
@@ -1327,10 +1388,29 @@ class ecl_posn(object):
       ecl_posn[1] = lat
     """
     
-    def __init__(self, lng = 0.0, lat = 0.0):
+    def __init__(self, lng = 0.0, lat = 0.0, astropy = None):
         self.lng = lng
         self.lat = lat
         
+        self.astropy = astropy
+        
+    @property
+    def astropy(self):
+        return self._astropy
+        
+    @astropy.setter
+    def astropy(self, value):
+        if not isinstance(value, (type(None), SkyCoord)):
+            raise TypeError("Expected an object of type None or SkyCoord")
+            
+        if value is not None and not isinstance(value.frame, GeocentricTrueEcliptic):
+            raise TypeError("Expected a SkyCoord in the frame of GeocentricTrueEcliptic")
+            
+        self._astropy = value
+        if self._astropy is not None:
+            self.lng = self._astropy.lon.deg
+            self.lat = self._astropy.lat.deg
+            
     def to_equ(self, jD):
         """
         Get equatorial coordinates from ecliptical coordinates for a given time.
@@ -1357,80 +1437,6 @@ class ecl_posn(object):
         """
         
         return (deg_to_dms(self.lng), deg_to_dms(self.lat))
-
-
-class nutation(object):
-    """
-    Provides nutation information in longitude and obliquity.
-    
-    Public members:
-      longitude - Nutation in longitude (float degrees).
-      obliquity - Nutation in ecliptic obliquity (float degrees).
-      ecliptic - Obliquity of the ecliptic (float degrees).
-    """
-    
-    def __init__(self, longitude = 0.0, obliquity = 0.0, ecliptic = 0.0):
-        """
-        Create a nutation object.
-        
-        Param: longitude  - Nutation in longitude.
-                            Object of type dms or float degrees (-360.0, 360.0).
-        Param: obliquity  - Nutation in obliquity.
-                            Object of type dms or float degrees [-90.0, 90.0].
-        Param: ecliptic   - Obliquity of the ecliptic.
-                            Object of type dms or float degrees [-90.0, 90.0].
-        """
-        
-        if longitude is not None:
-            if isinstance(longitude, dms):
-                longitude = longitude.to_deg()
-            if longitude <= -360.0 or longitude >= 360.0:
-                raise ValueError(f"longitude parameter range is (-360.0, 360.0), is set to {longitude:0.3f}")
-            self.longitude = longitude
-            
-        if obliquity is not None:
-            if isinstance(obliquity, dms):
-                obliquity = obliquity.to_deg()
-            if obliquity < -90.0 or obliquity > 90.0:
-                raise ValueError(f"obliquity paramerer range is [-90.0, 90.0], is set to {obliquity:0.3f}")
-            self.obliquity = obliquity
-            
-        if ecliptic is not None:
-            if isinstance(ecliptic, dms):
-                ecliptic = ecliptic.to_deg()
-            if ecliptic < -90.0 or ecliptic > 90.0:
-                raise ValueError(f"ecliptic paramerer range is [-90.0, 90.0], is set to {ecliptic:0.3f}")
-            self.ecliptic = ecliptic  
-            
-    def __str__(self):
-        """
-        nutation object print/str method.
-        """
-        
-        return f"{self.longitude:0.3f} {self.obliquity:0.3f} {self.ecliptic:0.3f}"
-        
-    def __repr__(self):
-        """
-        nutation object repr string method
-        """
-        
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.longitude), repr(self.obliquity), repr(self.ecliptic))
-        
-    def __reduce__(self):
-        """
-        nutation object pickle reduce method.
-        """
-        
-        return (nutation, (self.longitude, self.obliquity, self.ecliptic))
-        
-    def format(self):
-        """
-        Return a tuple (lng, obl, ecl) where lng is an dms object,
-        obl is a dms object, and ecl is a dms object representing nutation
-        in longitude and obliquity, and obliquity of the ecliptic.
-        """
-        
-        return (deg_to_dms(self.longitude), deg_to_dms(self.obliquity), deg_to_dms(self.ecliptic))
 
 
 ######################################################################
@@ -1536,7 +1542,7 @@ def dms_to_rad(dms):
     Returns angle in radians (float).
     """
     
-    degrees = dms_to_rad(dms)
+    degrees = dms_to_deg(dms)
     return deg_to_rad(degrees)
 
 
@@ -1737,9 +1743,11 @@ def get_julian_day(date):
     Returns UTC time in Julian days (float).
     """
     
-    _date = ephem.Date("%i/%02i/%02i %02i:%02i:%09.6f" % (date.years, date.months, date.days, date.hours, date.minutes, date.seconds))
-    jd = float(_date)+DJD_OFFSET
-    return jd
+    s = int(date.seconds)
+    us = int((date.seconds - s)*1e6)
+    dt = datetime(date.years, date.months, date.days, date.hours, date.minutes, s, us)
+    d = AstroTime(dt, format='datetime', scale='utc')
+    return d.jd
     
     
 def get_julian_local_date(zonedate):
@@ -1765,15 +1773,15 @@ def get_date(jD):
     """
     
     _date = date()
-    d = ephem.Date(jD-DJD_OFFSET)
+    d = AstroTime(jD, format='jd', scale='utc')
     
-    years,months,days,hours,minutes,seconds = d.tuple()
-    _date.years = years
-    _date.months = months
-    _date.days = days
-    _date.hours = hours
-    _date.minutes = minutes
-    _date.seconds = seconds
+    dt = d.datetime
+    _date.years = dt.year
+    _date.months = dt.month
+    _date.days = dt.day
+    _date.hours = dt.hour
+    _date.minutes = dt.minute
+    _date.seconds = dt.second + dt.microsecond/1e6
     return _date
 
 
@@ -1795,8 +1803,8 @@ def get_julian_from_sys():
     Returns UTC Julian day (float) from system clock.
     """
     
-    t0 = time.time()
-    return unix_to_utcjd(t0)
+    t0 = AstroTime.now()
+    return t0.utc.jd
 
 
 def get_date_from_sys():
@@ -1815,13 +1823,13 @@ def get_julian_from_timet(timet):
     """
     Gets Julian day from Unix time.
     
-    Param: timet - Unix timet in seconds (integer)
+    Param: timet - Unix timet in seconds (float)
     
     Returns UTC Julian day (float).
     """
     
-    jD = float(timet) / SECS_IN_DAY + UNIX_OFFSET
-    return jD
+    t = AstroTime(timet, format='unix', scale='utc')
+    return t.jd
 
 
 def get_timet_from_julian(jD):
@@ -1830,11 +1838,11 @@ def get_timet_from_julian(jD):
     
     Param: jD - UTC Julian day (float).
     
-    Returns Unix timet in seconds (integer).
+    Returns Unix timet in seconds (float).
     """
     
-    timet = int((jD - UNIX_OFFSET) * SECS_IN_DAY)
-    return timet
+    t = AstroTime(jD, format='jd', scale='utc')
+    return t.unix
 
 
 ######################################################################
@@ -1852,25 +1860,22 @@ def get_hrz_from_equ(target, observer, jD):
     Returns object of type hrz_posn representing local position.
     """
     
-    _posn = hrz_posn()
-    b = ephem.FixedBody()
-    b._ra = deg_to_rad(target.ra)
-    b._dec = deg_to_rad(target.dec)
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
     try:
-        o.elev = observer.elv
+        elv = observer.elv
     except AttributeError:
-        pass
-    b.compute(o)
-    az = rad_to_deg(b.az)
-    alt = rad_to_deg(b.alt)
+        elv = 0.0
+        
+    _posn = hrz_posn()
+    t = AstroTime(jD, format='jd', scale='utc')
+    el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
+                                     height=elv*astrounits.m,
+                                     ellipsoid='WGS84')
+    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                  frame='fk5', equinox='J2000')
+    aa = AltAz(location=el, obstime=t)
+    sc = sc.transform_to(aa)
     
-    _posn.az = az
-    _posn.alt = alt
+    _posn.astropy = sc
     return _posn
 
 
@@ -1882,25 +1887,25 @@ def get_equ_from_hrz(target, observer, jD):
     Param: observer - Object of type lnlat_posn representing observer position.
     Param: jD       - UTC Julian day (float).
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing a equatorial position in the
+    astropy.coordinates.FK5 frame with equinox=J2000.
     """
     
-    _posn = equ_posn()
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
     try:
-        o.elev = observer.elv
+        elv = observer.elv
     except AttributeError:
-        pass
+        elv = 0.0
         
-    ra,dec = o.radec_of(deg_to_rad(target.az), deg_to_rad(target.alt))
-    ra = rad_to_deg(ra)
-    dec = rad_to_deg(dec)
+    _posn = equ_posn()
+    t = AstroTime(jD, format='jd', scale='utc')
+    el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
+                                     height=elv*astrounits.m,
+                                     ellipsoid='WGS84')
+    aa = AltAz(target.az*astrounits.deg, target.alt*astrounits.deg,
+               location=el, obstime=t)
+    sc = aa.transform_to(FK5(equinox='J2000'))
     
-    _posn.ra = ra
-    _posn.dec = dec
+    _posn.astropy = sc
     return _posn
 
 
@@ -1921,126 +1926,92 @@ def get_ecl_from_rect(rect):
 
 def get_equ_from_ecl(target, jD):
     """
-    Get equatorial coordinates from ecliptical coordinates for a given time.
+    Get J2000 equatorial coordinates from ecliptical coordinates for a given
+    time.
     
     Param: target   - Object of type lnlat_posn representing ecliptic position.
     Param: jD       - UTC Julian day (float). 
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing a equatorial position in the
+    astropy.coordinates.FK5 frame with equinox=J2000.
     """
     
     _posn = equ_posn()
-    ecl = ephem.Ecliptic(deg_to_rad(target.lng), deg_to_rad(target.lat), epoch=ephem.B1950)
-    equ = ephem.Equatorial(ecl)
-    ra = rad_to_deg(equ.ra)
-    dec = rad_to_deg(equ.dec)
+    t = AstroTime(jD, format='jd', scale='utc')
+    sc = GeocentricTrueEcliptic(target.lng*astrounits.deg, target.lat*astrounits.deg,
+                                equinox='J2000', obstime=t)
+    sc = sc.transform_to(FK5(equinox='J2000'))
     
-    _posn.ra = ra
-    _posn.dec = dec
+    _posn.astropy = sc
     return _posn
 
 
 def get_ecl_from_equ(target, jD):
     """
-    Get ecliptical coordinates from equatorial coordinates for a given time.
+    Get ecliptical coordinates from J2000 equatorial coordinates for a given
+    time.
     
-    Param: target  - Object of type equ_posn representing equatorial position.
-    Param: jD       - UTC Julian day (float). 
+    Param: target  - Object of type equ_posn representing a J2000 equatorial
+                     position.
+    Param: jD      - UTC Julian day (float). 
     
-    Returns object of type ecl_posn representing ecliptic position.
+    Returns object of type ecl_posn representing ecliptic position in the
+    astropy.coordinates.GeocentricTrueEcliptic frame with equinox=J2000 and
+    obstime=jD.
     """
     
     _posn = ecl_posn()
-    equ = ephem.Equatorial(deg_to_rad(target.ra), deg_to_rad(target.dec), epoch=ephem.B1950)
-    ecl = ephem.Ecliptic(equ)
-    l = rad_to_deg(ecl.lon)
-    b = rad_to_deg(ecl.lat)
+    t = AstroTime(jD, format='jd', scale='utc')
+    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                  frame='fk5', equinox='J2000')
+    sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t))
     
-    _posn.lng = l
-    _posn.lat = b
+    _posn.astropy = sc
     return _posn    
 
 
 def get_equ_from_gal(target):
     """
-    Get B1950 equatorial coordinates from galactic coordinates.
-    
-    Param: target - Object of type gal_posn representing galactic position.
-    
-    Returns object of type equ_posn representing B1950 equatorial position.
-    """
-    
-    _posn = equ_posn()
-    gal = ephem.Galactic(deg_to_rad(target.l), deg_to_rad(target.b))
-    equ = ephem.Equatorial(gal)
-    equ = ephem.Equatorial(equ, epoch=ephem.B1950)
-    ra = rad_to_deg(equ.ra)
-    dec = rad_to_deg(equ.dec)
-    
-    _posn.ra = ra
-    _posn.dec = dec
-    return _posn
-
-
-def get_gal_from_equ(target):
-    """
-    Get galactic coordinates from B1950 equatorial coordinates.
-    
-    Param: target - Object of type equ_posn representing B1950 equatorial 
-                    position.
-    
-    Returns object of type gal_posn representing galactic position.
-    """
-    
-    _posn = gal_posn()
-    equ = ephem.Equatorial(deg_to_rad(target.ra), deg_to_rad(target.dec), epoch=ephem.B1950)
-    ecl = ephem.Galactic(equ)
-    l = rad_to_deg(ecl.lon)
-    b = rad_to_deg(ecl.lat)
-    
-    _posn.l = l
-    _posn.b = b
-    return _posn
-
-
-def get_equ2000_from_gal(target):
-    """
     Get J2000 equatorial coordinates from galactic coordinates.
     
     Param: target - Object of type gal_posn representing galactic position.
     
-    Returns object of type equ_posn representing J2000 equatorial position.
+    Returns object of type equ_posn representing a equatorial position in the
+    astropy.coordinates.FK5 frame with equinox=J2000.
+    
+    .. versionchanged:: 3.0.0
+      This function now expects J2000 coordinates
     """
     
     _posn = equ_posn()
-    gal = ephem.Galactic(deg_to_rad(target.l), deg_to_rad(target.b))
-    equ = ephem.Equatorial(gal, epoch=ephem.J2000)
-    ra = rad_to_deg(equ.ra)
-    dec = rad_to_deg(equ.dec)
+    sc = SkyCoord(target.l*astrounits.deg, target.b*astrounits.deg,
+                  frame='galactic')
+    sc = sc.transform_to(FK5(equinox='J2000'))
     
-    _posn.ra = ra
-    _posn.dec = dec
+    _posn.astropy = sc
     return _posn
 
 
-def get_gal_from_equ2000(target):
+def get_gal_from_equ(target):
     """
     Get galactic coordinates from J2000 equatorial coordinates.
     
     Param: target - Object of type equ_posn representing J2000 equatorial 
                     position.
     
-    Returns object of type gal_posn representing galactic position.
+    Returns object of type gal_posn representing galactic position in the
+    astropy.coordinates.Galactic frame.
+    
+    .. versionchanged:: 3.0.0
+      This function now expects J2000 coordinates
     """
     
     _posn = gal_posn()
-    equ = ephem.Equatorial(deg_to_rad(target.ra), deg_to_rad(target.dec), epoch=ephem.J2000)
-    ecl = ephem.Galactic(equ)
-    l = rad_to_deg(ecl.lon)
-    b = rad_to_deg(ecl.lat)
+    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                  frame='fk5', equinox='J2000')
+    sc = sc.transform_to(Galactic())
     
-    _posn.l = l
-    _posn.b = b
+    _posn.astropy = sc
     return _posn
 
 
@@ -2055,22 +2026,12 @@ def get_apparent_sidereal_time(jD):
     Param: jD - UTC Julian day (float).
     
     Returns GM apparent sidereal time (float hours).
-    
-    From: http://aa.usno.navy.mil/faq/docs/GAST.php
     """
     
-    gmst = get_mean_sidereal_time(jD)
+    t = AstroTime(jD, format='jd', scale='utc')
+    gast = t.sidereal_time('apparent', longitude=0*astrounits.deg)
     
-    D = jD - 2451545.0
-    Omega = 125.04 - 0.052954*D
-    L = 280.47 + 0.98565*D
-    epsilon = 23.4393 - 0.0000004*D
-    deltaPhi = -0.000319*math.sin(deg_to_rad(Omega)) - 0.000024*math.sin(2*deg_to_rad(L))
-    
-    eqeq = deltaPhi*math.cos(deg_to_rad(epsilon))
-    
-    gast = gmst + eqeq
-    return gast
+    return gast.hourangle
 
 
 def get_mean_sidereal_time(jD):
@@ -2080,18 +2041,12 @@ def get_mean_sidereal_time(jD):
     Param: jD - UTC Julian day (float).
     
     Returns GM mean sidereal time (float hours).
-    
-    From: http://aa.usno.navy.mil/faq/docs/GAST.php
     """
     
-    D = jD - 2451545.0
-    D0 = (int(jD) - 0.5) - 2451545.0
-    H = (D - D0) * 24.0
-    T = D / 36525.0
+    t = AstroTime(jD, format='jd', scale='utc')
+    gmst = t.sidereal_time('mean', longitude=0*astrounits.deg)
     
-    gmst =  6.697374558 + 0.06570982441908*D0 + 1.00273790935*H + 0.000026*T*T
-    gmst %= 24
-    return gmst
+    return gmst.hourangle
 
 
 
@@ -2109,10 +2064,14 @@ def get_angular_separation(posn1, posn2):
     Returns angular separation in degrees (float).
     """
     
-    sep = ephem.separation((deg_to_rad(posn1.ra), deg_to_rad(posn1.dec)), (deg_to_rad(posn2.ra), deg_to_rad(posn2.dec)))
-    sep = rad_to_deg(sep)
+    sc1 = SkyCoord(posn1.ra*astrounits.deg, posn1.dec*astrounits.deg,
+                   format='fk5', equinox='J2000')
+    sc2 = SkyCoord(posn2.ra*astrounits.deg, posn2.dec*astrounits.deg,
+                   format='fk5', equinox='J2000')
     
-    return sep
+    sep = sc1.separation(sc2)
+    
+    return sep.deg
 
 
 def get_rel_posn_angle(posn1, posn2):
@@ -2123,31 +2082,16 @@ def get_rel_posn_angle(posn1, posn2):
     Param: posn2 - Object of type equ_posn representing body 2 position.
     
     Returns position angle in degrees (float).
-    
-    Based on dpav.f from SLALIB.
     """
     
-    d1 = dir_cos(posn1)
-    d2 = dir_cos(posn2)
+    sc1 = SkyCoord(posn1.ra*astrounits.deg, posn1.dec*astrounits.deg,
+                   format='fk5', equinox='J2000')
+    sc2 = SkyCoord(posn2.ra*astrounits.deg, posn2.dec*astrounits.deg,
+                   format='fk5', equinox='J2000')
+                   
+    pa = sc1.position_angle(sc2)
     
-    w1 = math.sqrt( d1[0]**2 + d1[1]**2 + d1[2]**2 )
-    if w1 != 0:
-        d1[0] /= w1
-        d1[1] /= w1
-        d1[2] /= w1
-    w2 = math.sqrt( d2[0]**2 + d2[1]**2 + d2[2]**2 )
-    if w2 != 0:
-        d2[0] /= w2
-        d2[1] /= w2
-        d2[2] /= w2
-        
-    sq = d2[1]*d1[0] - d2[0]*d1[1]
-    cq = d2[2]*(d1[0]**2+d1[1]**2) - d1[2]*(d2[0]*d1[0]+d2[1]*d1[1])
-    if sq == 0 and cq == 0:
-        cq = 1.0
-    ang = math.atan2(sq, cq)
-    ang = rad_to_deg(ang)
-    return ang
+    return pa.deg
 
 
 ######################################################################
@@ -2165,17 +2109,26 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
                             equ_posn.
     Param: jD             - UTC Julian day (float) to measure position.
     Param: proper_motion  - object of type equ_posn giving object's proper motion
-                            (optional).
+                            in mas/yr (optional).
     
-    Returns: Apparent equatorial position of object as type equ_posn.
+    Returns: Apparent equatorial position in the
+             astropy.coordinates.PrecessedGeocentric frame (equinox = jD; 
+             obstime = jD) of object as type equ_posn.
     """
     
     if proper_motion is None:
         proper_motion = _DEFAULT_PROPER_MOTION  
         
-    _posn = get_equ_pm(mean_position, proper_motion, jD)
-    _posn = get_equ_aber(_posn, jD)
-    return get_equ_prec(_posn, jD)
+    _posn = equ_posn()
+    t = AstroTime(jD, format='jd', scale='utc')
+    sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
+                  pm_ra_cosdec=proper_motion[0]*math.cos(proper_motion[1]/1000/3600*math.pi/180)*astrounits.mas/astrounits.yr,
+                  pm_dec= proper_motion[1]*astrounits.mas/astrounits.yr,
+                  frame='fk5', equinox='J2000')
+    sc = sc.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
+        
+    _posn.astropy = sc
+    return _posn
 
 
 ######################################################################
@@ -2190,17 +2143,17 @@ def get_equ_prec(mean_position, jD):
     Param: mean_position - J2000 equatorial mean position of object as type equ_posn.
     Param: jD - UTC Julian day (float) to measure position.
     
-    Returns: Adjusted equatorial position of object as type equ_posn.
+    Returns: Adjusted equatorial position in the astropy.coordinates.FK5 frame
+             (equinox=jD) of object as type equ_posn.
     """    
     
-    _posn = equ_posn() 
-    equ = ephem.Equatorial(deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec), epoch=ephem.J2000)
-    equ = ephem.Equatorial(equ, epoch=jD-DJD_OFFSET)
-    ra = rad_to_deg(equ.ra)
-    dec = rad_to_deg(equ.dec)
+    _posn = equ_posn()
+    sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
+                  frame='fk5', equinox='J2000')
+    t = AstroTime(jD, format='jd', scale='utc')
+    sc = sc.transform_to(FK5(equinox=t))
     
-    _posn.ra = ra
-    _posn.dec = dec
+    _posn.astropy = sc
     return _posn
 
 
@@ -2212,439 +2165,18 @@ def get_equ_prec2(mean_position, fromJD, toJD):
     Param: fromJD         - UTC Julian day (float) of first time.
     Param: toJD           - UTC Julian day (float) of second time.
     
-    Returns: Equatorial position of object as type equ_posn converted from
-            time 1 to time 2.
+    Returns: Equatorial position in the astropy.coordinates.FK5 frame of the
+             object as type equ_posn converted from time 1 to time 2.
     """  
     
-    _posn = equ_posn() 
-    equ = ephem.Equatorial(deg_to_rad(mean_position.ra), deg_to_rad(mean_position.dec), epoch=fromJD-DJD_OFFSET)
-    equ = ephem.Equatorial(equ, epoch=toJD-DJD_OFFSET)
-    ra = rad_to_deg(equ.ra)
-    dec = rad_to_deg(equ.dec)
-    
-    _posn.ra = ra
-    _posn.dec = dec
-    return _posn
-
-
-######################################################################
-# Nutation Functions
-######################################################################
-
-def get_nutation(jD):
-    """
-    Get nutation corrections for a given time.
-    
-    Param: jD - UTC Julian day (float) to measure nutation.
-    
-    Returns: Nutation corrections as object of type nutation.
-    
-    Based on the nutate.pro and co_nutate.pro from the AstroIDL
-    library.
-    """
-    
-    # form time in Julian centuries from 1900.0
-    t = (jD - 2451545.0) / 36525.
-    
-    # Mean elongation of the Moon
-    coeff1 = np.array([297.85036, 445267.111480, -0.0019142, 1.0/189474])
-    d = deg_to_rad(np.polyval(coeff1[::-1], t))
-    d %= (2*math.pi)
-    
-    # Sun's mean anomaly
-    coeff2 = np.array([357.52772, 35999.050340, -0.0001603, -1.0/3e5])
-    M = deg_to_rad(np.polyval(coeff2[::-1], t))
-    M %= (2*math.pi)
-    
-    # Moon's mean anomaly
-    coeff3 = np.array([134.96298, 477198.867398, 0.0086972, 1.0/5.625e4])
-    Mprime = deg_to_rad(np.polyval(coeff3[::-1], t))
-    Mprime %= (2*math.pi)
-    
-    # Moon's argument of latitude
-    coeff4 = np.array([93.27191, 483202.017538, -0.0036825, -1.0/3.27270e5])
-    F = deg_to_rad(np.polyval(coeff4[::-1], t)) 
-    F %= (2*math.pi)
-    
-    # Longitude of the ascending node of the Moon's mean orbit on the ecliptic,
-    # measured from the mean equinox of the date
-    coeff5 = np.array([125.04452, -1934.136261, 0.0020708, 1.0/4.5e5])
-    omega = deg_to_rad(np.polyval(coeff5[::-1], t))
-    omega %= (2*math.pi)
-    
-    d_lng = np.array([0,-2,0,0,0,0,-2,0,0,-2,-2,-2,0,2,0,2,0,0,-2,0,2,0,0,-2,
-                    0,-2,0,0,2,-2,0,-2,0,0,2,2,0,-2,0,2,2,-2,-2,2,2,0,-2,-2,
-                    0,-2,-2,0,-1,-2,1,0,0,-1,0,0,2,0,2])
-                    
-    m_lng = np.array([0,0,0,0,1,0,1,0,0,-1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                    2,0,2,1,0,-1,0,0,0,1,1,-1,0,0,0,0,0,0,-1,-1,0,0,0,1,0,0,
-                    1,0,0,0,-1,1,-1,-1,0,-1])
-                    
-    mp_lng = np.array([0,0,0,0,0,1,0,0,1,0,1,0,-1,0,1,-1,-1,1,2,-2,0,2,2,1,0,0,
-                    -1,0,-1,0,0,1,0,2,-1,1,0,1,0,0,1,2,1,-2,0,1,0,0,2,2,0,1,
-                    1,0,0,1,-2,1,1,1,-1,3,0])
-                    
-    f_lng = np.array([0,2,2,0,0,0,2,2,2,2,0,2,2,0,0,2,0,2,0,2,2,2,0,2,2,2,2,0,0,
-                    2,0,0,0,-2,2,2,2,0,2,2,0,2,2,0,0,0,2,0,2,0,2,-2,0,0,0,2,2,
-                    0,0,2,2,2,2])
-                    
-    om_lng = np.array([1,2,2,2,0,0,2,1,2,2,0,1,2,0,1,2,1,1,0,1,2,2,0,2,0,0,1,0,1,
-                    2,1,1,1,0,1,2,2,0,2,1,0,2,1,1,1,0,1,1,1,1,1,0,0,0,0,0,2,0,
-                    0,2,2,2,2])
-                    
-    sin_lng = np.array([-171996, -13187, -2274, 2062, 1426, 712, -517, -386, -301, 217, 
-                        -158, 129, 123, 63, 63, -59, -58, -51, 48, 46, -38, -31, 29, 29, 
-                        26, -22, 21, 17, 16, -16, -15, -13, -12, 11, -10, -8, 7, -7, -7, 
-                        -7, 6,6,6,-6,-6,5,-5,-5,-5,4,4,4,-4,-4,-4,3,-3,-3,-3,-3,-3,-3,-3])
-                        
-    sdelt = np.array([-174.2, -1.6, -0.2, 0.2, -3.4, 0.1, 1.2, -0.4, 0, -0.5, 0, 0.1, 
-                    0,0,0.1, 0,-0.1,0,0,0,0,0,0,0,0,0,0, -0.1, 0, 0.1,0,0,0,0,0,0,0,
-                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]) 
-                    
-    cos_lng = np.array([92025, 5736, 977, -895, 54, -7, 224, 200, 129, -95,0,-70,-53,0, 
-                        -33, 26, 32, 27, 0, -24, 16,13,0,-12,0,0,-10,0,-8,7,9,7,6,0,5,3,
-                        -3,0,3,3,0,-3,-3,3,3,0,3,3,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-                        
-    cdelt = np.array([8.9, -3.1, -0.5, 0.5, -0.1, 0.0, -0.6, 0.0, -0.1, 0.3,0,0,0,0,
-                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-                    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0])
-                    
-    # Sum the periodic terms 
-    arg = d_lng*d + m_lng*M + mp_lng*Mprime + f_lng*F + om_lng*omega
-    sarg = np.sin(arg)
-    carg = np.cos(arg)
-    lng = 0.0001*( (sdelt*t + sin_lng)*sarg ).sum()
-    obl = 0.0001*( (cdelt*t + cos_lng)*carg ).sum()
-
-    T = (jD -2451545.0) / 36525.0
-    ecl = 23.4392911*3600. - 46.8150*T - 0.00059*T*T + 0.001813*T*T*T
-    ecl = (ecl + obl)/3600
-    
-    _nut = nutation()
-    _nut.longitude = lng / 3600.0
-    _nut.obliquity = obl / 3600.0
-    _nut.ecliptic = ecl
-    return _nut
-
-
-def get_equ_nut(position, jD):
-    """
-    Get the position of a celesital object accounting for nutation.
-    
-    Param: mean_position  -  Equatorial position of object as type 
-                             equ_posn.
-    Param: jD             - UTC Julian day (float) to measure nutation.
-    
-    Returns: Adjusted equatorial position of object as type equ_posn.
-    
-    Based on the AstroIDL co_nutate.pro procedure
-    """    
-    
-    # Get the nutation
-    nut = get_nutation(jD)
-    
-    # Convert RA/dec into cartesian
-    ra  = deg_to_rad(position.ra)
-    dec = deg_to_rad(position.dec)
-    x = np.cos(dec) * np.cos(ra)
-    y = np.cos(dec) * np.sin(ra)
-    z = np.sin(dec)
-    
-    # Apply the nutation
-    ecl = deg_to_rad(nut.ecliptic)
-    obl = deg_to_rad(nut.obliquity)
-    lng = deg_to_rad(nut.longitude)
-    
-    x2 = x - (y*np.cos(ecl)*lng + z*np.sin(ecl)*lng)
-    y2 = y + (x*np.cos(ecl)*lng - z*obl)
-    z2 = z + (x*np.sin(ecl)*lng + y*obl)
-    
-    # Back to RA/dec
-    r = np.sqrt(x2**2 + y2**2 + z2**2)
-    xyproj = np.sqrt(x2**2 + y2**2)
-    
-    ra, dec = 0.0, 0.0
-    if xyproj == 0.0 and z != 0.0:
-        ra = 0.0
-        dec = np.arcsin(y2/x2)
-    if xyproj != 0.0:
-        ra = np.arctan2(y2, x2)
-        dec = np.arcsin(z2/r)
-        
-    # Create the output object and update it
     _posn = equ_posn()
-    _posn.ra = rad_to_deg(ra)
-    _posn.dec = rad_to_deg(dec)
+    t1 = AstroTime(fromJD, format='jd', scale='utc')
+    sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
+                  frame='fk5', equinox=t1)
+    t2 = AstroTime(toJD, format='jd', scale='utc')
+    sc = sc.transform_to(FK5(equinox=t2))
     
-    return _posn
-
-
-######################################################################
-# Aberration Functions
-######################################################################
-
-
-def get_equ_aber(mean_position, jD): 
-    """
-    Get position of celestial object accounting for aberration.
-    
-    Param: mean_position  - J2000 equatorial mean position of object as type 
-                            equ_posn.
-    Param: jD             - UTC Julian day (float) to measure aberration.
-    
-    Returns: Adjusted equatorial position of object as type equ_posn.
-    
-    Based on the libnova ln_get_equ_aber() function.
-    """    
-    
-    _posn = equ_posn()
-    # speed of light in 10-8 au per day
-    c = 17314463350.0
-    
-    # calc T
-    T = (jD - 2451545.0) / 36525.0
-    
-    # calc planetary perturbutions
-    L2 = 3.1761467 + 1021.3285546 * T
-    L3 = 1.7534703 + 628.3075849 * T
-    L4 = 6.2034809 + 334.0612431 * T
-    L5 = 0.5995464 + 52.9690965 * T
-    L6 = 0.8740168 + 21.329909095 * T
-    L7 = 5.4812939 + 7.4781599 * T
-    L8 = 5.3118863 + 3.8133036 * T
-    LL = 3.8103444 + 8399.6847337 * T
-    D = 5.1984667 + 7771.3771486 * T
-    MM = 2.3555559 + 8328.6914289 * T
-    F = 1.6279052 + 8433.4661601 * T
-    
-    X = 0.0
-    Y = 0.0
-    Z = 0.0
-    
-    # terms
-    TERMS = 36
-    
-    arguments = [[0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
-                [0, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-                [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0],
-                [0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0],
-                [0, 2, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 3, -8, 3, 0, 0, 0, 0, 0, 0, 0],
-                [0, 5, -8, 3, 0, 0, 0, 0, 0, 0, 0],
-                [2, -1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-                [0, 1, 0, -2, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0],
-                [0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-                [2, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 1, 0, -1, 0, 0, 0, 0, 0, 0, 0],
-                [0, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 3, 0, -2, 0, 0, 0, 0, 0, 0, 0],
-                [1, -2, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [2, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0],
-                [2, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 3, -2, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 1, 2, -1, 0],
-                [8, 12, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [8, 14, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0],
-                [3, 4, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 2, 0, -2, 0, 0, 0, 0, 0, 0, 0],
-                [3, -3, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 2, -2, 0, 0, 0, 0, 0, 0, 0, 0],
-                [0, 0, 0, 0, 0, 0, 0, 1, -2, 0, 0]]
-                
-    x_coefficients = [[-1719914, -2, -25, 0],
-                    [6434, 141, 28007, -107],
-                    [715, 0, 0, 0],
-                    [715, 0, 0, 0],
-                    [486, -5, -236, -4],
-                    [159, 0, 0, 0],
-                    [0, 0, 0, 0],
-                    [39, 0, 0, 0],
-                    [33, 0, -10, 0],
-                    [31, 0, 1, 0],
-                    [8, 0, -28, 0],
-                    [8, 0, -28, 0],
-                    [21, 0, 0, 0],
-                    [-19, 0, 0, 0],
-                    [17, 0, 0, 0],
-                    [16, 0, 0, 0],
-                    [16, 0, 0, 0],
-                    [11, 0, -1, 0],
-                    [0, 0, -11, 0],
-                    [-11, 0, -2, 0],
-                    [-7, 0, -8, 0],
-                    [-10, 0, 0, 0],
-                    [-9, 0, 0, 0], 
-                    [-9, 0, 0, 0],
-                    [0, 0, -9, 0],
-                    [0, 0, -9, 0],
-                    [8, 0, 0, 0],
-                    [8, 0, 0, 0], 
-                    [-4, 0, -7, 0],
-                    [-4, 0, -7, 0],
-                    [-6, 0, -5, 0],
-                    [-1, 0, -1, 0],
-                    [4, 0, -6, 0],
-                    [0, 0, -7, 0],
-                    [5, 0, -5, 0],
-                    [5, 0, 0, 0]]
-                    
-    y_coefficients = [[25, -13, 1578089, 156],
-                    [25697, -95, -5904, -130],
-                    [6, 0, -657, 0], 
-                    [0, 0, -656, 0],
-                    [-216, -4, -446, 5],
-                    [2, 0, -147, 0],
-                    [0, 0, 26, 0],
-                    [0, 0, -36, 0],
-                    [-9, 0, -30, 0],
-                    [1, 0, -28, 0],
-                    [25, 0, 8, 0],
-                    [-25, 0, -8, 0],
-                    [0, 0, -19, 0],
-                    [0, 0, 17, 0],
-                    [0, 0, -16, 0],
-                    [0, 0, 15, 0],
-                    [1, 0, -15, 0],
-                    [-1, 0, -10, 0],
-                    [-10, 0, 0, 0],
-                    [-2, 0, 9, 0],
-                    [-8, 0, 6, 0], 
-                    [0, 0, 9, 0], 
-                    [0, 0, -9, 0], 
-                    [0, 0, -8, 0],
-                    [-8, 0, 0, 0],
-                    [8, 0, 0, 0],
-                    [0, 0, -8, 0],
-                    [0, 0, -7, 0], 
-                    [-6, 0, -4, 0],
-                    [6, 0, -4, 0],
-                    [-4, 0, 5, 0],
-                    [-2, 0, -7, 0],
-                    [-5, 0, -4, 0],
-                    [-6, 0, 0, 0], 
-                    [-4, 0, -5, 0],
-                    [0, 0, -5, 0]]
-                    
-    z_coefficients = [[10, 32, 684185, -358],
-                    [11141, -48, -2559, -55],
-                    [-15, 0, -282, 0],
-                    [0, 0, -285, 0],
-                    [-94, 0, -193, 0],
-                    [-6, 0, -61, 0],
-                    [0, 0, 59, 0],
-                    [0, 0, 16, 0],
-                    [-5, 0, -13, 0],
-                    [0, 0, -12, 0],
-                    [11, 0, 3, 0],
-                    [-11, 0, -3, 0],
-                    [0, 0, -8, 0],
-                    [0, 0, 8, 0],
-                    [0, 0, -7, 0],
-                    [1, 0, 7, 0],
-                    [-3, 0, -6, 0],
-                    [-1, 0, 5, 0],
-                    [-4, 0, 0, 0],
-                    [-1, 0, 4, 0],
-                    [-3, 0, 3, 0],
-                    [0, 0, 4, 0],
-                    [0, 0, -4, 0],
-                    [0, 0, -4, 0],
-                    [-3, 0, 0, 0],
-                    [3, 0, 0, 0],
-                    [0, 0, -3, 0],
-                    [0, 0, -3, 0],
-                    [-3, 0, 2, 0],
-                    [3, 0, -2, 0],
-                    [-2, 0, 2, 0],
-                    [1, 0, -4, 0],
-                    [-2, 0, -2, 0],
-                    [-3, 0, 0, 0],
-                    [-2, 0, -2, 0],
-                    [0, 0, -2, 0]]
-                    
-    # Sum the terms
-    for i in range(TERMS):
-        A = arguments[i][0]*L2 + arguments[i][1]*L3 + arguments[i][2]*L4 + arguments[i][3]*L5 + arguments[i][4]*L6 + \
-                arguments[i][5]*L7 + arguments[i][6]*L8 + arguments[i][7]*LL + arguments[i][8]*D + arguments[i][9]*MM + \
-                arguments[i][10]*F
-        X += (x_coefficients[i][0] + x_coefficients[i][1]*T) * math.sin(A) + (x_coefficients[i][2] + x_coefficients[i][3]*T) * math.cos(A)
-        Y += (y_coefficients[i][0] + y_coefficients[i][1]*T) * math.sin(A) + (y_coefficients[i][2] + y_coefficients[i][3]*T) * math.cos(A)
-        Z += (z_coefficients[i][0] + z_coefficients[i][1]*T) * math.sin(A) + (z_coefficients[i][2] + z_coefficients[i][3]*T) * math.cos(A)
-        
-    # Equ 22.4
-    mean_ra = deg_to_rad(mean_position.ra)
-    mean_dec = deg_to_rad(mean_position.dec)
-    
-    delta_ra = (Y * math.cos(mean_ra) - X * math.sin(mean_ra)) / (c * math.cos(mean_dec))
-    delta_dec = (X * math.cos(mean_ra) + Y * math.sin(mean_ra)) * math.sin(mean_dec) - Z * math.cos(mean_dec)
-    delta_dec /= -c
-    
-    _posn.ra = rad_to_deg(mean_ra + delta_ra)
-    _posn.dec = rad_to_deg(mean_dec + delta_dec)
-    return _posn
-
-
-######################################################################
-# Proper Motion Functions
-######################################################################   
-
-def get_equ_pm(mean_position, proper_motion, jD):
-    """
-    Adjusts equatorial position of a stellar object accouting for proper motion.
-    
-    Param: mean_position - J2000 equatorial mean position of object as type equ_posn.
-    Param: proper_motion - Object of type equ_posn giving object's proper motion
-                           (units are deg/year).
-    Param: jD - UTC Julian day (float) to measure position.
-    
-    Returns: Adjusted equatorial position of object as type equ_posn.
-    
-    Based on pm.f, dcs2c.f, and dcc2s.f from SLALIB.
-    """
-    
-    _posn = equ_posn()
-    ra = ephem.degrees(str(mean_position.ra))
-    dec = ephem.degrees(str(mean_position.dec))
-    pmRA = ephem.degrees(str(proper_motion.ra))
-    pmDec = ephem.degrees(str(proper_motion.dec))
-    
-    p = [math.cos(ra)*math.cos(dec), 
-        math.sin(ra)*math.cos(dec), 
-        math.sin(dec)]
-    em = [-pmRA*p[1] - pmDec*math.cos(ra)*math.sin(dec), 
-        pmRA*p[0]  - pmDec*math.sin(ra)*math.sin(dec), 
-        pmDec*math.cos(dec)]
-        
-    t = jD - (ephem.J2000+DJD_OFFSET)
-    p[0] += em[0]*t
-    p[1] += em[1]*t
-    p[2] += em[2]*t
-    
-    r = math.sqrt(p[0]**2 + p[1]**2)
-    if r == 0:
-        ra = 0.0 % (2*math.pi)
-    else:
-        ra = math.atan2(p[1], p[0])
-    if p[2] == 0:
-        dec = 0.0
-    else:
-        dec = math.atan2(p[2], r)
-        
-    ra = rad_to_deg(ra)
-    dec = rad_to_deg(dec)
-    
-    _posn.ra = ra
-    _posn.dec = dec
+    _posn.astropy = sc
     return _posn
 
 
@@ -2664,29 +2196,182 @@ def get_object_rst(jD, observer, target):
             or None if the object is circumpolar.
     """
 
-    _rst = rst_time()
-    b = ephem.FixedBody()
-    b._ra = deg_to_rad(target.ra)
-    b._dec = deg_to_rad(target.dec)
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
     try:
-        o.elev = observer.elv
+        elv = observer.elv
     except AttributeError:
-        pass
+        elv = 0.0
+        
+    _rst = rst_time()
+    el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
+                                     height=elv*astrounits.m,
+                                     ellipsoid='WGS84')
+    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                  frame='fk5', equinox='J2000')
     
-    b.compute(o)
-    
-    try:
-        _rst.rise = o.next_rising(b)+DJD_OFFSET
-        _rst.transit = o.next_transit(b)+DJD_OFFSET
-        _rst.set = o.next_setting(b)+DJD_OFFSET
-        return _rst
-    except (ephem.NeverUpError, ephem.AlwaysUpError):
+    # Part 1 - Course +/1 day search for the anti-transits
+    t = AstroTime(jD+np.linspace(-1, 1, 192), format='jd', scale='utc')
+    aa = AltAz(location=el, obstime=t)
+    aa = sc.transform_to(aa)
+    antitransits = np.where(np.diff(aa.az[...].deg) < -180)[0]
+    if len(antitransits) == 0:
+        # No anti-transits = it never rises or never sets
         return None
+        
+    # Part 2 - Determine the approximate rise, set, and transit times
+    #          based on when the source is up.
+    above = np.where(aa.alt[antitransits[0]:antitransits[1]] >= 0)[0]
+    rise = above[0] + antitransits[0]
+    set = above[-1] + antitransits[0]
+    transit = (rise + set) // 2
+    
+    # Part 3 - Refine the rough values found in the course search.
+    # Note:  We are trying to emulate ephem.Observer.next_() so we want the next
+    #        rising/setting/transit.
+    offset = 0
+    if aa.obstime[rise].jd < jD:
+        offset = 1
+    tr = AstroTime(aa.obstime[rise].jd+np.linspace(offset-20/1440, offset+20/1440, 41), format='jd', scale='utc')
+    offset = 0
+    if aa.obstime[set].jd < jD:
+        offset = 1
+    ts = AstroTime(aa.obstime[set].jd+np.linspace(offset-20/1440, offset+20/1440, 41), format='jd', scale='utc')
+    offset = 0
+    if aa.obstime[transit].jd < jD:
+        offset = 1
+    tt = AstroTime(aa.obstime[transit].jd+np.linspace(offset-20/1440, offset+20/1440, 41), format='jd', scale='utc')
+    
+    # Part 3a - Rise time via interpolation to find the zero crossing
+    aa = AltAz(location=el, obstime=tr)
+    aa = sc.transform_to(aa)
+    rtf = interp1d(aa.alt, aa.obstime.jd)
+    try:
+        tr = rtf(0.0)
+    except ValueError:
+        return None
+        
+    # Part 3b - Set time via interpolation to find the zero crossing
+    aa = AltAz(location=el, obstime=ts)
+    aa = sc.transform_to(aa)
+    stf = interp1d(aa.alt, aa.obstime.jd)
+    try:
+        ts = stf(0.0)
+    except ValueError:
+        return None
+        
+    # Part 3c - Transit time via fitting a cubic to the altitude as a function
+    #           of time.
+    aa = AltAz(location=el, obstime=tt)
+    aa = sc.transform_to(aa)
+    ttf = np.polyfit(aa.obstime.jd-aa.obstime.jd[np.argmax(aa.alt)], aa.alt, 3)
+    tt = -ttf[1] - np.sqrt(ttf[1]**2 - 4*ttf[0]*ttf[2])
+    tt /= 2*ttf[0]
+    tt += aa.obstime.jd[np.argmax(aa.alt)]
+    
+    _rst.rise = tr
+    _rst.transit = tt
+    _rst.set = ts
+    return _rst
+
+
+SOLAR_SYSTEM_EPHEMERIS_TO_USE = 'de432s'
+
+def _get_solar_system_rst(jD, observer, body):
+    """
+    Get rise, set, and transit times of a solar system body.
+    
+    Param: jD       - UTC Julian day (float) target time.
+    Param: observer - object of type lnlat_posn giving observer position
+    Param: target   - name of the solar system body
+    
+    Returns: Object of type rst_time giving object's ephemeris UTC times,
+            or None if the object is circumpolar.
+    """
+
+    try:
+        elv = observer.elv
+    except AttributeError:
+        elv = 0.0
+        
+    _rst = rst_time()
+    el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
+                                     height=elv*astrounits.m,
+                                     ellipsoid='WGS84')
+        
+    # Part 1 - Course +/1 day search for the anti-transits
+    t = AstroTime(jD+np.linspace(-1, 1, 192), format='jd', scale='utc')
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        sc = get_body(body, t, location=el)
+        aa = AltAz(location=el, obstime=t)
+        aa = sc.transform_to(aa)
+    antitransits = np.where(np.diff(aa.az[...].deg) < -180)[0]
+    if len(antitransits) == 0:
+        # No anti-transits = it never rises or never sets
+        return None
+        
+    # Part 2 - Determine the approximate rise, set, and transit times
+    #          based on when the source is up.
+    try:
+        above = np.where(aa.alt[antitransits[0]:antitransits[1]] >= 0)[0]
+    except IndexError:
+        above = np.where(aa.alt[antitransits[0]:] >= 0)[0]
+    rise = above[0] + antitransits[0]
+    set = above[-1] + antitransits[0]
+    transit = (rise + set) // 2
+    
+    # Part 3 - Refine the rough values found in the course search.
+    # Note:  We are trying to emulate ephem.Observer.next_() so we want the next
+    #        rising/setting/transit.
+    scale = 20 if body != 'moon' else 60
+    offset = 0
+    if aa.obstime[rise].jd < jD:
+        offset = 1
+    tr = AstroTime(aa.obstime[rise].jd+np.linspace(offset-scale/1440, offset+scale/1440, 2*scale+1), format='jd', scale='utc')
+    offset = 0
+    if aa.obstime[set].jd < jD:
+        offset = 1
+    ts = AstroTime(aa.obstime[set].jd+np.linspace(offset-scale/1440, offset+scale/1440, 2*scale+1), format='jd', scale='utc')
+    offset = 0
+    if aa.obstime[transit].jd < jD:
+        offset = 1
+    tt = AstroTime(aa.obstime[transit].jd+np.linspace(offset-scale/1440, offset+scale/1440, 2*scale+1), format='jd', scale='utc')
+    
+    # Part 3a - Rise time via interpolation to find the zero crossing
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        sc = get_body(body, tr, location=el)
+        aa = AltAz(location=el, obstime=tr)
+        aa = sc.transform_to(aa)
+    rtf = interp1d(aa.alt, aa.obstime.jd)
+    try:
+        tr = rtf(0.0)
+    except ValueError:
+        return None
+        
+    # Part 3b - Set time via interpolation to find the zero crossing
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        sc = get_body(body, ts, location=el)
+        aa = AltAz(location=el, obstime=ts)
+        aa = sc.transform_to(aa)
+    stf = interp1d(aa.alt, aa.obstime.jd)
+    try:
+        ts = stf(0.0)
+    except ValueError:
+        return None
+        
+    # Part 3c - Transit time via fitting a cubic to the altitude as a function
+    #           of time.
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        sc = get_body(body, tt, location=el)
+        aa = AltAz(location=el, obstime=tt)
+        aa = sc.transform_to(aa)
+    ttf = np.polyfit(aa.obstime.jd-aa.obstime.jd[np.argmax(aa.alt)], aa.alt, 3)
+    tt = -ttf[1] - np.sqrt(ttf[1]**2 - 4*ttf[0]*ttf[2])
+    tt /= 2*ttf[0]
+    tt += aa.obstime.jd[np.argmax(aa.alt)]
+    
+    _rst.rise = tr
+    _rst.transit = tt
+    _rst.set = ts
+    return _rst
 
 
 ######################################################################
@@ -2700,15 +2385,18 @@ def get_solar_equ_coords(jD):
     
     Param: jD - UTC Julian day (float).
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing equatorial position that are
+    in the astropy.coordinates.PrecessedGeocentric frame with equinox = jD and
+    obstime = jD.
     """
     
     _posn = equ_posn()
-    b = ephem.Sun()
-    b.compute(jD-DJD_OFFSET)
-    
-    _posn.ra = rad_to_deg(b.g_ra)
-    _posn.dec = rad_to_deg(b.g_dec)
+    t = AstroTime(jD, format='jd', scale='utc')
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        b = get_body('sun', t)
+        b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
+        
+    _posn.astropy = b
     return _posn
 
 
@@ -2720,30 +2408,10 @@ def get_solar_rst(jD, observer):
     Param: observer - Object of type lnlat_posn representing observer position.
     
     Returns Object of type rst_time represeting UTC ephemeris times,
-            or None if the object is circumpolar..
+            or None if the object is circumpolar.
     """
     
-    _rst = rst_time()
-    b = ephem.Sun()
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
-    try:
-        o.elev = observer.elv
-    except AttributeError:
-        pass
-        
-    b.compute(o)
-    
-    try:
-        _rst.rise = o.next_rising(b)+DJD_OFFSET
-        _rst.transit = o.next_transit(b)+DJD_OFFSET
-        _rst.set = o.next_setting(b)+DJD_OFFSET
-        return _rst
-    except (ephem.NeverUpError, ephem.AlwaysUpError):
-        return None
+    return _get_solar_system_rst(jD, observer, 'sun')
 
 
 ######################################################################
@@ -2757,15 +2425,18 @@ def get_jupiter_equ_coords(jD):
     
     Param: jD - UTC Julian day (float).
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing equatorial position that are
+    in the astropy.coordinates.PrecessedGeocentric frame with equinox = jD and
+    obstime = jD.
     """
     
     _posn = equ_posn()
-    b = ephem.Jupiter()
-    b.compute(jD-DJD_OFFSET)
-    
-    _posn.ra = rad_to_deg(b.g_ra)
-    _posn.dec = rad_to_deg(b.g_dec)
+    t = AstroTime(jD, format='jd', scale='utc')
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        b = get_body('jupiter', t)
+        b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
+        
+    _posn.astropy = b
     return _posn
 
 
@@ -2780,27 +2451,7 @@ def get_jupiter_rst(jD, observer):
             or None if the object is circumpolar.
     """
     
-    _rst = rst_time()
-    b = ephem.Jupiter()
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
-    try:
-        o.elev = observer.elv
-    except AttributeError:
-        pass
-        
-    b.compute(o)
-    
-    try:
-        _rst.rise = o.next_rising(b)+DJD_OFFSET
-        _rst.transit = o.next_transit(b)+DJD_OFFSET
-        _rst.set = o.next_setting(b)+DJD_OFFSET
-        return _rst
-    except (ephem.NeverUpError, ephem.AlwaysUpError):
-        return None
+    return _get_solar_system_rst(jD, observer, 'jupiter')
 
 
 ######################################################################
@@ -2814,15 +2465,18 @@ def get_saturn_equ_coords(jD):
     
     Param: jD - UTC Julian day (float).
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing equatorial position that are
+    in the astropy.coordinates.PrecessedGeocentric frame with equinox = jD and
+    obstime = jD.
     """
     
     _posn = equ_posn()
-    b = ephem.Saturn()
-    b.compute(jD-DJD_OFFSET)
-    
-    _posn.ra = rad_to_deg(b.g_ra)
-    _posn.dec = rad_to_deg(b.g_dec)
+    t = AstroTime(jD, format='jd', scale='utc')
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        b = get_body('saturn', t)
+        b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
+        
+    _posn.astropy = b
     return _posn
 
 
@@ -2837,27 +2491,7 @@ def get_saturn_rst(jD, observer):
             or None if the object is circumpolar.
     """
 
-    _rst = rst_time()
-    b = ephem.Saturn()
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
-    try:
-        o.elev = observer.elv
-    except AttributeError:
-        pass
-        
-    b.compute(o)
-    
-    try:
-        _rst.rise = o.next_rising(b)+DJD_OFFSET
-        _rst.transit = o.next_transit(b)+DJD_OFFSET
-        _rst.set = o.next_setting(b)+DJD_OFFSET
-        return _rst
-    except (ephem.NeverUpError, ephem.AlwaysUpError):
-        return None
+    return _get_solar_system_rst(jD, observer, 'saturn')
 
 
 ######################################################################
@@ -2871,15 +2505,18 @@ def get_lunar_equ_coords(jD):
     
     Param: jD - UTC Julian day (float).
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing equatorial position that are
+    in the astropy.coordinates.PrecessedGeocentric frame with equinox = jD and
+    obstime = jD.
     """
     
     _posn = equ_posn()
-    b = ephem.Moon()
-    b.compute(jD-DJD_OFFSET)
-    
-    _posn.ra = rad_to_deg(b.g_ra)
-    _posn.dec = rad_to_deg(b.g_dec)
+    t = AstroTime(jD, format='jd', scale='utc')
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        b = get_body('moon', t)
+        b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
+        
+    _posn.astropy = b
     return _posn
 
 
@@ -2894,27 +2531,7 @@ def get_lunar_rst(jD, observer):
             or None if the object is circumpolar.
     """
     
-    _rst = rst_time()
-    b = ephem.Moon()
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
-    try:
-        o.elev = observer.elv
-    except AttributeError:
-        pass
-        
-    b.compute(o)
-    
-    try:
-        _rst.rise = o.next_rising(b)+DJD_OFFSET
-        _rst.transit = o.next_transit(b)+DJD_OFFSET
-        _rst.set = o.next_setting(b)+DJD_OFFSET
-        return _rst
-    except (ephem.NeverUpError, ephem.AlwaysUpError):
-        return None
+    return _get_solar_system_rst(jD, observer, 'moon')
 
 
 ######################################################################
@@ -2928,15 +2545,18 @@ def get_venus_equ_coords(jD):
     
     Param: jD - UTC Julian day (float).
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing equatorial position that are
+    in the astropy.coordinates.PrecessedGeocentric frame with equinox = jD and
+    obstime = jD.
     """
     
     _posn = equ_posn()
-    b = ephem.Venus()
-    b.compute(jD-DJD_OFFSET)
-    
-    _posn.ra = rad_to_deg(b.g_ra)
-    _posn.dec = rad_to_deg(b.g_dec)
+    t = AstroTime(jD, format='jd', scale='utc')
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        b = get_body('venus', t)
+        b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
+        
+    _posn.astropy = b
     return _posn
 
 
@@ -2951,27 +2571,7 @@ def get_venus_rst(jD, observer):
             or None if the object is circumpolar.
     """
     
-    _rst = rst_time()
-    b = ephem.Venus()
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
-    try:
-        o.elev = observer.elv
-    except AttributeError:
-        pass
-        
-    b.compute(o)
-    
-    try:
-        _rst.rise = o.next_rising(b)+DJD_OFFSET
-        _rst.transit = o.next_transit(b)+DJD_OFFSET
-        _rst.set = o.next_setting(b)+DJD_OFFSET
-        return _rst
-    except (ephem.NeverUpError, ephem.AlwaysUpError):
-        return None
+    return _get_solar_system_rst(jD, observer, 'venus')
 
 
 ######################################################################
@@ -2985,15 +2585,18 @@ def get_mars_equ_coords(jD):
     
     Param: jD - UTC Julian day (float).
     
-    Returns object of type equ_posn representing equatorial position.
+    Returns object of type equ_posn representing equatorial position that are
+    in the astropy.coordinates.PrecessedGeocentric frame with equinox = jD and
+    obstime = jD.
     """
     
     _posn = equ_posn()
-    b = ephem.Mars()
-    b.compute(jD-DJD_OFFSET)
-    
-    _posn.ra = rad_to_deg(b.g_ra)
-    _posn.dec = rad_to_deg(b.g_dec)
+    t = AstroTime(jD, format='jd', scale='utc')
+    with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
+        b = get_body('mars', t)
+        b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
+        
+    _posn.astropy = b
     return _posn
 
 
@@ -3008,27 +2611,7 @@ def get_mars_rst(jD, observer):
             or None if the object is circumpolar.
     """
     
-    _rst = rst_time()
-    b = ephem.Mars()
-    
-    o = ephem.Observer()
-    o.date = jD-DJD_OFFSET
-    o.lon = deg_to_rad(observer.lng)
-    o.lat = deg_to_rad(observer.lat)
-    try:
-        o.elev = observer.elv
-    except AttributeError:
-        pass
-        
-    b.compute(o)
-    
-    try:
-        _rst.rise = o.next_rising(b)+DJD_OFFSET
-        _rst.transit = o.next_transit(b)+DJD_OFFSET
-        _rst.set = o.next_setting(b)+DJD_OFFSET
-        return _rst
-    except (ephem.NeverUpError, ephem.AlwaysUpError):
-        return None
+    return _get_solar_system_rst(jD, observer, 'mars')
 
 
 ######################################################################
@@ -3317,25 +2900,8 @@ def utc_to_tai(utcJD):
     Returns: The TAI JD value (float).
     """
     
-    # check the last entry first since it is likely the time is
-    # current or future
-    p = _LEAP_SEC_LIST[-1]
-    if utcJD >= p[0]:
-        return utcJD + p[2]
-        
-    if utcJD < FIRST_LEAP_UTC:
-        raise ValueError(f"utcJD must be greater than {FIRST_LEAP_UTC}")
-        
-    # search the conversion list for the UTC JD range
-    p = _LEAP_SEC_LIST[0]
-    for e in _LEAP_SEC_LIST[1:]:
-        if utcJD < e[0]:
-            return utcJD + p[2]
-        p = e
-        
-    # the time is after the last conversion range entry
-    p = _LEAP_SEC_LIST[-1]
-    return utcJD + p[2]
+    t = AstroTime(utcJD, format='jd', scale='utc')
+    return t.tai.jd
 
 
 def tai_to_utc(taiJD):
@@ -3348,29 +2914,8 @@ def tai_to_utc(taiJD):
     Returns: The UTC JD value (float).
     """
     
-    # check the last entry first since it is likely the time is
-    # current or future
-    p = _LEAP_SEC_LIST[-1]
-    tai = p[0] + p[2]
-    if taiJD >= tai:
-        return taiJD - p[2]
-        
-    p = _LEAP_SEC_LIST[0]
-    firstTai = p[0] + p[2]
-    if taiJD < firstTai:
-        raise ValueError(f"taiJD must be greater than {firstTai}")
-        
-    # search the conversion list for the TAI JD range
-    p = _LEAP_SEC_LIST[0]
-    for e in _LEAP_SEC_LIST[1:]:
-        tai = e[0] + e[2]
-        if taiJD < tai:
-            return taiJD - p[2] 
-        p = e
-        
-    # the time is after the last conversion range entry
-    p = _LEAP_SEC_LIST[-1]
-    return taiJD - p[2]
+    t = AstroTime(taiJD, format='jd', scale='tai')
+    return t.utc.jd
 
 
 def taimjd_to_utcjd(taiMJD):
@@ -3382,8 +2927,8 @@ def taimjd_to_utcjd(taiMJD):
     Returns: The UTC JD value (float).
     """
     
-    jd = mjd_to_jd(taiMJD)
-    return tai_to_utc(jd)
+    t = AstroTime(taiMJD, format='mjd', scale='tai')
+    return t.utc.jd
 
 
 def utcjd_to_taimjd(utcJD):
@@ -3395,8 +2940,8 @@ def utcjd_to_taimjd(utcJD):
     Returns: The TAI MJD value.
     """
     
-    tai = utc_to_tai(utcJD)
-    return jd_to_mjd(tai)
+    t = AstroTime(utcJD, format='jd', scale='utc')
+    return t.tai.mjd
 
 
 def unix_to_utcjd(unixTime):
@@ -3408,8 +2953,8 @@ def unix_to_utcjd(unixTime):
     Returns: The UTC JD value.
     """
     
-    utcJD = float(unixTime) / SECS_IN_DAY + UNIX_OFFSET
-    return utcJD
+    t = AstroTime(float(unixTime), format='unix', scale='utc')
+    return t.jd
 
 
 def unix_to_taimjd(unixTime):
@@ -3421,9 +2966,8 @@ def unix_to_taimjd(unixTime):
     Returns: The TAI MJD value.
     """
     
-    utcJD = unix_to_utcjd(unixTime)
-    taiMJD = utcjd_to_taimjd(utcJD)
-    return taiMJD
+    t = AstroTime(float(unixTime), format='unix', scale='utc')
+    return t.tai.mjd
 
 
 def utcjd_to_unix(utcJD):
@@ -3435,8 +2979,8 @@ def utcjd_to_unix(utcJD):
     Returns: The UNIX time
     """
     
-    unixTime = (utcJD - UNIX_OFFSET) * SECS_IN_DAY
-    return unixTime
+    t = AstroTime(utcJD, format='jd', scale='utc')
+    return t.unix
 
 
 def taimjd_to_unix(taiMJD):
@@ -3448,9 +2992,8 @@ def taimjd_to_unix(taiMJD):
     Returns: The UNIX time
     """
     
-    utcJD = taimjd_to_utcjd(taiMJD)
-    unixTime = utcjd_to_unix(utcJD)
-    return unixTime
+    t = AstroTime(taiMJD, format='mjd', scale='tai')
+    return t.utc.unix
 
 
 def tai_to_tt(taiJD):
@@ -3462,7 +3005,8 @@ def tai_to_tt(taiJD):
     Returns: The TT JD value (float).
     """
     
-    return taiJD + sec_to_jd(TAI_TT_OFFSET)
+    t = AstroTime(taiJD, format='jd', scale='tai')
+    return t.tt.jd
 
 
 def tt_to_tai(ttJD):
@@ -3474,7 +3018,8 @@ def tt_to_tai(ttJD):
     Returns: The TAI JD value (float).
     """   
     
-    return ttJD - sec_to_jd(TAI_TT_OFFSET)
+    t = AstroTime(taiJD, format='jd', scale='tt')
+    return t.tai.jd
 
 
 def utc_to_tt(utcJD):
@@ -3486,7 +3031,8 @@ def utc_to_tt(utcJD):
     Returns: The TT JD value (float).
     """    
     
-    return tai_to_tt(utc_to_tai(utcJD))
+    t = AstroTime(utcJD, format='jd', scale='utc')
+    return t.tt.jd
 
 
 def tt_to_utc(ttJD):
@@ -3498,7 +3044,8 @@ def tt_to_utc(ttJD):
     Returns: The UTC JD value (float).
     """     
     
-    return tai_to_utc(tt_to_tai(ttJD))
+    t = AstroTime(ttJD, format='jd', scale='tt')
+    return t.utc.jd
 
 
 def tt_to_tdb(ttJD):
@@ -3511,8 +3058,8 @@ def tt_to_tdb(ttJD):
     Returns: The TDB JD value (float).
     """    
     
-    g = math.radians(357.53 + (0.9856003 * (ttJD - J2000_UTC_JD)))
-    return (ttJD + (0.001658 * math.sin(g)) + (0.000014 * math.sin(2.0 * g)))  
+    t = AstroTime(ttJD, format='jd', scale='tai')
+    return t.tdb.jd  
 
 
 def get_tai_from_sys():
@@ -3521,7 +3068,8 @@ def get_tai_from_sys():
     TAI MJD (float).
     """
     
-    return utcjd_to_taimjd(get_julian_from_sys())
+    t0 = AstroTime.now()
+    return t0.tai.mjd
 
 
 def hms_to_sec(hms):
@@ -3696,13 +3244,13 @@ def get_rect_from_equ(posn):
     Returns: Object of type rect_posn giving rectangular coordinates (normallized to 1).
     """
     
-    raRad = math.radians(posn.ra)
-    decRad = math.radians(posn.dec)
-    cdec = math.cos(decRad) 
+    sc = SkyCoord(posn.ra*astrounits.deg, posn.dec*astrounits.deg,
+                  frame='fk5', equinox='J2000')
+    sc = sc.cartesian 
     
-    x = (math.cos(raRad) * cdec)
-    y = (math.sin(raRad) * cdec)
-    z = math.sin(decRad)
+    x = sc.x.value
+    y = sc.y.value
+    z = sc.z.value
     
     return rect_posn(x, y, z)
 
@@ -3720,11 +3268,11 @@ def get_equ_from_rect(posn):
     y = posn.Y
     z = posn.Z
     
-    t = math.sqrt((x * x) + (y * y))
-    ra = math.degrees(math.atan2(y, x))
-    dec = math.degrees(math.atan2(z, t))
+    _posn = equ_posn()
+    sc = SkyCoord(CartesianRepresentation(x, y, z), frame='fk5', equinox='J2000')
     
-    return equ_posn(range_degrees(ra), dec)
+    _posn.astropy = sc
+    return _posn
 
 
 def get_geo_from_rect(posn):
@@ -3738,36 +3286,10 @@ def get_geo_from_rect(posn):
     Returns: object of type geo_posn giving geographical coordinates.
     """
     
-    x = posn.X
-    y = posn.Y
-    z = posn.Z
-    
-    e2 = 6.69437999014e-3
-    a = 6378137.0
-    
-    p = math.sqrt((x * x) + (y * y))
-    dz = (e2 * z)
-    
-    while(True):
-        sz = (z + dz)
-        slat =  sz / math.sqrt((x * x) + (y * y) + (sz * sz))
-            
-        N = a / math.sqrt(1.0 - (e2 * slat * slat))  
-        
-        olddz = dz
-        dz = (N * e2 * slat) 
-            
-        dzerr = math.fabs(dz - olddz)  
-        if dzerr < 1.0e-9:
-            break 
-            
-    sz = (z + dz)  
-    lon = math.atan2(y, x)
-    lat = math.atan2(sz, p)
-    h = math.sqrt((x * x) + (y * y) + (sz * sz)) - N 
-    
-    lat = math.degrees(lat)
-    lon = math.degrees(lon)  
+    el = EarthLocation.from_geocentric(posn.X*astrounits.m, posn.Y*astrounits.m, posn.Z*astrounits.m)
+    lon = el.lon.deg
+    lat = el.lat.deg
+    h = el.height.to('m').value
     
     return geo_posn(range_degrees(lon), lat, h)
 
@@ -3783,21 +3305,12 @@ def get_rect_from_geo(posn):
     Returns: object of type rect_posn giving ECEF position. 
     """
     
-    lon = math.radians(posn.lng)
-    lat = math.radians(posn.lat)
-    h = posn.elv     
-    
-    a = 6378137.0
-    e2 = 6.69437999014e-3
-    
-    clat = math.cos(lat)
-    slat = math.sin(lat)
-    
-    rad_cur  = a / math.sqrt(1.0 - e2*slat*slat)
-    
-    x = (rad_cur + h) * clat * math.cos(lon)
-    y = (rad_cur + h) * clat * math.sin(lon)
-    z = ((1.0 - e2) * rad_cur + h) * slat
+    el = EarthLocation.from_geodetic(posn.lng*astrounits.deg, posn.lat*astrounits.deg,
+                                     height=posn.elv*astrounits.m,
+                                     ellipsoid='WGS84')
+    x = el.x.to('m').value
+    y = el.y.to('m').value
+    z = el.z.to('m').value     
     
     return rect_posn(x, y, z)
 
@@ -3814,117 +3327,16 @@ def get_precession(jD1, pos, jD2):
     Returns: object of type equ_posn giving epoch 2 position.
     """
     
-    rect = get_rect_from_equ(pos)
+    _posn = equ_posn()
+    t1 = AstroTime(jD1, format='jd', scale='utc')
+    sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
+                  frame='fk5', equinox=t1)
+    t2 = AstroTime(jD2, format='jd', scale='utc')
+    sc = sc.transform_to(FK5(equinox=t2))
     
-    # the precession function time paramters should be in TDB
-    # the UTC->TDB conversion, however, currently does not support
-    # times before 1972
-    # this might result in a small error in position
-    (xp, yp, zp) = _precession(jD1, (rect.X, rect.Y, rect.Z), jD2) 
-    
-    rect.X = xp
-    rect.Y = yp
-    rect.Z = zp
-    
-    return get_equ_from_rect(rect)
-
-
-def _precession(tjd1, pos, tjd2):
-    """
-    Precesses equatorial rectangular coordinates from one epoch to
-    another.  The coordinates are referred to the mean equator and
-    equinox of the two respective epochs.
-    
-    Adapoted from NOVAS-C library Version 2.0.1, function precession(). 
-    
-    CREDITS:
-    Astronomical Applications Dept, U.S. Naval Observatory
-    
-    REFERENCES:
-    Explanatory Supplement to AE and AENA (1961); pp. 30-34.
-    Lieske, J., et al. (1977). Astron. & Astrophys. 58, 1-16.
-    Lieske, J. (1979). Astron. & Astrophys. 73, 282-284.
-    Kaplan, G. H. et. al. (1989). Astron. Journ. Vol. 97, pp. 1197-1210.
-    Kaplan, G. H. "NOVAS: Naval Observatory Vector Astrometry
-    Subroutines"; USNO internal document dated 20 Oct 1988; revised 15 Mar 1990.
-    
-    INPUT
-    ARGUMENTS:
-    tjd1 (double)
-    TDB Julian date of first epoch.
-    pos[3] (double)
-    Position vector, geocentric equatorial rectangular coordinates,
-    referred to mean equator and equinox of first epoch.
-    tjd2 (double)
-    TDB Julian date of second epoch.
-    
-    RETURNED
-    VALUE:
-    pos2[3] (double)
-    Position vector, geocentric equatorial rectangular coordinates,
-    referred to mean equator and equinox of second epoch.
-    """
-    
-    T0 = 2451545.00000000
-    RAD2SEC = 206264.806247096355
-    
-    #
-    #  't' and 't1' below correspond to Lieske's "big T" and "little t".
-    #
-    t = (tjd1 - T0) / 36525.0
-    t1 = (tjd2 - tjd1) / 36525.0
-    t02 = t * t
-    t2 = t1 * t1
-    t3 = t2 * t1
-    
-    #
-    #  'zeta0', 'zee', 'theta' below correspond to Lieske's "zeta-sub-a",
-    #  "z-sub-a", and "theta-sub-a".
-    #
-    zeta0 = (2306.2181 + 1.39656 * t - 0.000139 * t02) * t1 \
-        + (0.30188 - 0.000344 * t) * t2 + 0.017998 * t3
-        
-    zee = (2306.2181 + 1.39656 * t - 0.000139 * t02) * t1 \
-        + (1.09468 + 0.000066 * t) * t2 + 0.018203 * t3
-        
-    theta = (2004.3109 - 0.85330 * t - 0.000217 * t02) * t1 \
-        + (-0.42665 - 0.000217 * t) * t2 - 0.041833 * t3
-        
-    zeta0 /= RAD2SEC
-    zee /= RAD2SEC
-    theta /= RAD2SEC
-    
-    #
-    #  Precalculate trig terms.
-    #
-    cz0 = math.cos (zeta0)
-    sz0 = math.sin (zeta0)
-    ct = math.cos (theta)
-    st = math.sin (theta)
-    cz = math.cos (zee)
-    sz = math.sin (zee)
-    
-    #
-    #  Precession rotation matrix follows.
-    #
-    xx =  cz0 * ct * cz - sz0 * sz
-    yx = -sz0 * ct * cz - cz0 * sz
-    zx = -st * cz
-    xy = cz0 * ct * sz + sz0 * cz
-    yy = -sz0 * ct * sz + cz0 * cz
-    zy = -st * sz
-    xz = cz0 * st
-    yz = -sz0 * st
-    zz = ct
-    
-    #
-    #  Perform rotation.
-    #
-    xr = xx * pos[0] + yx * pos[1] + zx * pos[2]
-    yr = xy * pos[0] + yy * pos[1] + zy * pos[2]
-    zr = xz * pos[0] + yz * pos[1] + zz * pos[2]
-    
-    return (xr, yr, zr)
+    _posn.ra = sc.ra.deg
+    _posn.dec = sc.dec.deg
+    return _posn
 
 
 def B1950_to_J2000(pos):
@@ -3933,20 +3345,20 @@ def B1950_to_J2000(pos):
     
     Param: pos - object of type equ_posn giving B1950 coordinates
     
-    Returns: object of type equ_posn giving J2000 coordinates.
+    Returns: object of type equ_posn giving J2000 coordinates in the
+             astropy.coordinates.FK5 frame with equinox=J2000.
     
     .. note::
         The accuracy of this function is about 0.01 degrees.
     """
     
     _posn = equ_posn()
-    coord = ephem.Equatorial(deg_to_rad(pos.ra), deg_to_rad(pos.dec), epoch=ephem.B1950)
-    coord = ephem.Equatorial(coord, epoch=ephem.J2000)
-    ra = rad_to_deg(coord.ra)
-    dec = rad_to_deg(coord.dec)
+    sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
+                  frame='fk4', equinox='B1950')
+    sc = sc.transform_to(FK5(equinox='J2000'))
     
-    _posn.ra = ra
-    _posn.dec = dec
+    _posn.ra = sc.ra.deg
+    _posn.dec = sc.dec.deg
     return _posn
 
 
@@ -3956,18 +3368,18 @@ def J2000_to_B1950(pos):
     
     Param: pos - object of type equ_posn giving J2000 coordinates
     
-    Returns: object of type equ_posn giving B1950 coordinates.
+    Returns: object of type equ_posn giving B1950 coordinates in the
+             astropy.coordinates.FK4 frame with equinox=B1950.
     
     .. note::
         The accuracy of this function is about 0.01 degrees.
     """   
     
     _posn = equ_posn()
-    coord = ephem.Equatorial(deg_to_rad(pos.ra), deg_to_rad(pos.dec), epoch=ephem.J2000)
-    coord = ephem.Equatorial(coord, epoch=ephem.B1950)
-    ra = rad_to_deg(coord.ra)
-    dec = rad_to_deg(coord.dec)
+    sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
+                  frame='fk5', equinox='J2000')
+    sc = sc.transform_to(FK4(equinox='B1950'))
     
-    _posn.ra = ra
-    _posn.dec = dec
+    _posn.ra = sc.ra.deg
+    _posn.dec = sc.dec.deg
     return _posn
