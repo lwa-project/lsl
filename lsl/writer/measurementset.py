@@ -475,7 +475,7 @@ try:
             obs = ephem.Observer()
             obs.lat = arrayGeo.lat * np.pi/180
             obs.lon = arrayGeo.lng * np.pi/180
-            obs.elev = arrayGeo.elv * np.pi/180
+            obs.elev = arrayGeo.elv
             obs.pressure = 0
             
             nameList = []
@@ -735,7 +735,7 @@ try:
             obs = ephem.Observer()
             obs.lat = arrayGeo.lat * np.pi/180
             obs.lon = arrayGeo.lng * np.pi/180
-            obs.elev = arrayGeo.elv * np.pi/180
+            obs.elev = arrayGeo.elv
             obs.pressure = 0
             
             mapper = self.array[0]['mapper']
@@ -1124,7 +1124,7 @@ except ImportError:
         def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new Measurement Set object using a filename and a reference time
-            given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+            given in seconds since the UNIX 1970 epoch, a python datetime object, or a 
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
             

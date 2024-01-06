@@ -35,7 +35,7 @@ class VirtualWriter(WriterBase):
     def __init__(self, ref_time=0.0, verbose=False):
         """
         Initialize a new virtual writer object using a reference time given in
-        seconds since the UNIX 1970 ephem, a python datetime object, or a
+        seconds since the UNIX 1970 epoch, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         """
         

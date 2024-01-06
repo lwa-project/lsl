@@ -397,7 +397,7 @@ class Idi(WriterBase):
     def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new FITS IDI object using a filename and a reference time 
-        given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+        given in seconds since the UNIX 1970 epoch, a python datetime object, or a 
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
@@ -881,7 +881,7 @@ class Idi(WriterBase):
         obs = ephem.Observer()
         obs.lat = arrPos.lat * np.pi/180
         obs.lon = arrPos.lng * np.pi/180
-        obs.elev = arrPos.elv * np.pi/180
+        obs.elev = arrPos.elv
         obs.pressure = 0
         
         nameList = []
@@ -1055,7 +1055,7 @@ class Idi(WriterBase):
         obs = ephem.Observer()
         obs.lat = arrPos.lat * np.pi/180
         obs.lon = arrPos.lng * np.pi/180
-        obs.elev = arrPos.elv * np.pi/180
+        obs.elev = arrPos.elv
         obs.pressure = 0
         
         mList = []

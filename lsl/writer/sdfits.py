@@ -71,7 +71,7 @@ class Sd(WriterBase):
     def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new SDFITS object using a filename and a reference time
-        given in seconds since the UNIX 1970 ephem, a python datetime object, or a
+        given in seconds since the UNIX 1970 epoch, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
