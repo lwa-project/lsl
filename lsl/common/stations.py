@@ -12,8 +12,8 @@ import importlib.util
 from textwrap import fill as tw_fill
 from functools import total_ordering
 
-from astropy import units as AU
-from astropy.coordinates import EarthLocation, AltAz
+from astropy import units as astrounits
+from astropy.coordinates import EarthLocation, AltAz, CartesianRepresentation, ITRS
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
@@ -43,7 +43,7 @@ def geo_to_ecef(lat, lon, elev):
     centered, earth-fixed coordinates.
     """
     
-    el = EarthLocation.from_geodetic(lon*AU.rad, lat*AU.rad, height=elev*AU.m,
+    el = EarthLocation.from_geodetic(lon*astrounits.rad, lat*astrounits.rad, height=elev*astrounits.m,
                                      ellipsoid='WGS84')
     return (el.x.to('m').value, el.y.to('m').value, el.z.to('m').value)
 
@@ -54,8 +54,8 @@ def ecef_to_geo(x, y, z):
     (rad), elevation (m).
     """
     
-    el = EarthLocation.from_geocentric(x*AU.m, y*AU.m, z*AU.m)
-    return (el.lat.to('rad').value, el.lon.to('rad').value, el.height.to('m').value)
+    el = EarthLocation.from_geocentric(x*astrounits.m, y*astrounits.m, z*astrounits.m)
+    return (el.lat.rad, el.lon.rad, el.height.to('m').value)
 
 
 def _build_repr(name, attrs=[]):
@@ -298,7 +298,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         Return an astropy.coordinates.EarthLocation for the station.
         """
         
-        return EarthLocation.from_geodetic(self.long*AU.rad, self.lat*AU.rad, height=self.elev*AU.m,
+        return EarthLocation.from_geodetic(self.long*astrounits.rad, self.lat*astrounits.rad, height=self.elev*astrounits.m,
                                            ellipsoid='WGS84')
         
     @property
@@ -311,8 +311,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         """
         
         return np.array([[0.0, -np.sin(self.lat), np.cos(self.lat)], 
-                            [1.0, 0.0,                  0.0], 
-                            [0.0, np.cos(self.lat),  np.sin(self.lat)]])
+                         [1.0,  0.0,              0.0], 
+                         [0.0,  np.cos(self.lat), np.sin(self.lat)]])
         
     @property
     def eci_inverse_transform_matrix(self):
@@ -322,9 +322,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         elevation] for that baseline.
         """
         
-        return np.array([[ 0.0,                 1.0, 0.0                ],
-                            [-np.sin(self.lat), 0.0, np.cos(self.lat)],
-                            [ np.cos(self.lat), 0.0, np.sin(self.lat)]])
+        return np.array([[ 0.0,              1.0, 0.0             ],
+                         [-np.sin(self.lat), 0.0, np.cos(self.lat)],
+                         [ np.cos(self.lat), 0.0, np.sin(self.lat)]])
                         
     def get_enz_offset(self, locTo):
         """
@@ -337,8 +337,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         
         az, alt, dist = self.get_pointing_and_distance(locTo)
         return np.array([np.sin(az)*np.cos(alt),
-                            np.cos(az)*np.cos(alt),
-                            np.sin(alt)])*dist
+                         np.cos(az)*np.cos(alt),
+                         np.sin(alt)])*dist
         
     def get_pointing_and_distance(self, locTo):
         """
@@ -358,14 +358,14 @@ class LWAStation(ephem.Observer, LWAStationBase):
             try:
                 ecefTo = locTo.earth_location
             except AttributeError:
-                ecefTo = EarthLocation.from_geodetic(locTo[1]*AU.deg, locTo[0]*AU.deg, height=locTo[2]*AU.m,
+                ecefTo = EarthLocation.from_geodetic(locTo[1]*astrounits.deg, locTo[0]*astrounits.deg, height=locTo[2]*astrounits.m,
                                                      ellipsoid='WGS84')
             ecefTo = ecefTo.itrs
             
         aa = AltAz(location=ecefFrom, obstime=ecefTo.obstime, pressure=0)
         pd = ecefTo.transform_to(aa)
         
-        return (pd.az.to('rad').value, pd.alt.to('rad').value, pd.distance.to('m').value)
+        return (pd.az.rad, pd.alt.rad, pd.distance.to('m').value)
         
     @property
     def stands(self):
@@ -626,6 +626,17 @@ class Stand(object):
                 out = (self.x-std, self.y-std, self.z-std)
                 
         return out
+        
+    @property
+    def earth_location(self):
+        if self._parent is None:
+            raise RuntimeError("Cannot determine stands location without a reference point")
+            
+        center = self._parent.earth_location
+        aa = AltAz(CartesianRepresentation(self.y*astrounits.m, self.x*astrounits.m, self.z*astrounits.m),
+                   location=center)
+        aa = aa.transform_to(ITRS())
+        return EarthLocation.from_geocentric(aa.x, aa.y, aa.z)
 
 
 @total_ordering
