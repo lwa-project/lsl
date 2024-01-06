@@ -33,7 +33,7 @@ def _radec_of(antennaarray, az, alt):
     hrz = astro.hrz_posn()
     # radians -> degrees
     hrz.alt = alt*180/np.pi
-    hrz.az = az*180/np.pi
+    hrz.az = az*180/np.pi % 360
     
     geo = astro.geo_posn()
     # radians -> degrees
