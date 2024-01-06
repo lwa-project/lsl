@@ -117,7 +117,7 @@ class Uv(WriterBase):
         xyz = np.zeros((len(stands),3))
         i = 0
         for ant in antennas:
-            ecef = ant.stand.earth_location.itrf
+            ecef = ant.stand.earth_location.itrs
             xyz[i,0] = ecef.x.to('m').value
             xyz[i,1] = ecef.y.to('m').value
             xyz[i,2] = ecef.z.to('m').value
