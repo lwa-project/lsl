@@ -117,9 +117,10 @@ class Uv(WriterBase):
         xyz = np.zeros((len(stands),3))
         i = 0
         for ant in antennas:
-            xyz[i,0] = ant.stand.x
-            xyz[i,1] = ant.stand.y
-            xyz[i,2] = ant.stand.z
+            ecef = ant.stand.earth_location.itrf
+            xyz[i,0] = ecef.x.to('m').value
+            xyz[i,1] = ecef.y.to('m').value
+            xyz[i,2] = ecef.z.to('m').value
             i += 1
             
         # Create the stand mapper
@@ -130,10 +131,8 @@ class Uv(WriterBase):
             enableMapper = False
             
         ants = []
-        topo2eci = site.eci_transform_matrix
         for i in range(len(stands)):
-            eci = np.dot(topo2eci, xyz[i,:])
-            ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
+            ants.append( self._Antenna(stands[i], xyz[i,0], xyz[i,1], xyz[i,2], bits=bits) )
             if enableMapper:
                 mapper[stands[i]] = i+1
             else:
@@ -548,9 +547,9 @@ class Uv(WriterBase):
         an.header['POLARX'] = pm_xy[0].to('arcsec').value
         an.header['POLARY'] = pm_xy[1].to('arcsec').value
         
-        an.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
-        an.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')
-        an.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECI Z coordinate (m)')
+        an.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECEF X coordinate (m)')
+        an.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECEF Y coordinate (m)')
+        an.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECEF Z coordinate (m)')
         
         an.header['NOSTAMAP'] = (int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
         

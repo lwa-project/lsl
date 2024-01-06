@@ -149,17 +149,16 @@ try:
             
             xyz = np.zeros((len(stands),3))
             for i,ant in enumerate(antennas):
-                xyz[i,0] = ant.stand.x
-                xyz[i,1] = ant.stand.y
-                xyz[i,2] = ant.stand.z
+                ecef = ant.stand.earth_location.itrf
+                xyz[i,0] = ecef.x.to('m').value
+                xyz[i,1] = ecef.y.to('m').value
+                xyz[i,2] = ecef.z.to('m').value
                 
             # Create the stand mapper
             mapper = []
             ants = []
-            topo2eci = site.eci_transform_matrix
             for i in range(len(stands)):
-                eci = np.dot(topo2eci, xyz[i,:])
-                ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
+                ants.append( self._Antenna(stands[i], xyz[i,0], xyz[i,1], xyz[i,2], bits=bits) )
                 mapper.append( stands[i] )
                 
             self.nAnt = len(ants)

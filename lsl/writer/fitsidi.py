@@ -444,9 +444,10 @@ class Idi(WriterBase):
         
         xyz = np.zeros((len(stands),3))
         for i,ant in enumerate(antennas):
-            xyz[i,0] = ant.stand.x
-            xyz[i,1] = ant.stand.y
-            xyz[i,2] = ant.stand.z
+            ecef = ant.stand.earth_location.itrf
+            xyz[i,0] = ecef.x.to('m').value
+            xyz[i,1] = ecef.y.to('m').value
+            xyz[i,2] = ecef.z.to('m').value
             
         # Create the stand mapper to deal with the fact that stands range from 
         # 1 to 258, not 1 to 255
@@ -457,10 +458,8 @@ class Idi(WriterBase):
             enableMapper = False
             
         ants = []
-        topo2eci = site.eci_transform_matrix
         for i in range(len(stands)):
-            eci = np.dot(topo2eci, xyz[i,:])
-            ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
+            ants.append( self._Antenna(stands[i], xyz[i,0], xyz[i,1], xyz[i,2], bits=bits) )
             if enableMapper:
                 mapper[stands[i]] = i+1
             else:
@@ -690,9 +689,9 @@ class Idi(WriterBase):
         ag.header['POLARX'] = pm_xy[0].to('arcsec').value
         ag.header['POLARY'] = pm_xy[1].to('arcsec').value
         
-        ag.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECI X coordinate (m)')
-        ag.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECI Y coordinate (m)')
-        ag.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECI Z coordinate (m)')
+        ag.header['ARRAYX'] = (self.array[0]['center'][0], 'array ECEF X coordinate (m)')
+        ag.header['ARRAYY'] = (self.array[0]['center'][1], 'array ECEF Y coordinate (m)')
+        ag.header['ARRAYZ'] = (self.array[0]['center'][2], 'array ECEF Z coordinate (m)')
         
         ag.header['NOSTAMAP'] = (int(self.array[0]['enableMapper']), 'Mapping enabled for stand numbers')
         
