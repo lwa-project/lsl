@@ -33,7 +33,7 @@ telemetry.track_module()
 
 __version__   = '0.6'
 __all__ = ['dms', 'hms', 'date', 'zonedate', 'rst_time', 'hrz_posn', 'equ_posn', 
-           'gal_posn', 'rect_posn', 'lnlat_posn', 'ecl_posn', 
+           'gal_posn', 'rect_posn', 'ecl_posn', 
            'get_gmtoff', 'date_to_zonedate', 'zonedate_to_date', 'rad_to_deg', 
            'deg_to_rad', 'dms_to_rad', 'dms_to_deg', 'deg_to_dms', 'rad_to_dms', 
            'hms_to_deg', 'hms_to_rad', 'deg_to_hms', 'rad_to_hms', 'add_secs_hms', 
@@ -686,6 +686,8 @@ class hrz_posn(object):
       hrz_posn[1] = alt 
     """
     
+    _astropy = None
+    
     def __init__(self, az = 0.0, alt = 0.0, astropy = None):
         """
         Create a hrz_posn object.
@@ -695,17 +697,39 @@ class hrz_posn(object):
         """
 
         if az is not None:
-            if az < 0.0 or az >= 360.0:
-                raise ValueError(f"az paramerer range is [0.0, 360.0), is set to {az:0.3f}")
             self.az = az
             
         if alt is not None:
-            if alt < -90.0 or alt > 90.0:
-                raise ValueError(f"alt paramerer range is [-90.0, 90.0], is set to {alt:0.3f}")
             self.alt = alt
             
         self.astropy = astropy
         
+    @property
+    def az(self):
+        return self._az
+        
+    @az.setter
+    def az(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set az when this.astropy is not None")
+            
+        if value < 0.0 or value >= 360.0:
+            raise ValueError(f"az paramerer range is [0.0, 360.0), is set to {value:0.3f}")
+        self._az = value
+        
+    @property
+    def alt(self):
+        return self._alt
+        
+    @alt.setter
+    def alt(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set alt when this.astropy is not None")
+            
+        if value < -90.0 or value > 90.0:
+            raise ValueError(f"alt paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+        self._alt = value
+    
     @property
     def astropy(self):
         return self._astropy
@@ -720,8 +744,8 @@ class hrz_posn(object):
             
         self._astropy = value
         if self._astropy is not None:
-            self.az = self._astropy.az.deg
-            self.alt = self._astropy.alt.deg
+            self._az = self._astropy.az.deg
+            self._alt = self._astropy.alt.deg
             
     def zen(self, value = None):
         """
@@ -774,6 +798,9 @@ class hrz_posn(object):
         Set members by subscript index.
         """
         
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set index {key} when this.astropy is not None")
+            
         if key == 0:
             self.az = value
         elif key == 1:
@@ -805,7 +832,8 @@ class hrz_posn(object):
         """
         Get equatorial/celestial coordinates from local horizontal coordinates.
         
-        Param: observer - Object of type lnlat_posn representing observer position.
+        Param: observer - Object of type equ_posn representing the pointing's
+                          position.
         Param: jD       - UTC Julian day (float).
         
         Returns object of type equ_posn representing equatorial position.
@@ -839,6 +867,8 @@ class equ_posn(object):
       equ_posn[1] = dec
     """
     
+    _astropy = None
+    
     def __init__(self, ra = 0.0, dec = 0.0, astropy = None):
         """
         Create a equ_posn object.
@@ -850,20 +880,42 @@ class equ_posn(object):
         """
         
         if ra is not None:
-            if isinstance(ra, hms):
-                ra = ra.to_deg()
-            if ra < 0.0 or ra >= 360.0:
-                raise ValueError(f"ra paramerer range is [0.0, 360.0), is set to {ra:0.3f}")
             self.ra = ra
             
         if dec is not None:
-            if isinstance(dec, dms):
-                dec = dec.to_deg()
-            if dec < -90.0 or dec > 90.0:
-                raise ValueError(f"dec paramerer range is [-90.0, 90.0], is set to {dec:0.3f}")
             self.dec = dec
             
         self.astropy = astropy
+        
+    @property
+    def ra(self):
+        return self._ra
+        
+    @ra.setter
+    def ra(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set ra when this.astropy is not None")
+            
+        if isinstance(value, hms):
+            value = value.to_deg()
+        if value < 0.0 or value >= 360.0:
+            raise ValueError(f"ra paramerer range is [0.0, 360.0), is set to {value:0.3f}")
+        self._ra = value
+        
+    @property
+    def dec(self):
+        return self._dec
+        
+    @dec.setter
+    def dec(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set dec when this.astropy is not None")
+            
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value < -90.0 or value > 90.0:
+            raise ValueError(f"dec paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+        self._dec = value
         
     @property
     def astropy(self):
@@ -880,8 +932,8 @@ class equ_posn(object):
                 
         self._astropy = value
         if self._astropy is not None:
-            self.ra = self._astropy.ra.deg
-            self.dec = self._astropy.dec.deg
+            self._ra = self._astropy.ra.deg
+            self._dec = self._astropy.dec.deg
             
     def __str__(self):
         """
@@ -914,6 +966,9 @@ class equ_posn(object):
         Set members by subscript index.
         """
         
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set index {key} when this.astropy is not None")
+            
         if key == 0:
             self.ra = value
         elif key == 1:
@@ -945,7 +1000,8 @@ class equ_posn(object):
         """
         Get local horizontal coordinates from equatorial/celestial coordinates.
         
-        Param: observer - Object of type lnlat_posn representing observer position.
+        Param: observer - Object of type hrz_posn representing the object's
+                          position in the sky.
         Param: jD       - UTC Julian day (float).
         
         Returns object of type hrz_posn representing local position.
@@ -972,7 +1028,7 @@ class equ_posn(object):
         
         Param: jD - UTC Julian day (float).
         
-        Returns object of type lnlat_posn representing eclipitcal position.
+        Returns object of type ecl_posn representing eclipitcal position.
         """
         
         return get_ecl_from_equ(self, jD)
@@ -1029,31 +1085,55 @@ class gal_posn(object):
       gal_posn[1] = b
     """
     
+    _astropy = None
+    
     def __init__(self, l = 0.0, b = 0.0, astropy = None):
         """
         Create a gal_posn object.
         
         Param: l - Position longitude angle. 
-                Object of type dms or float degrees [0.0, 360.0).
+                Object of type dms or float degrees [-360.0, 360.0).
         Param: b - Position latitude angle. 
                 Object of type dms or float degrees [-90.0, 90.0].
         """
         
         if l is not None:
-            if isinstance(l, dms):
-                l = l.to_deg()
-            if l < -360.0 or l >= 360.0:
-                raise ValueError(f"l parameter range is [-360.0, 360.0), is set to {l:0.3f}")
             self.l = l
             
         if b is not None:
-            if isinstance(b, dms):
-                b = b.to_deg()
-            if b < -90.0 or b > 90.0:
-                raise ValueError(f"b paramerer range is [-90.0, 90.0], is set to {b:0.3f}")
             self.b = b
             
         self.astropy = astropy
+        
+    @property
+    def l(self):
+        return self._l
+        
+    @l.setter
+    def l(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set l when this.astropy is not None")
+            
+        if isinstance(value, hms):
+            value = value.to_deg()
+        if value < -360.0 or value >= 360.0:
+            raise ValueError(f"l paramerer range is [-360.0, 360.0), is set to {value:0.3f}")
+        self._l = value
+        
+    @property
+    def b(self):
+        return self._b
+        
+    @b.setter
+    def b(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set b when this.astropy is not None")
+            
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value < -90.0 or value > 90.0:
+            raise ValueError(f"b paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+        self._b = value
         
     @property
     def astropy(self):
@@ -1069,8 +1149,8 @@ class gal_posn(object):
             
         self._astropy = value
         if self._astropy is not None:
-            self.l = self._astropy.l.deg
-            self.b = self._astropy.b.deg
+            self._l = self._astropy.l.deg
+            self._b = self._astropy.b.deg
             
     def __str__(self):
         """
@@ -1110,6 +1190,9 @@ class gal_posn(object):
         Set members by subscript index.
         """
         
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set index {key} when this.astropy is not None")
+            
         if key == 0:
             self.l = value
         elif key == 1:
@@ -1261,65 +1344,94 @@ class rect_posn(object):
         return (self.X != other.X) or (self.Y != other.Y) or (self.Z != other.Z)
 
 
-class lnlat_posn(object):
+class ecl_posn(object):
     """
-    Represents position coordinates in latitude and longitude.
-    When representing a geographical location, the longitude is negative
-    when measured west of GM and positive is measured east of GM.
+    Represents position as ecliptic longitude and latitude.
     
     Public members:
       lng - Position longitude coordinate (float degrees).
       lat - Position latitude coordinate (float degrees).
     
     Members may also be accessed by subscript:
-      lnlat_posn[0] = lng
-      lnlat_posn[1] = lat
+      ecl_posn[0] = lng
+      ecl_posn[1] = lat
     """
     
-    def __init__(self, lng = 0.0, lat = 0.0):
-        """
-        Create a lnlat_posn object.
+    _astropy = None
+    
+    def __init__(self, lng = 0.0, lat = 0.0, astropy = None):
+        self.lng = lng
+        self.lat = lat
         
-        Param: lng - Position longitude coordinate
-                    Object of type dms or float degrees (-360.0, 360.0).
-        Param: lat - Position latitude coordinate
-                    Object of type dms or float degrees [-90.0, 90.0].
-        """
-                
-        if lng is not None:
-            if isinstance(lng, dms):
-                lng = lng.to_deg()
-            if lng <= -360.0 or lng >= 360.0:
-                raise ValueError(f"lng parameter range is (-360.0, 360.0), is set to {lng:0.3f}")
-            self.lng = lng
+        self.astropy = astropy
+        
+    @property
+    def lng(self):
+        return self._lng
+        
+    @lng.setter
+    def lng(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set lng when this.astropy is not None")
             
-        if lat is not None:
-            if isinstance(lat, dms):
-                lat = lat.to_deg()
-            if lat < -90.0 or lat > 90.0:
-                raise ValueError(f"lat paramerer range is [-90.0, 90.0], is set to {lat:0.3f}")
-            self.lat = lat
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value < -360.0 or value > 360.0:
+            raise ValueError(f"lng parameter range is [-360.0, 360.0), is set to {value:0.3f}")
+        self._lng = value
+        
+    @property
+    def lat(self):
+        return self._lat
+        
+    @lat.setter
+    def lat(self, value):
+        if self.astropy is not None:
+            raise RuntimeError("Cannot set lat when this.astropy is not None")
+            
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value < -90.0 or value > 90.0:
+            raise ValueError(f"lat parameter range is [-90.0, 90.0], is set to {value:0.3f}")
+        self._lat = value
+        
+    @property
+    def astropy(self):
+        return self._astropy
+        
+    @astropy.setter
+    def astropy(self, value):
+        if not isinstance(value, (type(None), SkyCoord)):
+            raise TypeError("Expected an object of type None or SkyCoord")
+            
+        if value is not None and not isinstance(value.frame, GeocentricTrueEcliptic):
+            raise TypeError("Expected a SkyCoord in the frame of GeocentricTrueEcliptic")
+            
+        self._astropy = value
+        if self._astropy is not None:
+            self._lng = self._astropy.lon.deg
+            self._lat = self._astropy.lat.deg
             
     def __str__(self):
         """
-        lnlat_posn object print/str method.
+        ecl_posn object print/str method.
         """
         
         return f"{self.lng:0.3f} {self.lat:0.3f}"
         
     def __repr__(self):
         """
-        lnlat_posn object repr string method
+        ecl_posn object repr string method
         """
         
         return "%s.%s(%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat))
         
     def __reduce__(self):
         """
-        lnlat_posn object pickle reduce method.
+        ecl_posn object pickle reduce method.
         """
         
-        return (lnlat_posn, (self.lng, self.lat))
+        return (ecl_posn, (self.lng, self.lat))
         
     def __getitem__(self, key):
         """
@@ -1338,78 +1450,15 @@ class lnlat_posn(object):
         Set members by subscript index.
         """
         
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set index {key} when this.astropy is not None")
+            
         if key == 0:
             self.lng = value
         elif key == 1:
             self.lat = value
         else:
             raise ValueError(f"subscript {key} out of range")
-            
-    def __eq__(self, other):
-        """
-        lnlat_posn equality test.
-        """
-        
-        if not isinstance(other, lnlat_posn):
-            raise TypeError(f"comparison not supported for type {type(other).__name__}")
-            
-        return (self.lng == other.lng) and (self.lat == other.lat)
-        
-    def __ne__(self, other):
-        """
-        lnlat_posn non-equality test.
-        """
-        
-        if not isinstance(other, lnlat_posn):
-            raise TypeError(f"comparison not supported for type {type(other).__name__}")
-            
-        return (self.lng != other.lng) or (self.lat != other.lat)
-        
-    def format(self):
-        """
-        Return a tuple (lng, lat) where lng is an dms object and
-        lat is a dms object representing longitude and latitude
-        position coordinates.
-    """
-        
-        return (deg_to_dms(self.lng), deg_to_dms(self.lat))
-
-
-class ecl_posn(object):
-    """
-    Represents position as ecliptic longitude and latitude.
-    
-    Public members:
-      lng - Position longitude coordinate (float degrees).
-      lat - Position latitude coordinate (float degrees).
-    
-    Members may also be accessed by subscript:
-      ecl_posn[0] = lng
-      ecl_posn[1] = lat
-    """
-    
-    def __init__(self, lng = 0.0, lat = 0.0, astropy = None):
-        self.lng = lng
-        self.lat = lat
-        
-        self.astropy = astropy
-        
-    @property
-    def astropy(self):
-        return self._astropy
-        
-    @astropy.setter
-    def astropy(self, value):
-        if not isinstance(value, (type(None), SkyCoord)):
-            raise TypeError("Expected an object of type None or SkyCoord")
-            
-        if value is not None and not isinstance(value.frame, GeocentricTrueEcliptic):
-            raise TypeError("Expected a SkyCoord in the frame of GeocentricTrueEcliptic")
-            
-        self._astropy = value
-        if self._astropy is not None:
-            self.lng = self._astropy.lon.deg
-            self.lat = self._astropy.lat.deg
             
     def to_equ(self, jD):
         """
@@ -1421,13 +1470,6 @@ class ecl_posn(object):
         """
         
         return get_equ_from_ecl(self, jD)
-        
-    def __reduce__(self):
-        """
-        ecl_posn object pickle reduce method.
-        """
-        
-        return (ecl_posn, (self.lng, self.lat))
         
     def format(self):
         """
@@ -1854,7 +1896,7 @@ def get_hrz_from_equ(target, observer, jD):
     Get local horizontal coordinates from equatorial/celestial coordinates.
     
     Param: target   - Object of type equ_posn representing celestial position.
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     Param: jD       - UTC Julian day (float).
     
     Returns object of type hrz_posn representing local position.
@@ -1884,7 +1926,7 @@ def get_equ_from_hrz(target, observer, jD):
     Get equatorial/celestial coordinates from local horizontal coordinates.
     
     Param: target   - Object of type hrz_posn representing horizontal position.
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     Param: jD       - UTC Julian day (float).
     
     Returns object of type equ_posn representing a equatorial position in the
@@ -1915,7 +1957,7 @@ def get_ecl_from_rect(rect):
     
     Param: rect - Object of type rect_posn representing position.
     
-    Returns object of type lnlat_posn representing ecliptical position.
+    Returns object of type ecl_posn representing ecliptical position.
     """
     
     _posn = ecl_posn()
@@ -1929,7 +1971,7 @@ def get_equ_from_ecl(target, jD):
     Get J2000 equatorial coordinates from ecliptical coordinates for a given
     time.
     
-    Param: target   - Object of type lnlat_posn representing ecliptic position.
+    Param: target   - Object of type ecl_posn representing ecliptic position.
     Param: jD       - UTC Julian day (float). 
     
     Returns object of type equ_posn representing a equatorial position in the
@@ -2189,7 +2231,7 @@ def get_object_rst(jD, observer, target):
     Get rise, set, and transit times of a celstial object.
     
     Param: jD       - UTC Julian day (float) target time.
-    Param: observer - object of type lnlat_posn giving observer position
+    Param: observer - object of type geo_posn giving observer position
     Param: target   - object of type equ_posn giving target equatorial position
     
     Returns: Object of type rst_time giving object's ephemeris UTC times,
@@ -2280,7 +2322,7 @@ def _get_solar_system_rst(jD, observer, body):
     Get rise, set, and transit times of a solar system body.
     
     Param: jD       - UTC Julian day (float) target time.
-    Param: observer - object of type lnlat_posn giving observer position
+    Param: observer - object of type geo_posn giving observer position
     Param: target   - name of the solar system body
     
     Returns: Object of type rst_time giving object's ephemeris UTC times,
@@ -2405,7 +2447,7 @@ def get_solar_rst(jD, observer):
     Get Sun's rise, transit, set times from Julian day.
     
     Param: jD       - UTC Julian day (float).
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     
     Returns Object of type rst_time represeting UTC ephemeris times,
             or None if the object is circumpolar.
@@ -2445,7 +2487,7 @@ def get_jupiter_rst(jD, observer):
     Get Jupiter's rise, transit, set times from Julian day.
     
     Param: jD       - UTC Julian day (float).
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     
     Returns Object of type rst_time represeting UTC ephemeris times,
             or None if the object is circumpolar.
@@ -2485,7 +2527,7 @@ def get_saturn_rst(jD, observer):
     Get Saturn's rise, transit, set times from Julian day.
     
     Param: jD       - UTC Julian day (float).
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     
     Returns Object of type rst_time represeting UTC ephemeris times,
             or None if the object is circumpolar.
@@ -2525,7 +2567,7 @@ def get_lunar_rst(jD, observer):
     Get the Moon's rise, transit, set times from Julian day.
     
     Param: jD       - UTC Julian day (float).
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     
     Returns Object of type rst_time represeting UTC ephemeris times,
             or None if the object is circumpolar.
@@ -2565,7 +2607,7 @@ def get_venus_rst(jD, observer):
     Get Venus' rise, transit, set times from Julian day.
     
     Param: jD       - UTC Julian day (float).
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     
     Returns Object of type rst_time represeting UTC ephemeris times,
             or None if the object is circumpolar.
@@ -2605,7 +2647,7 @@ def get_mars_rst(jD, observer):
     Get Mars' rise, transit, set times from Julian day.
     
     Param: jD       - UTC Julian day (float).
-    Param: observer - Object of type lnlat_posn representing observer position.
+    Param: observer - Object of type geo_posn representing observer position.
     
     Returns Object of type rst_time represeting UTC ephemeris times,
             or None if the object is circumpolar.
@@ -3116,7 +3158,7 @@ def get_local_sidereal_time(lng, jD):
 # Position utility classes
 ######################################################################
 
-class geo_posn(lnlat_posn):
+class geo_posn(object):
     """
     Class to represent geographical position in terms of longitude, lattitude,
     and elevation.  This is a set of geodetic coordinates based on the WGS84 model.
@@ -3132,26 +3174,100 @@ class geo_posn(lnlat_posn):
       geo_posn[2] = elv
     """
     
-    def __init__(self, lng = 0.0, lat = 0.0, elv = 0.0):
+    _astropy = None
+    
+    def __init__(self, lng = 0.0, lat = 0.0, elv = 0.0, astropy = None):
         """
         Create a geo_posn object.
         
-        Param: lng - longitude (float degrees)
-        Param: lat - latitude (float degrees)
+        Param: lng - longitude coordinate
+                    Object of type dms or float degrees (-360.0, 360.0).
+        Param: lat - Position latitude coordinate
+                    Object of type dms or float degrees [-90.0, 90.0].
         Param: elv - elevation (float meters)
         """
         
-        lnlat_posn.__init__(self, lng, lat)
+        if lng is not None:
+            self.lng = lng
+            
+        if lat is not None:
+            self.lat = lat
+            
+        if elv is not None:
+            self.elv = elv
+            
+        self.astropy = astropy
         
-        self.elv = elv
+    @property
+    def lng(self):
+        return self._lng
         
+    @lng.setter
+    def lng(self, value):
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set lng when this.astropy is not None")
+            
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value <= -360.0 or value >= 360.0:
+            raise ValueError(f"lng parameter range is (-360.0, 360.0), is set to {value:0.3f}")
+        self._lng = value
+        
+    @property
+    def lat(self):
+        return self._lat
+        
+    @lat.setter
+    def lat(self, value):
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set lat when this.astropy is not None")
+            
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value < -90.0 or value > 90.0:
+            raise ValueError(f"lat paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+        self._lat = value
+    
+    @property
+    def elv(self):
+        return self._elv
+        
+    @elv.setter
+    def elv(self, value):
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot elv when this.astropy is not None")
+            
+        self._elv = value
+        
+    @property
+    def astropy(self):
+        return self._astropy
+        
+    @astropy.setter
+    def astropy(self, value):
+        if not isinstance(value, (type(None), EarthLocation)):
+            raise TypeError("Expected an object of type None or EarthLocation")
+            
+        self._astropy = value
+        if self._astropy is not None:
+            self._lng = self._astropy.lon.deg
+            self._lat = self._astropy.lat.deg
+            self._elv = self._astropy.height.to('m').value
+            
     def __str__(self):
         """
-        Get string representation of geo_posn object.
+        geo_posn object print/str method.
         """
         
-        return lnlat_posn.__str__(self) + f" {self.elv:0.3f}"
+        return f"{self.lng:0.3f} {self.lat:0.3f} {self.elv:0.3f}"
         
+    def __repr__(self):
+        """
+        geo_posn object repr string method
+        """
+        
+        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat), repr(self.elv))
+            
     def __reduce__(self):
         """
         geo_posn object pickle reduce method.
@@ -3159,52 +3275,65 @@ class geo_posn(lnlat_posn):
         
         return (geo_posn, (self.lng, self.lat, self.elv))
         
-    def __repr__(self):
-        """
-        geo_posn object repr string method.
-        """
-        
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat), repr(self.elv))
-        
     def __getitem__(self, key):
         """
         Get members by subscript index.
         """
         
-        if key == 2:
+        if key == 0:
+            return self.lng
+        elif key == 1:
+            return self.lat
+        elif key == 2:
             return self.elv
         else:
-            return lnlat_posn.__getitem__(self, key)
-            
+            raise ValueError(f"subscript {key} out of range")
+                
     def __setitem__(self, key, value):
         """
         Set members by subscript index.
         """
         
-        if key == 2:
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set index {key} when this.astropy is not None")
+            
+        if key == 0:
+            self.lng = value
+        elif key == 1:
+            self.lat = value
+        elif key == 2:
             self.elv = value
         else:
-            lnlat_posn.__setitem__(self, key, value)
-            
+            raise ValueError(f"subscript {key} out of range")
+        
     def __eq__(self, other):
         """
-        geo_posn equality operation.
+        geo_posn equality test.
         """
         
         if not isinstance(other, geo_posn):
             raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
-        return lnlat_posn.__eq__(self, other) and (self.elv == other.elv)
-        
+        return (self.lng == other.lng) and (self.lat == other.lat) and (self.elv == other.elv)
+            
     def __ne__(self, other):
         """
-        geo_posn non-equality operation.
+        geo_posn non-equality test.
         """
         
         if not isinstance(other, geo_posn):
             raise TypeError(f"comparison not supported for type {type(other).__name__}")
             
-        return lnlat_posn.__ne__(self, other) or (self.elv != other.elv)
+        return (self.lng != other.lng) or (self.lat != other.lat) or (self.elv != other.elv)
+        
+    def format(self):
+        """
+        Return a tuple (lng, lat) where lng is an dms object and
+        lat is a dms object representing longitude and latitude
+        position coordinates.
+        """
+        
+        return (deg_to_dms(self.lng), deg_to_dms(self.lat), self.elv)
 
 
 ######################################################################
@@ -3334,8 +3463,7 @@ def get_precession(jD1, pos, jD2):
     t2 = AstroTime(jD2, format='jd', scale='utc')
     sc = sc.transform_to(FK5(equinox=t2))
     
-    _posn.ra = sc.ra.deg
-    _posn.dec = sc.dec.deg
+    _posn.astropy = sc
     return _posn
 
 
@@ -3357,8 +3485,7 @@ def B1950_to_J2000(pos):
                   frame='fk4', equinox='B1950')
     sc = sc.transform_to(FK5(equinox='J2000'))
     
-    _posn.ra = sc.ra.deg
-    _posn.dec = sc.dec.deg
+    _posn.astropy = sc
     return _posn
 
 
@@ -3380,6 +3507,5 @@ def J2000_to_B1950(pos):
                   frame='fk5', equinox='J2000')
     sc = sc.transform_to(FK4(equinox='B1950'))
     
-    _posn.ra = sc.ra.deg
-    _posn.dec = sc.dec.deg
+    _posn.astropy = sc
     return _posn

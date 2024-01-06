@@ -817,9 +817,10 @@ class astro_tests(unittest.TestCase):
         """Test astro.geo_posn.format() method."""
         
         g = astro.geo_posn(39.221, -24.543, 2000.345)
-        (lng, lat) = g.format()
+        (lng, lat, elv) = g.format()
         self.assertAlmostEqual(lng.to_deg(), 39.221)
         self.assertAlmostEqual(lat.to_deg(), -24.543)
+        self.assertAlmostEqual(elv, 2000.345)
         
     def test_rect_posn_init(self):
         """Test astro.rect_posn constructor method."""
@@ -885,7 +886,7 @@ class astro_tests(unittest.TestCase):
             astro.hms( 1, 14, 39.0438).to_deg(),
             astro.hms(10, 28, 52.5980).to_deg())
             
-        obs = astro.lnlat_posn(0.0, 0.0)    
+        obs = astro.geo_posn(0.0, 0.0)    
         
         ira = iter(ra_aa)
         for t in self.times:
@@ -911,7 +912,7 @@ class astro_tests(unittest.TestCase):
             astro.hms(10, 28, 52.5980).to_deg()) 
             
         hrz = astro.hrz_posn(0.0, 60.0)
-        obs = astro.lnlat_posn(0.0, 0.0)
+        obs = astro.geo_posn(0.0, 0.0)
         
         ira = iter(ra_aa)
         for t in self.times:
