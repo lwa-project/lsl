@@ -24,7 +24,7 @@ import ephem
 import numpy as np
 from astropy.constants import c as speedOfLight
 from astropy.coordinates import Angle as AstroAngle
-from astropy.coordinates import EarthLocation as AstroEarthLocation
+from astropy.coordinates import EarthLocation as EarthLocation
 
 from lsl.common.stations import lwa1
 
@@ -171,7 +171,7 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
         dec2 = dec.radian
     else:
         dec2 = dec * np.pi/180
-    if isinstance(site, AstroEarthLocation):
+    if isinstance(site, EarthLocation):
         lat2 = site.lat.radian
     else:
         lat2 = site.lat
@@ -235,7 +235,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
         dec2 = dec.radian
     else:
         dec2 = dec * np.pi/180
-    if isinstance(site, AstroEarthLocation):
+    if isinstance(site, EarthLocation):
         lat2 = site.lat.radian
     else:
         lat2 = site.lat
