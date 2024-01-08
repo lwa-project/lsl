@@ -1504,6 +1504,32 @@ class astro_tests(unittest.TestCase):
         assert_spatially_close((equ.ra,equ.dec),
                                (pos_B1950.ra,pos_B1950.dec),
                                degrees=True, decimal=ACCURACY_DIST)
+        
+    def test_resolve_name(self):
+        """Test astro.resolve_name() function."""
+        
+        ACCURACY_DIST = 3
+        
+        # Test set generated at https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxp/SNV
+        pos_Barnard = astro.equ_posn(269.4520769586187, 4.69336496657667)
+        pos_B1919 = astro.equ_posn(290.4367292, 21.8839583)
+        
+        equ = astro.resolve_name("Barnard's star")
+        assert_spatially_close((equ.ra, equ.dec),
+                                (pos_Barnard.ra, pos_Barnard.dec),
+                                degrees=True, decimal=ACCURACY_DIST)
+        self.assertTrue(equ.pm_ra is not None)
+        self.assertTrue(equ.distance is not None)
+        
+        equ = astro.resolve_name("PSR B1919+21")
+        assert_spatially_close((equ.ra, equ.dec),
+                                (pos_B1919.ra, pos_B1919.dec),
+                                degrees=True, decimal=ACCURACY_DIST)
+        self.assertTrue(equ.pm_ra is None)
+        self.assertTrue(equ.distance is None)
+        
+        with self.assertRaises(RuntimeError):
+            equ = astro.resolve_name("PSR B1919asdfd+21")
 
 
 class astro_test_suite(unittest.TestSuite):

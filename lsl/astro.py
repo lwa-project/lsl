@@ -9,8 +9,10 @@ import math
 import numpy as np
 import warnings
 from urllib.request import urlopen
+from urllib.parse import quote_plus
 from calendar import timegm
 from datetime import datetime
+from xml.etree import ElementTree
 from functools import total_ordering
 
 from scipy.interpolate import interp1d
@@ -33,30 +35,30 @@ telemetry.track_module()
 
 __version__   = '0.6'
 __all__ = ['dms', 'hms', 'date', 'zonedate', 'rst_time', 'hrz_posn', 'equ_posn', 
-           'gal_posn', 'rect_posn', 'ecl_posn', 
-           'get_gmtoff', 'date_to_zonedate', 'zonedate_to_date', 'rad_to_deg', 
-           'deg_to_rad', 'dms_to_rad', 'dms_to_deg', 'deg_to_dms', 'rad_to_dms', 
-           'hms_to_deg', 'hms_to_rad', 'deg_to_hms', 'rad_to_hms', 'add_secs_hms', 
-           'add_hms', 'hrz_to_nswe', 'range_degrees', 'get_julian_day', 
-           'get_julian_local_date', 'get_date', 'get_day_of_week', 
-           'get_julian_from_sys', 'get_date_from_sys', 'get_julian_from_timet', 
-           'get_timet_from_julian', 'get_hrz_from_equ', 'get_equ_from_hrz', 
-           'get_ecl_from_rect', 'get_equ_from_ecl', 'get_ecl_from_equ', 
-           'get_equ_from_gal', 'get_gal_from_equ', 'get_apparent_sidereal_time', 
-           'get_mean_sidereal_time', 'get_angular_separation', 'get_rel_posn_angle', 
-           'get_apparent_posn', 'get_equ_prec', 'get_equ_prec2', 'get_object_rst', 
-           'get_solar_equ_coords', 'get_solar_rst', 'get_jupiter_equ_coords', 
-           'get_jupiter_rst', 'get_saturn_equ_coords', 'get_saturn_rst', 
-           'get_lunar_equ_coords', 'get_lunar_rst', 'get_venus_equ_coords', 
+           'gal_posn', 'rect_posn', 'ecl_posn', 'get_gmtoff', 'date_to_zonedate',
+           'zonedate_to_date', 'rad_to_deg', 'deg_to_rad', 'dms_to_rad',
+           'dms_to_deg', 'deg_to_dms', 'rad_to_dms', 'hms_to_deg', 'hms_to_rad',
+           'deg_to_hms', 'rad_to_hms', 'add_secs_hms', 'add_hms', 'hrz_to_nswe',
+           'range_degrees', 'get_julian_day', 'get_julian_local_date', 'get_date',
+           'get_day_of_week', 'get_julian_from_sys', 'get_date_from_sys',
+           'get_julian_from_timet', 'get_timet_from_julian', 'get_hrz_from_equ',
+           'get_equ_from_hrz', 'get_ecl_from_rect', 'get_equ_from_ecl',
+           'get_ecl_from_equ', 'get_equ_from_gal', 'get_gal_from_equ',
+           'get_apparent_sidereal_time', 'get_mean_sidereal_time',
+           'get_angular_separation', 'get_rel_posn_angle', 'get_apparent_posn',
+           'get_equ_prec', 'get_equ_prec2', 'get_object_rst',
+           'get_solar_equ_coords', 'get_solar_rst', 'get_jupiter_equ_coords',
+           'get_jupiter_rst', 'get_saturn_equ_coords', 'get_saturn_rst',
+           'get_lunar_equ_coords', 'get_lunar_rst', 'get_venus_equ_coords',
            'get_venus_rst', 'get_mars_equ_coords', 'get_mars_rst', 'sec_to_jd', 
            'jd_to_sec',  'range_hours', 'jd_to_mjd', 'mjd_to_jd', 'leap_secs', 
            'utc_to_tai', 'tai_to_utc', 'taimjd_to_utcjd', 'utcjd_to_taimjd', 
            'unix_to_utcjd', 'unix_to_taimjd', 'utcjd_to_unix', 'taimjd_to_unix', 
            'tai_to_tt', 'tt_to_tai', 'utc_to_tt', 'tt_to_utc', 'tt_to_tdb', 
-           'get_tai_from_sys', 'hms_to_sec', 'deg_to_sec', 'get_local_sidereal_time', 
-           'geo_posn', 'dir_cos', 'get_rect_from_equ', 'get_equ_from_rect', 
-           'get_geo_from_rect', 'get_rect_from_geo', 'get_precession', 'B1950_to_J2000', 
-           'J2000_to_B1950']
+           'get_tai_from_sys', 'hms_to_sec', 'deg_to_sec',
+           'get_local_sidereal_time', 'geo_posn', 'dir_cos', 'get_rect_from_equ',
+           'get_equ_from_rect', 'get_geo_from_rect', 'get_rect_from_geo',
+           'get_precession', 'B1950_to_J2000', 'J2000_to_B1950', 'resolve_name']
 __author__    = 'D. L. Wood'
 __maintainer__ = 'Jayce Dowell'
 
@@ -3508,4 +3510,71 @@ def J2000_to_B1950(pos):
     sc = sc.transform_to(FK4(equinox='B1950'))
     
     _posn.astropy = sc
+    return _posn
+
+
+def resolve_name(name):
+    """
+    Given the name of an astronomical source resolve it into coordinates.
+    
+    Param: name - object of type str giving the name of the source
+    
+    Returns: object of equ_posn giving coordinates in the astropy.coordinats.ICRS
+             frame with additional information about the proper motion (pm_ra and
+             pm_dec; mas/yr), distance (distance; pc), and resolver service
+             (resolved_by; str).
+    """
+    
+    try:
+        result = urlopen('https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxp/SNV?%s' % quote_plus(name))
+        tree = ElementTree.fromstring(result.read())
+        target = tree.find('Target')
+        service = target.find('Resolver')
+        ra = service.find('jradeg')
+        dec = service.find('jdedeg')
+        try:
+            pm = service.find('pm')
+        except Exception as e:
+            pm = None
+        try:
+            plx = service.find('plx')
+        except Exception as e:
+            plx = None
+            
+        service = service.attrib['name'].split('=', 1)[1]
+        ra = float(ra.text)
+        dec = float(dec.text)
+        coordsys = 'J2000'
+        if pm is not None:
+            pmRA = float(pm.find('pmRA').text)
+            pmDec = float(pm.find('pmDE').text)
+        else:
+            pmRA = None
+            pmDec = None
+        if plx is not None:
+            dist = float(plx.find('v').text)
+        else:
+            dist = None
+            
+        _posn = equ_posn()
+        _posn.resolved_by = service
+        _posn.pm_ra = pmRA
+        _posn.pm_dec = pmDec
+        _posn.distance = dist
+        if pmRA is not None:
+            pmRA = pmRA*math.cos(dec*math.pi/180)*astrounits.mas/astrounits.yr
+        if pmDec is not None:
+            pmDec = pmDec*astrounits.mas/astrounits.yr
+        if dist is not None:
+            dist = dist*astrounits.pc
+            
+        sc = SkyCoord(ra*astrounits.deg, dec*astrounits.deg,
+                      pm_ra_cosdec=pmRA, pm_dec=pmDec,
+                      distance=dist,
+                      frame='icrs')
+        _posn.astropy = sc
+        
+    except (IOError, AttributeError, ValueError, RuntimeError) as e:
+        raise RuntimeError(f"Failed to resolve source '{name}'")
+        
     return _posn
