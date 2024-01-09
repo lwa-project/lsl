@@ -326,11 +326,11 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     if overrides is not None:
         adp_macros.update(overrides)
     not_int = []
-    for k in dp_macros:
-        if not isinstance(dp_macros[k], (int, np.integer)):
+    for k in adp_macros:
+        if not isinstance(adp_macros[k], (int, np.integer)):
             not_int.append(k)
     for k in not_int:
-        del dp_macros[k]
+        del adp_macros[k]
         
     return _parse_c_struct(cStruct, char_mode=char_mode, endianness=endianness,
                            overrides=adp_macros)
