@@ -339,8 +339,9 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     """
     
     # Process the macro overrides dictionary
-    if overrides is None:
-        overrides = {}
+    dp_macros = {a: globals()[a] for a in __all__}
+    if overrides is not None:
+        dp_macros.update(overrides)
         
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):
@@ -380,28 +381,16 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         try:
             d1 = mtch.group('d1')
             if d1 is not None:
-                try:
-                    d1 = overrides[d1]
-                except KeyError:
-                    d1 = eval(d1)
+                d1 = eval(d1, None, dp_macros)
             d2 = mtch.group('d2')
             if d2 is not None:
-                try:
-                    d2 = overrides[d2]
-                except KeyError:
-                    d2 = eval(d2)
+                d2 = eval(d2, None, dp_macros)
             d3 = mtch.group('d3')
             if d3 is not None:
-                try:
-                    d3 = overrides[d3]
-                except KeyError:
-                    d3 = eval(d3)
+                d3 = eval(d3, None, dp_macros)
             d4 = mtch.group('d4')
             if d4 is not None:
-                try:
-                    d4 = overrides[d4]
-                except KeyError:
-                    d4 = eval(d4)
+                d4 = eval(d4, None, dp_macros)
         except NameError:
             raise RuntimeError(f"Unknown value in array index: '{line}'")
         
@@ -517,7 +506,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
             
             output = {}
             for f,d in self._fields_:
-                output[f] = eval("self.%s" % f)
+                output[f] = getattr(self, f)
             return output
     
     # Create and return
