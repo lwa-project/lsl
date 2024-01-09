@@ -680,8 +680,9 @@ class hrz_posn(object):
     """
     
     _astropy = None
+    _distance = None
     
-    def __init__(self, az = 0.0, alt = 0.0, astropy = None):
+    def __init__(self, az = 0.0, alt = 0.0):
         """
         Create a hrz_posn object.
         
@@ -695,10 +696,30 @@ class hrz_posn(object):
         if alt is not None:
             self.alt = alt
             
-        self.astropy = astropy
+    @classmethod
+    def from_astropy(kls, value):
+        if not isinstance(value, SkyCoord):
+            raise TypeError("Expected an object of type SkyCoord")
+            
+        if value is not None and not isinstance(value.frame, AltAz):
+            raise TypeError("Expected a SkyCoord in the frame of AltAz")
+            
+        _posn = kls()
+        _posn._astropy = value
+        _posn._az = value.az.deg
+        _posn._alt = value.alt.deg
+        try:
+            _posn._distance = value.distance.to('pc').value
+        except astrounits.UnitConversionError:
+            pass
+        return _posn
         
     @property
     def az(self):
+        """
+        Azimiuth in degrees.
+        """
+        
         return self._az
         
     @az.setter
@@ -712,6 +733,10 @@ class hrz_posn(object):
         
     @property
     def alt(self):
+        """
+        Altitude in degrees.
+        """
+        
         return self._alt
         
     @alt.setter
@@ -722,24 +747,19 @@ class hrz_posn(object):
         if value < -90.0 or value > 90.0:
             raise ValueError(f"alt paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
         self._alt = value
-    
+        
+    @property
+    def distance(self):
+        """
+        Distance in pc or None is the distance is unknown.
+        """
+        
+        return self._distance
+        
     @property
     def astropy(self):
         return self._astropy
         
-    @astropy.setter
-    def astropy(self, value):
-        if not isinstance(value, (type(None), SkyCoord)):
-            raise TypeError("Expected an object of type None or SkyCoord")
-            
-        if value is not None and not isinstance(value.frame, AltAz):
-            raise TypeError("Expected a SkyCoord in the frame of AltAz")
-            
-        self._astropy = value
-        if self._astropy is not None:
-            self._az = self._astropy.az.deg
-            self._alt = self._astropy.alt.deg
-            
     def zen(self, value = None):
         """
         If value is None, returns position zenith angle (float degrees 
@@ -861,8 +881,11 @@ class equ_posn(object):
     """
     
     _astropy = None
+    _pm_ra = None
+    _pm_dec = None
+    _distance = None
     
-    def __init__(self, ra = 0.0, dec = 0.0, astropy = None):
+    def __init__(self, ra = 0.0, dec = 0.0):
         """
         Create a equ_posn object.
         
@@ -878,10 +901,36 @@ class equ_posn(object):
         if dec is not None:
             self.dec = dec
             
-        self.astropy = astropy
+    @classmethod
+    def from_astropy(kls, value):
+        if not isinstance(value, (SkyCoord, ICRS, FK4, FK5)):
+            raise TypeError("Expected an object of type SkyCoord, ICRS, FK4, or FK5")
+            
+        if isinstance(value, SkyCoord):
+            if not isinstance(value.frame, (ICRS, FK4, FK5, PrecessedGeocentric)):
+                raise TypeError("Expected a SkyCoord in the frame of ICRS, FK4, FK5, or PrecessedGeocentric")
+                
+        _posn = kls()
+        _posn._astropy = value
+        _posn._ra = value.ra.deg
+        _posn._dec = value.dec.deg
+        try:
+            _posn._pm_ra = value.pm_ra_cosdec.to('mas/yr').value / math.cos(value.dec.rad)
+            _posn._pm_dec = value.pm_dec.to('mas/yr').value
+        except TypeError:
+            pass
+        try:
+            _posn._distance = value.distance.to('pc').value
+        except astrounits.UnitConversionError:
+            pass
+        return _posn
         
     @property
     def ra(self):
+        """
+        RA in degrees.
+        """
+        
         return self._ra
         
     @ra.setter
@@ -897,6 +946,10 @@ class equ_posn(object):
         
     @property
     def dec(self):
+        """
+        Declination in degrees.
+        """
+        
         return self._dec
         
     @dec.setter
@@ -911,23 +964,33 @@ class equ_posn(object):
         self._dec = value
         
     @property
+    def pm_ra(self):
+        """
+        Proper motion in RA in mas/yr or None if it is unknown.
+        """
+        
+        return self._pm_ra
+        
+    @property
+    def pm_dec(self):
+        """
+        Proper motion in declination in mas/yr or None if it is unknown.
+        """
+        
+        return self._pm_dec
+        
+    @property
+    def distance(self):
+        """
+        Distance in pc or None if it is unknown.
+        """
+        
+        return self._distance
+        
+    @property
     def astropy(self):
         return self._astropy
         
-    @astropy.setter
-    def astropy(self, value):
-        if not isinstance(value, (type(None), SkyCoord, ICRS, FK4, FK5)):
-            raise TypeError("Expected an object of type None, SkyCoord, ICRS, FK4, or FK5")
-            
-        if isinstance(value, SkyCoord):
-            if not isinstance(value.frame, (ICRS, FK4, FK5, PrecessedGeocentric)):
-                raise TypeError("Expected a SkyCoord in the frame of ICRS, FK4, FK5, or PrecessedGeocentric")
-                
-        self._astropy = value
-        if self._astropy is not None:
-            self._ra = self._astropy.ra.deg
-            self._dec = self._astropy.dec.deg
-            
     def __str__(self):
         """
         equ_posn object str/print method.
@@ -1079,8 +1142,11 @@ class gal_posn(object):
     """
     
     _astropy = None
+    _pm_l = None
+    _pm_b = None
+    _distance = None
     
-    def __init__(self, l = 0.0, b = 0.0, astropy = None):
+    def __init__(self, l = 0.0, b = 0.0):
         """
         Create a gal_posn object.
         
@@ -1096,10 +1162,35 @@ class gal_posn(object):
         if b is not None:
             self.b = b
             
-        self.astropy = astropy
+    @classmethod
+    def from_astropy(kls, value):
+        if not isinstance(value, SkyCoord):
+            raise TypeError("Expected an object of type SkyCoord")
+            
+        if value is not None and not isinstance(value.frame, Galactic):
+            raise TypeError("Expected a SkyCoord in the frame of Galactic")
+            
+        _posn = kls()
+        _posn._astropy = value
+        _posn._l = value.l.deg
+        _posn._b = value.b.deg
+        try:
+            _posn._pm_l = value.pm_l_cosb.to('mas/yr').value / math.cos(value.b.rad)
+            _posn._pm_b = value.pm_b.to('mas/yr').value
+        except TypeError:
+            pass
+        try:
+            _posn._distance = value.distance.to('pc').value
+        except astrounits.UnitConversionError:
+            pass
+        return _posn
         
     @property
     def l(self):
+        """
+        Galactic longitude in degrees.
+        """
+        
         return self._l
         
     @l.setter
@@ -1115,6 +1206,10 @@ class gal_posn(object):
         
     @property
     def b(self):
+        """
+        Galactic latitude in degrees.
+        """
+        
         return self._b
         
     @b.setter
@@ -1129,22 +1224,33 @@ class gal_posn(object):
         self._b = value
         
     @property
+    def pm_l(self):
+        """
+        Proper motion in Galactic longitude in mas/yr or None if it is unknown.
+        """
+        
+        return self._pm_l
+        
+    @property
+    def pm_b(self):
+        """
+        Proper motion in Galactic latitude in mas/yr or None if it is unknown.
+        """
+        
+        return self._pm_b
+        
+    @property
+    def distance(self):
+        """
+        Distance in pc or None if it is unknown.
+        """
+        
+        return self._distance
+        
+    @property
     def astropy(self):
         return self._astropy
         
-    @astropy.setter
-    def astropy(self, value):
-        if not isinstance(value, (type(None), SkyCoord)):
-            raise TypeError("Expected an object of type None or SkyCoord")
-            
-        if value is not None and not isinstance(value.frame, Galactic):
-            raise TypeError("Expected a SkyCoord in the frame of Galactic")
-            
-        self._astropy = value
-        if self._astropy is not None:
-            self._l = self._astropy.l.deg
-            self._b = self._astropy.b.deg
-            
     def __str__(self):
         """
         gal_posn object print/str method.
@@ -1351,15 +1457,46 @@ class ecl_posn(object):
     """
     
     _astropy = None
+    _pm_lng = None
+    _pm_lat = None
+    _distance = None
     
-    def __init__(self, lng = 0.0, lat = 0.0, astropy = None):
-        self.lng = lng
-        self.lat = lat
-        
-        self.astropy = astropy
+    def __init__(self, lng = 0.0, lat = 0.0):
+        if lng is not None:
+            self.lng = lng
+            
+        if lat is not None:
+            self.lat = lat
+            
+    @classmethod
+    def from_astropy(kls, value):
+        if not isinstance(value, SkyCoord):
+            raise TypeError("Expected an object of type SkyCoord")
+            
+        if value is not None and not isinstance(value.frame, GeocentricTrueEcliptic):
+            raise TypeError("Expected a SkyCoord in the frame of GeocentricTrueEcliptic")
+            
+        _posn = kls()
+        _posn._astropy = value
+        _posn._lng = value.lon.deg
+        _posn._lat = value.lat.deg
+        try:
+            _posn._pm_lng = value.pm_lon_coslat.to('mas/yr').value / math.cos(value.lat.rad)
+            _posn._pm_lat = value.pm_lat.to('mas/yr').value
+        except TypeError:
+            pass
+        try:
+            _posn._distance = value.distance.to('pc').value
+        except astrounits.UnitConversionError:
+            pass
+        return _posn
         
     @property
     def lng(self):
+        """
+        Ecliptic longitude in degees.
+        """
+        
         return self._lng
         
     @lng.setter
@@ -1375,6 +1512,10 @@ class ecl_posn(object):
         
     @property
     def lat(self):
+        """
+        Ecliptic latitude in degrees.
+        """
+        
         return self._lat
         
     @lat.setter
@@ -1389,22 +1530,33 @@ class ecl_posn(object):
         self._lat = value
         
     @property
+    def pm_lng(self):
+        """
+        Proper motion in Ecliptic longitude in mas/yr or None if it is unknown.
+        """
+        
+        return self._pm_lng
+        
+    @property
+    def pm_lat(self):
+        """
+        Proper motion in Ecliptic latitude in mas/yr or None if it is unknown.
+        """
+        
+        return self._pm_lat
+        
+    @property
+    def distance(self):
+        """
+        Distance in pc or None if it is unknown.
+        """
+        
+        return self._distance
+        
+    @property
     def astropy(self):
         return self._astropy
         
-    @astropy.setter
-    def astropy(self, value):
-        if not isinstance(value, (type(None), SkyCoord)):
-            raise TypeError("Expected an object of type None or SkyCoord")
-            
-        if value is not None and not isinstance(value.frame, GeocentricTrueEcliptic):
-            raise TypeError("Expected a SkyCoord in the frame of GeocentricTrueEcliptic")
-            
-        self._astropy = value
-        if self._astropy is not None:
-            self._lng = self._astropy.lon.deg
-            self._lat = self._astropy.lat.deg
-            
     def __str__(self):
         """
         ecl_posn object print/str method.
@@ -1900,7 +2052,6 @@ def get_hrz_from_equ(target, observer, jD):
     except AttributeError:
         elv = 0.0
         
-    _posn = hrz_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
                                      height=elv*astrounits.m,
@@ -1910,8 +2061,7 @@ def get_hrz_from_equ(target, observer, jD):
     aa = AltAz(location=el, obstime=t)
     sc = sc.transform_to(aa)
     
-    _posn.astropy = sc
-    return _posn
+    return hrz_posn.from_astropy(sc)
 
 
 def get_equ_from_hrz(target, observer, jD):
@@ -1931,7 +2081,6 @@ def get_equ_from_hrz(target, observer, jD):
     except AttributeError:
         elv = 0.0
         
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
                                      height=elv*astrounits.m,
@@ -1940,8 +2089,7 @@ def get_equ_from_hrz(target, observer, jD):
                location=el, obstime=t)
     sc = aa.transform_to(FK5(equinox='J2000'))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def get_ecl_from_rect(rect):
@@ -1971,14 +2119,12 @@ def get_equ_from_ecl(target, jD):
     astropy.coordinates.FK5 frame with equinox=J2000.
     """
     
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     sc = GeocentricTrueEcliptic(target.lng*astrounits.deg, target.lat*astrounits.deg,
                                 equinox='J2000', obstime=t)
     sc = sc.transform_to(FK5(equinox='J2000'))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def get_ecl_from_equ(target, jD):
@@ -1995,14 +2141,12 @@ def get_ecl_from_equ(target, jD):
     obstime=jD.
     """
     
-    _posn = ecl_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
                   frame='fk5', equinox='J2000')
     sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t))
     
-    _posn.astropy = sc
-    return _posn    
+    return ecl_posn.from_astropy(sc)
 
 
 def get_equ_from_gal(target):
@@ -2018,13 +2162,11 @@ def get_equ_from_gal(target):
       This function now expects J2000 coordinates
     """
     
-    _posn = equ_posn()
     sc = SkyCoord(target.l*astrounits.deg, target.b*astrounits.deg,
                   frame='galactic')
     sc = sc.transform_to(FK5(equinox='J2000'))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def get_gal_from_equ(target):
@@ -2041,13 +2183,11 @@ def get_gal_from_equ(target):
       This function now expects J2000 coordinates
     """
     
-    _posn = gal_posn()
     sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
                   frame='fk5', equinox='J2000')
     sc = sc.transform_to(Galactic())
     
-    _posn.astropy = sc
-    return _posn
+    return gal_posn.from_astropy(sc)
 
 
 ######################################################################
@@ -2152,9 +2292,10 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
     """
     
     if proper_motion is None:
-        proper_motion = _DEFAULT_PROPER_MOTION  
-        
-    _posn = equ_posn()
+        proper_motion = [mean_position.pm_ra, mean_position.pm_dec]
+        if proper_motion[0] is None or proper_motion[1] is None:
+            proper_motion = _DEFAULT_PROPER_MOTION  
+            
     t = AstroTime(jD, format='jd', scale='utc')
     sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
                   pm_ra_cosdec=proper_motion[0]*math.cos(proper_motion[1]/1000/3600*math.pi/180)*astrounits.mas/astrounits.yr,
@@ -2162,8 +2303,7 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
                   frame='fk5', equinox='J2000')
     sc = sc.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
         
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 ######################################################################
@@ -2182,14 +2322,12 @@ def get_equ_prec(mean_position, jD):
              (equinox=jD) of object as type equ_posn.
     """    
     
-    _posn = equ_posn()
     sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
                   frame='fk5', equinox='J2000')
     t = AstroTime(jD, format='jd', scale='utc')
     sc = sc.transform_to(FK5(equinox=t))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def get_equ_prec2(mean_position, fromJD, toJD):
@@ -2204,15 +2342,13 @@ def get_equ_prec2(mean_position, fromJD, toJD):
              object as type equ_posn converted from time 1 to time 2.
     """  
     
-    _posn = equ_posn()
     t1 = AstroTime(fromJD, format='jd', scale='utc')
     sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
                   frame='fk5', equinox=t1)
     t2 = AstroTime(toJD, format='jd', scale='utc')
     sc = sc.transform_to(FK5(equinox=t2))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 ######################################################################
@@ -2425,14 +2561,12 @@ def get_solar_equ_coords(jD):
     obstime = jD.
     """
     
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
         b = get_body('sun', t)
         b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
         
-    _posn.astropy = b
-    return _posn
+    return equ_posn.from_astropy(b)
 
 
 def get_solar_rst(jD, observer):
@@ -2465,14 +2599,12 @@ def get_jupiter_equ_coords(jD):
     obstime = jD.
     """
     
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
         b = get_body('jupiter', t)
         b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
         
-    _posn.astropy = b
-    return _posn
+    return equ_posn.from_astropy(b)
 
 
 def get_jupiter_rst(jD, observer):
@@ -2505,14 +2637,12 @@ def get_saturn_equ_coords(jD):
     obstime = jD.
     """
     
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
         b = get_body('saturn', t)
         b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
         
-    _posn.astropy = b
-    return _posn
+    return equ_posn.from_astropy(b)
 
 
 def get_saturn_rst(jD, observer):
@@ -2545,14 +2675,12 @@ def get_lunar_equ_coords(jD):
     obstime = jD.
     """
     
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
         b = get_body('moon', t)
         b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
         
-    _posn.astropy = b
-    return _posn
+    return equ_posn.from_astropy(b)
 
 
 def get_lunar_rst(jD, observer):
@@ -2585,14 +2713,12 @@ def get_venus_equ_coords(jD):
     obstime = jD.
     """
     
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
         b = get_body('venus', t)
         b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
         
-    _posn.astropy = b
-    return _posn
+    return equ_posn.from_astropy(b)
 
 
 def get_venus_rst(jD, observer):
@@ -2625,14 +2751,12 @@ def get_mars_equ_coords(jD):
     obstime = jD.
     """
     
-    _posn = equ_posn()
     t = AstroTime(jD, format='jd', scale='utc')
     with solar_system_ephemeris.set(SOLAR_SYSTEM_EPHEMERIS_TO_USE):
         b = get_body('mars', t)
         b = b.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
         
-    _posn.astropy = b
-    return _posn
+    return equ_posn.from_astropy(b)
 
 
 def get_mars_rst(jD, observer):
@@ -3035,7 +3159,7 @@ class geo_posn(object):
     
     _astropy = None
     
-    def __init__(self, lng = 0.0, lat = 0.0, elv = 0.0, astropy = None):
+    def __init__(self, lng = 0.0, lat = 0.0, elv = 0.0):
         """
         Create a geo_posn object.
         
@@ -3055,7 +3179,17 @@ class geo_posn(object):
         if elv is not None:
             self.elv = elv
             
-        self.astropy = astropy
+    @classmethod
+    def from_astropy(kls, value):
+        if not isinstance(value, EarthLocation):
+            raise TypeError("Expected an object of type EarthLocation")
+            
+        _posn = kls()
+        _posn._astropy = value
+        _posn._lng = value.lon.wrap_at(360*astrounits.deg).deg
+        _posn._lat = value.lat.deg
+        _posn._elv = value.height.to('m').value
+        return _posn
         
     @property
     def lng(self):
@@ -3102,17 +3236,6 @@ class geo_posn(object):
     def astropy(self):
         return self._astropy
         
-    @astropy.setter
-    def astropy(self, value):
-        if not isinstance(value, (type(None), EarthLocation)):
-            raise TypeError("Expected an object of type None or EarthLocation")
-            
-        self._astropy = value
-        if self._astropy is not None:
-            self._lng = self._astropy.lon.deg
-            self._lat = self._astropy.lat.deg
-            self._elv = self._astropy.height.to('m').value
-            
     def __str__(self):
         """
         geo_posn object print/str method.
@@ -3256,11 +3379,9 @@ def get_equ_from_rect(posn):
     y = posn.Y
     z = posn.Z
     
-    _posn = equ_posn()
     sc = SkyCoord(CartesianRepresentation(x, y, z), frame='fk5', equinox='J2000')
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def get_geo_from_rect(posn):
@@ -3275,11 +3396,8 @@ def get_geo_from_rect(posn):
     """
     
     el = EarthLocation.from_geocentric(posn.X*astrounits.m, posn.Y*astrounits.m, posn.Z*astrounits.m)
-    lon = el.lon.deg
-    lat = el.lat.deg
-    h = el.height.to('m').value
     
-    return geo_posn(range_degrees(lon), lat, h)
+    return geo_posn.from_astropy(el)
 
 
 def get_rect_from_geo(posn):
@@ -3315,15 +3433,13 @@ def get_precession(jD1, pos, jD2):
     Returns: object of type equ_posn giving epoch 2 position.
     """
     
-    _posn = equ_posn()
     t1 = AstroTime(jD1, format='jd', scale='utc')
     sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
                   frame='fk5', equinox=t1)
     t2 = AstroTime(jD2, format='jd', scale='utc')
     sc = sc.transform_to(FK5(equinox=t2))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def B1950_to_J2000(pos):
@@ -3339,13 +3455,11 @@ def B1950_to_J2000(pos):
         The accuracy of this function is about 0.01 degrees.
     """
     
-    _posn = equ_posn()
     sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
                   frame='fk4', equinox='B1950')
     sc = sc.transform_to(FK5(equinox='J2000'))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def J2000_to_B1950(pos):
@@ -3361,13 +3475,11 @@ def J2000_to_B1950(pos):
         The accuracy of this function is about 0.01 degrees.
     """   
     
-    _posn = equ_posn()
     sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
                   frame='fk5', equinox='J2000')
     sc = sc.transform_to(FK4(equinox='B1950'))
     
-    _posn.astropy = sc
-    return _posn
+    return equ_posn.from_astropy(sc)
 
 
 def resolve_name(name):
@@ -3413,11 +3525,6 @@ def resolve_name(name):
         else:
             dist = None
             
-        _posn = equ_posn()
-        _posn.resolved_by = service
-        _posn.pm_ra = pmRA
-        _posn.pm_dec = pmDec
-        _posn.distance = dist
         if pmRA is not None:
             pmRA = pmRA*math.cos(dec*math.pi/180)*astrounits.mas/astrounits.yr
         if pmDec is not None:
@@ -3429,7 +3536,8 @@ def resolve_name(name):
                       pm_ra_cosdec=pmRA, pm_dec=pmDec,
                       distance=dist,
                       frame='icrs')
-        _posn.astropy = sc
+        _posn = equ_posn.from_astropy(sc)
+        _posn.resolved_by = service
         
     except (IOError, AttributeError, ValueError, RuntimeError) as e:
         raise RuntimeError(f"Failed to resolve source '{name}'")
