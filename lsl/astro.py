@@ -7,7 +7,6 @@ import sys
 import time
 import math
 import numpy as np
-import warnings
 from urllib.request import urlopen
 from urllib.parse import quote_plus
 from calendar import timegm
@@ -20,14 +19,6 @@ from scipy.interpolate import interp1d
 from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK4, FK5, Galactic, GeocentricTrueEcliptic, PrecessedGeocentric, CartesianRepresentation, AltAz, solar_system_ephemeris, get_body
-
-from lsl.common.progress import DownloadBar
-from lsl.misc.file_cache import FileCache, MemoryCache
-from lsl.common.color import colorfy
-
-from lsl.config import LSL_CONFIG
-ASTRO_CONFIG = LSL_CONFIG.view('astro')
-DOWN_CONFIG = LSL_CONFIG.view('download')
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -2728,132 +2719,6 @@ def jd_to_sec(jD):
 
 
 ######################################################################
-# This code is run at import time to load the UTC/TAI almanac data 
-# The information is provided from the USNO data file available from
-# site location http://maia.usno.navy.mil/ser7/tai-utc.dat.
-######################################################################
-
-# Create the cache directory
-try:
-    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'astro_cache'))
-except OSError:
-    _CACHE_DIR = MemoryCache()
-    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
-
-######################################################################
-#
-# Create empty UTC->leap second list.  The function _parse_tai_file()
-# will populate this list with tuples of three elements.  The three
-# tuple elements (utc_jd, leap_sec, leap_jd) are:
-#
-#   utc_jd    - The UTC Julian day time at which a leap second 
-#               adjustmentwas made
-#   leap_sec  - The cumulative number of leap seconds to add to the
-#               UTC value to get TAI
-#   leap_jd   - The 'leap_sec' value converted to Julian days
-#
-######################################################################
-
-FIRST_LEAP_UTC = 2441317.5
-
-_LEAP_SEC_LIST = []
-
-def _parse_tai_file():
-    # get path to almanac data file
-    download = True
-    if not 'Leap_Second.dat' in _CACHE_DIR:
-        from lsl.common.data_access import DataAccess
-        oldName = os.path.join('astro', 'Leap_Second.dat')
-        with DataAccess.open(oldName, 'rb') as oh:
-            with _CACHE_DIR.open('Leap_Second.dat', 'wb') as dh:
-                dh.write(oh.read())
-                
-    # check for expiration
-    with _CACHE_DIR.open('Leap_Second.dat', 'r') as datFile:
-        for l in datFile:
-            if l.find('File expires on') != -1:
-                expDate = l.strip().rstrip().split('on ', 1)[1]
-                expDate = datetime.strptime(expDate, "%d %B %Y")
-                if datetime.utcnow() < expDate:
-                    download = False
-                    
-    # download as needed
-    if download:
-        is_interactive = sys.__stdin__.isatty()
-        
-        url = ASTRO_CONFIG.get('leapsec_url')
-        
-        print("Downloading %s" % url)
-        lsFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        remote_size = 1
-        try:
-            remote_size = int(lsFH.headers["Content-Length"])
-        except AttributeError:
-            pass
-        try:
-            meta = lsFH.info()
-            remote_size = int(meta.getheaders("Content-Length")[0])
-        except AttributeError:
-            pass
-        pbar = DownloadBar(max=remote_size)
-        while True:
-            new_data = lsFH.read(DOWN_CONFIG.get('block_size'))
-            if len(new_data) == 0:
-                break
-            pbar.inc(len(new_data))
-            try:
-                data += new_data
-            except NameError:
-                data = new_data
-            if is_interactive:
-                sys.stdout.write(pbar.show()+'\r')
-                sys.stdout.flush()
-        lsFH.close()
-        if is_interactive:
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
-            
-        with _CACHE_DIR.open('Leap_Second.dat', 'wb') as fh:
-            fh.write(data)
-            
-    # read tai-utc.dat file to get conversion info
-    with _CACHE_DIR.open('Leap_Second.dat', 'r') as datFile:
-        lineNum = 0
-        for l in datFile:
-            if l.startswith('#'):
-                continue
-            elif len(l) < 3:
-                continue
-                
-            # split
-            utcMJD, day, month, year, leapSec = l.split(None, 4)
-            
-            # get UTC JD of leap second boundaries
-            try:
-                utcJD = float(utcMJD) + MJD_OFFSET
-            except ValueError:
-                raise RuntimeError(f"line {lineNum} of {datName} file not correctly formatted")
-                
-            # only get values prior to UTC JD 2441317.5 (1972 JAN  1)
-            if utcJD < FIRST_LEAP_UTC:
-                lineNum += 1
-                continue
-                
-            # get leap second asjustment value
-            try:
-                leapSec = float(leapSec)
-            except ValueError:
-                raise RuntimeError(f"line {lineNum} of {datName} file not correctly formatted")
-                
-            # add entry to list
-            _LEAP_SEC_LIST.append((utcJD, leapSec, sec_to_jd(leapSec)))
-            lineNum += 1
-
-
-_parse_tai_file()
-
-
-######################################################################
 # Time utility functions
 ######################################################################
 
@@ -2903,6 +2768,10 @@ def mjd_to_jd(mjd):
     return (mjd + MJD_OFFSET)
 
 
+FIRST_LEAP_UTC = 2441317.5
+
+_UNIX_EPOCH_AT = AstroTime(0, format='unix', scale='utc')
+
 def leap_secs(utcJD):
     """
     Get the number of leap seconds for given UTC time value.
@@ -2913,25 +2782,13 @@ def leap_secs(utcJD):
     Returns: The number of leap seconds (float) for the UTC time.
     """
     
-    # check the last entry first since it is likely the time is
-    # current or future
-    p = _LEAP_SEC_LIST[-1]
-    if utcJD >= p[0]:
-        return p[1]
-        
     if utcJD < FIRST_LEAP_UTC:
         raise ValueError(f"utcJD must be greater than {FIRST_LEAP_UTC}")
         
-    # search the conversion list for the UTC JD range
-    p = _LEAP_SEC_LIST[0]
-    for e in _LEAP_SEC_LIST[1:]:
-        if utcJD < e[0]:
-            return p[1]
-        p = e
-        
-    # the time is after the last conversion range entry
-    p = _LEAP_SEC_LIST[-1]
-    return p[1]    
+    t = AstroTime(utcJD, format='jd', scale='utc')
+    diff_unix = t.unix
+    diff_jd = (t - _UNIX_EPOCH_AT).sec
+    return round(diff_jd - diff_unix, 1) + 8   # +8 for initial 10 s offset between TAI and UTC
 
 
 def utc_to_tai(utcJD):
