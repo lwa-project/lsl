@@ -118,7 +118,7 @@ class FrameHeader(FrameHeaderBase):
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
         # and convert it to a MJD
-        frameDT = AstroTime(f"{2000+self.ref_epoch//2}-{(self.ref_epoch % 2)*6+1}-01 00:00:00",
+        frameDT = AstroTime(f"{2000+self.ref_epoch//2}-{(self.ref_epoch % 2)*6+1}-1 00:00:00",
                             format='iso', scale='utc')
         frameDT += AstroDelta(self.seconds_from_epoch, format='sec')
         

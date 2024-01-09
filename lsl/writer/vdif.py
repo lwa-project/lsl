@@ -89,8 +89,8 @@ class Frame(object):
         # Seconds since the UNIX epoch
         curEpoch = AstroTime(seconds_i, seconds_f, format='unix', scale='utc')
         # Seconds since the VDIF epoch
-        self.epoch = 2*(int(curEpoch.jyear - 2000))
-        epochSeconds = curEpoch - AstroTime(f"{int(curEpoch.jyear)}-1-1 00:00:00", format='iso', scale='utc')
+        self.epoch = 2*(curEpoch.ymdhms[0] - 2000) + (curEpoch.ymdhms[1] > 6)
+        epochSeconds = curEpoch - AstroTime(f"{curEpoch.ymdhms[0]}-{(curEpoch.ymdhms[1]//7)*6+1}-1 00:00:00", format='iso', scale='utc')
         # Integer seconds
         self.seconds = int(epochSeconds.sec)
         
