@@ -7,7 +7,7 @@ classes for all of the LSL readers.
 
 import copy
 import pytz
-import numpy
+import numpy as np
 from functools import total_ordering
 from textwrap import fill as tw_fill
 from datetime import datetime, timedelta
@@ -112,7 +112,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         newFrame = copy.deepcopy(self)
@@ -129,7 +129,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         try:
@@ -148,7 +148,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         newFrame = copy.deepcopy(self)
@@ -165,7 +165,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
             
         try:
@@ -184,7 +184,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -201,7 +201,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -220,7 +220,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -237,7 +237,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -256,7 +256,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         newFrame = copy.deepcopy(self)
@@ -273,7 +273,7 @@ class FrameBase(object):
             ignored.
         """
         
-        if not isinstance(y, (FrameBase, int, float, complex, numpy.ndarray)):
+        if not isinstance(y, (FrameBase, int, float, complex, np.ndarray)):
             raise TypeError("Unsupported type '%s'" % type(y).__name__)
             
         try:
@@ -297,7 +297,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+        elif isinstance(y, (int, float, np.integer, np.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
@@ -316,7 +316,7 @@ class FrameBase(object):
         tX = self.time
         if isinstance(y, FrameBase):
             tY = y.time
-        elif isinstance(y, (int, float, numpy.integer, numpy.floating, FrameTimestamp)):
+        elif isinstance(y, (int, float, np.integer, np.floating, FrameTimestamp)):
             tY = y
         else:
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
@@ -340,7 +340,7 @@ class FrameTimestamp(object):
             if sf != 0.0:
                 self._time += AstroDelta(sf, format='sec')
         else:
-            if isinstance(si, (float, numpy.floating)):
+            if isinstance(si, (float, np.floating)):
                 sf = sf + (si - int(si))
                 si = int(si)
             # Make sure sf is [0.0, 1.0)
@@ -426,7 +426,7 @@ class FrameTimestamp(object):
             raise IndexError
             
     def __add__(self, other):
-        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
+        if isinstance(other, (int, float, np.integer, np.floating)):
             t = self._time + AstroDelta(other, format='sec')
             return FrameTimestamp(t)
         elif isinstance(other, timedelta):
@@ -436,7 +436,7 @@ class FrameTimestamp(object):
             raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __iadd__(self, other):
-        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
+        if isinstance(other, (int, float, np.integer, np.floating)):
             self._time += AstroDelta(other, format='sec')
             return self
         elif isinstance(other, timedelta):
@@ -449,7 +449,7 @@ class FrameTimestamp(object):
         if isinstance(other, FrameTimestamp):
             diff = self._time - other._time
             return diff.sec
-        elif isinstance(other, (int, float, numpy.integer, numpy.floating)):
+        elif isinstance(other, (int, float, np.integer, np.floating)):
             t = self._time - AstroDelta(other, format='sec')
             return FrameTimestamp(t)
         elif isinstance(other, timedelta):
@@ -459,7 +459,7 @@ class FrameTimestamp(object):
             raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __isub__(self, other):
-        if isinstance(other, (int, float, numpy.integer, numpy.floating)):
+        if isinstance(other, (int, float, np.integer, np.floating)):
             self._time -= AstroDelta(other, format='sec')
             return self
         elif isinstance(other, timedelta):
@@ -471,7 +471,7 @@ class FrameTimestamp(object):
     def __eq__(self, y):
         if isinstance(y, FrameTimestamp):
             return self._time == y._time
-        elif isinstance(y, (int, numpy.integer, float, numpy.floating)):
+        elif isinstance(y, (int, np.integer, float, np.floating)):
             return float(self) == y
         else:
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
@@ -479,7 +479,7 @@ class FrameTimestamp(object):
     def __lt__(self, y):
         if isinstance(y, FrameTimestamp):
             return self._time < y._time
-        elif isinstance(y, (int, numpy.integer, float, numpy.floating)):
+        elif isinstance(y, (int, np.integer, float, np.floating)):
             return float(self) < y
         else:
             raise TypeError(f"Unsupported type: '{type(y).__name__}'")
@@ -593,4 +593,4 @@ class FrameTimestamp(object):
         return self._time
 
 
-CI8 = numpy.dtype([('re', 'i1'), ('im', 'i1')])
+CI8 = np.dtype([('re', 'i1'), ('im', 'i1')])
