@@ -27,7 +27,7 @@ of the data, including various window functions and time averaging.
 import ephem
 import numpy as np
 from astropy.constants import c as speedOfLight
-from astropy.coordinates import AltAz as AstroAltAz
+from astropy.coordinates import AltAz, SkyCoord
 
 from lsl.reader.base import CI8
 from lsl.common import dp as dp_common
@@ -257,19 +257,22 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         azPC = 0.0
         elPC = np.pi/2.0
     else:
-        if isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            elPC = phase_center.alt * 1.0
-        elif isinstance(phase_center, AstroAltAz):
+        if isinstance(phase_center, AltAz):
             azPC = phase_center.az.radian
             elPC = phase_center.alt.radian
+        elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+            azPC = phase_center.az.radian
+            elPC = phase_center.alt.radian
+        elif isinstance(phase_center, ephem.Body):
+            azPC = phase_center.az * 1.0
+            elPC = phase_center.alt * 1.0
         else:
             azPC = phase_center[0]*np.pi/180.0
             elPC = phase_center[1]*np.pi/180.0
             
     source = np.array([np.cos(elPC)*np.sin(azPC), 
-                    np.cos(elPC)*np.cos(azPC), 
-                    np.sin(elPC)])
+                       np.cos(elPC)*np.cos(azPC), 
+                       np.sin(elPC)])
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals
@@ -411,18 +414,21 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         azPC = 0.0
         elPC = np.pi/2.0
     else:
-        if isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            elPC = phase_center.alt * 1.0
-        elif isinstance(phase_center, AstroAltAz):
+        if isinstance(phase_center, AltAz):
             azPC = phase_center.az.radian
             elPC = phase_center.alt.radian
+        elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+            azPC = phase_center.az.radian
+            elPC = phase_center.alt.radian
+        elif isinstance(phase_center, ephem.Body):
+            azPC = phase_center.az * 1.0
+            elPC = phase_center.alt * 1.0
         else:
             azPC = phase_center[0]*np.pi/180.0
             elPC = phase_center[1]*np.pi/180.0
     source = np.array([np.cos(elPC)*np.sin(azPC), 
-                    np.cos(elPC)*np.cos(azPC), 
-                    np.sin(elPC)])
+                       np.cos(elPC)*np.cos(azPC), 
+                       np.sin(elPC)])
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals
