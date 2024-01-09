@@ -10,7 +10,8 @@ handle.
 """
 
 import numpy as np
-import ephem
+
+from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
 
 from lsl.common import dp as dp_common
 import lsl.astro as astro
@@ -19,11 +20,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['Frame',]
-
-VDIF_EPOCH = ephem.Date('2000/01/01 00:00:00.00')
-UNIX_EPOCH = ephem.Date('1970/01/01 00:00:00.00')
 
 
 class Frame(object):
@@ -88,18 +86,18 @@ class Frame(object):
             seconds_i = int(self.time)
             seconds_f = self.time - seconds_i
                 
-        # UNIX time to seconds since DJD  = 0
-        curEpoch = float(UNIX_EPOCH)*astro.SECS_IN_DAY + seconds_i
-        self.epoch = 0
+        # Seconds since the UNIX epoch
+        curEpoch = AstroTime(seconds_i, seconds_f, format='unix', scale='utc')
         # Seconds since the VDIF epoch
-        epochSeconds = curEpoch - float(VDIF_EPOCH)*astro.SECS_IN_DAY
+        self.epoch = 2*(int(curEpoch.jyear - 2000))
+        epochSeconds = curEpoch - AstroTime(f"{int(curEpoch.jyear)}-1-1 00:00:00", format='iso', scale='utc')
         # Integer seconds
-        self.seconds = int(epochSeconds)
+        self.seconds = int(epochSeconds.sec)
         
         # Compute the frames since the beginning of the second
-        frame = (epochSeconds - self.seconds + seconds_f) * (self.sample_rate/(len(self.data)//(2-self.dataReal)))
+        frame = (epochSeconds.sec - self.seconds) * (self.sample_rate/(len(self.data)//(2-self.dataReal)))
         self.frame = int(round(frame))
-
+        
     def create_raw_frame(self):
         """
         Using the data and information stored in the object, create a

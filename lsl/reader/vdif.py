@@ -29,6 +29,8 @@ get_thread_count
 import warnings
 from datetime import datetime
 
+from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
+
 from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.reader.base import *
 from lsl.reader._gofast import read_vdif, read_vdif_i8
@@ -116,14 +118,9 @@ class FrameHeader(FrameHeaderBase):
         
         # Get the reference epoch in the strange way that it is stored in VDIF 
         # and convert it to a MJD
-        epochDT = datetime(2000+self.ref_epoch//2, (self.ref_epoch % 2)*6+1, 1, 0, 0, 0, 0)
-        epochMJD, epochMPM = datetime_to_mjdmpm(epochDT)
-        epochMJD = epochMJD + epochMPM/1000.0/86400.0
-        
-        # Get the frame MJD by adding the seconds_from_epoch value to the epoch
-        frameMJD_i = epochMJD + self.seconds_from_epoch // 86400
-        frameMJD_f = (self.seconds_from_epoch % 86400) / 86400.0
-        frameMJD_s = 0.0
+        frameDT = AstroTime(f"{2000+self.ref_epoch//2}-{(self.ref_epoch % 2)*6+1}-01 00:00:00",
+                            format='iso', scale='utc')
+        frameDT += AstroDelta(self.seconds_from_epoch, format='sec')
         
         if self.sample_rate == 0.0:
             # Try to get the sub-second time by parsing the extended user data
@@ -142,7 +139,7 @@ class FrameHeader(FrameHeaderBase):
                 ## What is the frame rate?
                 frameRate = sample_rate // nSamples
                 
-                frameMJD_s += 1.0*self.frame_in_second/frameRate
+                frameDT += AstroDelta(1.0*self.frame_in_second/frameRate, format='sec')
             
             except KeyError:
                 warnings.warn(colorfy("{{%yellow Insufficient information to determine exact frame timestamp, time will be approximate"), RuntimeWarning)
@@ -158,14 +155,9 @@ class FrameHeader(FrameHeaderBase):
             ## What is the frame rate?
             frameRate = self.sample_rate // nSamples
             
-            frameMJD_s += 1.0*self.frame_in_second/frameRate
+            frameDT += AstroDelta(1.0*self.frame_in_second/frameRate, format='sec')
             
-        # Convert from MJD to UNIX time
-        if frameMJD_f > 1:
-            frameMJD_i += 1
-            frameMJD_f -= 1
-            
-        return FrameTimestamp.from_pulsar_mjd(frameMJD_i, frameMJD_f, frameMJD_s)
+        return FrameTimestamp.from_astropy(frameDT)
         
     @property
     def id(self):

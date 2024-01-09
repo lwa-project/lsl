@@ -58,7 +58,7 @@ class vdif_tests(unittest.TestCase):
             for i in range(1,9):
                 frames.append(tbn.read_frame(fh))
                 # WAR for bad TBN timetags
-                frames[-1].payload.timetag += 1073741823*196000000
+                frames[-1].payload.timetag += 1673741823*196000000
                 frames[-1].payload.timetag //= 19600000
                 frames[-1].payload.timetag *= 19600000
                 

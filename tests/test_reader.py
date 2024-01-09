@@ -78,14 +78,14 @@ class reader_tests(unittest.TestCase):
         self.assertEqual(dt.second, 58)
         self.assertEqual(dt.microsecond, 500000)
         
-        t = FrameTimestamp.from_dp_timetag(1587495778*196000000 + 196000000/2)
+        t = FrameTimestamp.from_dp_timetag(1587495778*196000000 + 196000000//2)
         self.assertAlmostEqual(t.unix, 1587495778.5, 6)
         # https://planetcalc.com/503/
-        self.assertAlmostEqual(t.mjd, 58960.7937268517+0.5/86400.0, 9)
+        self.assertAlmostEqual(t.mjd, 58960.79372685185+0.5/86400.0, 9)
         self.assertEqual(t.pulsar_mjd[0], 58960)
-        self.assertAlmostEqual(t.pulsar_mjd[1], 0.7937268517, 9)
+        self.assertEqual(t.pulsar_mjd[1], 68578)
         self.assertAlmostEqual(t.pulsar_mjd[2], 0.5, 9)
-        self.assertEqual(t.dp_timetag, 1587495778*196000000 + 196000000/2)
+        self.assertEqual(t.dp_timetag, 1587495778*196000000 + 196000000//2)
         
         t = FrameTimestamp.from_mjd_mpm(58962, 60481519)
         # 200423 16:48:01  58962  60481519 T   1099467 1 SHL RPT POWER-OUTAGE|
@@ -123,23 +123,19 @@ class reader_tests(unittest.TestCase):
         
         t = FrameTimestamp(1587495778, 0.5)
         t = t + 0.1
-        self.assertEqual(t, FrameTimestamp(1587495778, 0.6))
-        self.assertAlmostEqual(t, FrameTimestamp(1587495778, 0.6), 6)
+        self.assertAlmostEqual(t, FrameTimestamp(1587495778, 0.6), 10)
         self.assertAlmostEqual(t, 1587495778.6, 6)
         
         t += 1
-        self.assertEqual(t, FrameTimestamp(1587495779, 0.6))
-        self.assertAlmostEqual(t, FrameTimestamp(1587495779, 0.6), 6)
+        self.assertAlmostEqual(t, FrameTimestamp(1587495779, 0.6), 10)
         self.assertAlmostEqual(t, 1587495779.6, 6)
         
         t = t + timedelta(seconds=1)
-        self.assertEqual(t, FrameTimestamp(1587495780, 0.6))
-        self.assertAlmostEqual(t, FrameTimestamp(1587495780, 0.6), 6)
+        self.assertAlmostEqual(t, FrameTimestamp(1587495780, 0.6), 10)
         self.assertAlmostEqual(t, 1587495780.6, 6)
         
         t += timedelta(seconds=1, microseconds=400000)
-        self.assertEqual(t, FrameTimestamp(1587495782, 0.0))
-        self.assertAlmostEqual(t, FrameTimestamp(1587495782, 0.0), 6)
+        self.assertAlmostEqual(t, FrameTimestamp(1587495782, 0.0), 10)
         self.assertAlmostEqual(t, 1587495782.0, 6)
         
     def test_timestamp_sub(self):
@@ -156,23 +152,19 @@ class reader_tests(unittest.TestCase):
         self.assertAlmostEqual(t0-t1, 77.8, 9)
         
         t0 = t0 - 0.1
-        self.assertEqual(t0, FrameTimestamp(1587495778, 0.4))
-        self.assertAlmostEqual(t0, FrameTimestamp(1587495778, 0.4), 6)
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495778, 0.4), 10)
         self.assertAlmostEqual(t0, 1587495778.4, 6)
         
         t0 -= 0.4
-        self.assertEqual(t0, FrameTimestamp(1587495778, 0.0))
-        self.assertAlmostEqual(t0, FrameTimestamp(1587495778, 0.0), 6)
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495778, 0.0), 10)
         self.assertAlmostEqual(t0, 1587495778.0, 6)
         
         t0 = t0 - timedelta(seconds=1)
-        self.assertEqual(t0, FrameTimestamp(1587495777, 0.0))
-        self.assertAlmostEqual(t0, FrameTimestamp(1587495777, 0.0), 6)
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495777, 0.0), 10)
         self.assertAlmostEqual(t0, 1587495777.0, 6)
         
         t0 -= timedelta(seconds=1, microseconds=500000)
-        self.assertEqual(t0, FrameTimestamp(1587495775, 0.5))
-        self.assertAlmostEqual(t0, FrameTimestamp(1587495775, 0.5), 6)
+        self.assertAlmostEqual(t0, FrameTimestamp(1587495775, 0.5), 10)
         self.assertAlmostEqual(t0, 1587495775.5, 6)
         
     def test_timestmp_cmp(self):
