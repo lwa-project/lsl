@@ -40,6 +40,7 @@ The other functions:
 
 import re
 import ctypes
+import numpy as np
 from datetime import datetime
 
 from lsl.common import adp as adpCommon
@@ -321,7 +322,7 @@ OSF2_STRUCT = """
 """
 
 def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None):
-    adp_macros = {a: globals()[a] for a in __all__}
+    adp_macros = {a: globals()[a] for a in __all__ if isinstance(globals()[a], (int, np.integer))}
     if overrides is not None:
         adp_macros.update(overrides)
         

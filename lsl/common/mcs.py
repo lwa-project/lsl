@@ -339,7 +339,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     """
     
     # Process the macro overrides dictionary
-    dp_macros = {a: globals()[a] for a in __all__}
+    dp_macros = {a: globals()[a] for a in __all__ if isinstance(globals()[a], (int, np.integer))}
     if overrides is not None:
         dp_macros.update(overrides)
         
