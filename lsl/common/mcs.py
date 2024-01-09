@@ -339,9 +339,15 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     """
     
     # Process the macro overrides dictionary
-    dp_macros = {a: globals()[a] for a in __all__ if isinstance(globals()[a], (int, np.integer))}
+    dp_macros = {a: globals()[a] for a in __all__}
     if overrides is not None:
         dp_macros.update(overrides)
+    not_int = []
+    for k in dp_macros:
+        if not isinstance(dp_macros[k], (int, np.integer)):
+            not_int.append(k)
+    for k in not_int:
+        del dp_macros[k]
         
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):

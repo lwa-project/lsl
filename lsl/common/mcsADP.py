@@ -322,9 +322,15 @@ OSF2_STRUCT = """
 """
 
 def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None):
-    adp_macros = {a: globals()[a] for a in __all__ if isinstance(globals()[a], (int, np.integer))}
+    adp_macros = {a: globals()[a] for a in __all__}
     if overrides is not None:
         adp_macros.update(overrides)
+    not_int = []
+    for k in dp_macros:
+        if not isinstance(dp_macros[k], (int, np.integer)):
+            not_int.append(k)
+    for k in not_int:
+        del dp_macros[k]
         
     return _parse_c_struct(cStruct, char_mode=char_mode, endianness=endianness,
                            overrides=adp_macros)
