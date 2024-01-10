@@ -14,7 +14,7 @@ import subprocess
 from io import StringIO
 from urllib.request import urlopen
 from datetime import datetime, timedelta
-from ftplib import FTP_TLS, error_perm as FTP_ERROR
+from ftplib import FTP_TLS, error_perm as FTP_ERROR_PERM, error_temp as FTP_ERROR_TEMP
 
 from scipy.special import lpmv
 try:
@@ -434,7 +434,7 @@ def _download_worker_cddis(url, filename):
     remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
     try:
         remote_size = ftps.size(remote_path)
-    except FTP_ERROR:
+    except (FTP_ERROR_TEMP, FTP_ERROR_PERM):
         ftps.close()
         return False
         
@@ -447,10 +447,13 @@ def _download_worker_cddis(url, filename):
                 sys.stdout.write(pbar.show()+'\r')
                 sys.stdout.flush()
                 
-        status = ftps.retrbinary(f"RETR {remote_path}", write, blocksize=DOWN_CONFIG.get('block_size'))
-        if is_interactive:
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
+        try:
+            status = ftps.retrbinary(f"RETR {remote_path}", write, blocksize=DOWN_CONFIG.get('block_size'))
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\n')
+                sys.stdout.flush()
+        except (FTP_ERROR_TEMP, FTP_ERROR_PERM):
+            status = 'FAILED'
             
     if not status.startswith("226"):
         _CACHE_DIR.remove(filename)
