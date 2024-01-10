@@ -26,6 +26,7 @@ from astropy.constants import c as speedOfLight
 from astropy.coordinates import Angle as AstroAngle
 from astropy.coordinates import EarthLocation as EarthLocation
 
+from lsl import astro
 from lsl.common.stations import lwa1
 
 from lsl.misc import telemetry
@@ -159,30 +160,34 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
 
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    if isinstance(HA, ephem.Angle):
-        HA2 = HA*1.0
+    if isinstance(HA, (astro.hms, astro.dms)):
+        HA2 = HA.to_rad()
     elif isinstance(HA, AstroAngle):
-        HA2 = HA.radian
+        HA2 = HA.rad
+    elif isinstance(HA, ephem.Angle):
+        HA2 = HA*1.0
     else:
         HA2 = HA * 15.0 * np.pi/180
-    if isinstance(dec, ephem.Angle):
-        dec2 = dec*1.0
+    if isinstance(dec, astro.dms):
+        dec2 = dec.to_rad()
     elif isinstance(dec, AstroAngle):
-        dec2 = dec.radian
+        dec2 = dec.rad
+    elif isinstance(dec, ephem.Angle):
+        dec2 = dec*1.0
     else:
         dec2 = dec * np.pi/180
     if isinstance(site, EarthLocation):
-        lat2 = site.lat.radian
+        lat2 = site.lat.rad
     else:
         lat2 = site.lat
     
     # Coordinate transformation matrices
     trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
-                           [1,  0,               0],
-                           [0,  np.cos(lat2), np.sin(lat2)]])
-    trans2 = np.matrix([[ np.sin(HA2),                  np.cos(HA2),                 0],
-                           [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
-                           [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
+                        [1,  0,            0           ],
+                        [0,  np.cos(lat2), np.sin(lat2)]])
+    trans2 = np.matrix([[ np.sin(HA2),               np.cos(HA2),              0           ],
+                        [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
+                        [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
                     
     for k,(i,j) in enumerate(baselines):
         # Go from a east, north, up coordinate system to a celestial equation, 
@@ -229,10 +234,12 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     
     # Phase center coordinates
     # Convert numbers to radians and, for HA, hours to degrees
-    if isinstance(dec, ephem.Angle):
-        dec2 = dec*1.0
+    if isinstance(dec, astro.dms):
+        dec2 = dec.to_rad()
     elif isinstance(dec, AstroAngle):
-        dec2 = dec.radian
+        dec2 = dec.rad
+    elif isinstance(dec, ephem.Angle):
+        dec2 = dec*1.0
     else:
         dec2 = dec * np.pi/180
     if isinstance(site, EarthLocation):
@@ -242,8 +249,8 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     
     # Coordinate transformation matrices
     trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
-                           [1,  0,               0],
-                           [0,  np.cos(lat2), np.sin(lat2)]])
+                        [1,  0,            0           ],
+                        [0,  np.cos(lat2), np.sin(lat2)]])
                     
     count = 0
     for i,j in get_baselines(antennas, indicies=True):
