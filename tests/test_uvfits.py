@@ -62,7 +62,7 @@ class uvfits_tests(unittest.TestCase):
     def test_write_tables(self):
         """Test if the UVFITS writer writes all of the tables."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = time.time() - 7*86400.0
         testFile = os.path.join(self.testPath, 'uv-test-W.fits')
         
         # Get some data
@@ -94,7 +94,7 @@ class uvfits_tests(unittest.TestCase):
     def test_array_geometry(self):
         """Test the 'AIPS AN' table, part 1."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = time.time() - 7*86400.0
         testFile = os.path.join(self.testPath, 'uv-test-AG.fits')
         
         # Get some data
@@ -125,7 +125,7 @@ class uvfits_tests(unittest.TestCase):
     def test_antenna(self):
         """Test the 'AIPS AN' table, part 2."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = time.time() - 7*86400.0
         testFile = os.path.join(self.testPath, 'uv-test-AN.fits')
         
         # Get some data
@@ -151,7 +151,7 @@ class uvfits_tests(unittest.TestCase):
     def test_frequency(self):
         """Test the 'AIPS FQ' table."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = time.time() - 7*86400.0
         testFile = os.path.join(self.testPath, 'uv-test-FQ.fits')
         
         # Get some data
@@ -181,7 +181,7 @@ class uvfits_tests(unittest.TestCase):
     def test_source(self):
         """Test the 'AIPS SU' table."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = time.time() - 7*86400.0
         testFile = os.path.join(self.testPath, 'uv-test-SU.fits')
         
         # Get some data
@@ -205,7 +205,7 @@ class uvfits_tests(unittest.TestCase):
     def test_bandpass(self):
         """Test the 'AIPS BP' table."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = time.time() - 7*86400.0
         testFile = os.path.join(self.testPath, 'uv-test-BP.fits')
         
         # Get some data
@@ -229,7 +229,7 @@ class uvfits_tests(unittest.TestCase):
     def test_uvdata(self):
         """Test the primary data table."""
         
-        testTime = time.time() - 2*86400.0
+        testTime = time.time() - 7*86400.0
         testFile = os.path.join(self.testPath, 'uv-test-UV.fits')
         
         # Get some data
