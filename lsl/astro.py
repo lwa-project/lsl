@@ -167,6 +167,14 @@ class dms(object):
         
         return dms_to_deg(self)
         
+    def to_rad(self):
+        """
+        Convert angles degrees, minutes, seconds to float radians.
+        Returns angle in radians (float).
+        """
+        
+        return dms_to_rad(self)
+        
     def to_hms(self):
         """
         Convert angles degrees, minutes seconds to hours, minutes, seconds.
@@ -271,6 +279,14 @@ class hms(object):
         """
         
         return hms_to_deg(self)
+        
+    def to_rad(self):
+        """
+        Convert angles hours, minutes, second to float radians.
+        Returns angle in radians (float).
+        """
+        
+        return hms_to_rad(self)
         
     def to_dms(self):
         """
