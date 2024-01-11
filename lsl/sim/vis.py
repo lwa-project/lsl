@@ -53,7 +53,10 @@ import ephem
 import numpy as np
 import warnings
 from scipy.interpolate import interp1d
+
 from astropy.constants import c as speedOfLight
+from astropy.time import Time as AstroTime
+from astropy.coordinates import AltAz, FK5
 
 from lsl import astro
 from lsl.common.data_access import DataAccess
@@ -1014,6 +1017,14 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     else:
         pcAz = 0.0
         pcEl = 90.0
+        
+        ot = AstroTime(jd, format='jd', scale='utc')
+        tc = AltAz('0deg', '90deg', location=aa._station.earth_location, obstime=ot)
+        pc = tc.transform_to(FK5(equinox=ot))
+        
+        UVData.phase_center = aipy.amp.RadioFixedBody(pc.ra.rad, pc.dec.rad,
+                                                      name=f"ZA{pc.ra.to_string(sep='')}",
+                                                      epoch=ephem.J2000 + (ot.jyear - 2000))
         
     for p,pol in enumerate(pols):
         ## Apply the antenna gain pattern for each source
