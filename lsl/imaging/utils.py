@@ -48,7 +48,9 @@ from datetime import datetime
 from astropy import units as astrounits
 from astropy.constants import c as vLight
 from astropy.io import fits as astrofits
-from astropy.coordinates import EarthLocation
+from astropy.time import Time as AstroTime
+from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK5
+from astropy.wcs import WCS
 
 from lsl import astro
 from lsl.statistics import robust
@@ -608,7 +610,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
             ## Build up the list of antennas
             antennas = []
             for line,act in zip(ag.data, noact):
-                el = EarthLocation.from_geocentric(*(line['STABXYZ']*astrounits.m)
+                el = EarthLocation.from_geocentric(*(line['STABXYZ']*astrounits.m))
                 enz = self.station.get_enz_offset(el)
                 
                 stand = stations.Stand(act, *enz)
@@ -706,6 +708,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
                                                                    row['DECEPO'] * np.pi/180, 
                                                                    name=row['SOURCE'], 
                                                                    epoch=(row['EPOCH'] - 2000.0)*365.25 + ephem.J2000)
+                            
                             
                 # Pull out the raw data from the table
                 bl = uvData.data['BASELINE'][selection]
@@ -1273,6 +1276,9 @@ class ImgWPlus(aipy.img.ImgW):
     the field of view and the pixels near the phase center.
     """
     
+    _mjd = None
+    _phase_center = None
+    
     def __iadd__(self, uv, bm=None):
         if isinstance(uv, ImgWPlus):
             if self.shape != uv.shape:
@@ -1493,6 +1499,80 @@ class ImgWPlus(aipy.img.ImgW):
             return self._gen_img(self.bm[term], center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper)
         else:
             return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
+            
+    @property
+    def mjd(self):
+        """
+        Observation/image MJD.
+        """
+        
+        return self._mjd
+        
+    @mjd.setter
+    def mjd(self, value):
+        if isinstance(value, AstroTime):
+            self._mjd = value.utc.mjd
+        elif isinstance(value, (int, np.integer, float, np.floating)):
+            self._mjd = float(value)
+        else:
+            raise TypeError("Expected an object of type astropy.time.Time, int, or float")
+            
+    @property
+    def phase_center(self):
+        """
+        Observation/image phase center.
+        """
+        
+        return self._phase_center
+        
+    @phase_center.setter
+    def phase_center(self, value):
+        if isinstance(value, (SkyCoord, ICRS, FK5, ephem.Body, astro.equ_posn)):
+            self._phase_center = value
+        else:
+            raise TypeError("Expected an object of type SkyCoord, ICRS, FK5, ephem.Body, or astro.equ_posn")
+            
+    @property
+    def wcs(self):
+        """
+        World Coordinate System (WCS) associated with the image in equatorial
+        (RA/dec.) coordinates.
+        """
+        
+        if self._mjd is None:
+            raise RuntimeError("Cannot create WCS: unknown observation MJD")
+        if self._phase_center is None:
+            raise RuntimeError("Cannot create WCS: unknown phase center")
+            
+        # Extract what we need from the phase center
+        obs_t = AstroTime(self._mjd, format='mjd', scale='utc')
+        if isinstance(self._phase_center, astro.equ_posn):
+            pc_ra = self._phase_center.ra
+            pc_dec = self._phase_center.dec
+        else:
+            try:
+                pc = self._phase_center.transform_to(FK5(equinox=obs_t))
+                pc_ra = pc.ra.deg
+                pc_dec = pc.dec.deg
+            except AttributeError:
+                pc_ra = np.degrees(self._phase_center.ra)
+                pc_dec = np.degrees(self._phase_center.dec)
+                
+        return WCS(header={'WCSAXES': 2,
+                           'RADESYS': 'FK5',
+                           'EQUINOX': obs_t.jyear,
+                           'CTYPE1':  'RA---SIN',
+                           'CRPIX1':  np.round(self.size/self.res) // 2 + 1,
+                           'CDELT1':  -1 * np.degrees(self.pixel_size),
+                           'CRVAL1':  pc_ra,
+                           'CUNIT1':  'deg',
+                           'CTYPE2':  'DEC--SIN',
+                           'CRPIX2':  np.round(self.size/self.res) // 2 + 1,
+                           'CDELT2':  np.degrees(self.pixel_size),
+                           'CRVAL2':  pc_dec,
+                           'CUNIT2':  'deg',
+                           'LONPOLE': 180.0,
+                           'LATPOLE': 90.0})
 
 
 def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None, verbose=True):
@@ -1573,6 +1653,10 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
             
         im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, np.float64(res), np.float64(wres))
         
+    # Update MJD and phase center information
+    im.mjd = data_set.mjd
+    im.phase_center = data_set.phase_center
+    
     return im
 
 
