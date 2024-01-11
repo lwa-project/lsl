@@ -221,7 +221,7 @@ class imaging_tests(unittest.TestCase):
         self.assertAlmostEqual(station1.elev, station2.elev, 1)
         
         # Check antennas
-        ants1 = [a for a in station1.antennas if a.pol == 0]
+        ants1 = idi1.station.antennas
         ants2 = station2.antennas
         for a1,a2 in zip(ants1, ants2):
             self.assertEqual(a1.id, a2.id)
