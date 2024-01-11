@@ -68,7 +68,6 @@ def _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
         A[i,l] = 1.0
         A[i,m] = 1.0
         
-    A = np.matrix(A)
     return A
 
 
@@ -136,7 +135,6 @@ def _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
             else:
                 pass
         
-    A = np.matrix(A)
     return A
 
 
@@ -202,7 +200,6 @@ def _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
             else:
                 pass
         
-    A = np.matrix(A)
     return A
 
 
@@ -272,7 +269,6 @@ def _build_delayandphase_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
             else:
                 pass
         
-    A = np.matrix(A)
     return A
 
 
