@@ -38,14 +38,17 @@ import aipy
 import ephem
 import numpy as np
 import atexit
-from astropy.io import fits as astrofits
 import shutil
 import tarfile
 import tempfile
 import warnings
 from calendar import timegm
 from datetime import datetime
+
+from astropy import units as astrounits
 from astropy.constants import c as vLight
+from astropy.io import fits as astrofits
+from astropy.coordinates import EarthLocation
 
 from lsl import astro
 from lsl.statistics import robust
@@ -310,24 +313,22 @@ class CorrelatedDataIDI(CorrelatedDataBase):
             if len(noact2) == len(noact):
                 noact = np.array(noact2)
                 
-            ## Create the ECI -> topocentric transform
-            lat  = site[0]
-            ecii = np.array([[ 0.0,            1.0, 0.0           ],
-                                [-np.sin(lat), 0.0, np.cos(lat)],
-                                [ np.cos(lat), 0.0, np.sin(lat)]])
+            ## Build up the station
+            self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/np.pi, site[1]*180/np.pi, site[2])
+            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                                - astro.DJD_OFFSET
             
             ## Build up the list of antennas
             antennas = []
             for line,act in zip(ag.data, noact):
-                enz = np.dot(ecii, line['STABXYZ'])
+                el = EarthLocation.from_geocentric(*(line['STABXYZ']*astrounits.m))
+                enz = self.station.get_enz_offset(el)
                 
                 stand = stations.Stand(act, *enz)
                 antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
                 
-            ## Build up the station
-            self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/np.pi, site[1]*180/np.pi, site[2], antennas=antennas)
-            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
-                                - astro.DJD_OFFSET
+            ## Add in the antennas
+            self.station.antennas = antennas
             
             self.stand_map = {}
             self.stands = []
@@ -412,9 +413,9 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                     for row in srcData.data:
                         if row['SOURCE_ID'] == src_id:
                             phase_center = aipy.amp.RadioFixedBody(row['RAEPO'] * np.pi/180, 
-                                                                row['DECEPO'] * np.pi/180, 
-                                                                name=row['SOURCE'], 
-                                                                epoch=(row['EPOCH'] - 2000.0)*365.24 + ephem.J2000)
+                                                                   row['DECEPO'] * np.pi/180, 
+                                                                   name=row['SOURCE'], 
+                                                                   epoch=(row['EPOCH'] - 2000.0)*365.24 + ephem.J2000)
                             
                 # Figure out if we have seperate WEIGHT data or not
                 seperateWeights = False
@@ -599,24 +600,22 @@ class CorrelatedDataUV(CorrelatedDataBase):
             if len(noact2) == len(noact):
                 noact = np.array(noact2)
                 
-            ## Create the ECI -> topocentric transform
-            lat  = site[0]
-            ecii = np.array([[ 0.0,            1.0, 0.0           ],
-                                [-np.sin(lat), 0.0, np.cos(lat)],
-                                [ np.cos(lat), 0.0, np.sin(lat)]])
-                            
+            ## Build up the station
+            self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/np.pi, site[1]*180/np.pi, site[2])
+            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+                                - astro.DJD_OFFSET
+            
             ## Build up the list of antennas
             antennas = []
             for line,act in zip(ag.data, noact):
-                enz = np.dot(ecii, line['STABXYZ'])
+                el = EarthLocation.from_geocentric(*(line['STABXYZ']*astrounits.m)
+                enz = self.station.get_enz_offset(el)
                 
                 stand = stations.Stand(act, *enz)
                 antennas.append(stations.Antenna(2*(stand.id-1)+1, stand=stand, pol=0))
                 
-            ## Build up the station
-            self.station = stations.LWAStation(ag.header['ARRNAM'], site[0]*180/np.pi, site[1]*180/np.pi, site[2], antennas=antennas)
-            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
-                                - astro.DJD_OFFSET
+            ## Add in the antennas
+            self.station.antennas = antennas
             
             self.stand_map = {}
             self.stands = []
@@ -1359,56 +1358,17 @@ class ImgWPlus(aipy.img.ImgW):
         of L found for the inverted uv matrix.
         """
         
-        # Get the L and M coordinates
-        l,m = self.get_LM()
-        
-        # Find the maximum and minimum values of L
-        lMax = np.where( l == l.max() )
-        lMin = np.where( l == l.min() )
-        #print lMax, lMin, l[lMax], l[lMin], m[lMax], m[lMin]
-        
-        # Convert these locations into topocentric
-        xMax, xMin = l.data[lMax], l.data[lMin]
-        yMax, yMin = m.data[lMax], m.data[lMin]
-        zMax, zMin = np.sqrt(1 - xMax**2 - yMax**2), np.sqrt(1 - xMin**2 - yMin**2)
-        azAltMax = aipy.coord.top2azalt((xMax,yMax,zMax))
-        azAltMin = aipy.coord.top2azalt((xMin,yMin,zMin))
-        
-        # Get the separation between the two
-        d = 2*np.arcsin( np.sqrt( np.sin((azAltMax[1]-azAltMin[1])/2)**2+np.cos(azAltMax[1])*np.cos(azAltMin[1])*np.sin((azAltMax[0]-azAltMin[0])/2)**2 ) )
-        
-        return d.max()
+        im_fov = 360/np.pi * np.arcsin(np.min([1.0, 1/self.res/2]))
+        return im_fov * np.pi/180
         
     @property
     def pixel_size(self):
         """
         Return the approximate size of pixels at the phase center in radians.
-        The pixel size is averaged over the four pixels that neighboor the 
-        phase center.
         """
         
-        # Get the L and M coordinates
-        l,m = self.get_LM()
-        
-        sizes = []
-        x0, y0 = l[0,0], m[0,0]
-        z0 = np.sqrt(1 - x0**2 - y0**2)
-        for offX,offY in ((0,1), (1,0), (0,-1), (-1,0)):
-            x1, y1 = l[offX,offY], m[offX,offY]
-            z1 = np.sqrt(1 - x1**2 - y1**2)
-            
-            # Convert these locations into topocentric
-            azAlt0 = aipy.coord.top2azalt((x0,y0,z0))
-            azAlt1 = aipy.coord.top2azalt((x1,y1,z1))
-            
-            # Get the separation between the two
-            d = 2*np.arcsin( np.sqrt( np.sin((azAlt1[1]-azAlt0[1])/2)**2+np.cos(azAlt0[1])*np.cos(azAlt1[1])*np.sin((azAlt1[0]-azAlt0[0])/2)**2 ) )
-            
-            # Save
-            sizes.append(d)
-        sizes = np.array(sizes)
-        
-        return sizes.mean()
+        im_res = 360/np.pi * np.arcsin(1/self.size/2)
+        return im_res * np.pi/180
         
     def _gen_img(self, data, center=(0,0), weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
         """
@@ -1558,9 +1518,7 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
     if (im_size is not None) and (im_res is not None): # Case: User provides Image plane inputs
         res = (2 * im_size * np.sin(np.pi * im_res / 360))**-1
         size = im_size * res
-       
         
-    
     # Make sure we have the right kinds of objects
     ## im
     if im is None:
