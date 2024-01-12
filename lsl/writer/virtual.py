@@ -190,6 +190,10 @@ class VirtualWriter(WriterBase):
             phase_center = aipy.amp.RadioFixedBody(pc.ra.rad, pc.dec.rad,
                                                    name=f"ZA{pc.ra.to_string(sep='')}",
                                                    epoch=ephem.J2000 + (ot.jyear - 2000))
+            old_obs_date = self.antenna_array.date
+            self.antenna_array.date = ot.iso
+            phase_center.compute(self.antenna_array)
+            self.antenna_array.date = old_obs_date
         else:
             phase_center = source
                                                       

@@ -1025,6 +1025,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         UVData.phase_center = aipy.amp.RadioFixedBody(pc.ra.rad, pc.dec.rad,
                                                       name=f"ZA{pc.ra.to_string(sep='')}",
                                                       epoch=ephem.J2000 + (ot.jyear - 2000))
+        UVData.phase_center.compute(aa)
         
     for p,pol in enumerate(pols):
         ## Apply the antenna gain pattern for each source
