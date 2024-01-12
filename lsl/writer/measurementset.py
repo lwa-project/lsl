@@ -8,11 +8,13 @@ import os
 import gc
 import glob
 import math
-import ephem
 import numpy as np
 import shutil
-from astropy.time import Time as AstroTime
 from datetime import datetime
+
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import EarthLocation, AltAz, HADec, FK5
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -23,7 +25,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['Ms', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
@@ -71,7 +73,7 @@ try:
             Represents one MS UV visibility data set for a given observation time.
             """
         
-            def get_uvw(self, HA, dec, obs):
+            def get_uvw(self, HA, dec, el):
                 Nbase = len(self.baselines)
                 uvw = np.zeros((Nbase,3), dtype=np.float32)
                 
@@ -79,18 +81,18 @@ try:
                 # Convert numbers to radians and, for HA, hours to degrees
                 HA2 = HA * 15.0 * np.pi/180
                 dec2 = dec * np.pi/180
-                lat2 = obs.lat
+                lat2 = el.lat.rad
                 
                 # Coordinate transformation matrices
                 trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
-                                      [1,  0,               0],
-                                      [0,  np.cos(lat2), np.sin(lat2)]])
-                trans2 = np.array([[ np.sin(HA2),                  np.cos(HA2),                 0],
-                                      [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
-                                      [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
+                                   [1,  0,            0           ],
+                                   [0,  np.cos(lat2), np.sin(lat2)]])
+                trans2 = np.array([[ np.sin(HA2),               np.cos(HA2),              0           ],
+                                   [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
+                                   [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
                         
                 for i,(a1,a2) in enumerate(self.baselines):
-                    # Go from a east, north, up coordinate system to a celestial equation, 
+                    # Go from a east, north, up coordinate system to a celestial equator, 
                     # east, north celestial pole system
                     xyzPrime = a1.stand - a2.stand
                     xyz = np.dot(trans1, np.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
@@ -116,7 +118,7 @@ try:
         def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new Measurment Set object using a filename and a reference time
-            given in seconds since the UNIX 1970 ephem, a python datetime object, or a
+            given in seconds since the UNIX 1970 epoch, a python datetime object, or a
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
             
@@ -468,14 +470,9 @@ try:
             
             # Source
             
-            arrayGeo = astro.rect_posn(*self.array[0]['center'])
-            arrayGeo = astro.get_geo_from_rect(arrayGeo)
-            
-            obs = ephem.Observer()
-            obs.lat = arrayGeo.lat * np.pi/180
-            obs.lon = arrayGeo.lng * np.pi/180
-            obs.elev = arrayGeo.elv
-            obs.pressure = 0
+            el = EarthLocation.from_geocentric(self.array[0]['center'][0]*astrounits.m,
+                                               self.array[0]['center'][1]*astrounits.m,
+                                               self.array[0]['center'][2]*astrounits.m,)
             
             nameList = []
             posList = []
@@ -483,13 +480,7 @@ try:
             for dataSet in self.data:
                 if dataSet.pol == self.stokes[0]:
                     utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-                    date = astro.get_date(utc)
-                    date.hours = 0
-                    date.minutes = 0
-                    date.seconds = 0
-                    utc0 = date.to_jd()
-                    
-                    obs.date = utc - astro.DJD_OFFSET
+                    date = AstroTime(utc, format='jd', scale='utc')
                     
                     try:
                         currSourceName = dataSet.source.name
@@ -501,14 +492,19 @@ try:
                         
                         if dataSet.source == 'z':
                             ## Zenith pointings
-                            equ = astro.equ_posn( obs.sidereal_time()*180/np.pi, obs.lat*180/np.pi )
+                            tc = AltAz(0.0*astrounits.deg, 90.0*astrounits.deg,
+                                       location=el, obstime=date)
+                            equ = tc.transform_to(FK5(equinox=date))
                             
                             # format 'source' name based on local sidereal time
-                            raHms = astro.deg_to_hms(equ.ra)
+                            raHms = astro.deg_to_hms(equ.ra.deg)
                             (tsecs, secs) = math.modf(raHms.seconds)
                             
                             name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
-                            equPo = astro.get_equ_prec2(equ, utc, astro.J2000_UTC_JD)
+                            equPo = equ.transform_to(FK5(equinox='J2000'))
+                            
+                            equ = astro.equ_posn.from_astropy(equ)
+                            equPo = astro.equ_posn.from_astropy(equPo)
                             
                         else:
                             ## Real-live sources (ephem.Body instances)
@@ -728,14 +724,9 @@ try:
             
             nBand = len(self.freq)
             
-            arrayGeo = astro.rect_posn(*self.array[0]['center'])
-            arrayGeo = astro.get_geo_from_rect(arrayGeo)
-            
-            obs = ephem.Observer()
-            obs.lat = arrayGeo.lat * np.pi/180
-            obs.lon = arrayGeo.lng * np.pi/180
-            obs.elev = arrayGeo.elv
-            obs.pressure = 0
+            el = EarthLocation.from_geocentric(self.array[0]['center'][0]*astrounits.m,
+                                               self.array[0]['center'][1]*astrounits.m,
+                                               self.array[0]['center'][2]*astrounits.m,)
             
             mapper = self.array[0]['mapper']
             
@@ -823,24 +814,26 @@ try:
                 if dataSet.pol == self.stokes[0]:
                     ## Figure out the new date/time for the observation
                     utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-                    date = astro.get_date(utc)
-                    date.hours = 0
-                    date.minutes = 0
-                    date.seconds = 0
-                    utc0 = date.to_jd()
+                    date = AstroTime(utc, format='jd', scale='utc')
+                    utc0 = AstroTime(f"{date.ymdhms[0]}-{date.ymdhms[1]}-{date.ymdhms[2]} 00:00:00", format='iso', scale='utc')
+                    utc0 = utc0.jd
                     
                     ## Update the observer so we can figure out where the source is
-                    obs.date = utc - astro.DJD_OFFSET
                     if dataSet.source == 'z':
                         ### Zenith pointings
-                        equ = astro.equ_posn( obs.sidereal_time()*180/np.pi, obs.lat*180/np.pi )
+                        tc = AltAz(0.0*astrounits.deg, 90.0*astrounits.deg,
+                                   location=el, obstime=date)
+                        equ = tc.transform_to(FK5(equinox=date))
                         
                         ### format 'source' name based on local sidereal time
-                        raHms = astro.deg_to_hms(equ.ra)
+                        raHms = astro.deg_to_hms(equ.ra.deg)
                         (tsecs, secs) = math.modf(raHms.seconds)
                         name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
                     else:
                         ### Real-live sources (ephem.Body instances)
+                        equ = FK5(dataSet.source.a_ra*astrounits.rad, dataSet.source.a_dec*astrounits.rad,
+                                  equinox=date)
+                        
                         name = dataSet.source.name
                         
                     ## Update the source ID
@@ -851,13 +844,10 @@ try:
                         sourceID = _sourceTable.index(name)
                         
                     ## Compute the uvw coordinates of all baselines
-                    if dataSet.source == 'z':
-                        HA = 0.0
-                        dec = equ.dec
-                    else:
-                        HA = (obs.sidereal_time() - dataSet.source.ra) * 12/np.pi
-                        dec = dataSet.source.dec * 180/np.pi
-                    uvwCoords = dataSet.get_uvw(HA, dec, obs)
+                    ha = equ.transform_to(HADec(location=el, obstime=date))
+                    HA = ha.ha.hourangle
+                    dec = ha.dec.deg
+                    uvwCoords = dataSet.get_uvw(HA, dec, el)
                     
                     ## Populate the metadata
                     ### Add in the baselines

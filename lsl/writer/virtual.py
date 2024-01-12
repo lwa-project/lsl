@@ -5,11 +5,15 @@ directly worked with in the :mod:`lsl.imaging.utils` module.
 .. versionadded:: 2.1.3
 """
 
-import sys
+import aipy
+import ephem
 import numpy as np
 from datetime import datetime
+
+from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight
+from astropy.coordinates import AltAz, HADec, FK5
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -80,7 +84,7 @@ class VirtualWriter(WriterBase):
         ref_jd = mjd + mpm/1000.0 / 86400 + astro.MJD_OFFSET
         
         # Create the observer and antenna array
-        self.observer = self.site.get_observer()
+        self.el= self.site.earth_location
         self.antenna_array = build_sim_array(self.site, self.antennas,
                                              self.freq/1e9, jd=ref_jd)
         
@@ -96,29 +100,29 @@ class VirtualWriter(WriterBase):
         Nchan = len(self.freq)
         uvw = np.zeros((Nbase,3,Nchan), dtype=np.float32)
         
-        old_date = self.observer.date*1.0
-        self.observer.date = jd - astro.DJD_OFFSET
+        date = AstroTime(jd, format='jd', scale='utc')
         
         if source == 'z':
-            HA = 0.0
-            dec = self.observer.lat * 180/np.pi
+            tc = AltAz(0.0*astrounits.deg, 90.0*astrounits.deg,
+                       location=self.el, obstime=date)
+            equ = tc.transform_to(FK5(equinox=date))
         else:
-            HA = (self.observer.sidereal_time() - source.ra) * 12/np.pi
-            dec = source.dec * 180/np.pi
+            equ = FK5(source.a_ra*astrounits.rad, source.a_dec*astrounits.rad,
+                      equinox=date)
             
         # Phase center coordinates
-        # Convert numbers to radians and, for HA, hours to degrees
-        HA2 = HA * 15.0 * np.pi/180
-        dec2 = dec * np.pi/180
-        lat2 = self.observer.lat
+        ha = equ.transform_to(HADec(location=self.el, obstime=date))
+        HA2 = ha.ha.rad
+        dec2 = ha.dec.rad
+        lat2 = self.el.lat.rad
         
         # Coordinate transformation matrices
         trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
-                              [1,  0,               0],
-                              [0,  np.cos(lat2), np.sin(lat2)]])
-        trans2 = np.array([[ np.sin(HA2),                  np.cos(HA2),                 0],
-                              [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
-                              [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
+                           [1,  0,            0           ],
+                           [0,  np.cos(lat2), np.sin(lat2)]])
+        trans2 = np.array([[ np.sin(HA2),               np.cos(HA2),              0           ],
+                           [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
+                           [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
         
         # Frequency scaling
         uscl = self.freq / speedOfLight
@@ -134,8 +138,6 @@ class VirtualWriter(WriterBase):
             temp = np.dot(trans2, xyz)
             uvw[i,:,:] = temp
         uvw *= uscl
-        
-        self.observer.date = old_date
         
         return uvw
         
@@ -180,12 +182,23 @@ class VirtualWriter(WriterBase):
         for (a1,a2) in baselines:
             numericBaselines.append((self.antennas.index(a1), self.antennas.index(a2)))
             
+        if source == 'z':
+            ot = AstroTime(obsTime, format='mjd', scale='tai').utc
+            tc = AltAz('0deg', '90deg', location=self.el, obstime=ot)
+            pc = tc.transform_to(FK5(equinox=ot))
+        
+            phase_center = aipy.amp.RadioFixedBody(pc.ra.rad, pc.dec.rad,
+                                                   name=f"ZA{pc.ra.to_string(sep='')}",
+                                                   epoch=ephem.J2000 + (ot.jyear - 2000))
+        else:
+            phase_center = source
+                                                      
         obsJD = astro.taimjd_to_utcjd(obsTime)
         uvw = self._build_uvw(obsJD, baselines, source)
         pds = PolarizationDataSet(pol, visibilities, weight=weights)
         vds = VisibilityDataSet(obsJD, self.freq, numericBaselines, uvw,
                                 antennaarray=self.antenna_array,
-                                phase_center=source)
+                                phase_center=phase_center)
         vds.append(pds)
         return vds
         

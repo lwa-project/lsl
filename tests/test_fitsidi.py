@@ -2,18 +2,14 @@
 Unit test for the lsl.writer.fitsidi modules.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
+import ephem
 import unittest
 import tempfile
-import numpy
+import numpy as np
 import shutil
+
 from astropy.io import fits as astrofits
 
 from lsl.common import stations as lwa_common
@@ -34,7 +30,7 @@ class fitsidi_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-fitsidi-', suffix='.tmp')
 
     def _init_data(self):
@@ -48,15 +44,15 @@ class fitsidi_tests(unittest.TestCase):
         """
 
         # Frequency range
-        freq = numpy.arange(0,512)*20e6/512 + 40e6
+        freq = np.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa_common.lwa1
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
         blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
-        visData = numpy.random.rand(len(blList), len(freq))
-        visData = visData.astype(numpy.complex64)
+        visData = np.random.rand(len(blList), len(freq))
+        visData = visData.astype(np.complex64)
 
         return {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
 
@@ -179,10 +175,10 @@ class fitsidi_tests(unittest.TestCase):
         self.assertEqual(len(fq.field('FREQID')), 1)
 
         # Correct channel width
-        self.assertAlmostEqual(fq.field('CH_WIDTH')[0], numpy.abs(data['freq'][1]-data['freq'][0]), 4)
+        self.assertAlmostEqual(fq.field('CH_WIDTH')[0], np.abs(data['freq'][1]-data['freq'][0]), 4)
 
         # Correct bandwidth
-        self.assertAlmostEqual(fq.field('TOTAL_BANDWIDTH')[0], numpy.abs(data['freq'][-1]-data['freq'][0]).astype(numpy.float32), 4)
+        self.assertAlmostEqual(fq.field('TOTAL_BANDWIDTH')[0], np.abs(data['freq'][-1]-data['freq'][0]).astype(np.float32), 4)
 
         # Correct sideband
         self.assertEqual(fq.field('SIDEBAND')[0], 1)
@@ -262,12 +258,21 @@ class fitsidi_tests(unittest.TestCase):
         # Get some data
         data = self._init_data()
         
+        # Create a source other than zenith to try
+        source = ephem.FixedBody()
+        source._ra = 0.0
+        source._dec = np.pi/2
+        source._epoch = ephem.J2000
+        source.compute(data['site'])
+        
         # Start the file
         fits = fitsidi.Idi(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime+6.0), 6.0, data['bl'], data['vis'],
+                          source=source)
         fits.write()
         fits.close()
 
@@ -275,10 +280,11 @@ class fitsidi_tests(unittest.TestCase):
         hdulist = astrofits.open(testFile)
         so = hdulist['SOURCE'].data
         # Correct number of entries
-        self.assertEqual(len(so.field('SOURCE_ID')), 1)
+        self.assertEqual(len(so.field('SOURCE_ID')), 2)
 
         # Correct Source ID number
-        self.assertEqual(so.field('SOURCE_ID'), 1)
+        self.assertEqual(so.field('SOURCE_ID')[0], 1)
+        self.assertEqual(so.field('SOURCE_ID')[1], 2)
 
         hdulist.close()
 
@@ -340,10 +346,10 @@ class fitsidi_tests(unittest.TestCase):
                     i = i + 1
             
             # Extract the data and run the comparison
-            visData = numpy.zeros(len(data['freq']), dtype=numpy.complex64)
+            visData = np.zeros(len(data['freq']), dtype=np.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            numpy.testing.assert_allclose(visData, data['vis'][i,:])
+            np.testing.assert_allclose(visData, data['vis'][i,:])
             i = i + 1
         
         hdulist.close()
@@ -405,7 +411,7 @@ class fitsidi_tests(unittest.TestCase):
         fits.set_frequency(data['freq']+10e6)
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+                          np.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         fits.close()
 
@@ -453,16 +459,16 @@ class fitsidi_tests(unittest.TestCase):
                     i = i + 1
             
             # Extract the data and run the comparison - IF 1
-            visData = numpy.zeros(2*len(data['freq']), dtype=numpy.complex64)
+            visData = np.zeros(2*len(data['freq']), dtype=np.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            numpy.testing.assert_allclose(visData[:len(data['freq'])], data['vis'][i,:])
+            np.testing.assert_allclose(visData[:len(data['freq'])], data['vis'][i,:])
             
             # Extract the data and run the comparison - IF 2
-            visData = numpy.zeros(2*len(data['freq']), dtype=numpy.complex64)
+            visData = np.zeros(2*len(data['freq']), dtype=np.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            numpy.testing.assert_allclose(visData[len(data['freq']):], 10*data['vis'][i,:])
+            np.testing.assert_allclose(visData[len(data['freq']):], 10*data['vis'][i,:])
                 
         hdulist.close()
         
@@ -479,7 +485,7 @@ class aipsidi_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-aipsidi-', suffix='.tmp')
 
     def _init_data(self):
@@ -493,15 +499,15 @@ class aipsidi_tests(unittest.TestCase):
         """
 
         # Frequency range
-        freq = numpy.arange(0,512)*20e6/512 + 40e6
+        freq = np.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa_common.lwa1
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
         blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
-        visData = numpy.random.rand(len(blList), len(freq))
-        visData = visData.astype(numpy.complex64)
+        visData = np.random.rand(len(blList), len(freq))
+        visData = visData.astype(np.complex64)
 
         return {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
 
@@ -593,10 +599,10 @@ class aipsidi_tests(unittest.TestCase):
         self.assertEqual(len(fq.field('FREQID')), 1)
 
         # Correct channel width
-        self.assertAlmostEqual(fq.field('CH_WIDTH')[0], numpy.abs(data['freq'][1]-data['freq'][0]), 4)
+        self.assertAlmostEqual(fq.field('CH_WIDTH')[0], np.abs(data['freq'][1]-data['freq'][0]), 4)
 
         # Correct bandwidth
-        self.assertAlmostEqual(fq.field('TOTAL_BANDWIDTH')[0], numpy.abs(data['freq'][-1]-data['freq'][0]).astype(numpy.float32), 4)
+        self.assertAlmostEqual(fq.field('TOTAL_BANDWIDTH')[0], np.abs(data['freq'][-1]-data['freq'][0]).astype(np.float32), 4)
 
         # Correct sideband
         self.assertEqual(fq.field('SIDEBAND')[0], 1)
@@ -676,12 +682,21 @@ class aipsidi_tests(unittest.TestCase):
         # Get some data
         data = self._init_data()
         
+        # Create a source other than zenith to try
+        source = ephem.FixedBody()
+        source._ra = 0.0
+        source._dec = np.pi/2
+        source._epoch = ephem.J2000
+        source.compute(data['site'])
+        
         # Start the file
         fits = fitsidi.Aips(testFile, ref_time=testTime)
         fits.set_stokes(['xx'])
         fits.set_frequency(data['freq'])
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
+        fits.add_data_set(unix_to_taimjd(testTime+6.0), 6.0, data['bl'], data['vis'],
+                          source=source)
         fits.write()
         fits.close()
 
@@ -689,10 +704,11 @@ class aipsidi_tests(unittest.TestCase):
         hdulist = astrofits.open(testFile)
         so = hdulist['SOURCE'].data
         # Correct number of entries
-        self.assertEqual(len(so.field('SOURCE_ID')), 1)
+        self.assertEqual(len(so.field('SOURCE_ID')), 2)
 
         # Correct Source ID number
-        self.assertEqual(so.field('SOURCE_ID'), 1)
+        self.assertEqual(so.field('SOURCE_ID')[0], 1)
+        self.assertEqual(so.field('SOURCE_ID')[1], 2)
 
         hdulist.close()
 
@@ -754,10 +770,10 @@ class aipsidi_tests(unittest.TestCase):
                     i = i + 1
             
             # Extract the data and run the comparison
-            visData = numpy.zeros(len(data['freq']), dtype=numpy.complex64)
+            visData = np.zeros(len(data['freq']), dtype=np.complex64)
             visData.real = vis[0::2]
             visData.imag = vis[1::2]
-            numpy.testing.assert_allclose(visData, data['vis'][i,:])
+            np.testing.assert_allclose(visData, data['vis'][i,:])
             i = i + 1
         
         hdulist.close()
