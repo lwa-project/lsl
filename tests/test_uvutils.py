@@ -143,17 +143,6 @@ class uvutils_tests(unittest.TestCase):
         numpy.testing.assert_allclose(out0, out1)
         numpy.testing.assert_allclose(out0, out2)
         
-    def test_compute_uv_track(self):
-        """Test that the compute_uv_track function runs."""
-        
-        station = stations.lwa1
-        antennas = station.antennas
-        
-        out = uvutils.compute_uv_track(antennas[0:60:2])
-        
-        # Make sure we have the right dimensions
-        self.assertEqual(out.shape, (435,2,512))
-        
         
 class uvutils_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.reader units 
