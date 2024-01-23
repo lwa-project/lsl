@@ -357,7 +357,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             bestPhaseOffsets = np.array(bestPhaseOffsets)
             tempPhaseOffsets += 0.5*bestPhaseOffsets
             
-            valid = valid = np.where( np.abs(bestPhaseOffsets) < 1e6 )[0]
+            valid = np.where( np.abs(bestPhaseOffsets) < 1e6 )[0]
             metric = (np.abs(bestPhaseOffsets[valid])).max()
             if verbose:
                 print('    ', metric)
@@ -409,11 +409,11 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             A = A[good,:]
             C = C[good]
             
-            bestDelaysAndPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C)
-            resid = np.array(C - np.dot(A, bestDelaysAndPhaseOffsets)).ravel()
+            bestDelays, resid, rank, s = np.linalg.lstsq(A, C)
+            resid = np.array(C - np.dot(A, bestDelays)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
-            bestDelays = list(bestDelaysAndPhaseOffsets[:(N-1)])
+            bestDelays = list(bestDelays)
             bestDelays.insert(ref_ant, 0.0)
             bestDelays = np.array(bestDelays)
             tempDelays += 0.5*bestDelays
@@ -428,12 +428,16 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             A = A[good,:]
             C = C[good]
             
-            bestPhaseOffsets = list(bestDelaysAndPhaseOffsets[(N-1):])
+            bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C)
+            resid = np.array(C - np.dot(A, bestPhaseOffsets)).ravel()
+            resid = (C**2).sum(), (resid**2).sum()
+            
+            bestPhaseOffsets = list(bestPhaseOffsets)
             bestPhaseOffsets.insert(ref_ant, 0.0)
             bestPhaseOffsets = np.array(bestPhaseOffsets)
             tempPhaseOffsets += 0.5*bestPhaseOffsets
             
-            valid = np.where( np.abs(bestDelays) < 1e6 )[0]
+            valid = np.where( (np.abs(bestDelays) < 1e6) & (np.abs(bestPhaseOffsets) < 1e6) )[0]
             metric1 = (np.abs(bestDelays[valid])).max()
             metric2 = (np.abs(bestPhaseOffsets[valid])).max()
             if verbose:
