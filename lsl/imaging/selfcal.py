@@ -105,7 +105,7 @@ def _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     return Cp
 
 
-def _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
+def _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix A for phase correction with a frequency independent
     phase.
@@ -138,7 +138,7 @@ def _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     return A
 
 
-def _build_phaseonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
+def _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix C for phase correction with a frequency independent
     phase.
@@ -171,7 +171,7 @@ def _build_phaseonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     return Cp
 
 
-def _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
+def _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix A for phase correction with a delay.
     """
@@ -187,23 +187,23 @@ def _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     for i in range(fq.size):
         for j,(l,m) in enumerate(dataSet.baselines):
             if l < ref_ant:
-                A[j+i*nBLs,l]   =  2*np.pi*fq[i]
+                A[j+i*nBLs,l]   =  1
             elif l > ref_ant:
-                A[j+i*nBLs,l-1] =  2*np.pi*fq[i]
+                A[j+i*nBLs,l-1] =  1
             else:
                 pass
                 
             if m < ref_ant:
-                A[j+i*nBLs,m]   = -2*np.pi*fq[i]
+                A[j+i*nBLs,m]   = -1
             elif m > ref_ant:
-                A[j+i*nBLs,m-1] = -2*np.pi*fq[i]
+                A[j+i*nBLs,m-1] = -1
             else:
                 pass
         
     return A
 
 
-def _build_delayonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
+def _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
     Build the matrix C for phase correction with a delay.
     """
@@ -230,76 +230,7 @@ def _build_delayonly_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     Cp = np.zeros(nBLs*fq.size)
     for i in range(fq.size):
         for j in range(C.shape[0]):
-            Cp[j+i*nBLs] = C[j,i]
-    
-    return Cp
-
-
-def _build_delayandphase_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
-    """
-    Build the matrix A for phase correction with a delay and a phase offset.
-    """
-    
-    # Get the baseline and stand counts
-    nBLs = dataSet.nbaseline
-    nStands = len(aa.ants)
-    
-    # Frequency in GHz so that the delays can be in ns
-    fq = dataSet.freq[chan] / 1e9
-    
-    A = np.zeros((nBLs*fq.size, 2*(nStands-1)))
-    for i in range(fq.size):
-        for j,(l,m) in enumerate(dataSet.baselines):
-            if l < ref_ant:
-                A[j+i*nBLs,l]   =  2*np.pi*fq[i]
-                A[j+i*nBLs,l+(nStands-1)] = 1.0
-            elif l > ref_ant:
-                A[j+i*nBLs,l-1] =  2*np.pi*fq[i]
-                A[j+i*nBLs,l-1+(nStands-1)] = 1.0
-                
-            else:
-                pass
-                
-            if m < ref_ant:
-                A[j+i*nBLs,m]   = -2*np.pi*fq[i]
-                A[j+i*nBLs,m+(nStands-1)] = -1.0
-            elif m > ref_ant:
-                A[j+i*nBLs,m-1] = -2*np.pi*fq[i]
-                A[j+i*nBLs,m-1+(nStands-1)] = -1.0
-            else:
-                pass
-        
-    return A
-
-
-def _build_delayandphase_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
-    """
-    Build the matrix C for phase correction with a delay and a phase offset.
-    """
-    
-    # Get the baseline and stand counts
-    nBLs = dataSet.nbaseline
-    nStands = len(aa.ants)
-    
-    # Frequency in GHz so that the delays can be in ns
-    fq = dataSet.freq[chan] / 1e9
-    
-    obsVis = []
-    for vis in getattr(dataSet, pol).data:
-        obsVis.append( np.array(vis[chan]) )
-    obsVis = np.array(obsVis)
-    
-    simVis = []
-    for vis in getattr(simSet, pol).data:
-        simVis.append( np.array(vis[chan]) )
-    simVis = np.array(simVis)
-    
-    C = np.angle(simVis / obsVis)
-    
-    Cp = np.zeros(nBLs*fq.size)
-    for i in range(fq.size):
-        for j in range(C.shape[0]):
-            Cp[j+i*nBLs] = C[j,i]
+            Cp[j+i*nBLs] = C[j,i] / (2*np.pi*fq[i])
     
     return Cp
 
@@ -363,6 +294,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
     # Frequency in GHz so that the delays can be in ns
     fq = dataSet.freq[chan] / 1e9
     
+    origSet = dataSet
+    
     converged = False
     tempGains = np.ones(N)
     tempDelays = np.zeros(N)
@@ -399,7 +332,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 amplitude = False
                 converged = True
                 
-            dataSet = _scale_data(dataSet, bestGains, np.zeros_like(bestGains), np.zeros_like(bestGains))
+            dataSet = _scale_data(origSet, tempGains, np.zeros_like(tempGains), np.zeros_like(tempGains))
         
         #
         # Delay and/or phase
@@ -408,8 +341,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             if verbose:
                 print('  %iP' % (i+1,))
                 
-            A = _build_phaseonly_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
-            C = _build_phaseonly_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = np.where( np.isfinite(C) == 1 )[0]
             A = A[good,:]
@@ -422,7 +355,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             bestPhaseOffsets = list(bestPhaseOffsets)
             bestPhaseOffsets.insert(ref_ant, 0.0)
             bestPhaseOffsets = np.array(bestPhaseOffsets)
-            tempPhaseOffsets += bestPhaseOffsets
+            tempPhaseOffsets += 0.5*bestPhaseOffsets
             
             valid = valid = np.where( np.abs(bestPhaseOffsets) < 1e6 )[0]
             metric = (np.abs(bestPhaseOffsets[valid])).max()
@@ -432,14 +365,14 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 phase_only = False
                 converged = True
                 
-            dataSet = _scale_data(dataSet, np.ones_like(bestPhaseOffsets), np.zeros_like(bestPhaseOffsets), bestPhaseOffsets)
+            dataSet = _scale_data(origSet, np.ones_like(tempPhaseOffsets), np.zeros_like(tempPhaseOffsets), tempPhaseOffsets)
             
         elif delay_only:
             if verbose:
                 print('  %iD' % (i+1,))
                 
-            A = _build_delayonly_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
-            C = _build_delayonly_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = np.where( np.isfinite(C) == 1 )[0]
             A = A[good,:]
@@ -452,7 +385,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             bestDelays = list(bestDelays)
             bestDelays.insert(ref_ant, 0.0)
             bestDelays = np.array(bestDelays)
-            tempDelays += bestDelays
+            tempDelays += 0.5*bestDelays
             
             valid = np.where( np.abs(bestDelays) < 1e6 )[0]
             metric = (np.abs(bestDelays[valid])).max()
@@ -462,14 +395,15 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 delay_only = False
                 converged = True
                 
-            dataSet = _scale_data(dataSet, np.ones_like(bestDelays), bestDelays, np.zeros_like(bestDelays))
+            dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, np.zeros_like(tempDelays))
             
         elif delay_and_phase:
             if verbose:
                 print('  %iD+P' % (i+1,))
                 
-            A = _build_delayandphase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
-            C = _build_delayandphase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            ## Delay first
+            A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = np.where( np.isfinite(C) == 1 )[0]
             A = A[good,:]
@@ -482,12 +416,22 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             bestDelays = list(bestDelaysAndPhaseOffsets[:(N-1)])
             bestDelays.insert(ref_ant, 0.0)
             bestDelays = np.array(bestDelays)
-            tempDelays += bestDelays
+            tempDelays += 0.5*bestDelays
+            
+            dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, tempPhaseOffsets)
+            
+            ## Then phase
+            A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            
+            good = np.where( np.isfinite(C) == 1 )[0]
+            A = A[good,:]
+            C = C[good]
             
             bestPhaseOffsets = list(bestDelaysAndPhaseOffsets[(N-1):])
             bestPhaseOffsets.insert(ref_ant, 0.0)
             bestPhaseOffsets = np.array(bestPhaseOffsets)
-            tempPhaseOffsets += bestPhaseOffsets
+            tempPhaseOffsets += 0.5*bestPhaseOffsets
             
             valid = np.where( np.abs(bestDelays) < 1e6 )[0]
             metric1 = (np.abs(bestDelays[valid])).max()
@@ -498,7 +442,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 delay_and_phase = False
                 converged = True
                 
-            dataSet = _scale_data(dataSet, np.ones_like(bestDelays), bestDelays, bestPhaseOffsets)
+            dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, tempPhaseOffsets)
             
         else:
             pass
