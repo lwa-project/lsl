@@ -101,6 +101,8 @@ class _DataAccess(object):
                 
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
                 mtime = calendar.timegm(mtime.timetuple())
+        except IOError as e:
+            warnings.warn(colorfy("{{%%yellow Error finding modification time of file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         except socket.timeout:
             pass
             
@@ -195,9 +197,9 @@ class _DataAccess(object):
                 ## Yep, looks like it could be in need of a refresh.  See
                 ## what our options are.
                 local_mtime = self._local_copy_mtime(filename)
-                remote_mtime = self._download_mtime(filename, backup=False)
+                remote_mtime = self._download_mtime(filename, use_backup=False)
                 if remote_mtime == 0:
-                    remote_mtime = self._download_mtime(filename, backup=True)
+                    remote_mtime = self._download_mtime(filename, use_backup=True)
                     
                 if max([local_mtime, remote_mtime]) > cache_mtime:
                     ## Found something newer.  Delete the current version and
