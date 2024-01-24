@@ -40,13 +40,15 @@ The other functions:
 
 import re
 import dbm
-import aipy
 import math
 import pytz
 import numpy as np
 import ctypes
 import struct
 from datetime import datetime
+
+from astropy import units as astrounits
+from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
 
 from lsl.common import dp as dpCommon
 
@@ -940,17 +942,24 @@ def apply_pointing_correction(az, el, theta, phi, psi, lat=34.070, degrees=True)
     
     # Convert the az,alt coordinates to the unit vector
     if degrees:
-        xyz = aipy.coord.azalt2top((az*np.pi/180.0, el*np.pi/180.0))
+        az = az*astrounits.deg
+        el = el*astrounits.deg
     else:
-        xyz = aipy.coord.azalt2top((az, el))
-        
-    # Rotate
-    xyzP = np.dot(rot, xyz)
+        az = az*astrounits.rad
+        el = el*astrounits.rad
+    sph = SphericalRepresentation(az, el, 1)
+    xyz = sph.to_cartesian()
     
-    azP, elP = aipy.coord.top2azalt(xyzP)
+    # Rotate
+    xyzP = CartesianRepresentation(rot @ xyz.xyz)
+    
+    sph = SphericalRepresentation.from_cartesian(xyzP)
     if degrees:
-        azP *= 180/np.pi
-        elP *= 180/np.pi
+        azP = sph.lon.deg
+        elP = sph.lat.deg
+    else:
+        azP = sph.lon.rad
+        elP = sph.lat.rad
         
     return azP, elP
 
