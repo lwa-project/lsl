@@ -34,7 +34,8 @@ telemetry.track_module()
 
 __version__ = '2.5'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
-           'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_all_stations', 'get_full_stations',]
+           'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_all_stations', 'get_full_stations',
+           'get_mini_stations',]
 
 
 _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
@@ -1999,16 +2000,6 @@ with DataAccess.open('lwasv-ssmif.txt', 'r') as fh:
     lwasv = parse_ssmif(fh)
 
 
-def get_all_stations():
-    """
-    Function to return a list of all active stations.
-    
-    .. versionadded:: 3.0.0
-    """
-    
-    return [lwa1, lwasv, lwana]
-
-
 def get_full_stations():
     """
     Function to return a list of full stations.
@@ -2017,3 +2008,25 @@ def get_full_stations():
     """
     
     return [lwa1, lwasv]
+
+
+def get_mini_stations():
+    """
+    Function to return a list of full stations.
+    
+    .. versionadded:: 1.2.0
+    """
+    
+    return [lwana,]
+
+
+def get_all_stations():
+    """
+    Function to return a list of all active stations.
+    
+    .. versionadded:: 3.0.0
+    """
+
+    stations = get_full_stations()
+    stations.extend(get_mini_stations())
+    return stations
