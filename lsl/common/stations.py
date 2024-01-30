@@ -2012,7 +2012,7 @@ def get_full_stations():
 
 def get_mini_stations():
     """
-    Function to return a list of full stations.
+    Function to return a list of mini stations.
     
     .. versionadded:: 1.2.0
     """
