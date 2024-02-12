@@ -131,10 +131,10 @@ def _load_response_full(frequency, model='feko'):
         # Open the file and select the mode relevant frequencies
         with DataAccess.open(filename, 'rb') as fh:
             h = h5py.File(fh)
-            mfreq = h['Freq(MHz)'][...]*1e6
+            mfreq = h['freq'][...]*1e6
             best = np.where(np.abs(mfreq - frequency) < 10e6)[0]
-            maz = h['phi_pts'][...]
-            malt = 90 - h['theta_pts'][...] # zenith angle -> elevation
+            maz = h['phi'][...]
+            malt = 90 - h['theta'][...] # zenith angle -> elevation
             mflds = h[f"{pol.upper()}-pol_Efields"]
             E = mflds['Etheta(Mag)'][best,:,:maz.size]*np.exp(1j*mflds['Etheta(Phase)'][best,:,:maz.size])
             H = mflds['Ephi(Mag)'][best,:,:maz.size]*np.exp(1j*mflds['Ephi(Phase)'][best,:,:maz.size])
