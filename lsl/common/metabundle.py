@@ -1,7 +1,7 @@
 """
-Module for working with an MCS meta-data tarball and extracting the useful bits out 
-it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.LWAStation` 
-and :class:`lsl.common.sdm.SDM`.
+Module for working with any MCS meta-data tarball and extracting the useful bits
+out it and putting those bits into Python objects, e.g, 
+:class:`lsl.common.stations.LWAStation` and :class:`lsl.common.sdmDP.SDM`.
 """
 
 import os
