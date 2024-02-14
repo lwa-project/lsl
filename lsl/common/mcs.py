@@ -835,6 +835,8 @@ def mode_to_string(mode):
         return "DIAG1"
     elif mode == 8:
         return "TBF"
+    elif mode == 9:
+        return "TRK_LUN"
     else:
         raise ValueError("Invalid observing mode %i" % mode)
 
