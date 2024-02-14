@@ -1,5 +1,5 @@
 """
-Unit test for the lsl.common.metabundleNDP module.
+Unit test for the NDP portion of the lsl.common.metabundle module.
 """
 
 # Python2 compatibility
@@ -11,7 +11,7 @@ if sys.version_info < (3,):
 import os
 import unittest
 
-from lsl.common import metabundleNDP
+from lsl.common import metabundle, metabundleNDP
 from lsl.common.paths import DATA_BUILD
 
 
@@ -34,8 +34,8 @@ class metabundle_tests_ndp(unittest.TestCase):
     def test_ss(self):
         """Test the session specification utilties."""
         
-        ses = metabundleNDP.get_session_spec(mdbFileNDP)
-        obs = metabundleNDP.get_observation_spec(mdbFileNDP)
+        ses = metabundle.get_session_spec(mdbFileNDP)
+        obs = metabundle.get_observation_spec(mdbFileNDP)
         
         # Check session start time
         self.assertEqual(ses['mjd'], 60180)
@@ -50,8 +50,8 @@ class metabundle_tests_ndp(unittest.TestCase):
     def test_os(self):
         """Test the observation specification utilities."""
         
-        obs1 = metabundleNDP.get_observation_spec(mdbFileNDP)
-        obs2 = metabundleNDP.get_observation_spec(mdbFileNDP, obs_id=1)
+        obs1 = metabundle.get_observation_spec(mdbFileNDP)
+        obs2 = metabundle.get_observation_spec(mdbFileNDP, obs_id=1)
         
         # Check if the right observation is returned
         self.assertEqual(obs1[0], obs2)
@@ -66,7 +66,7 @@ class metabundle_tests_ndp(unittest.TestCase):
     def test_cs(self):
         """Test the command script utilities."""
         
-        cmnds = metabundleNDP.get_command_script(mdbFileNDP)
+        cmnds = metabundle.get_command_script(mdbFileNDP)
         
         # Check number of command
         self.assertEqual(len(cmnds), 10)
@@ -86,7 +86,7 @@ class metabundle_tests_ndp(unittest.TestCase):
     def test_sm(self):
         """Test the session metadata utilties."""
         
-        sm = metabundleNDP.get_session_metadata(mdbFileNDP)
+        sm = metabundle.get_session_metadata(mdbFileNDP)
         
         # Make sure all of the observations are done
         self.assertEqual(len(sm.keys()), 1)
@@ -94,22 +94,22 @@ class metabundle_tests_ndp(unittest.TestCase):
     def test_sdf(self):
         """Test building a SDF from a tarball."""
         
-        sdf = metabundleNDP.get_sdf(mdbFileNDP)
+        sdf = metabundle.get_sdf(mdbFileNDP)
         
     def test_station(self):
         """Test building a station from a tarball."""
         
-        station = metabundleNDP.get_station(mdbFileNDP)
+        station = metabundle.get_station(mdbFileNDP)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
         
-        sm = metabundleNDP.get_sdm(mdbFileNDP)
+        sm = metabundle.get_sdm(mdbFileNDP)
         
     def test_metadata(self):
         """Test the observation metadata utility."""
         
-        fileInfo = metabundleNDP.get_session_metadata(mdbFileNDP)
+        fileInfo = metabundle.get_session_metadata(mdbFileNDP)
         self.assertEqual(len(fileInfo.keys()), 1)
         
         # File tag
@@ -122,21 +122,21 @@ class metabundle_tests_ndp(unittest.TestCase):
         """Test retrieving the ASP configuration."""
         
         # Beginning config.
-        aspConfig = metabundleNDP.get_asp_configuration_summary(mdbFileNDP, which='beginning')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFileNDP, which='beginning')
         self.assertEqual(aspConfig['asp_filter'],      0)
         self.assertEqual(aspConfig['asp_atten_1'],     7)
         self.assertEqual(aspConfig['asp_atten_2'],     7)
         self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # End config.
-        aspConfig = metabundleNDP.get_asp_configuration_summary(mdbFileNDP, which='End')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFileNDP, which='End')
         self.assertEqual(aspConfig['asp_filter'],      0)
         self.assertEqual(aspConfig['asp_atten_1'],     7)
         self.assertEqual(aspConfig['asp_atten_2'],     7)
         self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundleNDP.get_asp_configuration_summary, mdbFileNDP, 'middle')
+        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileNDP, 'middle')
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""
@@ -155,7 +155,7 @@ class metabundle_tests_ndp(unittest.TestCase):
 
 
 class metabundle_ndp_test_suite(unittest.TestSuite):
-    """A unittest.TestSuite class which contains all of the lsl.common.metabundleNDP
+    """A unittest.TestSuite class which contains all of the lsl.common.metabundle
     module unit tests."""
     
     def __init__(self):

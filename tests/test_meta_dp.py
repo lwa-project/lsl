@@ -1,5 +1,5 @@
 """
-Unit test for the lsl.common.metabundle module.
+Unit test for the DP portion of the lsl.common.metabundle module.
 """
 
 # Python2 compatibility
@@ -11,7 +11,7 @@ if sys.version_info < (3,):
 import os
 import unittest
 
-from lsl.common import metabundle
+from lsl.common import metabundle, metabundleDP
 
 
 __version__  = "0.6"
@@ -25,7 +25,7 @@ mdbFileNDP = os.path.join(os.path.dirname(__file__), 'data', 'metadata-ndp.tgz')
 mdbFileGDB = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb.tgz')
 mdbFileGDBOld0 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb-old-0.tgz')
 
-class metabundle_tests(unittest.TestCase):
+class metabundle_dp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
     module."""
     
@@ -150,7 +150,7 @@ class metabundle_tests(unittest.TestCase):
         self.assertFalse(metabundle.is_valid(mdbFileGDBOld0))
 
 
-class metabundle_tests_old_0(unittest.TestCase):
+class metabundle_dp_tests_old_0(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
     module based on the tarball format supported in LSL 0.5.x."""
     
@@ -230,7 +230,7 @@ class metabundle_tests_old_0(unittest.TestCase):
         self.assertTrue(metabundle.is_valid(mdbFileOld0))
 
 
-class metabundle_tests_old_1(unittest.TestCase):
+class metabundle_dp_tests_old_1(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
     module."""
     
@@ -339,10 +339,10 @@ class metabundle_tests_old_1(unittest.TestCase):
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.is_valid(mdbFileOld1))
+        self.assertTrue(metabundleDP.is_valid(mdbFileOld1))
 
 
-class metabundle_test_suite(unittest.TestSuite):
+class metabundle_dp_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.common.metabundle
     module unit tests."""
     
@@ -350,9 +350,9 @@ class metabundle_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(metabundle_tests))        
-        self.addTests(loader.loadTestsFromTestCase(metabundle_tests_old_0))
-        self.addTests(loader.loadTestsFromTestCase(metabundle_tests_old_1))
+        self.addTests(loader.loadTestsFromTestCase(metabundle_dp_tests))        
+        self.addTests(loader.loadTestsFromTestCase(metabundle_dp_tests_old_0))
+        self.addTests(loader.loadTestsFromTestCase(metabundle_dp_tests_old_1))
         
 if __name__ == '__main__':
     unittest.main()
