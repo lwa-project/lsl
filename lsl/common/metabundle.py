@@ -4,6 +4,9 @@ it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.
 and :class:`lsl.common.sdm.SDM`.
 """
 
+import os
+from lsl.common import metabundleDP, metabundleADP, metabundleNDP
+
 __version__ = '1.2'
 __all__ = ['get_sdm', 'get_beamformer_min_delay', 'get_station',
            'get_session_metadata', 'get_session_spec', 'get_observation_spec',
@@ -11,10 +14,12 @@ __all__ = ['get_sdm', 'get_beamformer_min_delay', 'get_station',
            'get_asp_configuration_summary']
 
 
-from lsl.common import metabundleDP, metabundleADP, metabundleNDP
 
 
 def get_sdm(tarname):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_sdm(tarname)
@@ -24,6 +29,9 @@ def get_sdm(tarname):
 
 
 def get_beamformer_min_delay(tarname):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_beamformer_min_delay(tarname)
@@ -33,6 +41,9 @@ def get_beamformer_min_delay(tarname):
 
 
 def get_station(tarname, apply_sdm=True):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_station(tarname, apply_sdm=apply_sdm)
@@ -42,6 +53,9 @@ def get_station(tarname, apply_sdm=True):
 
 
 def get_session_metadata(tarname):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_session_metadata(tarname)
@@ -51,6 +65,9 @@ def get_session_metadata(tarname):
 
 
 def get_session_spec(tarname):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_session_spec(tarname)
@@ -60,6 +77,9 @@ def get_session_spec(tarname):
 
 
 def get_observation_spec(tarname, obs_id=None):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_observation_spec(tarname, obs_id=obs_id)
@@ -69,6 +89,9 @@ def get_observation_spec(tarname, obs_id=None):
 
 
 def get_sdf(tarname):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_sdf(tarname)
@@ -78,6 +101,9 @@ def get_sdf(tarname):
 
 
 def get_command_script(tarname):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_command_script(tarname)
@@ -87,6 +113,9 @@ def get_command_script(tarname):
 
 
 def get_asp_configuration(tarname, which='beginning'):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:
             return backend.get_asp_configuration(tarname, which=which)
@@ -96,6 +125,9 @@ def get_asp_configuration(tarname, which='beginning'):
 
 
 def get_asp_configuration_summary(tarname, which='beginning'):
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
             try:
                 return backend.get_asp_configuration_summary(tarname, which=which)
