@@ -301,11 +301,4 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
 
 
 def get_avaliable_models():
-    models = []
-    if os.path.exists(_MODELS['empirical']):
-        models.extend(['empirical', 'llfss'])
-    for model,filename in _MODELS.items():
-        if os.path.exists(filename):
-            models.append(model)
-    
-    return models
+    return list(_MODELS.keys())
