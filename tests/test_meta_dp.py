@@ -134,20 +134,20 @@ class metabundle_dp_tests(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
+        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.is_valid(mdbFile))
+        self.assertTrue(metabundleDP.is_valid(mdbFile))
         
     def test_is_not_valid(self):
         """Test whether or not is_valid works on LWA-SV and LWA-NA files."""
         
-        self.assertFalse(metabundle.is_valid(mdbFileADP))
-        self.assertFalse(metabundle.is_valid(mdbFileNDP))
-        self.assertFalse(metabundle.is_valid(mdbFileGDB))
-        self.assertFalse(metabundle.is_valid(mdbFileGDBOld0))
+        self.assertFalse(metabundleDP.is_valid(mdbFileADP))
+        self.assertFalse(metabundleDP.is_valid(mdbFileNDP))
+        self.assertFalse(metabundleDP.is_valid(mdbFileGDB))
+        self.assertFalse(metabundleDP.is_valid(mdbFileGDBOld0))
 
 
 class metabundle_dp_tests_old_0(unittest.TestCase):
@@ -227,7 +227,7 @@ class metabundle_dp_tests_old_0(unittest.TestCase):
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.is_valid(mdbFileOld0))
+        self.assertTrue(metabundleDP.is_valid(mdbFileOld0))
 
 
 class metabundle_dp_tests_old_1(unittest.TestCase):
@@ -334,7 +334,7 @@ class metabundle_dp_tests_old_1(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileOld1, 'middle')
+        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFileOld1, 'middle')
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""

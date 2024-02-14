@@ -135,7 +135,7 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileADP, 'middle')
+        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFileADP, 'middle')
         
     def test_aspconfig_gdbm(self):
         """Test retrieving the ASP configuration from a GDBM MIB."""
@@ -155,7 +155,7 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileGDB, 'middle')
+        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFileGDB, 'middle')
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""
