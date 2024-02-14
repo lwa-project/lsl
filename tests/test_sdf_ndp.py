@@ -32,16 +32,16 @@ __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(DATA_BUILD, 'tests', 'tbw-sdf.txt')
-tbnFile = os.path.join(DATA_BUILD, 'tests', 'tbn-sdf.txt')
-drxFile = os.path.join(DATA_BUILD, 'tests', 'drx-sdf.txt')
-solFile = os.path.join(DATA_BUILD, 'tests', 'sol-sdf.txt')
-jovFile = os.path.join(DATA_BUILD, 'tests', 'jov-sdf.txt')
-lunFile = os.path.join(DATA_BUILD, 'tests', 'lun-sdf.txt')
-stpFile = os.path.join(DATA_BUILD, 'tests', 'stp-sdf.txt')
-spcFile = os.path.join(DATA_BUILD, 'tests', 'spc-sdf.txt')
-tbfFile = os.path.join(DATA_BUILD, 'tests', 'tbf-sdf.txt')
-idfFile = os.path.join(DATA_BUILD, 'tests', 'drx-idf.txt')
+tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-sdf.txt')
+tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-sdf.txt')
+drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-sdf.txt')
+solFile = os.path.join(os.path.dirname(__file__), 'data', 'sol-sdf.txt')
+jovFile = os.path.join(os.path.dirname(__file__), 'data', 'jov-sdf.txt')
+lunFile = os.path.join(os.path.dirname(__file__), 'data', 'lun-sdf.txt')
+stpFile = os.path.join(os.path.dirname(__file__), 'data', 'stp-sdf.txt')
+spcFile = os.path.join(os.path.dirname(__file__), 'data', 'spc-sdf.txt')
+tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-sdf.txt')
+idfFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-idf.txt')
 
 
 class sdf_ndp_tests(unittest.TestCase):
