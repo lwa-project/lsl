@@ -14,11 +14,9 @@ import os
 import re
 import copy
 import glob
-import shutil
-import tarfile
-import tempfile
 from datetime import datetime, timedelta
 
+from lsl.common._metabundle_utils import *
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
 from lsl.common.adp import word_to_freq, fS
@@ -29,45 +27,11 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.1'
+__version__ = '1.2'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_beamformer_min_delay',
            'get_station', 'get_session_metadata', 'get_session_spec', 'get_observation_spec',
            'get_sdf', 'get_command_script', 'get_asp_configuration', 'get_asp_configuration_summary',
            'is_valid']
-
-# Regular expression for figuring out filenames
-filenameRE = re.compile(r'(?P<projectID>[a-zA-Z0-9]{1,8})_(?P<sessionID>\d+)(_(?P<obsID>\d+)(_(?P<obsOutcome>\d+))?)?.*\..*')
-
-
-@lru_cache(maxsize=1)
-def _open_tarball(tarname):
-    return tarfile.open(tarname, mode='r:*')
-
-
-@lru_cache(maxsize=1)
-def _get_members(tarname):
-    tf = _open_tarball(tarname)
-    return tf.getmembers()
-
-
-class managed_mkdtemp(object):
-    """
-    Wrapper class around tempfile.mkdtemp to enable 'with' statements with 
-    automatic cleanup.
-    """
-    
-    def __init__(self, suffix='', prefix='tmp', dir=None):
-        self._dir = tempfile.mkdtemp(suffix, prefix, dir)
-        
-    def __enter__(self):
-        return self._dir
-        
-    def __exit__(self, type, value, tb):
-        shutil.rmtree(self._dir, ignore_errors=True)
-        
-    @property
-    def name(self):
-        return self._dir
 
 
 def read_ses_file(filename):
