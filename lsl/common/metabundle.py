@@ -5,6 +5,7 @@ and :class:`lsl.common.sdm.SDM`.
 """
 
 import os
+
 from lsl.common import metabundleDP, metabundleADP, metabundleNDP
 
 __version__ = '1.2'
@@ -12,8 +13,6 @@ __all__ = ['get_sdm', 'get_beamformer_min_delay', 'get_station',
            'get_session_metadata', 'get_session_spec', 'get_observation_spec',
            'get_sdf', 'get_command_script', 'get_asp_configuration',
            'get_asp_configuration_summary']
-
-
 
 
 def get_sdm(tarname):
