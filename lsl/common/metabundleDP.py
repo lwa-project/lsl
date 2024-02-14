@@ -1,7 +1,7 @@
 """
 Module for working with an MCS meta-data tarball and extracting the useful bits out 
 it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.LWAStation` 
-and :class:`lsl.common.sdm.SDM`.
+and :class:`lsl.common.sdmDP.SDM`.
 """
 
 # Python2 compatibility
@@ -19,7 +19,7 @@ import tarfile
 import tempfile
 from datetime import datetime, timedelta
 
-from lsl.common import stations, sdm, sdf
+from lsl.common import stations, sdmDP, sdf
 from lsl.common.mcs import *
 from lsl.common.dp import word_to_freq, fS
 from lsl.misc.lru_cache import lru_cache
@@ -272,7 +272,7 @@ def read_cs_file(filename):
 def get_sdm(tarname):
     """
     Given an MCS meta-data tarball, extract the information stored in the 
-    dynamic/sdm.dat file and return a :class:`lsl.common.sdm.SDM` instance
+    dynamic/sdm.dat file and return a :class:`lsl.common.sdmDP.SDM` instance
     describing the dynamic condition of the station.
     
     If a sdm.dat file cannot be found in the tarball, None is returned.
@@ -289,7 +289,7 @@ def get_sdm(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse the SDM file and build the SDM instance
-        dynamic = sdm.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+        dynamic = sdmDP.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
         
     return dynamic
 
