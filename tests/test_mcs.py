@@ -79,10 +79,10 @@ class mcs_tests(unittest.TestCase):
     def test_mode_limits(self):
         """Test valid observing mode values"""
         
-        for i in range(1, 8+1):
+        for i in range(1, 9+1):
             mcs.mode_to_string(i)
         self.assertRaises(ValueError, mcs.mode_to_string, 0)
-        self.assertRaises(ValueError, mcs.mode_to_string, 9)
+        self.assertRaises(ValueError, mcs.mode_to_string, 10)
         
     def test_pointing_correction(self):
         """Test the pointing correction function"""
