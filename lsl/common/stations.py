@@ -1959,8 +1959,8 @@ def parse_ssmif(filename_or_fh):
             interface = LSLInterface(backend='lsl.common.dp', 
                                      mcs='lsl.common.mcs', 
                                      sdf='lsl.common.sdf', 
-                                     metabundle='lsl.common.metabundle', 
-                                     sdm='lsl.common.sdm')
+                                     metabundle='lsl.common.metabundleDP', 
+                                     sdm='lsl.common.sdmDP')
         elif idn in ('SV',):
             interface = LSLInterface(backend='lsl.common.adp', 
                                      mcs='lsl.common.mcsADP', 
