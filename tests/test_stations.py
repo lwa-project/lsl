@@ -16,7 +16,7 @@ import unittest
 from datetime import datetime
 
 from lsl.common.paths import DATA_BUILD
-from lsl.common import stations, dp, mcs, sdf, metabundle, sdm
+from lsl.common import stations, dp, mcs, sdf, metabundleDP, sdmDP
 import lsl.testing
 
 
@@ -117,8 +117,8 @@ class stations_tests(unittest.TestCase):
         self.assertEqual(lwa1.interface.backend, 'lsl.common.dp')
         self.assertEqual(lwa1.interface.mcs, 'lsl.common.mcs')
         self.assertEqual(lwa1.interface.sdf, 'lsl.common.sdf')
-        self.assertEqual(lwa1.interface.metabundle, 'lsl.common.metabundle')
-        self.assertEqual(lwa1.interface.sdm, 'lsl.common.sdm')
+        self.assertEqual(lwa1.interface.metabundle, 'lsl.common.metabundleDP')
+        self.assertEqual(lwa1.interface.sdm, 'lsl.common.sdmDP')
         
         lwasv = stations.lwasv
         self.assertEqual(lwasv.interface.backend, 'lsl.common.adp')
@@ -141,22 +141,22 @@ class stations_tests(unittest.TestCase):
         self.assertEqual(lwa1.interface.get_module('backend').__file__, dp.__file__)
         self.assertEqual(lwa1.interface.get_module('mcs').__file__, mcs.__file__)
         self.assertEqual(lwa1.interface.get_module('sdf').__file__, sdf.__file__)
-        self.assertEqual(lwa1.interface.get_module('metabundle').__file__, metabundle.__file__)
-        self.assertEqual(lwa1.interface.get_module('sdm').__file__, sdm.__file__)
+        self.assertEqual(lwa1.interface.get_module('metabundle').__file__, metabundleDP.__file__)
+        self.assertEqual(lwa1.interface.get_module('sdm').__file__, sdmDP.__file__)
         
         lwasv = stations.lwasv
         self.assertFalse(lwasv.interface.get_module('backend').__file__ == dp.__file__)
         self.assertFalse(lwasv.interface.get_module('mcs').__file__ == mcs.__file__)
         self.assertFalse(lwasv.interface.get_module('sdf').__file__ == sdf.__file__)
-        self.assertFalse(lwasv.interface.get_module('metabundle').__file__ == metabundle.__file__)
-        self.assertFalse(lwasv.interface.get_module('sdm').__file__ == sdm.__file__)
+        self.assertFalse(lwasv.interface.get_module('metabundle').__file__ == metabundleDP.__file__)
+        self.assertFalse(lwasv.interface.get_module('sdm').__file__ == sdmDP.__file__)
         
         lwana = stations.lwana
-        self.assertFalse(lwana.interface.get_module('backend') == dp)
-        self.assertFalse(lwana.interface.get_module('mcs') == mcs)
-        self.assertFalse(lwana.interface.get_module('sdf') == sdf)
-        self.assertFalse(lwana.interface.get_module('metabundle') == metabundle)
-        self.assertFalse(lwana.interface.get_module('sdm') == sdm)
+        self.assertFalse(lwana.interface.get_module('backend').__file__ == dp.__file__)
+        self.assertFalse(lwana.interface.get_module('mcs').__file__ == mcs.__file__)
+        self.assertFalse(lwana.interface.get_module('sdf').__file__ == sdf.__file__)
+        self.assertFalse(lwana.interface.get_module('metabundle').__file__ == metabundleDP.__file__)
+        self.assertFalse(lwana.interface.get_module('sdm').__file__ == sdmDP.__file__)
         
     def test_ssmif(self):
         """Test the SSMIF parser."""
