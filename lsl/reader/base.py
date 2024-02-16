@@ -487,6 +487,16 @@ class FrameTimestamp(object):
     def __repr__(self):
         return "<FrameTimestamp i=%i, f=%.9f>" % (self._int, self._frac)
         
+    def __format__(self, format_spec):
+        if format_spec == '' or format_spec[-1] == 's':
+            return format(str(self), format_spec)
+        elif format_spec[-1] in ('e', 'E', 'f', 'F', 'g', 'G', 'n'):
+            return format(float(self), format_spec)
+        elif format_spec[-1] in ('d', 'n'):
+            return format(self._int, format_spec)
+        else:
+            raise TypeError("unsupported format string passed to %s.__format__" % type(self).__name__)
+            
     def __float__(self):
         return self._int+self._frac
         
