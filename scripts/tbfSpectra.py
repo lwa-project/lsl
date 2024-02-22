@@ -81,6 +81,10 @@ def main(args):
     fh.seek(0)
     beginDate = junkFrame.time.datetime
     
+    # Make sure the TBF stand count is consistent with how many antennas we have
+    if antpols//2 != junkFrame.nstand:
+        raise RuntimeError("Number of stands in the station (%i) does not match what is in the data (%i)" % (antpols//2, junkFrame.nstand))
+        
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
     nFramesPerObs = tbf.get_frames_per_obs(fh)
