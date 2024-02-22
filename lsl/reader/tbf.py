@@ -68,7 +68,7 @@ class FrameHeader(FrameHeaderBase):
     well as the original binary header data.
     """
     
-    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'first_chan']
+    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'nstand', 'first_chan']
     
     def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None):
         self.adp_id = adp_id
