@@ -208,6 +208,15 @@ class LDPFileBase(object):
             except KeyError:
                 raise ValueError("Unknown key '%s'" % key)
                 
+    @property
+    def info(self):
+        """
+        Return a dictionary containing metadata about the file.  Equivalent to
+        calling get_info(None).
+        """
+        
+        return self.description
+        
     def get_remaining_frame_count(self):
         """
         Return the number of frames left in the file.
