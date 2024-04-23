@@ -1893,9 +1893,9 @@ class TBFFile(LDPFileBase):
             self._timetag = 0
             
         # Find out how many frames to read in
+        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         if duration is None:
             duration = self.description['nframe'] / framesPerObs / self.description['sample_rate']
-        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frame_count = int(round(1.0 * duration * self.description['sample_rate']))
         frame_count = frame_count if frame_count else 1
         duration = frame_count / self.description['sample_rate']
