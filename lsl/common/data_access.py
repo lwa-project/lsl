@@ -114,6 +114,8 @@ class _DataAccess(object):
                 mtime = calendar.timegm(mtime.timetuple())
         except socket.timeout:
             pass
+        except:
+            pass
             
         return mtime
         
