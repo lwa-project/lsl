@@ -192,7 +192,7 @@ def main(args):
         
     jd = idf.get_info('start_time').jd
     date = idf.get_info('start_time').datetime
-    nant = idf.get_info('nantennas')
+    nant = idf.get_info('nantenna')
     nFpO = idf.get_info('nchan') // 12
     sample_rate = idf.get_info('sample_rate')
     nInts = idf.get_info('nframe') // nFpO
