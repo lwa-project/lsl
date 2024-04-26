@@ -99,7 +99,7 @@ class _DataAccess(object):
             
         mtime = 0
         try:
-            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')):
+            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')) as uh:
                 try:
                     mtime = uh.headers['Last-Modified']
                 except AttributeError:
