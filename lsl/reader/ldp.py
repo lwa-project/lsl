@@ -1182,7 +1182,10 @@ class DRXFile(LDPFileBase):
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
-                            baseframe = copy.deepcopy(cFrames[0])
+                            try:
+                                baseframe = copy.deepcopy(cFrames[0])
+                            except NameError:
+                                baseframe = copy.deepcopy(self.buffer.buffer[cTimetag][0])
                             baseframe.payload.timetag = m
                             baseframe.payload._data *= 0
                             self.buffer.append(baseframe)
