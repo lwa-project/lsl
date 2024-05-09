@@ -351,7 +351,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = self.earth_location
+        ecefFrom = self.earth_location.itrs
         try:
             ecefTo = locTo.itrs
         except AttributeError:
