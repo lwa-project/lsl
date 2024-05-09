@@ -951,7 +951,8 @@ def apply_pointing_correction(az, el, theta, phi, psi, lat=34.070, degrees=True)
     xyz = sph.to_cartesian()
     
     # Rotate
-    xyzP = CartesianRepresentation(rot @ xyz.xyz)
+    yxz = xyz.xyz[[1,0,2]]
+    xyzP = CartesianRepresentation((rot @ yxz)[[1,0,2]])
     
     sph = SphericalRepresentation.from_cartesian(xyzP)
     if degrees:
