@@ -1138,7 +1138,7 @@ class MIBEntry(object):
          * f4r:   float, 4 bytes, big-ending (=float32)
         """
         
-        if dataType == 'NUL':
+        if dataType == 'NUL' or dataType == '':
             try:
                 value = str(value, 'utf-8')
             except TypeError:
