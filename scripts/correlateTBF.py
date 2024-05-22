@@ -269,6 +269,7 @@ def main(args):
         if args.samples > nSets:
             args.samples = nSets
             
+
         # Loop over junks of 100 integrations to make sure that we don't overflow 
         # the FITS IDI memory buffer
         s = 0
@@ -281,8 +282,7 @@ def main(args):
                 if args.casa:
                     fitsFilename = "%s_IF%i.ms_%i" % (basename, ifno, (s+1),)
                 else:
-                    fitsFilename = "%s_IF%i.FITS_%i" % (basename, ifno, (s+1),)
-                    
+                    fitsFilename = "%s_IF%i.FITS_%i" % (basename, ifno, (s+1),)                  
                 if leftToDo > 100:
                     chunk = 100
                 else:
