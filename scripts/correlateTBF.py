@@ -15,6 +15,7 @@ import os
 import sys
 import time
 import numpy
+from scipy.stats import mode
 import argparse
 
 from astropy.constants import c as speedOfLight
@@ -34,7 +35,7 @@ telemetry.track_script()
 
 
 
-def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['xx',], chunk_size=100):
+def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['xx',], chunk_size=100, fstart=5.0e6, fend=93.0e6):
     """
     Given a lsl.reader.ldp.TBNFile instances and various parameters for the 
     cross-correlation, write cross-correlate the data and save it to a file.
@@ -144,7 +145,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             vis = XEngine2(d1, d2, v1, v2)
             
             # Select the right range of channels to save
-            toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
+            toUse = numpy.where( (freq>=fstart) & (freq<=fend) )
             toUse = toUse[0]
             
             # If we are in the first polarazation product of the first iteration,  setup
@@ -169,6 +170,22 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
     del(vis)
     return True
 
+def getifs(freq_array):
+    fdiff = freq_array[1:] - freq_array[:-1]
+    bw,bwcount = mode(fdiff,keepdims=False)
+    fgaps = list(numpy.where(fdiff>bw)[0]+1)
+
+    ifindex = [0,len(freq_array)-1]
+    ifindex.extend(fgaps)
+    ifindex = numpy.sort(ifindex)
+
+    iflist = [freq_array[f1:f2] for f1,f2 in zip(ifindex[:-1],ifindex[1:])]
+    ifinds = [(f1,f2) for f1,f2 in zip(ifindex[:-1],ifindex[1:])]
+    fedges = []
+    for thisif in iflist:
+        fedges.append((thisif.min(),thisif.max()))
+    return fedges
+
 
 def main(args):
     # Parse command line options
@@ -184,6 +201,8 @@ def main(args):
         station = stations.lwasv
     antennas = station.antennas
     with LWASVDataFile(filename) as idf:
+        freq_array = idf.get_info('freq1')
+        fedges = getifs(freq_array)
 
         if not isinstance(idf, TBFFile):
             raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
@@ -253,25 +272,27 @@ def main(args):
         # Loop over junks of 100 integrations to make sure that we don't overflow 
         # the FITS IDI memory buffer
         s = 0
-        leftToDo = args.samples
         basename = os.path.split(filename)[1]
         basename, ext = os.path.splitext(basename)
-        while leftToDo > 0:
-            if args.casa:
-                fitsFilename = "%s.ms_%i" % (basename, (s+1),)
-            else:
-                fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
-                
-            if leftToDo > 100:
-                chunk = 100
-            else:
-                chunk = leftToDo
-                
-            process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
-                         freq_decim=args.decimate, pols=args.products, chunk_size=chunk)
-                        
-            s += 1
-            leftToDo = leftToDo - chunk
+    for ifno,(fstart,fend) in enumerate(fedges):
+        with LWASVDataFile(filename) as idf:
+            leftToDo = args.samples
+            while leftToDo > 0:
+                if args.casa:
+                    fitsFilename = "%s_IF%i.ms_%i" % (basename, ifno, (s+1),)
+                else:
+                    fitsFilename = "%s_IF%i.FITS_%i" % (basename, ifno, (s+1),)
+                    
+                if leftToDo > 100:
+                    chunk = 100
+                else:
+                    chunk = leftToDo
+                process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
+                             freq_decim=args.decimate, pols=args.products, 
+                             chunk_size=chunk, fstart=fstart, fend=fend)
+                            
+                s += 1
+                leftToDo = leftToDo - chunk
             
 
 
