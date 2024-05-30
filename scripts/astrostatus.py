@@ -50,7 +50,7 @@ if __name__ == '__main__':
     elif site == 'ovrolwa':
         station = stations.lwa1
         station.name = 'OVRO-LWA'
-        station.lat, station.lon, station.elev = ('37.2397808', '-118.2816819', 1183.4839)
+        station.lat, station.lon, station.elev = ('37.23977727', '-118.2816667', 1183.48)
     else:
         raise RuntimeError("Unknown site name: %s" % site)
     site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)

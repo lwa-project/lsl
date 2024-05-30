@@ -265,7 +265,7 @@ def main(args):
             chunk = leftToDo
             
         process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
-                     freq_decim=args.decim, pols=args.products, chunk_size=chunk)
+                     freq_decim=args.decimate, pols=args.products, chunk_size=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk
