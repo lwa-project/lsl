@@ -48,7 +48,7 @@ def main(args):
     elif args.ovrolwa:
         nam = 'ovro'
         sta = stations.lwa1
-        sta.lat, sta.lon, sta.elev = ('37.23977727', '-118.2816667', 1182.89)
+        sta.lat, sta.lon, sta.elev = ('37.23977727', '-118.2816667', 1183.48)
     else:
         nam = 'lwa1'
         sta = stations.lwa1

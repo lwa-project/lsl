@@ -12,6 +12,7 @@ try:
     from urllib2 import urlopen
 except ImportError:
     from urllib.request import urlopen
+from urllib.error import HTTPError
 
 from lsl.common.paths import DATA as DATA_PATH
 from lsl.common.progress import DownloadBar
@@ -113,6 +114,8 @@ class _DataAccess(object):
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
                 mtime = calendar.timegm(mtime.timetuple())
         except socket.timeout:
+            pass
+        except HTTPError:
             pass
             
         return mtime
