@@ -47,15 +47,23 @@ def main(args):
     nchan = len(idi.freq)
     freq = idi.freq
     
+    chan_width = freq[1]-freq[0]
+    chan = numpy.round(freq / chan_width)
+    nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+    freq_if = freq*1.0
+    freq_if = freq_if.reshape(nif, -1)  
+    
     print("Raw Stand Count: %i" % nStand)
     print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
-    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3))
+    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq_if[0,0]/1e6, freq_if[0,-1]/1e6, freq_if.shape[1], (freq_if[0,1] - freq_if[0,0])/1e3))
+    for i in range(1, nif):
+        print("                  %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq_if[i,0]/1e6, freq_if[i,-1]/1e6, freq_if.shape[1], (freq_if[i,1] - freq_if[i,0])/1e3))
     try:
         print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
     except KeyError:
         # Catch for CASA MS that use a different numbering scheme
         NUMERIC_STOKESMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
-                        9:'XX', 10:'XY', 11:'YX', 12:'YY'}
+                            9:'XX', 10:'XY', 11:'YX', 12:'YY'}
         print("Polarization Products: %s" % ' '.join([NUMERIC_STOKESMS[p] for p in idi.pols]))
         
     print("Reading in FITS IDI data")
