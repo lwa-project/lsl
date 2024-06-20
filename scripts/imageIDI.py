@@ -235,7 +235,7 @@ def main(args):
                 if yn not in ('n', 'N'):
                     overwrite = True
             try:
-                hdulist.writeto(args.fits, overwrite=overwrite)
+                hdulist.writeto(f"{args.fits}-t{set}.fits", overwrite=overwrite)
             except IOError as e:
                 print("WARNING: FITS image file not saved")
                 
@@ -275,6 +275,6 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--no-grid', action='store_true', 
                         help='disable the coordinate grid')
     parser.add_argument('-f', '--fits', type=str, 
-                        help='save the images to the specified FITS image file')
+                        help='save the images to FITS image files with specified basename. ex: basename-t1.fits')
     args = parser.parse_args()
     main(args)
