@@ -34,7 +34,7 @@ telemetry.track_script()
 
 def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['xx',], chunk_size=100):
     """
-    Given a lsl.reader.ldp.TBNFile instances and various parameters for the 
+    Given a lsl.reader.ldp.TBFFile instances and various parameters for the
     cross-correlation, write cross-correlate the data and save it to a file.
     """
     
@@ -47,10 +47,19 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
     # Get the metadata
     freq = idf.get_info('freq1')
+    srate = idf.get_info('sample_rate')
+    
+    # Break the frequency range into IFs
+    chan = numpy.round(freq / srate)
+    nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+    freq = freq.reshape(nif, -1)
+    
+    # Decimate in frequency if requested
     if freq_decim > 1:
-        freq = freq.reshape(-1, freq_decim)
-        freq = freq.mean(axis=1)
-        
+        freq = freq.reshape(nif, -1, freq_decim)
+        freq = freq.mean(axis=2)
+    freq_flat = freq.ravel()
+    
     # Create the list of good digitizers and a digitizer to Antenna instance mapping.  
     # These are:
     #  toKeep  -> mapping of digitizer number to array location
@@ -89,7 +98,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply frequency decimation
         if freq_decim > 1:
-            data = data.reshape(-1, freq.size, freq_decim)
+            data = data.reshape(nif, -1, freq_decim)
             data = data.mean(axis=2)
             
         ## Split the polarizations
@@ -100,14 +109,14 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply the cable delays as phase rotations
         for i in range(dataX.shape[0]):
-            gain = numpy.sqrt( antennasX[i].cable.gain(freq) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasX[i].cable.delay(freq) \
+            gain = numpy.sqrt( antennasX[i].cable.gain(freq_flat) )
+            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasX[i].cable.delay(freq_flat) \
                                                    -antennasX[i].stand.z/speedOfLight))
             for j in range(dataX.shape[2]):
                 dataX[i,:,j] *= phaseRot / gain
         for i in range(dataY.shape[0]):
-            gain = numpy.sqrt( antennasY[i].cable.gain(freq) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasY[i].cable.delay(freq)\
+            gain = numpy.sqrt( antennasY[i].cable.gain(freq_flat) )
+            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasY[i].cable.delay(freq_flat)\
                                                    -antennasY[i].stand.z/speedOfLight))
             for j in range(dataY.shape[2]):
                 dataY[i,:,j] *= phaseRot / gain
@@ -141,10 +150,6 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             ## Run the cross multiply and accumulate
             vis = XEngine2(d1, d2, v1, v2)
             
-            # Select the right range of channels to save
-            toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
-            toUse = toUse[0]
-            
             # If we are in the first polarazation product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
@@ -152,11 +157,12 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
                 
                 fits = writer_class(filename, ref_time=ref_time)
                 fits.set_stokes(pols)
-                fits.set_frequency(freq[toUse])
+                for f in range(freq.shape[0]):
+                    fits.set_frequency(freq[f,:])
                 fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
-            fits.add_data_set(setTime, readT, blList, vis[:,toUse], pol=pol)
+            fits.add_data_set(setTime, readT, blList, vis, pol=pol)
         print("->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1)))
         
     # Cleanup after everything is done
@@ -181,96 +187,97 @@ def main(args):
     else:
         station = stations.lwasv
     antennas = station.antennas
-    
-    idf = LWASVDataFile(filename)
-    if not isinstance(idf, TBFFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
+    with LWASVDataFile(filename) as idf:
+        if not isinstance(idf, TBFFile):
+            raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
+            
+        jd = idf.get_info('start_time').jd
+        date = idf.get_info('start_time').datetime
+        nFpO = idf.get_info('nchan') // 12
+        sample_rate = idf.get_info('sample_rate')
+        nInts = idf.get_info('nframe') // nFpO
         
-    jd = idf.get_info('start_time').jd
-    date = idf.get_info('start_time').datetime
-    nFpO = idf.get_info('nchan') // 12
-    sample_rate = idf.get_info('sample_rate')
-    nInts = idf.get_info('nframe') // nFpO
-    
-    # Get valid stands for both polarizations
-    goodX = []
-    goodY = []
-    for i in range(len(antennas)):
-        ant = antennas[i]
-        if ant.combined_status != 33 and not args.all:
-            pass
-        else:
-            if ant.pol == 0:
-                goodX.append(ant)
+        # Get valid stands for both polarizations
+        goodX = []
+        goodY = []
+        for i in range(len(antennas)):
+            ant = antennas[i]
+            if ant.combined_status != 33 and not args.all:
+                pass
             else:
-                goodY.append(ant)
-                
-    # Now combine both lists to come up with stands that
-    # are in both so we can form the cross-polarization 
-    # products if we need to
-    good = []
-    for antX in goodX:
-        for antY in goodY:
-            if antX.stand.id == antY.stand.id:
-                good.append( antX.digitizer-1 )
-                good.append( antY.digitizer-1 )
-                
-    # Report on the valid stands found.  This is a little verbose,
-    # but nice to see.
-    print("Found %i good stands to use" % (len(good)//2,))
-    for i in good:
-        print("%3i, %i" % (antennas[i].stand.id, antennas[i].pol))
-        
-    # Number of frames to read in at once and average
-    nFrames = min([int(args.avg_time*sample_rate), nInts])
-    nSets = idf.get_info('nframe') // nFpO // nFrames
-    args.offset = idf.offset(args.offset)
-    nSets = nSets - int(args.offset*sample_rate) // nFrames
-    
-    central_freq = idf.get_info('freq1')
-    central_freq = central_freq[len(central_freq)//2]
-    
-    print("Data type:  %s" % type(idf))
-    print("Samples per observations: %i" % nFpO)
-    print("Sampling rate: %i Hz" % sample_rate)
-    print("Tuning frequency: %.3f Hz" % central_freq)
-    print("Captures in file: %i (%.3f s)" % (nInts, nInts / sample_rate))
-    print("==")
-    print("Station: %s" % station.name)
-    print("Date observed: %s" % date)
-    print("Julian day: %.5f" % jd)
-    print("Offset: %.3f s (%i frames)" % (args.offset, args.offset*sample_rate))
-    print("Integration Time: %.3f s" % (nFrames/sample_rate))
-    print("Number of integrations in file: %i" % nSets)
-    
-    # Make sure we don't try to do too many sets
-    if args.samples > nSets:
-        args.samples = nSets
-        
-    # Loop over junks of 100 integrations to make sure that we don't overflow 
-    # the FITS IDI memory buffer
-    s = 0
-    leftToDo = args.samples
-    basename = os.path.split(filename)[1]
-    basename, ext = os.path.splitext(basename)
-    while leftToDo > 0:
-        if args.casa:
-            fitsFilename = "%s.ms_%i" % (basename, (s+1),)
-        else:
-            fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
-            
-        if leftToDo > 100:
-            chunk = 100
-        else:
-            chunk = leftToDo
-            
-        process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
-                     freq_decim=args.decimate, pols=args.products, chunk_size=chunk)
+                if ant.pol == 0:
+                    goodX.append(ant)
+                else:
+                    goodY.append(ant)
                     
-        s += 1
-        leftToDo = leftToDo - chunk
+        # Now combine both lists to come up with stands that
+        # are in both so we can form the cross-polarization 
+        # products if we need to
+        good = []
+        for antX in goodX:
+            for antY in goodY:
+                if antX.stand.id == antY.stand.id:
+                    good.append( antX.digitizer-1 )
+                    good.append( antY.digitizer-1 )
+                    
+        # Report on the valid stands found.  This is a little verbose,
+        # but nice to see.
+        print("Found %i good stands to use" % (len(good)//2,))
+        for i in good:
+            print("%3i, %i" % (antennas[i].stand.id, antennas[i].pol))
+            
+        # Number of frames to read in at once and average
+        if args.avg_time == 0.0:
+            args.avg_time = nInts/sample_rate
+        nFrames = min([int(args.avg_time*sample_rate), nInts])
+        nSets = idf.get_info('nframe') // nFpO // nFrames
+        args.offset = idf.offset(args.offset)
+        nSets = nSets - int(args.offset*sample_rate) // nFrames
         
-    idf.close()
+        central_freq = idf.get_info('freq1')
+        chan = numpy.round(central_freq / sample_rate)
+        nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+        central_freq = central_freq.reshape(nif, -1)
+        central_freq = central_freq[:,central_freq.shape[1]//2]
+        
+        print("Data type:  %s" % type(idf))
+        print("Samples per observations: %i" % nFpO)
+        print("Sampling rate: %i Hz" % sample_rate)
+        print("Tuning frequency: %s Hz" % (', '.join("%.3f" % v for v in central_freq)))
+        print("Captures in file: %i (%.3f s)" % (nInts, nInts / sample_rate))
+        print("==")
+        print("Station: %s" % station.name)
+        print("Date observed: %s" % date)
+        print("Julian day: %.5f" % jd)
+        print("Offset: %.3f s (%i frames)" % (args.offset, args.offset*sample_rate))
+        print("Integration Time: %.3f s" % (nFrames/sample_rate))
+        print("Number of integrations in file: %i" % nSets)
+        
+        # Make sure we don't try to do too many sets
+        args.samples = min([args.samples, nSets])
+        
+        # Loop over junks of 100 integrations to make sure that we don't overflow 
+        # the FITS IDI memory buffer
+        s = 0
+        basename = os.path.split(filename)[1]
+        basename, ext = os.path.splitext(basename)
+        
+        leftToDo = args.samples
+        while leftToDo > 0:
+            if args.casa:
+                fitsFilename = "%s.ms_%i" % (basename, (s+1),)
+            else:
+                fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
+            if leftToDo > 100:
+                chunk = 100
+            else:
+                chunk = leftToDo
+            process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time,
+                         freq_decim=args.decimate, pols=args.products,
+                         chunk_size=chunk)
+            
+            s += 1
+            leftToDo = leftToDo - chunk
 
 
 if __name__ == "__main__":
