@@ -109,14 +109,14 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply the cable delays as phase rotations
         for i in range(dataX.shape[0]):
-            gain = numpy.sqrt( antennasX[i].cable.gain(freq) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasX[i].cable.delay(freq) \
+            gain = numpy.sqrt( antennasX[i].cable.gain(freq_flat) )
+            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasX[i].cable.delay(freq_flat) \
                                                    -antennasX[i].stand.z/speedOfLight))
             for j in range(dataX.shape[2]):
                 dataX[i,:,j] *= phaseRot / gain
         for i in range(dataY.shape[0]):
-            gain = numpy.sqrt( antennasY[i].cable.gain(freq) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasY[i].cable.delay(freq)\
+            gain = numpy.sqrt( antennasY[i].cable.gain(freq_flat) )
+            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasY[i].cable.delay(freq_flat)\
                                                    -antennasY[i].stand.z/speedOfLight))
             for j in range(dataY.shape[2]):
                 dataY[i,:,j] *= phaseRot / gain
