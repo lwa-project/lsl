@@ -229,13 +229,18 @@ def main(args):
                 
             ## Save the FITS file to disk
             hdulist = astrofits.HDUList(hdulist)
+            fitsname = args.fits
+            if args.dataset == -1 and nSets > 1:
+                fitsparts = os.path.splitext(args.fits)
+                fitsname = "%s-t%i%s" % (fitsparts[0], set, fitsparts[1])
+                
             overwrite = False
-            if os.path.exists(args.fits):
-                yn = input("WARNING: '%s' exists, overwrite? [Y/n]" % args.fits)
+            if os.path.exists(fitsname):
+                yn = input("WARNING: '%s' exists, overwrite? [Y/n]" % fitsname)
                 if yn not in ('n', 'N'):
                     overwrite = True
             try:
-                hdulist.writeto(f"{args.fits}-t{set}.fits", overwrite=overwrite)
+                hdulist.writeto(fitsname, overwrite=overwrite)
             except IOError as e:
                 print("WARNING: FITS image file not saved")
                 
@@ -275,6 +280,6 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--no-grid', action='store_true', 
                         help='disable the coordinate grid')
     parser.add_argument('-f', '--fits', type=str, 
-                        help='save the images to FITS image files with specified basename. ex: basename-t1.fits')
+                        help='save the images to the FITS image file; if multiple data sets are imaged the filename is updated to include a "-t<data_set_number>" tag')
     args = parser.parse_args()
     main(args)
