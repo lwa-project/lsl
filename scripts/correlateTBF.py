@@ -239,7 +239,6 @@ def main(args):
         nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
         central_freq = central_freq.reshape(nif, -1)
         central_freq = central_freq[:,central_freq.shape[1]//2]
-        print(nif, central_freq)
         
         print("Data type:  %s" % type(idf))
         print("Samples per observations: %i" % nFpO)
