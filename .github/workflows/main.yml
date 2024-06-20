@@ -23,8 +23,6 @@ jobs:
         include:
           - os: ubuntu-20.04
             python-version: '3.6'
-          - os: macos-latest
-            python-version: '3.6'
       fail-fast: false
     steps:
       - name: "Software Install - Ubuntu"
@@ -65,7 +63,7 @@ jobs:
         run: |
           python -m pip install \
             setuptools \
-            numpy \
+            "numpy<2" \
             matplotlib \
             scipy \
             ephem \
