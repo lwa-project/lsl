@@ -51,12 +51,12 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
     
     # Break the frequency range into IFs
     chan = numpy.round(freq / srate)
-    nifs = len(numpy.where(numpy.diff(chan) > 1)[0])
-    freqs = freqs.reshape(nif+1, -1)
+    nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+    freq = freq.reshape(nif, -1)
     
     # Decimate in frequency if requested
     if freq_decim > 1:
-        freq = freq.reshape(nif+1, -1, freq_decim)
+        freq = freq.reshape(nif, -1, freq_decim)
         freq = freq.mean(axis=2)
     freq_flat = freq.ravel()
     
@@ -98,7 +98,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply frequency decimation
         if freq_decim > 1:
-            data = data.reshape(-1, freq.size, freq_decim)
+            data = data.reshape(nif, -1, freq_decim)
             data = data.mean(axis=2)
             
         ## Split the polarizations
@@ -188,11 +188,9 @@ def main(args):
         station = stations.lwasv
     antennas = station.antennas
     with LWASVDataFile(filename) as idf:
-        freq_array = idf.get_info('freq1')
-        fedges = getifs(freq_array)
-        
         if not isinstance(idf, TBFFile):
             raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
+            
         jd = idf.get_info('start_time').jd
         date = idf.get_info('start_time').datetime
         nFpO = idf.get_info('nchan') // 12
@@ -237,12 +235,16 @@ def main(args):
         nSets = nSets - int(args.offset*sample_rate) // nFrames
         
         central_freq = idf.get_info('freq1')
-        central_freq = central_freq[len(central_freq)//2]
+        chan = numpy.round(central_freq / sample_rate)
+        nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+        central_freq = central_freq.reshape(nif, -1)
+        central_freq = central_freq[:,central_freq.shape[1]//2]
+        print(nif, central_freq)
         
         print("Data type:  %s" % type(idf))
         print("Samples per observations: %i" % nFpO)
         print("Sampling rate: %i Hz" % sample_rate)
-        print("Tuning frequency: %.3f Hz" % central_freq)
+        print("Tuning frequency: %s Hz" % (', '.join("%.3f" % v for v in central_freq)))
         print("Captures in file: %i (%.3f s)" % (nInts, nInts / sample_rate))
         print("==")
         print("Station: %s" % station.name)
