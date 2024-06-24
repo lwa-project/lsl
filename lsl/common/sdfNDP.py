@@ -249,13 +249,21 @@ class Project(_Project):
                     output += "OBS_STP_FREQ2+[%i]  %.9f MHz\n" % (stpID, step.frequency2/1e6)
                     output += "OBS_STP_B[%i]       %s\n" % (stpID, step.beam)
                     if step.beam == 'SPEC_DELAYS_GAINS':
-                        for k,delay in enumerate(step.delays):
+                        for k in range(2*self.mandc.LWA_MAX_NSTD):
                             dlyID = k + 1
-                            
+                            try:
+                                delay = step.delays[k]
+                            except IndexError:
+                                delay = 0.0
+                                
                             output += "OBS_BEAM_DELAY[%i][%i] %i\n" % (stpID, dlyID, delay)
-                        for k,gain in enumerate(step.gains):
+                        for k in range(self.mandc.LWA_MAX_NSTD):
                             gaiID = k + 1
-                            
+                            try:
+                                gain = step.gains[k]
+                            except IndexError:
+                                gain = [[0,0],[0,0]]
+                                
                             output += "OBS_BEAM_GAIN[%i][%i][1][1] %i\n" % (stpID, gaiID, gain[0][0])
                             output += "OBS_BEAM_GAIN[%i][%i][1][2] %i\n" % (stpID, gaiID, gain[0][1])
                             output += "OBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (stpID, gaiID, gain[1][0])
