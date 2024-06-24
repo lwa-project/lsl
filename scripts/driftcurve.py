@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d
 
 from lsl import skymap, astro
 from lsl.common import stations
-from lsl.common.data_access import DataAccess
+from lsl.sim.beam import get_avaliable_models, beam_response
 from lsl.misc import parser as aph
 
 from lsl.misc import telemetry
@@ -39,7 +39,7 @@ def main(args):
     elif args.ovrolwa:
         nam = 'ovro'
         sta = stations.lwa1
-        sta.lat, sta.lon, sta.elev = ('37.23977727', '-118.2816667', 1182.89)
+        sta.lat, sta.lon, sta.elev = ('37.23977727', '-118.2816667', 1183.48)
     else:
         nam = 'lwa1'
         sta = stations.lwa1
@@ -53,62 +53,12 @@ def main(args):
         smap = skymap.SkyMapLFSM(freq_MHz=args.frequency/1e6)
         if args.verbose:
             print("Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
+            
+    # Beam pattern function
+    model = 'llfss' if args.empirical else 'empirical'
+    pol = 'XX' if args.pol == 'EW' else 'YY'
+    bfunc = lambda x, y: beam_response(model, pol, x, y, frequency=args.frequency, degrees=True)
     
-    # Get the emperical model of the beam and compute it for the correct frequencies
-    with DataAccess.open('antenna/lwa1-dipole-emp.npz', 'rb') as fh:
-        beamDict = np.load(fh)
-        if args.pol == 'EW':
-            beamCoeff = beamDict['fitX']
-        else:
-            beamCoeff = beamDict['fitY']
-    alphaE = np.polyval(beamCoeff[0,0,:], args.frequency)
-    betaE =  np.polyval(beamCoeff[0,1,:], args.frequency)
-    gammaE = np.polyval(beamCoeff[0,2,:], args.frequency)
-    deltaE = np.polyval(beamCoeff[0,3,:], args.frequency)
-    alphaH = np.polyval(beamCoeff[1,0,:], args.frequency)
-    betaH =  np.polyval(beamCoeff[1,1,:], args.frequency)
-    gammaH = np.polyval(beamCoeff[1,2,:], args.frequency)
-    deltaH = np.polyval(beamCoeff[1,3,:], args.frequency)
-    if args.verbose:
-        print("Beam Coeffs. X: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaH, betaH, gammaH, deltaH))
-        print("Beam Coeffs. Y: a=%.2f, b=%.2f, g=%.2f, d=%.2f" % (alphaE, betaE, gammaE, deltaE))
-        
-    if args.empirical:
-        with DataAccess.open('antenna/lwa1-dipole-cor.npz', 'rb') as fh:
-            corrDict = np.load(fh)
-            cFreqs = corrDict['freqs']
-            cAlts  = corrDict['alts']
-            if corrDict['degrees'].item():
-                cAlts *= np.pi / 180.0
-            cCorrs = corrDict['corrs']
-            
-        if args.frequency/1e6 < cFreqs.min() or args.frequency/1e6 > cFreqs.max():
-            print("WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (args.frequency/1e6,))
-            corrFnc = None
-        else:
-            fCors = cAlts*0.0
-            for i in range(fCors.size):
-                ffnc = interp1d(cFreqs, cCorrs[:,i], bounds_error=False)
-                fCors[i] = ffnc(args.frequency/1e6)
-            corrFnc = interp1d(cAlts, fCors, bounds_error=False)
-            
-    else:
-        corrFnc = None
-        
-    def compute_beam_pattern(az, alt, corr=corrFnc):
-        zaR = np.pi/2 - alt*np.pi / 180.0 
-        azR = az*np.pi / 180.0
-        
-        c = 1.0
-        if corrFnc is not None:
-            c = corrFnc(alt*np.pi / 180.0)
-            c = np.where(np.isfinite(c), c, 1.0)
-            
-        pE = (1-(2*zaR/np.pi)**alphaE)*np.cos(zaR)**betaE + gammaE*(2*zaR/np.pi)*np.cos(zaR)**deltaE
-        pH = (1-(2*zaR/np.pi)**alphaH)*np.cos(zaR)**betaH + gammaH*(2*zaR/np.pi)*np.cos(zaR)**deltaH
-
-        return c*np.sqrt((pE*np.cos(azR))**2 + (pH*np.sin(azR))**2)
-
     if args.do_plot:
         az = np.zeros((90,360))
         alt = np.zeros((90,360))
@@ -118,7 +68,7 @@ def main(args):
             alt[i,:] = i
         pylab.figure(1)
         pylab.title("Beam Response: %s pol. @ %0.2f MHz" % (args.pol, args.frequency/1e6))
-        pylab.imshow(compute_beam_pattern(az, alt), extent=(0,359, 0,89), origin='lower')
+        pylab.imshow(bfunc(az, alt), extent=(0,359, 0,89), origin='lower')
         pylab.xlabel("Azimuth [deg]")
         pylab.ylabel("Altitude [deg]")
         pylab.grid(1)
@@ -140,7 +90,7 @@ def main(args):
         lstList.append(lst)
         
         # Convolution of user antenna pattern with visible skymap
-        gain = compute_beam_pattern(pmap.visibleAz, pmap.visibleAlt)
+        gain = bfunc(pmap.visibleAz, pmap.visibleAlt)
         powerAnt = (pmap.visiblePower * gain).sum() / gain.sum()
         powListAnt.append(powerAnt)
 

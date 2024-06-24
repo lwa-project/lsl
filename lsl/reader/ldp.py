@@ -1176,7 +1176,10 @@ class DRXFile(LDPFileBase):
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
-                            baseframe = copy.deepcopy(cFrames[0])
+                            try:
+                                baseframe = copy.deepcopy(cFrames[0])
+                            except NameError:
+                                baseframe = copy.deepcopy(self.buffer.buffer[cTimetag][0])
                             baseframe.payload.timetag = m
                             baseframe.payload._data *= 0
                             self.buffer.append(baseframe)
@@ -1887,9 +1890,9 @@ class TBFFile(LDPFileBase):
             self._timetag = 0
             
         # Find out how many frames to read in
+        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         if duration is None:
             duration = self.description['nframe'] / framesPerObs / self.description['sample_rate']
-        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frame_count = int(round(1.0 * duration * self.description['sample_rate']))
         frame_count = frame_count if frame_count else 1
         duration = frame_count / self.description['sample_rate']

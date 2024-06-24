@@ -34,7 +34,7 @@ if __name__ == '__main__':
     elif site == 'ovrolwa':
         station = stations.lwa1
         station.name = 'OVRO-LWA'
-        station.lat, station.long, station.elev = ('37.23977727', '-118.2816667', 1182.89)
+        station.lat, station.long, station.elev = ('37.23977727', '-118.2816667', 1183.48)
     else:
         raise RuntimeError("Unknown site name: %s" % site)
         

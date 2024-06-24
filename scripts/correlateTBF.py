@@ -35,6 +35,10 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
     # Get antennas
     antennas = site.antennas
     
+    # Sort out the integration time
+    if int_time == 0.0:
+        int_time = None
+        
     # Get the metadata
     freq = idf.get_info('freq1')
     if freq_decim > 1:
@@ -255,7 +259,7 @@ def main(args):
             chunk = leftToDo
             
         process_chunk(idf, station, good, fitsFilename, int_time=args.avg_time, 
-                     freq_decim=args.decim, pols=args.products, chunk_size=chunk)
+                     freq_decim=args.decimate, pols=args.products, chunk_size=chunk)
                     
         s += 1
         leftToDo = leftToDo - chunk
@@ -272,8 +276,8 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
-    parser.add_argument('-t', '--avg-time', type=aph.positive_float, default=1.0, 
-                        help='time window to average visibilities in seconds')
+    parser.add_argument('-t', '--avg-time', type=aph.positive_or_zero_float, default=0.0, 
+                        help='time window to average visibilities in seconds; 0 = integrate the entire file')
     parser.add_argument('-s', '--samples', type=aph.positive_int, default=1, 
                         help='number of average visibilities to generate')
     parser.add_argument('-o', '--offset', type=aph.positive_or_zero_float, default=0.0, 

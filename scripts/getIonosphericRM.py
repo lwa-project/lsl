@@ -50,7 +50,7 @@ def main(args):
         site = stations.lwasv
     elif args.ovrolwa:
         site = stations.lwa1
-        site.lat, site.lon, site.elev = ('37.23977727', '-118.2816667', 1182.89)
+        site.lat, site.lon, site.elev = ('37.23977727', '-118.2816667', 1183.48)
     else:
         site = stations.lwa1
     obs = site.get_observer()

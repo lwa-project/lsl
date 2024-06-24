@@ -147,6 +147,9 @@ def main(args):
         ## Basic setup
         print("   Target: %s" % project.sessions[0].observations[i].target)
         print("   Mode: %s" % project.sessions[0].observations[i].mode)
+        if project.sessions[0].observations[i].mode == 'STEPPED':
+            print("    Step Mode: %s" % ('RA/Dec' if project.sessions[0].observations[i].steps[0].is_radec else 'az/alt'))
+            print("    Step Count: %i" % len( project.sessions[0].observations[i].steps))
         print("   Start:")
         print("    MJD: %i" % project.sessions[0].observations[i].mjd)
         print("    MPM: %i" % project.sessions[0].observations[i].mpm)

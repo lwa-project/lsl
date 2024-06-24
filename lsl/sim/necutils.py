@@ -229,8 +229,8 @@ class NECPattern:
         # 0 to 359, where 0 is North and alt (altitude) runs from 0 to 89 , 
         # where 0 is the horizon The default pattern is all zeros (isotropic 
         # response)
-        self.antenna_pat_dB = np.zeros(shape=(360,90),dtype=np.float32)
-        self.antenna_pat_complex = np.zeros(shape=(360,90),dtype=np.complex64)
+        self.antenna_pat_dB = np.zeros(shape=(360,91),dtype=np.float32)
+        self.antenna_pat_complex = np.zeros(shape=(360,91),dtype=np.complex64)
         
         outname = os.path.splitext(necname)[0] + '.out'
         try:
@@ -308,7 +308,7 @@ class NECPattern:
             # Convert theta from zenith angle to altitude
             theta = 90-int(cols[0].split('.')[0])
             phi = int(cols[1].split('.')[0])
-            if theta < 0 or theta > 89 or phi > 359:
+            if theta < 0 or theta > 90 or phi > 359:
                 #print("Skipping ",phi,theta)
                 continue
             powgain = float(cols[4])
@@ -344,7 +344,7 @@ class NECPattern:
                 # Direction of the incident radiation
                 theta = 90 - int(float(fieldsAngle[3]))
                 phi = int(float(fieldsAngle[6]))
-                if theta < 0 or theta > 89 or phi > 359:
+                if theta < 0 or theta > 90 or phi > 359:
                     pass
                 else:
                     # Get the absolute value and put it on a dB scale

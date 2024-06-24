@@ -9,6 +9,7 @@ import warnings
 import contextlib
 from datetime import datetime
 from urllib.request import urlopen
+from urllib.error import HTTPError
 
 from lsl.common.paths import DATA as DATA_PATH
 from lsl.common.progress import DownloadBar
@@ -104,6 +105,8 @@ class _DataAccess(object):
         except IOError as e:
             warnings.warn(colorfy("{{%%yellow Error finding modification time of file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         except socket.timeout:
+            pass
+        except HTTPError:
             pass
             
         return mtime

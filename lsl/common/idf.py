@@ -316,6 +316,7 @@ class Project(object):
             session.drx_beam = 1
             session.ucf_username = 'eLWA/%s_%s_%s_%04i' % (self.id, start.strftime('%y%m%d'), start.strftime('%H%M'), ses.id)
             session.data_return_method = 'UCF'
+            session.include_station_smib = True
             
             ## Project Office
             new_projoff = sdfmod.ProjectOffice(project=copy.deepcopy(self.project_office.project), 

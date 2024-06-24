@@ -4,6 +4,7 @@
  * Fixed a division error in lsl.misc.mathutils.sphfit when real_only=True
  * Switched to a "download on demand and cache" method of distributing data for LSL
  * Added a lsl.common.stations.ARX.revision() method to find the revision name for an ARX board
+ * Added a new lsl.sim.beam module to find the dipole antenna response
 
 2.2.0
  * Add a keyword to lsl.imaging.selfcal functions that will return whether or not a call converged
