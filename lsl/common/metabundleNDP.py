@@ -17,9 +17,9 @@ import glob
 from datetime import datetime, timedelta
 
 from lsl.common._metabundle_utils import *
-from lsl.common import stations, sdmADP, sdfADP
-from lsl.common.mcsADP import *
-from lsl.common.adp import word_to_freq, fS
+from lsl.common import stations, sdmNDP, sdfNDP
+from lsl.common.mcsNDP import *
+from lsl.common.ndp import word_to_freq, fS
 from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
 
@@ -27,7 +27,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.2'
+__version__ = '0.1'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_beamformer_min_delay',
            'get_station', 'get_session_metadata', 'get_session_spec', 'get_observation_spec',
            'get_sdf', 'get_command_script', 'get_asp_configuration', 'get_asp_configuration_summary',
@@ -50,11 +50,11 @@ def read_ses_file(filename):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
         
-    record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
+    record = {'ASP': bses.SESSION_MRP_ASP, 'NDP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
               'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2,
               'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4}
     
-    update = {'ASP': bses.SESSION_MUP_ASP, 'ADP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
+    update = {'ASP': bses.SESSION_MUP_ASP, 'NDP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
               'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2,
               'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4}
     
@@ -145,7 +145,6 @@ def read_obs_file(filename):
               'asp_atten_2': list(bfooter.OBS_ASP_AT2), 'asp_atten_split': list(bfooter.OBS_ASP_ATS)}
     output['tbf_samples'] = bfooter.OBS_TBF_SAMPLES
     output['tbf_gain'] = bfooter.OBS_TBF_GAIN
-    output['tbn_gain'] = bfooter.OBS_TBN_GAIN
     output['drx_gain'] = bfooter.OBS_DRX_GAIN
     
     return output
@@ -191,7 +190,7 @@ def read_cs_file(filename):
                                'command_id': cid_to_string(action.cid), 
                                'command_length': action.len, 'data': data}
                 if actionPrime['subsystem_id'] == 'DP':
-                    raise RuntimeError("Command script references DP not ADP")
+                    raise RuntimeError("Command script references DP not NDP")
                     
                 commands.append( actionPrime )
             except IOError:
@@ -220,7 +219,7 @@ def get_sdm(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse the SDM file and build the SDM instance
-        dynamic = sdmADP.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+        dynamic = sdmNDP.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
         
     return dynamic
 
@@ -463,7 +462,7 @@ def get_sdf(tarname):
     a SDF-representation of the session.
     
     .. note::
-        This function returns a full :class:`lsl.common.sdfADP.Project` instance 
+        This function returns a full :class:`lsl.common.sdfNDP.Project` instance 
         with the session in question stored under `project.sessions[0]` and the 
         observations under `project.sessions[0].observations`.
     """
@@ -478,7 +477,7 @@ def get_sdf(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse it
-        project = sdfADP.parse_sdf(os.path.join(tempDir, ti.name))
+        project = sdfNDP.parse_sdf(os.path.join(tempDir, ti.name))
         
     # Return the filled-in SDF instance
     return project

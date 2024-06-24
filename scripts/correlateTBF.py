@@ -20,8 +20,8 @@ import argparse
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
-from lsl.reader.ldp import LWASVDataFile, TBFFile
-from lsl.common import stations, metabundleADP
+from lsl.reader.ldp import LWASVDataFile, LWANADataFile, TBFFile
+from lsl.common import stations, metabundleADP, metabundleNDP
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
@@ -89,7 +89,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply frequency decimation
         if freq_decim > 1:
-            data = data.reshape(-1, freq.size, freq_decim)
+            data = data.reshape(data.shape[0], -1, freq_decim, data.shape[2])
             data = data.mean(axis=2)
             
         ## Split the polarizations
@@ -177,21 +177,32 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            try:
+                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            except ValueError:
+                station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwasv
     antennas = station.antennas
     
-    idf = LWASVDataFile(filename)
+    try:
+        idf = LWASVDataFile(filename)
+    except RuntimeError:
+        idf = LWANADataFile(filename)
     if not isinstance(idf, TBFFile):
         raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
         
     jd = idf.get_info('start_time').jd
     date = idf.get_info('start_time').datetime
+    nant = idf.get_info('nantenna')
     nFpO = idf.get_info('nchan') // 12
     sample_rate = idf.get_info('sample_rate')
     nInts = idf.get_info('nframe') // nFpO
-    
+    if nant != len(antennas):
+        raise RuntimeError("Found %i antennas in the data but expected %i", nant, len(antennas))
+        
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
@@ -232,7 +243,7 @@ def main(args):
     
     print("Data type:  %s" % type(idf))
     print("Samples per observations: %i" % nFpO)
-    print("Sampling rate: %i Hz" % sample_rate)
+    print("Sampling rate: %.1f Hz" % sample_rate)
     print("Tuning frequency: %.3f Hz" % central_freq)
     print("Captures in file: %i (%.3f s)" % (nInts, nInts / sample_rate))
     print("==")
@@ -282,6 +293,8 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-n', '--lwana', action='store_true',
+                        help='use LWA-NA instead of LWA-SV')
     parser.add_argument('-t', '--avg-time', type=aph.positive_or_zero_float, default=0.0, 
                         help='time window to average visibilities in seconds; 0 = integrate the entire file')
     parser.add_argument('-s', '--samples', type=aph.positive_int, default=1, 

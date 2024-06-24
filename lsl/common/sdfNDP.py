@@ -1,6 +1,6 @@
 """
 Module that contains all of the relevant class to build up a representation 
-of a session definition file as defined in MCS0030v5 and updated for LWA-SV.  The 
+of a session definition file as defined in MCS0030v5 and updated for LWA-NA.  The 
 hierarchy of classes is:
   * Project - class that holds all of the information about the project (including
               the observer) and one or more sessions.  Technically, a SD file has 
@@ -8,13 +8,12 @@ hierarchy of classes is:
               multiple SD files from a single Project object.
   * Observer - class that hold the observer's name and numeric ID
   * Session - class that holds all of the observations associated with a particular 
-              ADP output.  
+              NDP output.  
   * Observations - class that hold information about a particular observation.  It
                    includes a variety of attributes that are used to convert human-
                    readable inputs to SDF data values.  The observation class is 
                    further subclasses into:
                      - TBF - class for TBF observations
-                     - TBN - class for TBN observations
                      - DRX - class for general DRX observation, with sub-classes:
                        * Solar - class for solar tracking
                        * Jovian - class for Jovian tracking
@@ -25,7 +24,7 @@ hierarchy of classes is:
 All of the classes, except for Stepped and BeamStep, are complete and functional.  In 
 addition, most class contain 'validate' attribute functions that can be used to 
 determine if the project/session/observation are valid or not given the constraints of
-the ADP system.
+the NDP system.
 
 In addition to providing the means for creating session definition files from scratch, 
 this module also includes a simple parser for SD files.
@@ -59,22 +58,22 @@ from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
 from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import LWA_MAX_NSTD
-from lsl.common.adp import word_to_freq, fC
-from lsl.common.stations import lwasv
+from lsl.common.mcsNDP import LWA_MAX_NSTD
+from lsl.common.ndp import word_to_freq, fC
+from lsl.common.stations import lwana
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_CHANNEL_COUNT as TBFChanCount
 
 from lsl.common.sdf import Observer, ProjectOffice
-from lsl.common.sdf import Project as _Project, Session as _Session
-from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, TBN, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
+from lsl.common.sdf import Project as _Project, Session as _Session, BeamStep as _BeamStep
+from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, DRX, Solar, Jovian, Lunar, Stepped
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.2'
-__all__ = ['UCF_USERNAME_RE', 'parse_time', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'TBN', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__version__ = '0.1'
+__all__ = ['UCF_USERNAME_RE', 'parse_time', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBF', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 
 _UTC = pytz.utc
@@ -199,11 +198,6 @@ class Project(_Project):
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
                 output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
-            elif obs.mode == 'TBN':
-                output += "OBS_FREQ1        %i\n" % (obs.freq1,)
-                output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
-                output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_RADEC':
                 output += "OBS_RA           %.9f\n" % (obs.ra,)
                 output += "OBS_DEC          %+.9f\n" % (obs.dec,)
@@ -255,13 +249,21 @@ class Project(_Project):
                     output += "OBS_STP_FREQ2+[%i]  %.9f MHz\n" % (stpID, step.frequency2/1e6)
                     output += "OBS_STP_B[%i]       %s\n" % (stpID, step.beam)
                     if step.beam == 'SPEC_DELAYS_GAINS':
-                        for k,delay in enumerate(step.delays):
+                        for k in range(2*LWA_MAX_NSTD):
                             dlyID = k + 1
-                            
+                            try:
+                                delay = step.delays[k]
+                            except IndexError:
+                                delay = 0.0
+                                
                             output += "OBS_BEAM_DELAY[%i][%i] %i\n" % (stpID, dlyID, delay)
-                        for k,gain in enumerate(step.gains):
+                        for k in range(LWA_MAX_NSTD):
                             gaiID = k + 1
-                            
+                            try:
+                                gain = step.gains[k]
+                            except IndexError:
+                                gain = [[0,0],[0,0]]
+                                
                             output += "OBS_BEAM_GAIN[%i][%i][1][1] %i\n" % (stpID, gaiID, gain[0][0])
                             output += "OBS_BEAM_GAIN[%i][%i][1][2] %i\n" % (stpID, gaiID, gain[0][1])
                             output += "OBS_BEAM_GAIN[%i][%i][2][1] %i\n" % (stpID, gaiID, gain[1][0])
@@ -332,10 +334,6 @@ class Project(_Project):
             ## TBF settings
             if obs.mode == 'TBF':
                 output += "OBS_TBF_SAMPLES  %i\n" % (obs.samples,)
-            ## TBN gain
-            if obs.mode == 'TBN':
-                if obs.gain != -1:
-                    output += "OBS_TBN_GAIN     %i\n" % (obs.gain,)
             ## DRX gain
             else:
                 if obs.gain != -1:
@@ -399,7 +397,7 @@ class TBF(Observation):
             sample_rate = 0.0
         nFramesTime = self.samples / (196e6 / fC)
         nFramesChan = math.ceil(sample_rate / fC / TBFChanCount)
-        nBytes = nFramesTime * nFramesChan * (TBFChanCount*256*2*1)
+        nBytes = nFramesTime * nFramesChan * (TBFChanCount*64*2*1)
         return nBytes
         
     def validate(self, verbose=False):
@@ -408,7 +406,7 @@ class TBF(Observation):
         
         self.update()
         
-        station = lwasv
+        station = lwana
         if self._parent is not None:
             station = self._parent.station
         backend = station.interface.get_module('backend')
@@ -454,9 +452,9 @@ class TBF(Observation):
 class Session(_Session):
     """Class to hold all of the observations in a session."""
     
-    _allowed_modes = (TBF, TBN, DRX, Stepped)
+    _allowed_modes = (TBF, DRX, Stepped)
     
-    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwasv):
+    def __init__(self, name, id, observations=None, data_return_method='DRSU', comments=None, station=lwana):
         _Session.__init__(self, name, id, 
                           observations=observations, data_return_method=data_return_method, 
                           comments=comments, station=station)
@@ -473,9 +471,9 @@ class Session(_Session):
         .. versionadded:: 1.2.0
         """
         
-        if value.interface.sdf != 'lsl.common.sdfADP':
+        if value.interface.sdf != 'lsl.common.sdfNDP':
             raise ValueError("Incompatible station: expected %s, got %s" % \
-                             (value.interface.sdf, 'lsl.common.sdfADP'))
+                             (value.interface.sdf, 'lsl.common.sdfNDP'))
             
         self._station = value
         self.update()
@@ -500,6 +498,73 @@ class Session(_Session):
                         print("[%i] Error: TBF can only run on beam 1" % os.getpid())
                     failures += 1
                     
+        if failures == 0:
+            return True
+        else:
+            return False
+
+
+class BeamStep(_BeamStep):
+    def validate(self, verbose=False):
+        """Evaluate the step and return True if it is valid, False otherwise."""
+        
+        self.update()
+        
+        station = lwana
+        if self._parent is not None:
+            if self._parent._parent is not None:
+                station = self._parent._parent.station
+        mandc = station.interface.get_module('mcs')
+        backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
+        
+        failures = 0
+        # Basic - Delay and gain settings are correctly configured
+        if self.delays is not None:
+            if len(self.delays) > 2*mandc.LWA_MAX_NSTD:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid())
+            if self.gains is None:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Delays specified but gains were not" % os.getpid())
+        if self.gains is not None:
+            if len(self.gains) > mandc.LWA_MAX_NSTD:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Specified gain list had the wrong number of stands" % os.getpid())
+            for g,gain in enumerate(self.gains):
+                if len(gain) != 2:
+                    failures += 1
+                    if verbose:
+                        print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
+                else:
+                    if len(gain[0]) != 2 or len(gain[1]) != 2:
+                        failures += 1
+                        if verbose:
+                            print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
+            if self.delays is None:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Gains specified but delays were not" % os.getpid())
+        # Basic - Observation time
+        if self.dur < 5:
+            if verbose:
+                print("[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur))
+            failures += 1
+        # Basic - Frequency and filter code values
+        if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
+            if verbose:
+                print("[%i] Error: Specified frequency for tuning 1 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
+            failures += 1
+        if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
+            if verbose:
+                print("[%i] Error: Specified frequency for tuning 2 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
+            failures += 1
+        # Any failures indicates a bad observation
         if failures == 0:
             return True
         else:
@@ -545,8 +610,6 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         
     if mode == 'TBF':
         obsOut = TBF(obs_temp['name'], obs_temp['target'], utcString, f1, f2, obs_temp['filter'], obs_temp['tbfSamples'], comments=obs_temp['comments'])
-    elif mode == 'TBN':
-        obsOut = TBN(obs_temp['name'], obs_temp['target'], utcString, durString, f1, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
     elif mode == 'TRK_RADEC':
         obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
@@ -572,10 +635,10 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
             f2 = word_to_freq(beam_temp['freq2'])
             
             if beam_temp['delays'] is not None:
-                if len(beam_temp['delays']) != 2*LWA_MAX_NSTD:
+                if len(beam_temp['delays']) > 2*LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of delays for custom beamforming")
             if beam_temp['gains'] is not None:
-                if len(beam_temp['gains']) != LWA_MAX_NSTD:
+                if len(beam_temp['gains']) > LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of gains for custom beamforming")
                     
             obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
@@ -1007,15 +1070,12 @@ def parse_sdf(filename, verbose=False):
             if keyword == 'OBS_TBF_SAMPLES':
                 obs_temp['tbfSamples'] = int(value)
                 continue
-            if keyword == 'OBS_TBN_GAIN':
-                obs_temp['gain'] = int(value)
-                continue
             if keyword == 'OBS_DRX_GAIN':
                 obs_temp['gain'] = int(value)
                 continue
-            
+                
             # Keywords that might indicate this is for DP-based stations/actually an IDF
-            if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'RUN_ID'):
+            if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'OBS_TBN_GAIN', 'RUN_ID'):
                 raise RuntimeError("Invalid keyword encountered: %s" % keyword)
             
         # Create the final observation

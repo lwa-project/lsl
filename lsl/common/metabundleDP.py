@@ -1,7 +1,7 @@
 """
 Module for working with an MCS meta-data tarball and extracting the useful bits out 
 it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.LWAStation` 
-and :class:`lsl.common.sdm.SDM`.
+and :class:`lsl.common.sdmDP.SDM`.
 """
 
 # Python2 compatibility
@@ -17,9 +17,9 @@ import glob
 from datetime import datetime, timedelta
 
 from lsl.common._metabundle_utils import *
-from lsl.common import stations, sdmADP, sdfADP
-from lsl.common.mcsADP import *
-from lsl.common.adp import word_to_freq, fS
+from lsl.common import stations, sdmDP, sdf
+from lsl.common.mcs import *
+from lsl.common.dp import word_to_freq, fS
 from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
 
@@ -45,23 +45,38 @@ def read_ses_file(filename):
         bses = parse_c_struct(SSF_STRUCT, endianness='little')
         fh.readinto(bses)
         
-        ## LWA-1 check
-        #if bses.FORMAT_VERSION not in (6,):
-        #	fh.close()
-        #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
-        
-    record = {'ASP': bses.SESSION_MRP_ASP, 'ADP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
-              'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2,
-              'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4}
+        # LWA-SV check
+        if bses.FORMAT_VERSION in (6,):
+            raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
+            
+        if bses.SESSION_NOBS > 150:
+            ## Pre SESSION_SPC
+            fh.seek(0)
+            
+            newStruct = []
+            for line in SSF_STRUCT.split('\n'):
+                if line.find('SESSION_SPC') != -1:
+                    continue
+                newStruct.append(line)
+            newStruct = '\n'.join(newStruct)
+            
+            bses = parse_c_struct(newStruct, endianness='little')
+            fh.readinto(bses)
+            
+            bses.SESSION_SPC = ''
+            
+    record = {'ASP': bses.SESSION_MRP_ASP, 'DP_': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
+              'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2, 
+              'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4, 'DR5': bses.SESSION_MRP_DR5}
     
-    update = {'ASP': bses.SESSION_MUP_ASP, 'ADP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
-              'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2,
-              'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4}
+    update = {'ASP': bses.SESSION_MUP_ASP, 'DP_': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
+              'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2, 
+              'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4, 'DR5': bses.SESSION_MUP_DR5}
     
     return {'version': bses.FORMAT_VERSION,
-            'project_id': bses.PROJECT_ID.lstrip().rstrip(), 'session_id': bses.SESSION_ID, 
+            'project_id': bses.PROJECT_ID.lstrip().rstrip(), 'session_id': bses.SESSION_ID,
             'configuration_authority': bses.SESSION_CRA,
-            'drx_beam': bses.SESSION_DRX_BEAM, 'spcSetup': bses.SESSION_SPC, 
+            'drx_beam': bses.SESSION_DRX_BEAM, 'spcSetup': bses.SESSION_SPC,
             'mjd': bses.SESSION_START_MJD, 'mpm': bses.SESSION_START_MPM, 'dur': bses.SESSION_DUR,
             'nobs': bses.SESSION_NOBS,
             'recordMIB': record, 'updateMIB': update, 
@@ -83,12 +98,30 @@ def read_obs_file(filename):
         bfooter = parse_c_struct(OSF2_STRUCT, endianness='little')
         fh.readinto(bheader)
         
-        ## LWA-1 check
-        #if bheader.FORMAT_VERSION not in (6,):
-        #	fh.close()
-        #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
+        # LWA-SV check
+        if bheader.FORMAT_VERSION in (6,):
+            fh.close()
+            raise RuntimeError("Version mis-match: File appears to be from LWA-SV")
             
-        if bheader.OBS_B > 2:
+        if bheader.OBS_ID > 150:
+            ## Pre SESSION_SPC and OBS_BDM
+            fh.seek(0)
+            
+            newStruct = []
+            for line in OSF_STRUCT.split('\n'):
+                if line.find('OBS_BDM') != -1:
+                    continue
+                if line.find('SESSION_SPC') != -1:
+                    continue
+                newStruct.append(line)
+            newStruct = '\n'.join(newStruct)
+            
+            bheader = parse_c_struct(newStruct, endianness='little')
+            fh.readinto(bheader)
+            bheader.SESSION_SPC = ''
+            bheader.OBS_BDM = ''
+            
+        elif bheader.OBS_B > 2:
             ## Pre OBS_BDM
             fh.seek(0)
             
@@ -134,17 +167,17 @@ def read_obs_file(filename):
               'drx_beam': bheader.SESSION_DRX_BEAM, 'spcSetup': bheader.SESSION_SPC,
               'obs_id': bheader.OBS_ID,
               'mjd': bheader.OBS_START_MJD, 'mpm': bheader.OBS_START_MPM, 'dur': bheader.OBS_DUR,
-              'mode': bheader.OBS_MODE, 'beamdipole_mode': bheader.OBS_BDM, 
+              'mode': bheader.OBS_MODE, 'beamdipole_mode': bheader.OBS_BDM,
               'ra': bheader.OBS_RA, 'dec': bheader.OBS_DEC,
               'beam': bheader.OBS_B, 
               'freq1': word_to_freq(bheader.OBS_FREQ1), 'freq2': word_to_freq(bheader.OBS_FREQ2),
               'bw': bheader.OBS_BW,
-              'nsteps': bheader.OBS_STP_N, 'is_radec': bheader.OBS_STP_RADEC,  'steps': steps, 
+              'nsteps': bheader.OBS_STP_N, 'is_radec': bheader.OBS_STP_RADEC,  'steps': steps,
               'fee_power': flat_to_multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
               'asp_filter': list(bfooter.OBS_ASP_FLT), 'asp_atten_1': list(bfooter.OBS_ASP_AT1), 
               'asp_atten_2': list(bfooter.OBS_ASP_AT2), 'asp_atten_split': list(bfooter.OBS_ASP_ATS)}
-    output['tbf_samples'] = bfooter.OBS_TBF_SAMPLES
-    output['tbf_gain'] = bfooter.OBS_TBF_GAIN
+    output['tbw_bits'] = bfooter.OBS_TBW_BITS
+    output['tbw_samples'] = bfooter.OBS_TBW_SAMPLES
     output['tbn_gain'] = bfooter.OBS_TBN_GAIN
     output['drx_gain'] = bfooter.OBS_DRX_GAIN
     
@@ -184,14 +217,14 @@ def read_cs_file(filename):
                     data = data.data
                 else:
                     data = None
-                
+                    
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
                                'ignore_time': True if action.bASAP else False, 
                                'subsystem_id': sid_to_string(action.sid),
                                'command_id': cid_to_string(action.cid), 
                                'command_length': action.len, 'data': data}
-                if actionPrime['subsystem_id'] == 'DP':
-                    raise RuntimeError("Command script references DP not ADP")
+                if actionPrime['subsystem_id'] == 'ADP':
+                    raise RuntimeError("Command script references ADP not DP")
                     
                 commands.append( actionPrime )
             except IOError:
@@ -203,7 +236,7 @@ def read_cs_file(filename):
 def get_sdm(tarname):
     """
     Given an MCS meta-data tarball, extract the information stored in the 
-    dynamic/sdm.dat file and return a :class:`lsl.common.sdm.SDM` instance
+    dynamic/sdm.dat file and return a :class:`lsl.common.sdmDP.SDM` instance
     describing the dynamic condition of the station.
     
     If a sdm.dat file cannot be found in the tarball, None is returned.
@@ -220,7 +253,7 @@ def get_sdm(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse the SDM file and build the SDM instance
-        dynamic = sdmADP.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+        dynamic = sdmDP.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
         
     return dynamic
 
@@ -463,7 +496,7 @@ def get_sdf(tarname):
     a SDF-representation of the session.
     
     .. note::
-        This function returns a full :class:`lsl.common.sdfADP.Project` instance 
+        This function returns a full :class:`lsl.common.sdf.Project` instance 
         with the session in question stored under `project.sessions[0]` and the 
         observations under `project.sessions[0].observations`.
     """
@@ -478,7 +511,7 @@ def get_sdf(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse it
-        project = sdfADP.parse_sdf(os.path.join(tempDir, ti.name))
+        project = sdf.parse_sdf(os.path.join(tempDir, ti.name))
         
     # Return the filled-in SDF instance
     return project

@@ -1,16 +1,22 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2024 May 13 by J. Dowell - updated for new diffuse sky model calibration
+#                C. Taylor - updated list of bad antennas
+# 2024 Jan 29 by J. Dowell - replace the outrigger with the real stand #64
+#                          - updated list of bad antennas
+# 2024 Jan 18 by J. Dowell - Updated for diffuse sky model calibration
+# 2023 Aug 23 by J. Dowell - Initial version for the "new" LWA-NA
 # 2012 OCT 26 by J. Craig
 # See MCS0031 for format info 
 # Search "FIXME" for things that need work
 
-FORMAT_VERSION 4
+FORMAT_VERSION 10
 STATION_ID NA
 GEO_N   +34.247
 GEO_E  -107.640
 GEO_EL 2133.6
-N_STD 20
+N_STD 64
 
 # --------------------------------------
 # --- Stand Positions  -----------------
@@ -19,66 +25,213 @@ N_STD 20
 # *** STD_LX[stand_id] [m] goes here 
 # *** STD_LY[stand_id] [m] goes here 
 # *** STD_LZ[stand_id] [m] goes here 
-STD_LX[1]   -47.527
-STD_LY[1]     9.086
-STD_LZ[1]     1.625
-STD_LX[2]   -47.940
-STD_LY[2]   -13.286
-STD_LZ[2]     1.560
-STD_LX[3]   -34.411
-STD_LY[3]   -35.887
-STD_LZ[3]     1.522
-STD_LX[4]   -10.172
-STD_LY[4]   -40.585
-STD_LZ[4]     1.378
-STD_LX[5]   -17.898
-STD_LY[5]   -18.835
-STD_LZ[5]     1.473
-STD_LX[6]   -24.588
-STD_LY[6]    11.555
-STD_LZ[6]     1.582
-STD_LX[7]   -31.546
-STD_LY[7]    32.125
-STD_LZ[7]     1.676
-STD_LX[8]   -11.095
-STD_LY[8]    41.936
-STD_LZ[8]     1.664
-STD_LX[9]   -11.354
-STD_LY[9]    23.123
-STD_LZ[9]     1.591
-STD_LX[10]    2.959
-STD_LY[10]   10.516
-STD_LZ[10]    1.460
-STD_LX[11]    3.408
-STD_LY[11]   -4.152
-STD_LZ[11]    1.426
-STD_LX[12]    6.517
-STD_LY[12]  -28.153
-STD_LZ[12]    1.379
-STD_LX[13]   10.044
-STD_LY[13]  -44.771
-STD_LZ[13]    1.262
-STD_LX[14]   22.663
-STD_LY[14]  -37.899
-STD_LZ[14]    1.246
-STD_LX[15]   24.186
-STD_LY[15]  -16.165
-STD_LZ[15]    1.338
-STD_LX[16]   15.811
-STD_LY[16]    8.904
-STD_LZ[16]    1.485
-STD_LX[17]   16.427
-STD_LY[17]   37.187
-STD_LZ[17]    1.539
-STD_LX[18]   34.232
-STD_LY[18]   27.755
-STD_LZ[18]    1.491
-STD_LX[19]   46.540
-STD_LY[19]    5.216
-STD_LZ[19]    1.358
-STD_LX[20]   37.909
-STD_LY[20]  -19.072
-STD_LZ[20]    1.260
+# Based on 2023 Oct 18 as-built survey
+# Other things:
+#  * BASE1 (SE slab corner) [ 52.4341 -50.2772   0.2951] [0. 0. 0.]
+#  * BASE2 (NE slab corner) [ 53.7965 -50.3776   0.29  ] [0. 0. 0.]
+#  * BASE3 (SW slab corner) [ 52.25   -52.9051   0.3031] [0. 0. 0.]
+#  * CORNER1 (NW fence post) [ 56.9304 -62.8681   1.9291] [0. 0. 0.]
+#  * CORNER2 (NE fence post) [62.9034 56.9313  1.6644] [0. 0. 0.]
+#  * CORNER3 (SE fence post) [-56.705   62.8185   1.3454] [0. 0. 0.]
+#  * CORNER4 (SW fence post) [-62.7605 -56.844    1.4682] [0. 0. 0.]
+#  * KEN (meteor radar antenna) [ 53.3637 -27.1628   1.8728] [0. 0. 0.]
+STD_LX[1]    -31.724
+STD_LY[1]      4.274
+STD_LZ[1]      1.632
+STD_LX[2]    -21.311
+STD_LY[2]      7.401
+STD_LZ[2]      1.653
+STD_LX[3]    -21.281
+STD_LY[3]      2.418
+STD_LZ[3]      1.627
+STD_LX[4]    -16.244    # std. dev. 0.002
+STD_LY[4]      0.591    # std. dev. 0.002
+STD_LZ[4]      1.667    # std. dev. 0.002
+STD_LX[5]    -14.549
+STD_LY[5]     -3.923
+STD_LZ[5]      1.711
+STD_LX[6]    -14.318
+STD_LY[6]     -8.942
+STD_LZ[6]      1.568
+STD_LX[7]     -5.273
+STD_LY[7]    -16.507
+STD_LZ[7]      1.482
+STD_LX[8]    -13.608
+STD_LY[8]    -16.571
+STD_LZ[8]      1.551
+STD_LX[9]    -11.907
+STD_LY[9]    -21.880
+STD_LZ[9]      1.507
+STD_LX[10]   -13.014
+STD_LY[10]   -28.929
+STD_LZ[10]     1.498
+STD_LX[11]    -6.450
+STD_LY[11]   -22.116
+STD_LZ[11]     1.459
+STD_LX[12]    -8.242
+STD_LY[12]   -27.034
+STD_LZ[12]     1.475
+STD_LX[13]     6.862
+STD_LY[13]   -35.703
+STD_LZ[13]     1.453
+STD_LX[14]   -23.832    # std. dev. 0.000
+STD_LY[14]    18.919    # std. dev. 0.000
+STD_LZ[14]     1.680    # std. dev. 0.000
+STD_LX[15]   -17.610
+STD_LY[15]    12.408
+STD_LZ[15]     1.537
+STD_LX[16]   -16.346
+STD_LY[16]     7.059
+STD_LZ[16]     1.583
+STD_LX[17]   -12.292
+STD_LY[17]    10.069
+STD_LZ[17]     1.628
+STD_LX[18]   -12.083
+STD_LY[18]     3.574
+STD_LZ[18]     1.533
+STD_LX[19]   -11.016
+STD_LY[19]    -0.533
+STD_LZ[19]     1.570
+STD_LX[20]    -6.431
+STD_LY[20]    -3.078
+STD_LZ[20]     1.512
+STD_LX[21]    -9.643
+STD_LY[21]    -7.540
+STD_LZ[21]     1.526
+STD_LX[22]    -1.750
+STD_LY[22]    -0.408
+STD_LZ[22]     1.617
+STD_LX[23]    -5.045
+STD_LY[23]    -9.569
+STD_LZ[23]     1.509
+STD_LX[24]    -2.013
+STD_LY[24]    -5.410
+STD_LZ[24]     1.485
+STD_LX[25]     2.067
+STD_LY[25]    -7.981
+STD_LZ[25]     1.512
+STD_LX[26]    -0.739
+STD_LY[26]   -12.208
+STD_LZ[26]     1.493
+STD_LX[27]    -0.287
+STD_LY[27]   -21.051
+STD_LZ[27]     1.446
+STD_LX[28]     4.360
+STD_LY[28]   -20.704
+STD_LZ[28]     1.446
+STD_LX[29]     6.642
+STD_LY[29]   -16.279
+STD_LZ[29]     1.463
+STD_LX[30]     7.419
+STD_LY[30]   -25.570
+STD_LZ[30]     1.388
+STD_LX[31]    11.068
+STD_LY[31]   -21.508
+STD_LZ[31]     1.398
+STD_LX[32]   -10.895
+STD_LY[32]    35.929
+STD_LZ[32]     1.710
+STD_LX[33]   -16.060
+STD_LY[33]    23.836
+STD_LZ[33]     1.669
+STD_LX[34]    -8.132
+STD_LY[34]    16.759
+STD_LZ[34]     1.636
+STD_LX[35]    -5.819
+STD_LY[35]     6.962
+STD_LZ[35]     1.564
+STD_LX[36]    -2.645
+STD_LY[36]    16.371
+STD_LZ[36]     1.600
+STD_LX[37]    -1.583
+STD_LY[37]     9.668
+STD_LZ[37]     1.599
+STD_LX[38]    -1.408    # std. dev. 0.001
+STD_LY[38]     4.707    # std. dev. 0.001
+STD_LZ[38]     1.572    # std. dev. 0.001
+STD_LX[39]     2.822
+STD_LY[39]     2.124
+STD_LZ[39]     1.495
+STD_LX[40]     2.628
+STD_LY[40]    -2.829
+STD_LZ[40]     1.542
+STD_LX[41]     7.069
+STD_LY[41]     4.641
+STD_LZ[41]     1.554
+STD_LX[42]    11.598
+STD_LY[42]     1.998
+STD_LZ[42]     1.538
+STD_LX[43]     6.948
+STD_LY[43]    -5.511
+STD_LZ[43]     1.522
+STD_LX[44]     6.203
+STD_LY[44]   -10.614
+STD_LZ[44]     1.457
+STD_LX[45]    11.687
+STD_LY[45]    -3.032
+STD_LZ[45]     1.499
+STD_LX[46]    15.529
+STD_LY[46]    -6.310
+STD_LZ[46]     1.459
+STD_LX[47]    13.815
+STD_LY[47]   -17.394
+STD_LZ[47]     1.416
+STD_LX[48]    19.564
+STD_LY[48]   -15.955
+STD_LZ[48]     1.396
+STD_LX[49]    -0.332
+STD_LY[49]    34.547
+STD_LZ[49]     1.709
+STD_LX[50]     1.479
+STD_LY[50]    28.610
+STD_LZ[50]     1.670
+STD_LX[51]     2.464
+STD_LY[51]    18.578
+STD_LZ[51]     1.636
+STD_LX[52]    10.908
+STD_LY[52]    24.918
+STD_LZ[52]     1.644
+STD_LX[53]     6.384
+STD_LY[53]    15.375
+STD_LZ[53]     1.592
+STD_LX[54]     6.766
+STD_LY[54]    10.383
+STD_LZ[54]     1.586
+STD_LX[55]    13.447
+STD_LY[55]    20.191
+STD_LZ[55]     1.569
+STD_LX[56]    10.911
+STD_LY[56]    13.011
+STD_LZ[56]     1.585
+STD_LX[57]    11.025
+STD_LY[57]     7.841
+STD_LZ[57]     1.562
+STD_LX[58]    16.127
+STD_LY[58]    14.722
+STD_LZ[58]     1.599
+STD_LX[59]    16.499
+STD_LY[59]     3.479
+STD_LZ[59]     1.494
+STD_LX[60]    17.221
+STD_LY[60]    -1.551
+STD_LZ[60]     1.435
+STD_LX[61]    21.391
+STD_LY[61]     1.451
+STD_LZ[61]     1.480
+STD_LX[62]    27.256
+STD_LY[62]   -13.972
+STD_LZ[62]     1.462
+STD_LX[63]    33.615
+STD_LY[63]    -9.397
+STD_LZ[63]     1.378
+# The real stand #64
+STD_LX[64]    11.049
+STD_LY[64]    36.077
+STD_LZ[64]     1.695
+## The Outrigger
+#STD_LX[64]   273.204
+#STD_LY[64]   -96.764
+#STD_LZ[64]     0.813
 
 # ------------------------------------
 # --- Antenna # -> Stand # mapping ---
@@ -105,11 +258,23 @@ STD_LZ[20]    1.260
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-#ANT_STAT[4]  1
-ANT_STAT[9]  1
-ANT_STAT[13] 1
-ANT_STAT[26] 1
-
+# FIXME CT: update as needed - last updated 2024/4/30
+ANT_STAT[10]  1
+ANT_STAT[17]  1
+ANT_STAT[20]  1
+ANT_STAT[22]  1
+ANT_STAT[27]  1
+ANT_STAT[32]  1
+ANT_STAT[45]  1
+ANT_STAT[49]  1
+ANT_STAT[63]  1
+ANT_STAT[64]  1
+ANT_STAT[66]  2
+ANT_STAT[74]  1
+ANT_STAT[95]  2
+ANT_STAT[97]  1
+ANT_STAT[98]  1
+ANT_STAT[128] 1
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -130,8 +295,7 @@ ANT_STAT[26] 1
 # -------------------------------------------------------
 # --- FEEs (number, status, design, nominal gain) -------
 # -------------------------------------------------------
-N_FEE 20
-
+N_FEE 64
 
 # This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identified
 # *** FEE_ID[fee_id] goes here:
@@ -145,13 +309,9 @@ N_FEE 20
 
 # FEE_GAI1[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
 # *** FEE_GAI1[fee_id] goes here:
-# FIXME JC: Need to set to actual values to the extent that these are known to be significantly different from 35.7 dB 
-# none known
 
 # FEE_GAI2[] will be set to 35.7 for any FEE #'s <= N_FEE not identified
 # *** FEE_GAI2[fee_id] goes here:
-# FIXME JC: Need to set to actual values to the extent that these are known to be significantly different from 35.7 dB 
-# none known
 
 
 # ------------------------------------
@@ -160,7 +320,7 @@ N_FEE 20
 # Format (example) "FEE_ANT1[2] 3" means antenna 3 is connected to port 1 of FEE 2.
 # If not specified, then FEE_ANT1[1] will be 1, FEE_ANT2[1] will be 2,
 #   FEE_ANT1[2] will be 3, FEE_ANT2[2] will be 4, and so on.
-# Strongly recommmended to leave this alone, and that only exceptions are noted.
+# Strongly recommended to leave this alone, and that only exceptions are noted.
 # *** FEE_ANT1[fee_id] goes here:
 # *** FEE_ANT2[fee_id] goes here:
 
@@ -177,56 +337,276 @@ N_FEE 20
 # FEE_PORT[] will be set to 0 (unknown) for any FEE #'s <= N_FEE not identified
 # *** FEE_RACK[fee_id] goes here:
 # *** FEE_PORT[fee_id] goes here:
-# All FEEs are currently on Rack 1, Port 1:
-# FIX_ME JC: verify port numbers
-FEE_RACK[1] 1
-FEE_PORT[1] 1
-FEE_RACK[1] 1
-FEE_PORT[1] 1
-FEE_RACK[2] 1
-FEE_PORT[2] 1
-FEE_RACK[3] 1
-FEE_PORT[3] 1
-FEE_RACK[4] 1
-FEE_PORT[4] 1
-FEE_RACK[5] 1
-FEE_PORT[5] 1
-FEE_RACK[6] 1
-FEE_PORT[6] 1
-FEE_RACK[7] 1
-FEE_PORT[7] 1
-FEE_RACK[8] 1
-FEE_PORT[8] 1
-FEE_RACK[9] 1
-FEE_PORT[9] 1
-FEE_RACK[10] 1
-FEE_PORT[10] 1
-FEE_RACK[11] 1
-FEE_PORT[11] 1
-FEE_RACK[12] 1
-FEE_PORT[12] 1
-FEE_RACK[13] 1
-FEE_PORT[13] 1
-FEE_RACK[14] 1
-FEE_PORT[14] 1
-FEE_RACK[15] 1
-FEE_PORT[15] 1
-FEE_RACK[16] 1
-FEE_PORT[16] 1
-FEE_RACK[17] 1
-FEE_PORT[17] 1
-FEE_RACK[18] 1
-FEE_PORT[18] 1
-FEE_RACK[19] 1
-FEE_PORT[19] 1
-FEE_RACK[20] 1
-FEE_PORT[20] 1
+# All FEEs are currently on Rack 2, Port 8:
+FEE_RACK[1]  2
+FEE_PORT[1]  8
+FEE_RACK[2]  2
+FEE_PORT[2]  8
+FEE_RACK[3]  2
+FEE_PORT[3]  8
+FEE_RACK[4]  2
+FEE_PORT[4]  8
+FEE_RACK[5]  2
+FEE_PORT[5]  8
+FEE_RACK[6]  2
+FEE_PORT[6]  8
+FEE_RACK[7]  2
+FEE_PORT[7]  8
+FEE_RACK[8]  2
+FEE_PORT[8]  8
+FEE_RACK[9]  2
+FEE_PORT[9]  8
+FEE_RACK[10] 2
+FEE_PORT[10] 8
+FEE_RACK[11] 2
+FEE_PORT[11] 8
+FEE_RACK[12] 2
+FEE_PORT[12] 8
+FEE_RACK[13] 2
+FEE_PORT[13] 8
+FEE_RACK[14] 2
+FEE_PORT[14] 8
+FEE_RACK[15] 2
+FEE_PORT[15] 8
+FEE_RACK[16] 2
+FEE_PORT[16] 8
+FEE_RACK[17] 2
+FEE_PORT[17] 8
+FEE_RACK[18] 2
+FEE_PORT[18] 8
+FEE_RACK[19] 2
+FEE_PORT[19] 8
+FEE_RACK[20] 2
+FEE_PORT[20] 8
+FEE_RACK[21] 2
+FEE_PORT[21] 8
+FEE_RACK[22] 2
+FEE_PORT[22] 8
+FEE_RACK[23] 2
+FEE_PORT[23] 8
+FEE_RACK[24] 2
+FEE_PORT[24] 8
+FEE_RACK[25] 2
+FEE_PORT[25] 8
+FEE_RACK[26] 2
+FEE_PORT[26] 8
+FEE_RACK[27] 2
+FEE_PORT[27] 8
+FEE_RACK[28] 2
+FEE_PORT[28] 8
+FEE_RACK[29] 2
+FEE_PORT[29] 8
+FEE_RACK[30] 2
+FEE_PORT[30] 8
+FEE_RACK[31] 2
+FEE_PORT[31] 8
+FEE_RACK[32] 2
+FEE_PORT[32] 8
+FEE_RACK[33] 2
+FEE_PORT[33] 8
+FEE_RACK[34] 2
+FEE_PORT[34] 8
+FEE_RACK[35] 2
+FEE_PORT[35] 8
+FEE_RACK[36] 2
+FEE_PORT[36] 8
+FEE_RACK[37] 2
+FEE_PORT[37] 8
+FEE_RACK[38] 2
+FEE_PORT[38] 8
+FEE_RACK[39] 2
+FEE_PORT[39] 8
+FEE_RACK[40] 2
+FEE_PORT[40] 8
+FEE_RACK[41] 2
+FEE_PORT[41] 8
+FEE_RACK[42] 2
+FEE_PORT[42] 8
+FEE_RACK[43] 2
+FEE_PORT[43] 8
+FEE_RACK[44] 2
+FEE_PORT[44] 8
+FEE_RACK[45] 2
+FEE_PORT[45] 8
+FEE_RACK[46] 2
+FEE_PORT[46] 8
+FEE_RACK[47] 2
+FEE_PORT[47] 8
+FEE_RACK[48] 2
+FEE_PORT[48] 8
+FEE_RACK[49] 2
+FEE_PORT[49] 8
+FEE_RACK[50] 2
+FEE_PORT[50] 8
+FEE_RACK[51] 2
+FEE_PORT[51] 8
+FEE_RACK[52] 2
+FEE_PORT[52] 8
+FEE_PORT[53] 8
+FEE_RACK[54] 2
+FEE_PORT[54] 8
+FEE_RACK[55] 2
+FEE_PORT[55] 8
+FEE_RACK[56] 2
+FEE_PORT[56] 8
+FEE_RACK[57] 2
+FEE_PORT[57] 8
+FEE_RACK[58] 2
+FEE_PORT[58] 8
+FEE_RACK[59] 2
+FEE_PORT[59] 8
+FEE_RACK[60] 2
+FEE_PORT[60] 8
+FEE_RACK[61] 2
+FEE_PORT[61] 8
+FEE_RACK[62] 2
+FEE_PORT[62] 8
+FEE_RACK[63] 2
+FEE_PORT[63] 8
+FEE_RACK[64] 2
+FEE_PORT[64] 8
 
 
 # ----------------------
 # --- RPD --------------
 # ----------------------
-N_RPD 40
+N_RPD 128
+
+# RPD_ID[] will be set to "UNK" (no identification) for any cables #'s <= N_RPD not identified
+# *** RPD_ID[cable#] <label> goes here:
+
+RPD_ID[1]  Stand_1-XX
+RPD_ID[2]  Stand_1-YY
+RPD_ID[3]  Stand_2-XX
+RPD_ID[4]  Stand_2-YY
+RPD_ID[5]  Stand_3-XX
+RPD_ID[6]  Stand_3-YY
+RPD_ID[7]  Stand_4-XX
+RPD_ID[8]  Stand_4-YY
+RPD_ID[9]  Stand_5-XX
+RPD_ID[10]  Stand_5-YY
+RPD_ID[11]  Stand_6-XX
+RPD_ID[12]  Stand_6-YY
+RPD_ID[13]  Stand_7-XX
+RPD_ID[14]  Stand_7-YY
+RPD_ID[15]  Stand_8-XX
+RPD_ID[16]  Stand_8-YY
+RPD_ID[17]  Stand_9-XX
+RPD_ID[18]  Stand_9-YY
+RPD_ID[19]  Stand_10-XX
+RPD_ID[20]  Stand_10-YY
+RPD_ID[21]  Stand_11-XX
+RPD_ID[22]  Stand_11-YY
+RPD_ID[23]  Stand_12-XX
+RPD_ID[24]  Stand_12-YY
+RPD_ID[25]  Stand_13-XX
+RPD_ID[26]  Stand_13-YY
+RPD_ID[27]  Stand_14-XX
+RPD_ID[28]  Stand_14-YY
+RPD_ID[29]  Stand_15-XX
+RPD_ID[30]  Stand_15-YY
+RPD_ID[31]  Stand_16-XX
+RPD_ID[32]  Stand_16-YY
+RPD_ID[33]  Stand_17-XX
+RPD_ID[34]  Stand_17-YY
+RPD_ID[35]  Stand_18-XX
+RPD_ID[36]  Stand_18-YY
+RPD_ID[37]  Stand_19-XX
+RPD_ID[38]  Stand_19-YY
+RPD_ID[39]  Stand_20-XX
+RPD_ID[40]  Stand_20-YY
+RPD_ID[41]  Stand_21-XX
+RPD_ID[42]  Stand_21-YY
+RPD_ID[43]  Stand_22-XX
+RPD_ID[44]  Stand_22-YY
+RPD_ID[45]  Stand_23-XX
+RPD_ID[46]  Stand_23-YY
+RPD_ID[47]  Stand_24-XX
+RPD_ID[48]  Stand_24-YY
+RPD_ID[49]  Stand_25-XX
+RPD_ID[50]  Stand_25-YY
+RPD_ID[51]  Stand_26-XX
+RPD_ID[52]  Stand_26-YY
+RPD_ID[53]  Stand_27-XX
+RPD_ID[54]  Stand_27-YY
+RPD_ID[55]  Stand_28-XX
+RPD_ID[56]  Stand_28-YY
+RPD_ID[57]  Stand_29-XX
+RPD_ID[58]  Stand_29-YY
+RPD_ID[59]  Stand_30-XX
+RPD_ID[60]  Stand_30-YY
+RPD_ID[61]  Stand_31-XX
+RPD_ID[62]  Stand_31-YY
+RPD_ID[63]  Stand_32-XX
+RPD_ID[64]  Stand_32-YY
+RPD_ID[65]  Stand_33-XX
+RPD_ID[66]  Stand_33-YY
+RPD_ID[67]  Stand_34-XX
+RPD_ID[68]  Stand_34-YY
+RPD_ID[69]  Stand_35-XX
+RPD_ID[70]  Stand_35-YY
+RPD_ID[71]  Stand_36-XX
+RPD_ID[72]  Stand_36-YY
+RPD_ID[73]  Stand_37-XX
+RPD_ID[74]  Stand_37-YY
+RPD_ID[75]  Stand_38-XX
+RPD_ID[76]  Stand_38-YY
+RPD_ID[77]  Stand_39-XX
+RPD_ID[78]  Stand_39-YY
+RPD_ID[79]  Stand_40-XX
+RPD_ID[80]  Stand_40-YY
+RPD_ID[81]  Stand_41-XX
+RPD_ID[82]  Stand_41-YY
+RPD_ID[83]  Stand_42-XX
+RPD_ID[84]  Stand_42-YY
+RPD_ID[85]  Stand_43-XX
+RPD_ID[86]  Stand_43-YY
+RPD_ID[87]  Stand_44-XX
+RPD_ID[88]  Stand_44-YY
+RPD_ID[89]  Stand_45-XX
+RPD_ID[90]  Stand_45-YY
+RPD_ID[91]  Stand_46-XX
+RPD_ID[92]  Stand_46-YY
+RPD_ID[93]  Stand_47-XX
+RPD_ID[94]  Stand_47-YY
+RPD_ID[95]  Stand_48-XX
+RPD_ID[96]  Stand_48-YY
+RPD_ID[97]  Stand_49-XX
+RPD_ID[98]  Stand_49-YY
+RPD_ID[99]  Stand_50-XX
+RPD_ID[100]  Stand_50-YY
+RPD_ID[101]  Stand_51-XX
+RPD_ID[102]  Stand_51-YY
+RPD_ID[103]  Stand_52-XX
+RPD_ID[104]  Stand_52-YY
+RPD_ID[105]  Stand_53-XX
+RPD_ID[106]  Stand_53-YY
+RPD_ID[107]  Stand_54-XX
+RPD_ID[108]  Stand_54-YY
+RPD_ID[109]  Stand_55-XX
+RPD_ID[110]  Stand_55-YY
+RPD_ID[111]  Stand_56-XX
+RPD_ID[112]  Stand_56-YY
+RPD_ID[113]  Stand_57-XX
+RPD_ID[114]  Stand_57-YY
+RPD_ID[115]  Stand_58-XX
+RPD_ID[116]  Stand_58-YY
+RPD_ID[117]  Stand_59-XX
+RPD_ID[118]  Stand_59-YY
+RPD_ID[119]  Stand_60-XX
+RPD_ID[120]  Stand_60-YY
+RPD_ID[121]  Stand_61-XX
+RPD_ID[122]  Stand_61-YY
+RPD_ID[123]  Stand_62-XX
+RPD_ID[124]  Stand_62-YY
+RPD_ID[125]  Stand_63-XX
+RPD_ID[126]  Stand_63-YY
+# The real stand #64
+RPD_ID[127]  Stand_64-XX
+RPD_ID[128]  Stand_64-YY
+## The Outrigger
+#RPD_ID[127]  OUTR-XX
+#RPD_ID[128]  OUTR-YY
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
@@ -235,49 +615,288 @@ N_RPD 40
 # RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
 # *** RPD_LENG[cable#] [m] goes here:
 
-RPD_LENG[1] 144.74
-RPD_LENG[2] 144.51
-RPD_LENG[3] 144.74
-RPD_LENG[4] 147.05
-RPD_LENG[5] 148.20
-RPD_LENG[6] 144.74
-RPD_LENG[7] 140.00
-RPD_LENG[8] 140.00
-RPD_LENG[9] 145.78
-RPD_LENG[10] 145.32
-RPD_LENG[11] 148.43
-RPD_LENG[12] 146.59
-RPD_LENG[13] 144.28
-RPD_LENG[14] 146.24
-RPD_LENG[15] 143.82
-RPD_LENG[16] 143.93
-RPD_LENG[17] 144.51
-RPD_LENG[18] 146.13
-RPD_LENG[19] 140.00
-RPD_LENG[20] 140.00
-RPD_LENG[21] 145.32
-RPD_LENG[22] 118.31
-RPD_LENG[23] 144.86
-RPD_LENG[24] 144.51
-RPD_LENG[25] 145.66
-RPD_LENG[26] 144.51
-RPD_LENG[27] 140.00
-RPD_LENG[28] 140.00
-RPD_LENG[29] 144.28
-RPD_LENG[30] 143.12
-RPD_LENG[31] 144.28
-RPD_LENG[32] 144.28
-RPD_LENG[33] 140.00
-RPD_LENG[34] 140.00
-RPD_LENG[35] 167.83
-RPD_LENG[36] 145.09
-RPD_LENG[37] 142.78
-RPD_LENG[38] 144.28
-RPD_LENG[39] 140.00
-RPD_LENG[40] 140.00
+RPD_LENG[1]   73.37905
+RPD_LENG[2]   74.31798
+RPD_LENG[3]   67.27605
+RPD_LENG[4]   66.33713
+RPD_LENG[5]   73.84852
+RPD_LENG[6]   72.90959
+RPD_LENG[7]   75.2569
+RPD_LENG[8]   76.19582
+RPD_LENG[9]   83.69782
+RPD_LENG[10]   83.69782
+RPD_LENG[11]   88.39243
+RPD_LENG[12]   88.39243
+RPD_LENG[13]   101.99743
+RPD_LENG[14]   101.52797
+RPD_LENG[15]   96.36389
+RPD_LENG[16]   96.83335
+RPD_LENG[17]   94.49543
+RPD_LENG[18]   94.9555
+RPD_LENG[19]   110.44773
+RPD_LENG[20]   110.44773
+RPD_LENG[21]   107.63097
+RPD_LENG[22]   107.1615
+RPD_LENG[23]   112.78565
+RPD_LENG[24]   113.72458
+RPD_LENG[25]   125.45172
+RPD_LENG[26]   125.92119
+RPD_LENG[27]   56.95729
+RPD_LENG[28]   56.95729
+RPD_LENG[29]   69.24779
+RPD_LENG[30]   69.24779
+RPD_LENG[31]   66.90049
+RPD_LENG[32]   66.43102
+RPD_LENG[33]   72.53402
+RPD_LENG[34]   71.97067
+RPD_LENG[35]   77.6981
+RPD_LENG[36]   78.16756
+RPD_LENG[37]   82.85279
+RPD_LENG[38]   82.85279
+RPD_LENG[39]   86.13902
+RPD_LENG[40]   86.13902
+RPD_LENG[41]   93.18094
+RPD_LENG[42]   93.6504
+RPD_LENG[43]   86.60848
+RPD_LENG[44]   86.60848
+RPD_LENG[45]   94.11986
+RPD_LENG[46]   94.11986
+RPD_LENG[47]   93.18094
+RPD_LENG[48]   93.18094
+RPD_LENG[49]   97.77227
+RPD_LENG[50]   97.77227
+RPD_LENG[51]   98.7112
+RPD_LENG[52]   98.7112
+RPD_LENG[53]   107.1615
+RPD_LENG[54]   107.1615
+RPD_LENG[55]   108.5605
+RPD_LENG[56]   108.5605
+RPD_LENG[57]   109.49942
+RPD_LENG[58]   109.49942
+RPD_LENG[59]   116.07188
+RPD_LENG[60]   115.13296
+RPD_LENG[61]   116.07188
+RPD_LENG[62]   116.07188
+RPD_LENG[63]   57.05118
+RPD_LENG[64]   57.05118
+RPD_LENG[65]   56.58172
+RPD_LENG[66]   57.05118
+RPD_LENG[67]   69.24779
+RPD_LENG[68]   68.77833
+RPD_LENG[69]   78.16756
+RPD_LENG[70]   78.16756
+RPD_LENG[71]   94.9555
+RPD_LENG[72]   94.48604
+RPD_LENG[73]   72.06456
+RPD_LENG[74]   73.94241
+RPD_LENG[75]   81.81997
+RPD_LENG[76]   81.81997
+RPD_LENG[77]   88.39243
+RPD_LENG[78]   88.39243
+RPD_LENG[79]   94.02597
+RPD_LENG[80]   94.02597
+RPD_LENG[81]   88.39243
+RPD_LENG[82]   87.92297
+RPD_LENG[83]   94.02597
+RPD_LENG[84]   93.55651
+RPD_LENG[85]   96.36389
+RPD_LENG[86]   96.36389
+RPD_LENG[87]   97.77227
+RPD_LENG[88]   97.77227
+RPD_LENG[89]   95.89443
+RPD_LENG[90]   95.89443
+RPD_LENG[91]   101.0585
+RPD_LENG[92]   101.0585
+RPD_LENG[93]   117.01081
+RPD_LENG[94]   116.54134
+RPD_LENG[95]   112.31619
+RPD_LENG[96]   112.78565
+RPD_LENG[97]   66.90049
+RPD_LENG[98]   67.36995
+RPD_LENG[99]   72.06456
+RPD_LENG[100]   71.12564
+RPD_LENG[101]   79.10648
+RPD_LENG[102]   79.10648
+RPD_LENG[103]   82.85279
+RPD_LENG[104]   82.85279
+RPD_LENG[105]   82.85279
+RPD_LENG[106]   82.38333
+RPD_LENG[107]   87.45351
+RPD_LENG[108]   87.45351
+RPD_LENG[109]   86.51459
+RPD_LENG[110]   86.04513
+RPD_LENG[111]   93.08705
+RPD_LENG[112]   93.08705
+RPD_LENG[113]   90.73974
+RPD_LENG[114]   90.73974
+RPD_LENG[115]   97.77227
+RPD_LENG[116]   97.77227
+RPD_LENG[117]   97.77227
+RPD_LENG[118]   97.77227
+RPD_LENG[119]   101.0585
+RPD_LENG[120]   101.0585
+RPD_LENG[121]   103.87527
+RPD_LENG[122]   103.87527
+RPD_LENG[123]   115.60242
+RPD_LENG[124]   116.07188
+RPD_LENG[125]   120.29704
+RPD_LENG[126]   119.82758
+# The real stand #64
+RPD_LENG[127]   80.04541
+RPD_LENG[128]   80.04541
+## The Outrigger
+#RPD_LENG[127]   362.60490 
+#RPD_LENG[128]   362.10727
 
-# note: cable length for 39 & 40 is unknown
-# cables for antennas 7, 8, 19, 20, 27, 28 are not installed
+# RPD_STR[] will be be set to 1 for any #'s <= N_RPD not identified
+# *** RPD_STR[cable#] stretch factor goes here:
+
+RPD_STR[1]   0.9766
+RPD_STR[2]   0.9738
+RPD_STR[3]   0.9622
+RPD_STR[4]   0.9656
+RPD_STR[5]   0.9786
+RPD_STR[6]   0.9759
+RPD_STR[7]   0.9829
+RPD_STR[8]   0.9808
+RPD_STR[9]   0.9939
+RPD_STR[10]  0.9939
+RPD_STR[11]  0.9957
+RPD_STR[12]  0.9991
+RPD_STR[13]  1.0104
+RPD_STR[14]  1.0120
+RPD_STR[15]  1.0099
+RPD_STR[16]  1.0069
+RPD_STR[17]  1.0079
+RPD_STR[18]  1.0035
+RPD_STR[19]  1.0097
+RPD_STR[20]  1.0145
+RPD_STR[21]  1.0146
+RPD_STR[22]  1.0133
+RPD_STR[23]  1.0208
+RPD_STR[24]  1.0203
+RPD_STR[25]  1.0271
+RPD_STR[26]  1.0248
+RPD_STR[27]  0.9426
+RPD_STR[28]  0.9414
+RPD_STR[29]  0.9661
+RPD_STR[30]  0.9672
+RPD_STR[31]  0.9647
+RPD_STR[32]  0.9506
+RPD_STR[33]  0.9739
+RPD_STR[34]  0.9779
+RPD_STR[35]  0.9823
+RPD_STR[36]  0.9768
+RPD_STR[37]  0.9901
+RPD_STR[38]  0.9883
+RPD_STR[39]  0.9962
+RPD_STR[40]  0.9883
+RPD_STR[41]  1.0051
+RPD_STR[42]  0.9998
+RPD_STR[43]  0.9923
+RPD_STR[44]  0.9921
+RPD_STR[45]  1.0006
+RPD_STR[46]  1.0012
+RPD_STR[47]  1.0014
+RPD_STR[48]  1.0020
+RPD_STR[49]  1.0011
+RPD_STR[50]  1.0049
+RPD_STR[51]  1.0109
+RPD_STR[52]  1.0073
+RPD_STR[53]  1.0154
+RPD_STR[54]  1.0150
+RPD_STR[55]  1.0175
+RPD_STR[56]  1.0160
+RPD_STR[57]  1.0205
+RPD_STR[58]  1.0173
+RPD_STR[59]  1.0200
+RPD_STR[60]  1.0192
+RPD_STR[61]  1.0219
+RPD_STR[62]  1.0226
+RPD_STR[63]  0.9876
+RPD_STR[64]  1.0991
+RPD_STR[65]  0.9449
+RPD_STR[66]  0.9332
+RPD_STR[67]  0.9658
+RPD_STR[68]  0.9673
+RPD_STR[69]  0.9806
+RPD_STR[70]  0.9826
+RPD_STR[71]  1.0063
+RPD_STR[72]  1.0071
+RPD_STR[73]  0.9763
+RPD_STR[74]  0.9750
+RPD_STR[75]  0.9864
+RPD_STR[76]  0.9873
+RPD_STR[77]  0.9970
+RPD_STR[78]  0.9958
+RPD_STR[79]  1.0078
+RPD_STR[80]  1.0059
+RPD_STR[81]  0.9948
+RPD_STR[82]  0.9993
+RPD_STR[83]  1.0019
+RPD_STR[84]  1.0043
+RPD_STR[85]  1.0078
+RPD_STR[86]  1.0068
+RPD_STR[87]  1.0055
+RPD_STR[88]  1.0042
+RPD_STR[89]  1.0030
+RPD_STR[90]  1.0041
+RPD_STR[91]  1.0097
+RPD_STR[92]  1.0121
+RPD_STR[93]  1.0229
+RPD_STR[94]  1.0225
+RPD_STR[95]  1.0170
+RPD_STR[96]  1.0202
+RPD_STR[97]  0.9885
+RPD_STR[98]  0.9617
+RPD_STR[99]  0.9675
+RPD_STR[100] 0.9724
+RPD_STR[101] 0.9818
+RPD_STR[102] 0.9814
+RPD_STR[103] 0.9892
+RPD_STR[104] 0.9896
+RPD_STR[105] 0.9877
+RPD_STR[106] 0.9859
+RPD_STR[107] 0.9956
+RPD_STR[108] 0.9957
+RPD_STR[109] 0.9929
+RPD_STR[110] 0.9962
+RPD_STR[111] 1.0067
+RPD_STR[112] 1.0045
+RPD_STR[113] 1.0017
+RPD_STR[114] 0.9996
+RPD_STR[115] 1.0072
+RPD_STR[116] 1.0065
+RPD_STR[117] 1.0102
+RPD_STR[118] 1.0119
+RPD_STR[119] 0.9958
+RPD_STR[120] 1.0037
+RPD_STR[121] 1.0123
+RPD_STR[122] 1.0127
+RPD_STR[123] 1.0218
+RPD_STR[124] 1.0172
+RPD_STR[125] 1.0263
+RPD_STR[126] 1.0254
+
+# The real stand #64
+RPD_STR[127] 0.9849
+RPD_STR[128] 1.0013
+
+## The Outrigger
+#RPD_VF[127]   85.0 # this is the known value for LMR-400
+#RPD_DD[127]   2.0 # this is SE's guess; see comment below 
+#RPD_A0[127]   0.00185 
+#RPD_A1[127]   0.00000 
+#RPD_STR[127]  1.00000
+#RPD_VF[128]   85.0 # this is the known value for LMR-400
+#RPD_DD[128]   2.0 # this is SE's guess; see comment below 
+#RPD_A0[128]   0.00185 
+#RPD_A1[128]   0.00000 
+#RPD_STR[128]  1.00000
+
+# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
+# ... a LMR-200-like cable, but I'm not sure by how much. 
+# FIXME JD: Also set outrigger cable parameters
  
 # --------------------------------------
 # --- Antenna # -> cable # mapping -----
@@ -292,12 +911,137 @@ RPD_LENG[40] 140.00
 # ----------------------
 # --- SEP --------------
 # ----------------------
-N_SEP 40
+N_SEP 128
 
 # SEP_ID[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
 # *** SEP_ID[port#] goes here:
-# FIXME JC: I think we agreed Steve Tremblay was going to provide this
-# Still working on it
+SEP_ID[1]   1
+SEP_ID[2]   2
+SEP_ID[3]   3
+SEP_ID[4]   4
+SEP_ID[5]   5
+SEP_ID[6]   6
+SEP_ID[7]   7
+SEP_ID[8]   8
+SEP_ID[9]   9
+SEP_ID[10]  10
+SEP_ID[11]  11
+SEP_ID[12]  12
+SEP_ID[13]  13
+SEP_ID[14]  14
+SEP_ID[15]  15
+SEP_ID[16]  16
+SEP_ID[17]  17
+SEP_ID[18]  18
+SEP_ID[19]  19
+SEP_ID[20]  20
+SEP_ID[21]  21
+SEP_ID[22]  22
+SEP_ID[23]  23
+SEP_ID[24]  24
+SEP_ID[25]  25
+SEP_ID[26]  26
+SEP_ID[27]  27
+SEP_ID[28]  28
+SEP_ID[29]  29
+SEP_ID[30]  30
+SEP_ID[31]  31
+SEP_ID[32]  32
+SEP_ID[33]  33
+SEP_ID[34]  34
+SEP_ID[35]  35
+SEP_ID[36]  36
+SEP_ID[37]  37
+SEP_ID[38]  38
+SEP_ID[39]  39
+SEP_ID[40]  40
+SEP_ID[41]  41
+SEP_ID[42]  42
+SEP_ID[43]  43
+SEP_ID[44]  44
+SEP_ID[45]  45
+SEP_ID[46]  46
+SEP_ID[47]  47
+SEP_ID[48]  48
+SEP_ID[49]  49
+SEP_ID[50]  50
+SEP_ID[51]  51
+SEP_ID[52]  52
+SEP_ID[53]  53
+SEP_ID[54]  54
+SEP_ID[55]  55
+SEP_ID[56]  56
+SEP_ID[57]  57
+SEP_ID[58]  58
+SEP_ID[59]  59
+SEP_ID[60]  60
+SEP_ID[61]  61
+SEP_ID[62]  62
+SEP_ID[63]  63
+SEP_ID[64]  64
+SEP_ID[65]  65
+SEP_ID[66]  66
+SEP_ID[67]  67
+SEP_ID[68]  68
+SEP_ID[69]  69
+SEP_ID[70]  70
+SEP_ID[71]  71
+SEP_ID[72]  72
+SEP_ID[73]  73
+SEP_ID[74]  74
+SEP_ID[75]  75
+SEP_ID[76]  76
+SEP_ID[77]  77
+SEP_ID[78]  78
+SEP_ID[79]  79
+SEP_ID[80]  80
+SEP_ID[81]  81
+SEP_ID[82]  82
+SEP_ID[83]  83
+SEP_ID[84]  84
+SEP_ID[85]  85
+SEP_ID[86]  86
+SEP_ID[87]  87
+SEP_ID[88]  88
+SEP_ID[89]  89
+SEP_ID[90]  90
+SEP_ID[91]  91
+SEP_ID[92]  92
+SEP_ID[93]  93
+SEP_ID[94]  94
+SEP_ID[95]  95
+SEP_ID[96]  96
+SEP_ID[97]  97
+SEP_ID[98]  98
+SEP_ID[99]  99
+SEP_ID[100] 100
+SEP_ID[101] 101
+SEP_ID[102] 102
+SEP_ID[103] 103
+SEP_ID[104] 104
+SEP_ID[106] 106
+SEP_ID[107] 107
+SEP_ID[108] 108
+SEP_ID[109] 109
+SEP_ID[110] 110
+SEP_ID[111] 111
+SEP_ID[112] 112
+SEP_ID[113] 113
+SEP_ID[114] 114
+SEP_ID[115] 115
+SEP_ID[116] 116
+SEP_ID[117] 117
+SEP_ID[118] 118
+SEP_ID[119] 119
+SEP_ID[120] 120
+SEP_ID[121] 121
+SEP_ID[122] 122
+SEP_ID[123] 123
+SEP_ID[124] 124
+SEP_ID[125] 125
+SEP_ID[126] 126
+SEP_ID[127] 127
+SEP_ID[128] 128
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any port #'s <= N_SEP not identified
@@ -331,20 +1075,50 @@ N_SEP 40
 # --- ASP --------------
 # ----------------------
 # Maximum (not necessarily actual) number of ARX boards:
-N_ARB 2
+N_ARB 8
 # Maximum (not necessarily actual) number or channels per ARX board:
 N_ARBCH 16
 
 # ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
 # *** ARB_ID[arb#] goes here:
-ARB_ID[1] 0201
-ARB_ID[2] 0202
+ARB_ID[1] 8243
+ARB_ID[2] 8252
+ARB_ID[3] 8244
+ARB_ID[4] 8249
+ARB_ID[5] 8250
+ARB_ID[6] 8248
+ARB_ID[7] 8247
+ARB_ID[8] 8245
 
+# ARB_SLOT[] will be set to 0 (not known/not applicable) for any ARX board #'s <= N_ARB not identified
+# *** ARB_SLOT[arb#] goes here:
+# Format is <chassis>-<slot-from-left>
+ARB_SLOT[1] 1-1
+ARB_SLOT[2] 1-2
+ARB_SLOT[3] 1-3
+ARB_SLOT[4] 1-4
+ARB_SLOT[5] 1-5
+ARB_SLOT[6] 1-6
+ARB_SLOT[7] 1-7
+ARB_SLOT[8] 1-8
 
 # ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
 # *** ARB_DESI[arb#] goes here:
-ARB_DESI[1] 1
-ARB_DESI[1] 1
+# ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
+# *** ARB_DESI[arb#] goes here:
+# Code are 1: rev C
+#          2: rev D
+#          3: rev F
+#          4: ref G
+#          5: ref H
+ARB_DESI[1] 5
+ARB_DESI[2] 5
+ARB_DESI[3] 5
+ARB_DESI[4] 5
+ARB_DESI[5] 5
+ARB_DESI[6] 5
+ARB_DESI[7] 5
+ARB_DESI[8] 5
 
 # Format (example) "ARB_RACK[2] 3" means ARX board 2 is powered via a supply in Rack 2.
 # ARB_RACK[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
@@ -352,10 +1126,22 @@ ARB_DESI[1] 1
 # ARB_PORT[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
 # *** ARB_RACK[arb#] goes here:
 # *** ARB_PORT[arb#] goes here:
-ARB_RACK[1] 1
-ARB_PORT[1] 2
-ARB_RACK[2] 1
-ARB_PORT[2] 2
+ARB_RACK[1] 2
+ARB_PORT[1] 8
+ARB_RACK[2] 2
+ARB_PORT[2] 8
+ARB_RACK[3] 2
+ARB_PORT[3] 8
+ARB_RACK[4] 2
+ARB_PORT[4] 8
+ARB_RACK[5] 2
+ARB_PORT[5] 8
+ARB_RACK[6] 2
+ARB_PORT[6] 8
+ARB_RACK[7] 2
+ARB_PORT[7] 8
+ARB_RACK[8] 2
+ARB_PORT[8] 8
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any ARX board-channels not identified
@@ -363,8 +1149,6 @@ ARB_PORT[2] 2
 
 # ARB_GAIN[][] will be set to 67.0 for any boards/channels not identified
 # *** ARB_GAIN[arb#][ch#] goes here:
-# ARB_STAT[4][12] 66.0 # FIXME JC: I believe this is what you told me?
-# The above, has since been fixed.
 
 
 # ----------------------------------------------
@@ -375,39 +1159,7 @@ ARB_PORT[2] 2
 #   ... so best is to note only the exceptions below.
 # Set ARB_ANT[][] to the corresponding negative value to indicated that only the input is connected.
 # *** ARB_ANT[arb#][ch#] goes here:
-# FIXME
-ARB_ANT[1][1]    5
-ARB_ANT[1][2]    6
-ARB_ANT[1][3]    31
-ARB_ANT[1][4]    32
-ARB_ANT[1][5]    9
-ARB_ANT[1][6]   10
-ARB_ANT[1][7]   38
-ARB_ANT[1][8]   37
-ARB_ANT[1][9]   36
-ARB_ANT[1][10]  35
-ARB_ANT[1][11]  25
-ARB_ANT[1][12]  26
-ARB_ANT[1][13]  30
-ARB_ANT[1][14]  29
-ARB_ANT[1][15]  11
-ARB_ANT[1][16]  12
-ARB_ANT[2][1]   18
-ARB_ANT[2][2]   17
-ARB_ANT[2][3]   13
-ARB_ANT[2][4]   14
-ARB_ANT[2][5]   4
-ARB_ANT[2][6]   3
-ARB_ANT[2][7]   21
-ARB_ANT[2][8]   40
-ARB_ANT[2][9]   2
-ARB_ANT[2][10]   1
-ARB_ANT[2][11]   22
-ARB_ANT[2][12]   39
-ARB_ANT[2][13]   15
-ARB_ANT[2][14]   16
-ARB_ANT[2][15]   24
-ARB_ANT[2][16]   23
+
 
 # ----------------------------------------------
 # --- ASP input/output labeling ----------------
@@ -415,203 +1167,717 @@ ARB_ANT[2][16]   23
 # ARB_IN[][] will be set to "UNK" ("unknown") for any boards/channels not identified
 # ARB_OUT[][] will be set to "UNK" ("unknown") for any boards/channels not identified
 # *** ARB_IN[][] goes here:
-# FIXME JC:  Joe provides this
-# label = panel#_input#
+# Format is <column>_<row>
 
-ARB_IN[1][1]   1_1
-ARB_IN[1][2]   1_2
-ARB_IN[1][3]   1_3
-ARB_IN[1][4]   1_4
-ARB_IN[1][5]   1_5
-ARB_IN[1][6]   1_6
-ARB_IN[1][7]   1_7
-ARB_IN[1][8]   1_8
-ARB_IN[1][9]   1_9
-ARB_IN[1][10] 1_10
-ARB_IN[1][11] 1_11
-ARB_IN[1][12] 1_12
-ARB_IN[1][13] 1_13
-ARB_IN[1][14] 1_14
-ARB_IN[1][15] 1_15
-ARB_IN[1][16] 1_16
-ARB_IN[2][1]  1_17
-ARB_IN[2][2]  1_18
-ARB_IN[2][3]  1_19
-ARB_IN[2][4]  1_20
+ARB_IN[1][1]  8_1
+ARB_IN[1][2]  8_2
+ARB_IN[1][3]  8_3
+ARB_IN[1][4]  8_4
+ARB_IN[1][5]  8_5
+ARB_IN[1][6]  8_6
+ARB_IN[1][7]  8_7
+ARB_IN[1][8]  8_8
+ARB_IN[1][9]  8_9
+ARB_IN[1][10]  8_10
+ARB_IN[1][11]  8_11
+ARB_IN[1][12]  8_12
+ARB_IN[1][13]  8_13
+ARB_IN[1][14]  8_14
+ARB_IN[1][15]  8_15
+ARB_IN[1][16]  8_16
+ARB_IN[2][1]  7_1
+ARB_IN[2][2]  7_2
+ARB_IN[2][3]  7_3
+ARB_IN[2][4]  7_4
+ARB_IN[2][5]  7_5
+ARB_IN[2][6]  7_6
+ARB_IN[2][7]  7_7
+ARB_IN[2][8]  7_8
+ARB_IN[2][9]  7_9
+ARB_IN[2][10]  7_10
+ARB_IN[2][11]  7_11
+ARB_IN[2][12]  7_12
+ARB_IN[2][13]  7_13
+ARB_IN[2][14]  7_14
+ARB_IN[2][15]  7_15
+ARB_IN[2][16]  7_16
+ARB_IN[3][1]  6_1
+ARB_IN[3][2]  6_2
+ARB_IN[3][3]  6_3
+ARB_IN[3][4]  6_4
+ARB_IN[3][5]  6_5
+ARB_IN[3][6]  6_6
+ARB_IN[3][7]  6_7
+ARB_IN[3][8]  6_8
+ARB_IN[3][9]  6_9
+ARB_IN[3][10]  6_10
+ARB_IN[3][11]  6_11
+ARB_IN[3][12]  6_12
+ARB_IN[3][13]  6_13
+ARB_IN[3][14]  6_14
+ARB_IN[3][15]  6_15
+ARB_IN[3][16]  6_16
+ARB_IN[4][1]  5_1
+ARB_IN[4][2]  5_2
+ARB_IN[4][3]  5_3
+ARB_IN[4][4]  5_4
+ARB_IN[4][5]  5_5
+ARB_IN[4][6]  5_6
+ARB_IN[4][7]  5_7
+ARB_IN[4][8]  5_8
+ARB_IN[4][9]  5_9
+ARB_IN[4][10]  5_10
+ARB_IN[4][11]  5_11
+ARB_IN[4][12]  5_12
+ARB_IN[4][13]  5_13
+ARB_IN[4][14]  5_14
+ARB_IN[4][15]  5_15
+ARB_IN[4][16]  5_16
+ARB_IN[5][1]  4_1
+ARB_IN[5][2]  4_2
+ARB_IN[5][3]  4_3
+ARB_IN[5][4]  4_4
+ARB_IN[5][5]  4_5
+ARB_IN[5][6]  4_6
+ARB_IN[5][7]  4_7
+ARB_IN[5][8]  4_8
+ARB_IN[5][9]  4_9
+ARB_IN[5][10]  4_10
+ARB_IN[5][11]  4_11
+ARB_IN[5][12]  4_12
+ARB_IN[5][13]  4_13
+ARB_IN[5][14]  4_14
+ARB_IN[5][15]  4_15
+ARB_IN[5][16]  4_16
+ARB_IN[6][1]  3_1
+ARB_IN[6][2]  3_2
+ARB_IN[6][3]  3_3
+ARB_IN[6][4]  3_4
+ARB_IN[6][5]  3_5
+ARB_IN[6][6]  3_6
+ARB_IN[6][7]  3_7
+ARB_IN[6][8]  3_8
+ARB_IN[6][9]  3_9
+ARB_IN[6][10]  3_10
+ARB_IN[6][11]  3_11
+ARB_IN[6][12]  3_12
+ARB_IN[6][13]  3_13
+ARB_IN[6][14]  3_14
+ARB_IN[6][15]  3_15
+ARB_IN[6][16]  3_16
+ARB_IN[7][1]  2_1
+ARB_IN[7][2]  2_2
+ARB_IN[7][3]  2_3
+ARB_IN[7][4]  2_4
+ARB_IN[7][5]  2_5
+ARB_IN[7][6]  2_6
+ARB_IN[7][7]  2_7
+ARB_IN[7][8]  2_8
+ARB_IN[7][9]  2_9
+ARB_IN[7][10]  2_10
+ARB_IN[7][11]  2_11
+ARB_IN[7][12]  2_12
+ARB_IN[7][13]  2_13
+ARB_IN[7][14]  2_14
+ARB_IN[7][15]  2_15
+ARB_IN[7][16]  2_16
+ARB_IN[8][1]  1_1
+ARB_IN[8][2]  1_2
+ARB_IN[8][3]  1_3
+ARB_IN[8][4]  1_4
+ARB_IN[8][5]  1_5
+ARB_IN[8][6]  1_6
+ARB_IN[8][7]  1_7
+ARB_IN[8][8]  1_8
+ARB_IN[8][9]  1_9
+ARB_IN[8][10]  1_10
+ARB_IN[8][11]  1_11
+ARB_IN[8][12]  1_12
+ARB_IN[8][13]  1_13
+ARB_IN[8][14]  1_14
+ARB_IN[8][15]  1_15
+ARB_IN[8][16]  1_16
 
 # *** ARB_OUT[][] goes here:
-# FIXME JC:  Joe provides this
-# label = panel#_input#_pair#
+# Format is <column-from-left>_<row-from-top>
 
-ARB_OUT[1][1]  1_1_1
-ARB_OUT[1][2]  1_1_2
-ARB_OUT[1][3]  1_1_3
-ARB_OUT[1][4]  1_1_4
-ARB_OUT[1][5]  1_2_1
-ARB_OUT[1][6]  1_2_2
-ARB_OUT[1][7]  1_2_3
-ARB_OUT[1][8]  1_2_4
-ARB_OUT[1][9]  1_3_1
-ARB_OUT[1][10] 1_3_2
-ARB_OUT[1][11] 1_3_3
-ARB_OUT[1][12] 1_3_4
-ARB_OUT[1][13] 1_4_1
-ARB_OUT[1][14] 1_4_2
-ARB_OUT[1][15] 1_4_3
-ARB_OUT[1][16] 1_4_4
-ARB_OUT[2][1]  1_5_1
-ARB_OUT[2][2]  1_5_2
-ARB_OUT[2][3]  1_5_3
-ARB_OUT[2][4]  1_5_4
+ARB_OUT[1][1]  1_1
+ARB_OUT[1][2]  1_2
+ARB_OUT[1][3]  1_3
+ARB_OUT[1][4]  1_4
+ARB_OUT[1][5]  1_5
+ARB_OUT[1][6]  1_6
+ARB_OUT[1][7]  1_7
+ARB_OUT[1][8]  1_8
+ARB_OUT[1][9]  1_9
+ARB_OUT[1][10]  1_10
+ARB_OUT[1][11]  1_11
+ARB_OUT[1][12]  1_12
+ARB_OUT[1][13]  1_13
+ARB_OUT[1][14]  1_14
+ARB_OUT[1][15]  1_15
+ARB_OUT[1][16]  1_16
+ARB_OUT[2][1]  2_1
+ARB_OUT[2][2]  2_2
+ARB_OUT[2][3]  2_3
+ARB_OUT[2][4]  2_4
+ARB_OUT[2][5]  2_5
+ARB_OUT[2][6]  2_6
+ARB_OUT[2][7]  2_7
+ARB_OUT[2][8]  2_8
+ARB_OUT[2][9]  2_9
+ARB_OUT[2][10]  2_10
+ARB_OUT[2][11]  2_11
+ARB_OUT[2][12]  2_12
+ARB_OUT[2][13]  2_13
+ARB_OUT[2][14]  2_14
+ARB_OUT[2][15]  2_15
+ARB_OUT[2][16]  2_16
+ARB_OUT[3][1]  3_1
+ARB_OUT[3][2]  3_2
+ARB_OUT[3][3]  3_3
+ARB_OUT[3][4]  3_4
+ARB_OUT[3][5]  3_5
+ARB_OUT[3][6]  3_6
+ARB_OUT[3][7]  3_7
+ARB_OUT[3][8]  3_8
+ARB_OUT[3][9]  3_9
+ARB_OUT[3][10]  3_10
+ARB_OUT[3][11]  3_11
+ARB_OUT[3][12]  3_12
+ARB_OUT[3][13]  3_13
+ARB_OUT[3][14]  3_14
+ARB_OUT[3][15]  3_15
+ARB_OUT[3][16]  3_16
+ARB_OUT[4][1]  4_1
+ARB_OUT[4][2]  4_2
+ARB_OUT[4][3]  4_3
+ARB_OUT[4][4]  4_4
+ARB_OUT[4][5]  4_5
+ARB_OUT[4][6]  4_6
+ARB_OUT[4][7]  4_7
+ARB_OUT[4][8]  4_8
+ARB_OUT[4][9]  4_9
+ARB_OUT[4][10]  4_10
+ARB_OUT[4][11]  4_11
+ARB_OUT[4][12]  4_12
+ARB_OUT[4][13]  4_13
+ARB_OUT[4][14]  4_14
+ARB_OUT[4][15]  4_15
+ARB_OUT[4][16]  4_16
+ARB_OUT[5][1]  5_1
+ARB_OUT[5][2]  5_2
+ARB_OUT[5][3]  5_3
+ARB_OUT[5][4]  5_4
+ARB_OUT[5][5]  5_5
+ARB_OUT[5][6]  5_6
+ARB_OUT[5][7]  5_7
+ARB_OUT[5][8]  5_8
+ARB_OUT[5][9]  5_9
+ARB_OUT[5][10]  5_10
+ARB_OUT[5][11]  5_11
+ARB_OUT[5][12]  5_12
+ARB_OUT[5][13]  5_13
+ARB_OUT[5][14]  5_14
+ARB_OUT[5][15]  5_15
+ARB_OUT[5][16]  5_16
+ARB_OUT[6][1]  6_1
+ARB_OUT[6][2]  6_2
+ARB_OUT[6][3]  6_3
+ARB_OUT[6][4]  6_4
+ARB_OUT[6][5]  6_5
+ARB_OUT[6][6]  6_6
+ARB_OUT[6][7]  6_7
+ARB_OUT[6][8]  6_8
+ARB_OUT[6][9]  6_9
+ARB_OUT[6][10]  6_10
+ARB_OUT[6][11]  6_11
+ARB_OUT[6][12]  6_12
+ARB_OUT[6][13]  6_13
+ARB_OUT[6][14]  6_14
+ARB_OUT[6][15]  6_15
+ARB_OUT[6][16]  6_16
+ARB_OUT[7][1]  7_1
+ARB_OUT[7][2]  7_2
+ARB_OUT[7][3]  7_3
+ARB_OUT[7][4]  7_4
+ARB_OUT[7][5]  7_5
+ARB_OUT[7][6]  7_6
+ARB_OUT[7][7]  7_7
+ARB_OUT[7][8]  7_8
+ARB_OUT[7][9]  7_9
+ARB_OUT[7][10]  7_10
+ARB_OUT[7][11]  7_11
+ARB_OUT[7][12]  7_12
+ARB_OUT[7][13]  7_13
+ARB_OUT[7][14]  7_14
+ARB_OUT[7][15]  7_15
+ARB_OUT[7][16]  7_16
+ARB_OUT[8][1]  8_1
+ARB_OUT[8][2]  8_2
+ARB_OUT[8][3]  8_3
+ARB_OUT[8][4]  8_4
+ARB_OUT[8][5]  8_5
+ARB_OUT[8][6]  8_6
+ARB_OUT[8][7]  8_7
+ARB_OUT[8][8]  8_8
+ARB_OUT[8][9]  8_9
+ARB_OUT[8][10]  8_10
+ARB_OUT[8][11]  8_11
+ARB_OUT[8][12]  8_12
+ARB_OUT[8][13]  8_13
+ARB_OUT[8][14]  8_14
+ARB_OUT[8][15]  8_15
+ARB_OUT[8][16]  8_16
+
+
 
 # ----------------------
-# --- DP1 --------------
+# --- SNAP2 ------------
 # ----------------------
-# Maximum number of DP1 boards:
-N_DP1 1
-# Maximum number or channels per DP1 board
-N_DP1CH 20
+# Maximum number of SNAP2 boards:
+N_SNAP 2
+# Maximum number or channels per SNAP2 board
+N_SNAPCH 64
 
-# DP1_ID[] will be set to "UNK" (no identification) for any DP1 boards not identified
-# *** DP1_ID[dp1#] goes here:
-# FIXME JC: I strongly recommend using this, to allow trouble-tracking of boards over time
+# SNAP_ID[] will be set to "UNK" (no identification) for any SNAP2 boards not identified
+# *** SNAP_ID[snap#] goes here:
+SNAP_ID[1] aaccc265
+SNAP_ID[2] 7bf3c205
 
-# DP1_SLOT[] will be set to 0 (not known/not applicable) for any DP1 boards not identified
-# *** DP1_SLOT[dp1#] goes here:
+# SNAP_SLOT[] will be set to 0 (not known/not applicable) for any SNAP2 boards not identified
+# *** SNAP_SLOT[snap#] goes here:
+# Format is <chassis>-<slot-from-left>
+SNAP_SLOT[1] 1-1
+SNAP_SLOT[2] 1-2
 
-# DP1_DESI[] be set to 1 for any DP1 boards not identified
-# *** DP1_DESI[dp1#] goes here:
+# SNAP_DESI[] be set to 1 for any SNAP2 boards not identified
+# *** SNAP_DESI[snap#] goes here:
+SNAP_DESI[1] 2
+SNAP_DESI[2] 2
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
-# This will be set to 3 ("OK") or any DP1 board-channels not identified
-# *** DP1_STAT[dp1#][ch#] goes here:
+# This will be set to 3 ("OK") or any SNAP2 board-channels not identified
+# *** SNAP_STAT[snap#][ch#] goes here:
 
-# DP1_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
-# *** DP1_INR[dp1#][ch#] goes here:
-# FIXME JC: Here's where the rack labels go...
-# unknown at this time
+# SNAP_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** SNAP_INR[snap#][ch#] goes here:
+# There are no rack entries
 
-# DP1_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
-# *** DP1_INC[dp1#][ch#] goes here:
-# FIXME JC: Here's where the chassis labels go...
-# unknown at this time
+# SNAP_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** SNAP_INC[snap#][ch#] goes here:
+# Format is <M(iddle)|L(eft)>_<T(op)|B(ottom)>_<input>
 
+SNAP_INC[1][1]  M_B_2
+SNAP_INC[1][2]  M_B_3
+SNAP_INC[1][3]  M_B_0
+SNAP_INC[1][4]  M_B_1
+SNAP_INC[1][5]  M_B_6
+SNAP_INC[1][6]  M_B_7
+SNAP_INC[1][7]  M_B_4
+SNAP_INC[1][8]  M_B_5
+SNAP_INC[1][9]  M_B_10
+SNAP_INC[1][10]  M_B_11
+SNAP_INC[1][11]  M_B_8
+SNAP_INC[1][12]  M_B_9
+SNAP_INC[1][13]  M_B_14
+SNAP_INC[1][14]  M_B_15
+SNAP_INC[1][15]  M_B_12
+SNAP_INC[1][16]  M_B_13
+SNAP_INC[1][17]  M_T_18
+SNAP_INC[1][18]  M_T_19
+SNAP_INC[1][19]  M_T_16
+SNAP_INC[1][20]  M_T_17
+SNAP_INC[1][21]  M_T_22
+SNAP_INC[1][22]  M_T_23
+SNAP_INC[1][23]  M_T_20
+SNAP_INC[1][24]  M_T_21
+SNAP_INC[1][25]  M_T_26
+SNAP_INC[1][26]  M_T_27
+SNAP_INC[1][27]  M_T_24
+SNAP_INC[1][28]  M_T_25
+SNAP_INC[1][29]  M_T_30
+SNAP_INC[1][30]  M_T_31
+SNAP_INC[1][31]  M_T_28
+SNAP_INC[1][32]  M_T_29
+SNAP_INC[1][33]  L_B_2
+SNAP_INC[1][34]  L_B_3
+SNAP_INC[1][35]  L_B_0
+SNAP_INC[1][36]  L_B_1
+SNAP_INC[1][37]  L_B_6
+SNAP_INC[1][38]  L_B_7
+SNAP_INC[1][39]  L_B_4
+SNAP_INC[1][40]  L_B_5
+SNAP_INC[1][41]  L_B_10
+SNAP_INC[1][42]  L_B_11
+SNAP_INC[1][43]  L_B_8
+SNAP_INC[1][44]  L_B_9
+SNAP_INC[1][45]  L_B_14
+SNAP_INC[1][46]  L_B_15
+SNAP_INC[1][47]  L_B_12
+SNAP_INC[1][48]  L_B_13
+SNAP_INC[1][49]  L_T_18
+SNAP_INC[1][50]  L_T_19
+SNAP_INC[1][51]  L_T_16
+SNAP_INC[1][52]  L_T_17
+SNAP_INC[1][53]  L_T_22
+SNAP_INC[1][54]  L_T_23
+SNAP_INC[1][55]  L_T_20
+SNAP_INC[1][56]  L_T_21
+SNAP_INC[1][57]  L_T_26
+SNAP_INC[1][58]  L_T_27
+SNAP_INC[1][59]  L_T_24
+SNAP_INC[1][60]  L_T_25
+SNAP_INC[1][61]  L_T_30
+SNAP_INC[1][62]  L_T_31
+SNAP_INC[1][63]  L_T_28
+SNAP_INC[1][64]  L_T_29
+SNAP_INC[2][1]  L_B_2
+SNAP_INC[2][2]  L_B_3
+SNAP_INC[2][3]  L_B_0
+SNAP_INC[2][4]  L_B_1
+SNAP_INC[2][5]  L_B_6
+SNAP_INC[2][6]  L_B_7
+SNAP_INC[2][7]  L_B_4
+SNAP_INC[2][8]  L_B_5
+SNAP_INC[2][9]  L_B_10
+SNAP_INC[2][10]  L_B_11
+SNAP_INC[2][11]  L_B_8
+SNAP_INC[2][12]  L_B_9
+SNAP_INC[2][13]  L_B_14
+SNAP_INC[2][14]  L_B_15
+SNAP_INC[2][15]  L_B_12
+SNAP_INC[2][16]  L_B_13
+SNAP_INC[2][17]  L_T_18
+SNAP_INC[2][18]  L_T_19
+SNAP_INC[2][19]  L_T_16
+SNAP_INC[2][20]  L_T_17
+SNAP_INC[2][21]  L_T_22
+SNAP_INC[2][22]  L_T_23
+SNAP_INC[2][23]  L_T_20
+SNAP_INC[2][24]  L_T_21
+SNAP_INC[2][25]  L_T_26
+SNAP_INC[2][26]  L_T_27
+SNAP_INC[2][27]  L_T_24
+SNAP_INC[2][28]  L_T_25
+SNAP_INC[2][29]  L_T_30
+SNAP_INC[2][30]  L_T_31
+SNAP_INC[2][31]  L_T_28
+SNAP_INC[2][32]  L_T_29
+SNAP_INC[2][33]  M_B_2
+SNAP_INC[2][34]  M_B_3
+SNAP_INC[2][35]  M_B_0
+SNAP_INC[2][36]  M_B_1
+SNAP_INC[2][37]  M_B_6
+SNAP_INC[2][38]  M_B_7
+SNAP_INC[2][39]  M_B_4
+SNAP_INC[2][40]  M_B_5
+SNAP_INC[2][41]  M_B_10
+SNAP_INC[2][42]  M_B_11
+SNAP_INC[2][43]  M_B_8
+SNAP_INC[2][44]  M_B_9
+SNAP_INC[2][45]  M_B_14
+SNAP_INC[2][46]  M_B_15
+SNAP_INC[2][47]  M_B_12
+SNAP_INC[2][48]  M_B_13
+SNAP_INC[2][49]  M_T_18
+SNAP_INC[2][50]  M_T_19
+SNAP_INC[2][51]  M_T_16
+SNAP_INC[2][52]  M_T_17
+SNAP_INC[2][53]  M_T_22
+SNAP_INC[2][54]  M_T_23
+SNAP_INC[2][55]  M_T_20
+SNAP_INC[2][56]  M_T_21
+SNAP_INC[2][57]  M_T_26
+SNAP_INC[2][58]  M_T_27
+SNAP_INC[2][59]  M_T_24
+SNAP_INC[2][60]  M_T_25
+SNAP_INC[2][61]  M_T_30
+SNAP_INC[2][62]  M_T_31
+SNAP_INC[2][63]  M_T_28
+SNAP_INC[2][64]  M_T_29
 
-# ----------------------------------------------
-# --- Antenna # -> DP1 board channel mapping ---
-# ----------------------------------------------
-# Format (example) "DP1_ANT[2][3] 4" means antenna 4 is connected to DP1 Board 2, channel 3.
-# DP1_ANT[1][1] will be set to 1, DP1_ANT[1][2] will be set to 2, etc., if not indicated otherwise
+# ------------------------------------------------
+# --- Antenna # -> SNAP2 board channel mapping ---
+# ------------------------------------------------
+# Format (example) "SNAP_ANT[2][3] 4" means antenna 4 is connected to SNAP2 Board 2, channel 3.
+# SNAP_ANT[1][1] will be set to 1, SNAP_ANT[1][2] will be set to 2, etc., if not indicated otherwise
 #   ... so best is to note only the exceptions below.
-# DP1_ANT[][] will be set to 0 (no connection, or only connected at outout) for any boards/channels not identified
-# *** DP1_ANT[dp1#][ch#] goes here:
-DP1_ANT[1][1] 1
-DP1_ANT[1][2] 2
-DP1_ANT[1][3] 3
-DP1_ANT[1][4] 4
-DP1_ANT[1][5] 23
-DP1_ANT[1][6] 24
-DP1_ANT[1][7] 21
-DP1_ANT[1][8] 22
-DP1_ANT[1][9] 13
-DP1_ANT[1][10] 14
-DP1_ANT[1][11] 15
-DP1_ANT[1][12] 16
-DP1_ANT[1][13] 5
-DP1_ANT[1][14] 6
-DP1_ANT[1][15] 29
-DP1_ANT[1][16] 30
-DP1_ANT[1][17] 9
-DP1_ANT[1][18] 10
-DP1_ANT[1][19] 11
-DP1_ANT[1][20] 12
-
+# SNAP_ANT[][] will be set to 0 (no connection, or only connected at output) for any boards/channels not identified
+# *** SNAP_ANT[snap#][ch#] goes here:
+SNAP_ANT[1][1]  1
+SNAP_ANT[1][2]  2
+SNAP_ANT[1][3]  3
+SNAP_ANT[1][4]  4
+SNAP_ANT[1][5]  5
+SNAP_ANT[1][6]  6
+SNAP_ANT[1][7]  7
+SNAP_ANT[1][8]  8
+SNAP_ANT[1][9]  9
+SNAP_ANT[1][10] 10
+SNAP_ANT[1][11] 11
+SNAP_ANT[1][12] 12
+SNAP_ANT[1][13] 13
+SNAP_ANT[1][14] 14
+SNAP_ANT[1][15] 15
+SNAP_ANT[1][16] 16
+SNAP_ANT[1][17] 17
+SNAP_ANT[1][18] 18
+SNAP_ANT[1][19] 19
+SNAP_ANT[1][20] 20
+SNAP_ANT[1][21] 21
+SNAP_ANT[1][22] 22
+SNAP_ANT[1][23] 23
+SNAP_ANT[1][24] 24
+SNAP_ANT[1][25] 25
+SNAP_ANT[1][26] 26
+SNAP_ANT[1][27] 27
+SNAP_ANT[1][28] 28
+SNAP_ANT[1][29] 29
+SNAP_ANT[1][30] 30
+SNAP_ANT[1][31] 31
+SNAP_ANT[1][32] 32
+SNAP_ANT[1][33] 33
+SNAP_ANT[1][34] 34
+SNAP_ANT[1][35] 35
+SNAP_ANT[1][36] 36
+SNAP_ANT[1][37] 37
+SNAP_ANT[1][38] 38
+SNAP_ANT[1][39] 39
+SNAP_ANT[1][40] 40
+SNAP_ANT[1][41] 41
+SNAP_ANT[1][42] 42
+SNAP_ANT[1][43] 43
+SNAP_ANT[1][44] 44
+SNAP_ANT[1][45] 45
+SNAP_ANT[1][46] 46
+SNAP_ANT[1][47] 47
+SNAP_ANT[1][48] 48
+SNAP_ANT[1][49] 49
+SNAP_ANT[1][50] 50
+SNAP_ANT[1][51] 51
+SNAP_ANT[1][52] 52
+SNAP_ANT[1][53] 53
+SNAP_ANT[1][54] 54
+SNAP_ANT[1][55] 55
+SNAP_ANT[1][56] 56
+SNAP_ANT[1][57] 57
+SNAP_ANT[1][58] 58
+SNAP_ANT[1][59] 59
+SNAP_ANT[1][60] 60
+SNAP_ANT[1][61] 61
+SNAP_ANT[1][62] 62
+SNAP_ANT[1][63] 63
+SNAP_ANT[1][64] 64
+SNAP_ANT[2][1] 65
+SNAP_ANT[2][2] 66
+SNAP_ANT[2][3] 67
+SNAP_ANT[2][4] 68
+SNAP_ANT[2][5] 69
+SNAP_ANT[2][6] 70
+SNAP_ANT[2][7] 71
+SNAP_ANT[2][8] 72
+SNAP_ANT[2][9] 73
+SNAP_ANT[2][10] 74
+SNAP_ANT[2][11] 75
+SNAP_ANT[2][12] 76
+SNAP_ANT[2][13] 77
+SNAP_ANT[2][14] 78
+SNAP_ANT[2][15] 79
+SNAP_ANT[2][16] 80
+SNAP_ANT[2][17] 81
+SNAP_ANT[2][18] 82
+SNAP_ANT[2][19] 83
+SNAP_ANT[2][20] 84
+SNAP_ANT[2][21] 85
+SNAP_ANT[2][22] 86
+SNAP_ANT[2][23] 87
+SNAP_ANT[2][24] 88
+SNAP_ANT[2][25] 89
+SNAP_ANT[2][26] 90
+SNAP_ANT[2][27] 91
+SNAP_ANT[2][28] 92
+SNAP_ANT[2][29] 93
+SNAP_ANT[2][30] 94
+SNAP_ANT[2][31] 95
+SNAP_ANT[2][32] 96
+SNAP_ANT[2][33] 97
+SNAP_ANT[2][34] 98
+SNAP_ANT[2][35] 99
+SNAP_ANT[2][36] 100
+SNAP_ANT[2][37] 101
+SNAP_ANT[2][38] 102
+SNAP_ANT[2][39] 103
+SNAP_ANT[2][40] 104
+SNAP_ANT[2][41] 105
+SNAP_ANT[2][42] 106
+SNAP_ANT[2][43] 107
+SNAP_ANT[2][44] 108
+SNAP_ANT[2][45] 109
+SNAP_ANT[2][46] 110
+SNAP_ANT[2][47] 111
+SNAP_ANT[2][48] 112
+SNAP_ANT[2][49] 113
+SNAP_ANT[2][50] 114
+SNAP_ANT[2][51] 115
+SNAP_ANT[2][52] 116
+SNAP_ANT[2][53] 117
+SNAP_ANT[2][54] 118
+SNAP_ANT[2][55] 119
+SNAP_ANT[2][56] 120
+SNAP_ANT[2][57] 121
+SNAP_ANT[2][58] 122
+SNAP_ANT[2][59] 123
+SNAP_ANT[2][60] 124
+SNAP_ANT[2][61] 125
+SNAP_ANT[2][62] 126
+SNAP_ANT[2][63] 127
+SNAP_ANT[2][64] 128
 
 # ----------------------
-# --- DP2 --------------
+# --- GPU Servers ------
 # ----------------------
-# Maximum number of DP2 boards:
-N_DP2 0
+# Maximum number of GPU servers:
+N_SERVER 3
 
-# DP2_ID[] will be set to "UNK" (no identification) for any DP2 boards not identified
-# *** DP2_ID[dp2#] goes here:
+# SERVER_ID[] will be set to "UNK" (no identification) for any GPU servers not identified
+# *** SERVER_ID[server#] goes here:
+SERVER_ID[1] ndp
+SERVER_ID[2] ndp1
+SERVER_ID[3] ndp2
 
-# DP2_SLOT[] will be set to 0 (not known/not applicable) for any DP2 boards not identified
-# *** DP2_SLOT[dp2#] goes here:
+# SERVER_SLOT[] will be set to 0 (not known/not applicable) for any GPU servers not identified
+# *** SERVER_SLOT[server#] goes here:
+# format = <slot from top>
+SERVER_SLOT[1] 1
+SERVER_SLOT[2] 2
+SERVER_SLOT[3] 3
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
-# This will be set to 3 ("OK") or any DP2 board-channels not identified
-# *** DP2_STAT[dp2#] goes here:
+# This will be set to 3 ("OK") or any GPU servers not identified
+# *** SERVER_STAT[server#] goes here:
 
-# DP2_DESI[] be set to 1 for any DP2 boards not identified
-# *** DP2_DESI[dp2#] goes here:
+# SERVER_DESI[] be set to 1 for any GPU servers not identified
+# *** SERVER_DESI[server#] goes here:
+SERVER_DESI[1]  1
+SERVER_DESI[2]  2
+SERVER_DESI[3]  2
 
 
 # ----------------------
 # --- DR ---------------
 # ----------------------
 # Maximum number of DR subsystems:
-N_DR 1
+N_DR 4
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DRs not identified
 # *** DR_STAT[dr#] goes here:
 DR_STAT[1] 3
-
+DR_STAT[2] 3
+DR_STAT[3] 3
+DR_STAT[4] 3
 
 # DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
 # *** DR_ID[dr#] goes here:
 DR_ID[1] DR1
+DR_ID[2] DR2
+DR_ID[3] DR3
+DR_ID[4] DR4
 
 # DR_SHLF[] will be set to 0 (not known/not applicable) for any DRs not identified
 # *** DR_SHLF[dr#] goes here:
 
 # DR_PC[] will be set to "UNK" (not known/not applicable) for any DRs not identified
 # *** DR_PC[dr#] goes here:
-DR_PC[1] T1500
+DR_PC[1] DR1
+DR_PC[2] DR2
+DR_PC[3] DR1
+DR_PC[4] DR2
 
 # 1-4 are the beam outputs, 5 is TBW/TBN
 # DR_DP[] will be set to 0 (no connection) for any DPs not identified
 # *** DR_DP[] goes here:
-DR_DP[1] 5
+DR_DP[1] 1
+DR_DP[2] 2
+DR_DP[3] 3
+DR_DP[4] 4
 
 
 # ----------------------
 # --- Power ------------
 # ----------------------
-N_PWR_RACK 1
+N_PWR_RACK 3
 
 # N_PWR_PORT[] will be set to 0 (no ports) for any rack power supplies not identified
 # *** _N_PWR_PORT[rack#] goes here:
-# FIXME JC: Note below we just have rack 1 defined, with 8 ports.  Is that it?
-# changed for IOC config
 N_PWR_PORT[1] 8
+N_PWR_PORT[2] 8
+N_PWR_PORT[3] 2
 
 # Format (example) "PWR_SS[2][3] SHL" means power from Rack 2 Port 3 goes to SHL.
-# Valid values are SHL, ASP, DP , MCS, DR1, DR2, DR3, DR4, and DR5.
+# Valid values are SHL, ASP, NDP , MCS, DR1, DR2, DR3, DR4, and DR5.
 # PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
 # Format (example) "PWR_NAME[2][3] MCS", assuming "PWR_SS[2][3] SHL", means power from Rack 2 Port 3 goes to SHL-MCS.
 #   For PWR SS[m][p] = SHL, valid values are MCS, others TBD
 #   For PWR SS[m][p] = ASP, valid values are MCS, FEE, ARX, FAN 
-#   For PWR SS[m][p] = DP , valid values are MCS, others TBD
+#   For PWR SS[m][p] = NDP, valid values are MCS, DC1, DC2, FAN, SYN, SWI
 #   For PWR SS[m][p] = MCS, valid values are SCH, EXE, TP, CH, and GW.
 #   For PWR SS[m][p] = DR1, DR2, DR3, DR4, and DR5; valid values are PC, DS1 (DRSU 1), and DS2 (DRSU 2)
 # PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
 # *** PWR_SS[rack#][port#] goes here:
 # *** PWR_NAME[rack#][port#] goes here:
-PWR_SS[1][1] ASP
-PWR_NAME[1][1] FEE  
+PWR_SS[1][1] DR1
+PWR_NAME[1][1] PC
+PWR_SS[1][2] DR1
+PWR_NAME[1][2] PC
 
-PWR_SS[1][2] ASP
-PWR_NAME[1][2] ARX  
+PWR_SS[1][3] DR2
+PWR_NAME[1][3] PC
+PWR_SS[1][4] DR2
+PWR_NAME[1][4] PC
 
-PWR_SS[1][3] ASP
-PWR_NAME[1][3] FAN  
+PWR_SS[1][6] NDP
+PWR_NAME[1][6] MCS
+PWR_SS[1][7] NDP
+PWR_NAME[1][7] MCS
 
-PWR_SS[1][7] ASP
-PWR_NAME[1][7] MCS 
-  
- 
+PWR_SS[2][3] NDP
+PWR_NAME[2][3] DC1
+PWR_SS[2][4] NDP
+PWR_NAME[2][4] DC1
+
+PWR_SS[2][5] NDP
+PWR_NAME[2][5] DC2
+PWR_SS[2][6] NDP
+PWR_NAME[2][6] DC2
+
+PWR_SS[2][7] ASP
+PWR_NAME[2][7] FAN
+
+PWR_SS[2][8] ASP
+PWR_NAME[2][8] ARX
+
+PWR_SS[3][2] NDP
+PWR_NAME[3][2] SYN
+
+# -----------------------------
+# --- Station Configuration ---
+# -----------------------------
+
+# MCS configuration request authority
+MCS_CRA 1
+
+## DRX beam pointing correction
+#PC_AXIS_TH   27.9 #   [deg] theta pointing for axis of rotation (theta = zenith angle)
+#PC_AXIS_PH  122.0 #   [deg] phi pointing for axis of rotation (0=E, 90=N)
+#PC_ROT       -0.4 #   [deg] rotation (right hand rule) around axis
+
+# Default gain values for various data products
+TBF_GAIN 6   # FIXME
+DRX_GAIN 6   # FIXME
+
+
 # ====================
 # === STATUS CODES ===
 # ====================

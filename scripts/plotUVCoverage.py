@@ -36,9 +36,14 @@ def main(args):
             try:
                 station = metabundle.get_station(args.metadata, apply_sdm=True)
             except:
-                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+                try:
+                    station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+                except:
+                    station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwa1
         
@@ -143,8 +148,11 @@ if __name__ == "__main__":
         description='plot the UV-plane converage of an LWA station', 
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA1')
     parser.add_argument('-f', '--frequency', type=aph.frequency, default='50.0', 
                         help='frequency in MHz to compute the uv coverage')
     parser.add_argument('-m', '--metadata', type=str, 

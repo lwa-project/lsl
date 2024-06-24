@@ -19,7 +19,7 @@ import argparse
 from datetime import datetime, timedelta
 
 from lsl.common.mcs import mjdmpm_to_datetime, mode_to_string
-from lsl.common import metabundle, metabundleADP
+from lsl.common import metabundle, metabundleADP, metabundleNDP
 from lsl.reader import tbw, tbn, drx, errors
 
 from lsl.misc import telemetry
@@ -53,11 +53,18 @@ def main(args):
         ses = metabundle.get_session_spec(meta)
         obs = metabundle.get_observation_spec(meta)
     except:
-        ## LWA-SV
-        ### Try again
-        sdf = metabundleADP.get_sdf(meta)
-        ses = metabundleADP.get_session_spec(meta)
-        obs = metabundleADP.get_observation_spec(meta)
+        try:
+            ## LWA-SV
+            ### Try again
+            sdf = metabundleADP.get_sdf(meta)
+            ses = metabundleADP.get_session_spec(meta)
+            obs = metabundleADP.get_observation_spec(meta)
+        except:
+            ## LWA-NA
+            ### Try again
+            sdf = metabundleNDP.get_sdf(meta)
+            ses = metabundleNDP.get_session_spec(meta)
+            obs = metabundleNDP.get_observation_spec(meta)
     obs.sort(_obs_comp)
     tStart = []
     oDetails = []

@@ -715,6 +715,8 @@ def sid_to_string(sid):
         return "DR #5"
     elif sid == 19:
         return "ADP"
+    elif sid == 20:
+        return "NDP"
     else:
         raise ValueError("Invalid sid code %i" % sid)
 
@@ -1136,7 +1138,7 @@ class MIBEntry(object):
          * f4r:   float, 4 bytes, big-ending (=float32)
         """
         
-        if dataType == 'NUL':
+        if dataType == 'NUL' or dataType == '':
             try:
                 value = str(value, 'utf-8')
             except TypeError:

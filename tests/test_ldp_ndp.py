@@ -1,5 +1,5 @@
 """
-Unit test for the ADP portion of the lsl.reader.ldp module.
+Unit test for the NDP portion of the lsl.reader.ldp module.
 """
 
 # Python2 compatibility
@@ -14,6 +14,7 @@ import unittest
 from lsl.reader import ldp
 from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
+from lsl.common.ndp import fC
 
 
 __version__  = "0.1"
@@ -25,12 +26,11 @@ tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
 drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
 
-tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-test.dat')
-tbfMiniFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-mini-test.dat')
+tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-mini-test.dat')
 corFile = os.path.join(os.path.dirname(__file__), 'data', 'cor-test.dat')
 
 
-class ldp_adp_tests(unittest.TestCase):
+class ldp_ndp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.reader
     modules."""
     
@@ -42,15 +42,15 @@ class ldp_adp_tests(unittest.TestCase):
         f = ldp.TBFFile(tbfFile)
         
         # File info
-        self.assertEqual(f.get_info("nantenna"), 512)
-        self.assertEqual(f.get_info("sample_rate"), 25e3)
+        self.assertEqual(f.get_info("nantenna"), 128)
+        self.assertEqual(f.get_info("sample_rate"), fC)
         self.assertEqual(f.get_info("data_bits"), 4)
-        self.assertEqual(f.get_info('nframe'), 5)
-
-        self.assertEqual(f.nantenna, 512)
-        self.assertEqual(f.sample_rate, 25e3)
+        self.assertEqual(f.get_info('nframe'), 7)
+        
+        self.assertEqual(f.nantenna, 128)
+        self.assertEqual(f.sample_rate, fC)
         self.assertEqual(f.data_bits, 4)
-        self.assertEqual(f.nframe, 5)
+        self.assertEqual(f.nframe, 7)
         
         # Read a frame
         frame = f.read_frame()
@@ -74,15 +74,15 @@ class ldp_adp_tests(unittest.TestCase):
         f = ldp.TBFFile(tbfFile, ignore_timetag_errors=True)
         
         # File info
-        self.assertEqual(f.get_info("nantenna"), 512)
-        self.assertEqual(f.get_info("sample_rate"), 25e3)
+        self.assertEqual(f.get_info("nantenna"), 128)
+        self.assertEqual(f.get_info("sample_rate"), fC)
         self.assertEqual(f.get_info("data_bits"), 4)
-        self.assertEqual(f.get_info('nframe'), 5)
+        self.assertEqual(f.get_info('nframe'), 7)
         
-        self.assertEqual(f.nantenna, 512)
-        self.assertEqual(f.sample_rate, 25e3)
+        self.assertEqual(f.nantenna, 128)
+        self.assertEqual(f.sample_rate, fC)
         self.assertEqual(f.data_bits, 4)
-        self.assertEqual(f.nframe, 5)
+        self.assertEqual(f.nframe, 7)
         
         # Read a frame
         frame = f.read_frame()
@@ -164,41 +164,35 @@ class ldp_adp_tests(unittest.TestCase):
     def test_ldp_discover_tbw(self):
         """Test the LDP LWA1DataFile function of TBW."""
         # TBW
-        self.assertRaises(RuntimeError, ldp.LWASVDataFile, tbwFile)
+        self.assertRaises(RuntimeError, ldp.LWANADataFile, tbwFile)
         
     def test_ldp_discover_tbn(self):
-        """Test the LDP LWASVDataFile function of TBN."""
+        """Test the LDP LWANADataFile function of TBN."""
         # TBN
-        f = ldp.LWASVDataFile(tbnFile)
-        self.assertEqual(type(f), ldp.TBNFile)
+        self.assertRaises(RuntimeError, ldp.LWANADataFile, tbnFile)
         
     def test_ldp_discover_drx(self):
-        """Test the LDP LWASVDataFile function of DRX."""
+        """Test the LDP LWANADataFile function of DRX."""
         # DRX
-        f = ldp.LWASVDataFile(drxFile)
+        f = ldp.LWANADataFile(drxFile)
         self.assertEqual(type(f), ldp.DRXFile)
         
     def test_ldp_discover_drspec(self):
-        """Test the LDP LWASVDataFile function of DR Spectrometer."""
+        """Test the LDP LWANADataFile function of DR Spectrometer."""
         # DR Spectrometer
-        f = ldp.LWASVDataFile(drspecFile)
+        f = ldp.LWANADataFile(drspecFile)
         self.assertEqual(type(f), ldp.DRSpecFile)
         
     def test_ldp_discover_tbf(self):
-        """Test the LDP LWASVDataFile function of TBF."""
+        """Test the LDP LWANADataFile function of TBF."""
         # TBF
-        f = ldp.LWASVDataFile(tbfFile)
+        f = ldp.LWANADataFile(tbfFile)
         self.assertEqual(type(f), ldp.TBFFile)
         
-    def test_ldp_discover_tbf_mini(self):
-        """Test the LDP LWASVDataFile function of TBF but on a mini-station file."""
-        # Mini-station TBF
-        self.assertRaises(RuntimeError, ldp.LWASVDataFile, tbfMiniFile)
-        
     def test_ldp_discover_cor(self):
-        """Test the LDP LWASVDataFile function of COR."""
+        """Test the LDP LWANADataFile function of COR."""
         # TBF
-        f = ldp.LWASVDataFile(corFile)
+        f = ldp.LWANADataFile(corFile)
         self.assertEqual(type(f), ldp.CORFile)
         
     def test_ldp_discover_all_tbw(self):
@@ -243,18 +237,18 @@ class ldp_adp_tests(unittest.TestCase):
     def test_ldp_splitfilewrapper_discover(self):
         """Test the LDP interface for type discover with a SplitFileWrapper."""
         
-        w = SplitFileWrapper([tbnFile,])
-        f = ldp.LWASVDataFile(fh=w)
+        w = SplitFileWrapper([tbfFile,])
+        f = ldp.LWANADataFile(fh=w)
         
         # File info
-        self.assertTrue(isinstance(f, ldp.TBNFile))
-        self.assertEqual(f.get_info("sample_rate"), 100e3)
-        self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info('nframe'), 29)
+        self.assertTrue(isinstance(f, ldp.TBFFile))
+        self.assertEqual(f.get_info("sample_rate"), fC)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info('nframe'), 7)
         
-        self.assertEqual(f.sample_rate, 100e3)
-        self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframe, 29)
+        self.assertEqual(f.sample_rate, fC)
+        self.assertEqual(f.data_bits, 4)
+        self.assertEqual(f.nframe, 7)
         
         # Read a frame
         frame = f.read_frame()
@@ -266,7 +260,7 @@ class ldp_adp_tests(unittest.TestCase):
         """Test the LDP interface for a SplitFileWrapper in a contorted way."""
         
         w = SplitFileWrapper([drxFile, tbfFile], sort=False)
-        f = ldp.LWASVDataFile(fh=w)
+        f = ldp.LWANADataFile(fh=w)
         
         # File info
         self.assertTrue(isinstance(f, ldp.DRXFile))
@@ -299,7 +293,7 @@ class ldp_adp_tests(unittest.TestCase):
                 continue
             except errors.EOFError:
                 break
-        self.assertEqual(len(frames), 5)  # We no longer loose part of the first frame to DRX   
+        self.assertEqual(len(frames), 7)  # We no longer loose part of the first frame to DRX   
         
     def tearDown(self):
         """Cleanup"""
@@ -307,7 +301,7 @@ class ldp_adp_tests(unittest.TestCase):
             handler.close()
 
 
-class ldp_adp_test_suite(unittest.TestSuite):
+class ldp_ndp_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.reader.ldp 
     unit tests."""
     
@@ -315,7 +309,7 @@ class ldp_adp_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(ldp_adp_tests)) 
+        self.addTests(loader.loadTestsFromTestCase(ldp_ndp_tests)) 
 
 
 if __name__ == '__main__':

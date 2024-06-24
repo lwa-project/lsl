@@ -1,5 +1,5 @@
 """
-Unit test for the lsl.common.metabundle module.
+Unit test for the DP portion of the lsl.common.metabundle module.
 """
 
 # Python2 compatibility
@@ -11,20 +11,28 @@ if sys.version_info < (3,):
 import os
 import unittest
 
-from lsl.common import metabundle
+from lsl.common import metabundle, metabundleDP
+
+run_gdbm_tests = False
+try:
+    from dbm import gnu
+    run_gdbm_tests = True
+except ImportError:
+    pass
 
 
-__version__  = "0.5"
+__version__  = "0.6"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(os.path.dirname(__file__), 'data', 'metadata.tgz')
 mdbFileOld0 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-old-0.tgz')
 mdbFileOld1 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-old-1.tgz')
 mdbFileADP = os.path.join(os.path.dirname(__file__), 'data', 'metadata-adp.tgz')
+mdbFileNDP = os.path.join(os.path.dirname(__file__), 'data', 'metadata-ndp.tgz')
 mdbFileGDB = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb.tgz')
 mdbFileGDBOld0 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb-old-0.tgz')
 
-class metabundle_tests(unittest.TestCase):
+class metabundle_dp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
     module."""
     
@@ -96,7 +104,7 @@ class metabundle_tests(unittest.TestCase):
     def test_station(self):
         """Test building a station from a tarball."""
         
-        station = metabundle.get_station(mdbFileADP)
+        station = metabundle.get_station(mdbFile)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
@@ -115,6 +123,7 @@ class metabundle_tests(unittest.TestCase):
         # DRSU barcode
         self.assertEqual(fileInfo[1]['barcode'], 'S15TCV23S0001')
         
+    @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig(self):
         """Test retrieving the ASP configuration."""
         
@@ -133,22 +142,23 @@ class metabundle_tests(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
+        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.is_valid(mdbFile))
+        self.assertTrue(metabundleDP.is_valid(mdbFile))
         
     def test_is_not_valid(self):
-        """Test whether or not is_valid works on LWA-SV files."""
+        """Test whether or not is_valid works on LWA-SV and LWA-NA files."""
         
-        self.assertFalse(metabundle.is_valid(mdbFileADP))
-        self.assertFalse(metabundle.is_valid(mdbFileGDB))
-        self.assertFalse(metabundle.is_valid(mdbFileGDBOld0))
+        self.assertFalse(metabundleDP.is_valid(mdbFileADP))
+        self.assertFalse(metabundleDP.is_valid(mdbFileNDP))
+        self.assertFalse(metabundleDP.is_valid(mdbFileGDB))
+        self.assertFalse(metabundleDP.is_valid(mdbFileGDBOld0))
 
 
-class metabundle_tests_old_0(unittest.TestCase):
+class metabundle_dp_tests_old_0(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
     module based on the tarball format supported in LSL 0.5.x."""
     
@@ -225,10 +235,10 @@ class metabundle_tests_old_0(unittest.TestCase):
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.is_valid(mdbFileOld0))
+        self.assertTrue(metabundleDP.is_valid(mdbFileOld0))
 
 
-class metabundle_tests_old_1(unittest.TestCase):
+class metabundle_dp_tests_old_1(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
     module."""
     
@@ -314,6 +324,7 @@ class metabundle_tests_old_1(unittest.TestCase):
         # DRSU barcode
         self.assertEqual(fileInfo[1]['barcode'], 'S10TCC13S0007')
         
+    @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig(self):
         """Test retrieving the ASP configuration."""
         
@@ -332,15 +343,15 @@ class metabundle_tests_old_1(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileOld1, 'middle')
+        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFileOld1, 'middle')
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundle.is_valid(mdbFileOld1))
+        self.assertTrue(metabundleDP.is_valid(mdbFileOld1))
 
 
-class metabundle_test_suite(unittest.TestSuite):
+class metabundle_dp_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.common.metabundle
     module unit tests."""
     
@@ -348,9 +359,9 @@ class metabundle_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(metabundle_tests))        
-        self.addTests(loader.loadTestsFromTestCase(metabundle_tests_old_0))
-        self.addTests(loader.loadTestsFromTestCase(metabundle_tests_old_1))
+        self.addTests(loader.loadTestsFromTestCase(metabundle_dp_tests))        
+        self.addTests(loader.loadTestsFromTestCase(metabundle_dp_tests_old_0))
+        self.addTests(loader.loadTestsFromTestCase(metabundle_dp_tests_old_1))
         
 if __name__ == '__main__':
     unittest.main()
