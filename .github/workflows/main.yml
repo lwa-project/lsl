@@ -18,7 +18,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         python-version: ['3.8', '3.10', '3.12']
         include:
           - os: ubuntu-20.04
@@ -44,7 +44,7 @@ jobs:
             libgsl-dev \
             pkg-config \
             software-properties-common
-          sudo add-apt-repository -y ppa:kernsuite/kern-8
+          sudo add-apt-repository -y ppa:kernsuite/kern-9
           sudo apt-get -q update
           sudo apt-get -y install casacore-dev wcslib-dev
       - name: "Software Install - MacOS"
