@@ -65,8 +65,8 @@ from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_CHANNEL_COUNT as TBFChanCount
 
 from lsl.common.sdf import Observer, ProjectOffice
-from lsl.common.sdf import Project as _Project, Session as _Session
-from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
+from lsl.common.sdf import Project as _Project, Session as _Session, BeamStep as _BeamStep
+from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, DRX, Solar, Jovian, Lunar, Stepped
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -249,7 +249,7 @@ class Project(_Project):
                     output += "OBS_STP_FREQ2+[%i]  %.9f MHz\n" % (stpID, step.frequency2/1e6)
                     output += "OBS_STP_B[%i]       %s\n" % (stpID, step.beam)
                     if step.beam == 'SPEC_DELAYS_GAINS':
-                        for k in range(2*self.mandc.LWA_MAX_NSTD):
+                        for k in range(2*LWA_MAX_NSTD):
                             dlyID = k + 1
                             try:
                                 delay = step.delays[k]
@@ -257,7 +257,7 @@ class Project(_Project):
                                 delay = 0.0
                                 
                             output += "OBS_BEAM_DELAY[%i][%i] %i\n" % (stpID, dlyID, delay)
-                        for k in range(self.mandc.LWA_MAX_NSTD):
+                        for k in range(LWA_MAX_NSTD):
                             gaiID = k + 1
                             try:
                                 gain = step.gains[k]
@@ -504,6 +504,73 @@ class Session(_Session):
             return False
 
 
+class BeamStep(_BeamStep):
+    def validate(self, verbose=False):
+        """Evaluate the step and return True if it is valid, False otherwise."""
+        
+        self.update()
+        
+        station = lwana
+        if self._parent is not None:
+            if self._parent._parent is not None:
+                station = self._parent._parent.station
+        mandc = station.interface.get_module('mcs')
+        backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
+        
+        failures = 0
+        # Basic - Delay and gain settings are correctly configured
+        if self.delays is not None:
+            if len(self.delays) > 2*mandc.LWA_MAX_NSTD:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Specified delay list had the wrong number of antennas" % os.getpid())
+            if self.gains is None:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Delays specified but gains were not" % os.getpid())
+        if self.gains is not None:
+            if len(self.gains) > mandc.LWA_MAX_NSTD:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Specified gain list had the wrong number of stands" % os.getpid())
+            for g,gain in enumerate(self.gains):
+                if len(gain) != 2:
+                    failures += 1
+                    if verbose:
+                        print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
+                else:
+                    if len(gain[0]) != 2 or len(gain[1]) != 2:
+                        failures += 1
+                        if verbose:
+                            print("[%i] Error: Expected a 2x2 matrix of gain values for stand %i" % (os.getpid(), g))
+            if self.delays is None:
+                failures += 1
+                if verbose:
+                    print("[%i] Error: Gains specified but delays were not" % os.getpid())
+        # Basic - Observation time
+        if self.dur < 5:
+            if verbose:
+                print("[%i] Error: step dwell time (%i ms) is too short" % (os.getpid(), self.dur))
+            failures += 1
+        # Basic - Frequency and filter code values
+        if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
+            if verbose:
+                print("[%i] Error: Specified frequency for tuning 1 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
+            failures += 1
+        if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
+            if verbose:
+                print("[%i] Error: Specified frequency for tuning 2 is outside of the %s tuning range" % (os.getpid(),
+                                                                                                          be_name))
+            failures += 1
+        # Any failures indicates a bad observation
+        if failures == 0:
+            return True
+        else:
+            return False
+
+
 def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     """Given a obs_temp dictionary of observation parameters and, optionally, a list of
     beam_temp step parameters, return a complete Observation object corresponding to 
@@ -568,10 +635,10 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
             f2 = word_to_freq(beam_temp['freq2'])
             
             if beam_temp['delays'] is not None:
-                if len(beam_temp['delays']) != 2*LWA_MAX_NSTD:
+                if len(beam_temp['delays']) > 2*LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of delays for custom beamforming")
             if beam_temp['gains'] is not None:
-                if len(beam_temp['gains']) != LWA_MAX_NSTD:
+                if len(beam_temp['gains']) > LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of gains for custom beamforming")
                     
             obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
