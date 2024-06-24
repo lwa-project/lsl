@@ -13,6 +13,13 @@ import unittest
 
 from lsl.common import metabundle, metabundleDP
 
+run_gdbm_tests = False
+try:
+    from dbm import gnu
+    run_gdbm_tests = True
+except ImportError:
+    pass
+
 
 __version__  = "0.6"
 __author__    = "Jayce Dowell"
@@ -116,6 +123,7 @@ class metabundle_dp_tests(unittest.TestCase):
         # DRSU barcode
         self.assertEqual(fileInfo[1]['barcode'], 'S15TCV23S0001')
         
+    @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig(self):
         """Test retrieving the ASP configuration."""
         
@@ -316,6 +324,7 @@ class metabundle_dp_tests_old_1(unittest.TestCase):
         # DRSU barcode
         self.assertEqual(fileInfo[1]['barcode'], 'S10TCC13S0007')
         
+    @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig(self):
         """Test retrieving the ASP configuration."""
         

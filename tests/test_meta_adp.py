@@ -13,6 +13,13 @@ import unittest
 
 from lsl.common import metabundle, metabundleADP
 
+run_gdbm_tests = False
+try:
+    from dbm import gnu
+    run_gdbm_tests = True
+except ImportError:
+    pass
+
 
 __version__  = "0.3"
 __author__    = "Jayce Dowell"
@@ -117,6 +124,7 @@ class metabundle_tests_adp(unittest.TestCase):
         # DRSU barcode
         self.assertEqual(fileInfo[1]['barcode'], 'S10TCC13S0016')
         
+    @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig(self):
         """Test retrieving the ASP configuration."""
         
@@ -137,6 +145,7 @@ class metabundle_tests_adp(unittest.TestCase):
         # Unknown code
         self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFileADP, 'middle')
         
+    @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig_gdbm(self):
         """Test retrieving the ASP configuration from a GDBM MIB."""
         
