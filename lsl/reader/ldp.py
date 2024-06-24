@@ -1810,7 +1810,7 @@ class TBFFile(LDPFileBase):
         freq *= srate
         
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
-                            'sample_rate': srate, 'data_bits': bits, 
+                            'sample_rate': srate, 'data_bits': bits,
                             'nantenna': nstand*2, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
                             'start_time_samples': startRaw}
                         
@@ -2423,6 +2423,8 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             try:
                 for i in range(2):
                     junkFrame = mode.read_frame(fh)
+                if mode == tbf and junkFrame.nstand != 256:
+                    raise errors.SyncError
                 foundMode = True
             except errors.EOFError:
                 break
@@ -2486,6 +2488,8 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                 try:
                     for i in range(4):
                         junkFrame = mode.read_frame(fh)
+                    if mode == tbf and junkFrame.nstand != 256:
+                        raise errors.SyncError
                     foundMode = True
                 except errors.SyncError:
                     #### Reset for the next mode...
@@ -2677,7 +2681,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
     
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
+        raise RuntimeError("File '%s' does not appear to be a valid LWA-NA data file" % filename)
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
@@ -2724,6 +2728,16 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
     if not found:
         try:
             ldpInstance = LWASVDataFile(filename=filename, fh=fh,
+                                       ignore_timetag_errors=ignore_timetag_errors,
+                                       buffering=buffering)
+            found = True
+        except RuntimeError:
+            pass
+            
+    # LWA-NA?
+    if not found:
+        try:
+            ldpInstance = LWANADataFile(filename=filename, fh=fh,
                                        ignore_timetag_errors=ignore_timetag_errors,
                                        buffering=buffering)
             found = True
