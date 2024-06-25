@@ -11,6 +11,7 @@ import numpy as np
 import shutil
 
 from astropy.io import fits as astrofits
+from astropy.coordinates import EarthLocation
 
 from lsl.common import stations as lwa_common
 from lsl.correlator import uvutils
@@ -139,15 +140,31 @@ class fitsidi_tests(unittest.TestCase):
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
-        ag = hdulist['ARRAY_GEOMETRY'].data
+        
+        # Correct station location
+        ag = hdulist['ARRAY_GEOMETRY'].header
+        site_ecef = data['site'].geocentric_location
+        self.assertAlmostEqual(ag['ARRAYX'], site_ecef[0], 3)
+        self.assertAlmostEqual(ag['ARRAYY'], site_ecef[1], 3)
+        self.assertAlmostEqual(ag['ARRAYZ'], site_ecef[2], 3)
+        
         # Correct number of stands
+        ag = hdulist['ARRAY_GEOMETRY'].data
         self.assertEqual(len(data['antennas']), len(ag.field('NOSTA')))
 
         # Correct stand names
         names = ['LWA%03i' % ant.stand.id for ant in data['antennas']]
         for name, anname in zip(names, ag.field('ANNAME')):
             self.assertEqual(name, anname)
-
+            
+        # Correct stand locations
+        for ant, ecef in zip(data['antennas'], ag.field('STABXYZ')):
+            el = EarthLocation.from_geocentric(*ecef, unit='m')
+            enz = data['site'].get_enz_offset(el)
+            self.assertAlmostEqual(enz[0], ant.stand.x, 3)
+            self.assertAlmostEqual(enz[1], ant.stand.y, 3)
+            self.assertAlmostEqual(enz[2], ant.stand.z, 3)
+            
         hdulist.close()
 
     def test_frequency(self):
@@ -563,15 +580,31 @@ class aipsidi_tests(unittest.TestCase):
 
         # Open the file and examine
         hdulist = astrofits.open(testFile)
-        ag = hdulist['ARRAY_GEOMETRY'].data
+        
+        # Correct station location
+        ag = hdulist['ARRAY_GEOMETRY'].header
+        site_ecef = data['site'].geocentric_location
+        self.assertAlmostEqual(ag['ARRAYX'], site_ecef[0], 3)
+        self.assertAlmostEqual(ag['ARRAYY'], site_ecef[1], 3)
+        self.assertAlmostEqual(ag['ARRAYZ'], site_ecef[2], 3)
+        
         # Correct number of stands
+        ag = hdulist['ARRAY_GEOMETRY'].data
         self.assertEqual(len(data['antennas']), len(ag.field('NOSTA')))
 
         # Correct stand names
         names = ['L%03i' % ant.stand.id for ant in data['antennas']]
         for name, anname in zip(names, ag.field('ANNAME')):
             self.assertEqual(name, anname)
-
+            
+        # Correct stand locations
+        for ant, ecef in zip(data['antennas'], ag.field('STABXYZ')):
+            el = EarthLocation.from_geocentric(*ecef, unit='m')
+            enz = data['site'].get_enz_offset(el)
+            self.assertAlmostEqual(enz[0], ant.stand.x, 3)
+            self.assertAlmostEqual(enz[1], ant.stand.y, 3)
+            self.assertAlmostEqual(enz[2], ant.stand.z, 3)
+            
         hdulist.close()
 
     def test_frequency(self):
