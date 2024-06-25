@@ -16,7 +16,7 @@ import numpy as np
 
 from scipy.interpolate import interp1d
 
-from astropy.coordinates import ICRS, EarthLocation, AltAz
+from astropy.coordinates import FK5, EarthLocation, AltAz
 from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 
@@ -230,7 +230,7 @@ class ProjectedSkyMap(object):
         
         # Compute the ra and dec locations to a altitude and azimuth. This requires a lat/lon and a time (UTC).
         # Alt and Az are compressed to show only the visible source.
-        sc = ICRS(ra=self.skymap_object.ra*astrounits.deg, dec=self.skymap_object.dec*astrounits.deg)
+        sc = FK5(ra=self.skymap_object.ra*astrounits.deg, dec=self.skymap_object.dec*astrounits.deg, equinox='J2000')
         el = EarthLocation.from_geodetic(lon*astrounits.deg, lat*astrounits.deg, height=0*astrounits.m)
         aa = AltAz(location=el, obstime=AstroTime(utc_jd, format='jd', scale='utc'))
         tc = sc.transform_to(aa)
