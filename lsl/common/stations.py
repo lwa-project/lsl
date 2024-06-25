@@ -635,7 +635,8 @@ class Stand(object):
         center = self._parent.earth_location
         aa = AltAz(CartesianRepresentation(self.y*astrounits.m, self.x*astrounits.m, self.z*astrounits.m),
                    location=center)
-        aa = aa.transform_to(ITRS())
+        aa = aa.transform_to(ITRS(location=center))
+        aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz)
         return EarthLocation.from_geocentric(aa.x, aa.y, aa.z)
 
 
