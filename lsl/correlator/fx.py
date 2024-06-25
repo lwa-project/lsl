@@ -1,4 +1,4 @@
-"""
+.rad"""
 Python module to handle the channelization and cross-correlation of TBW and
 TBN data.  The main python functions in this module are:
   * calcSpectra - calculate power spectra for a collection of signals
@@ -258,11 +258,11 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         elPC = np.pi/2.0
     else:
         if isinstance(phase_center, AltAz):
-            azPC = phase_center.az.radian
-            elPC = phase_center.alt.radian
+            azPC = phase_center.az.rad
+            elPC = phase_center.alt.rad
         elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
-            azPC = phase_center.az.radian
-            elPC = phase_center.alt.radian
+            azPC = phase_center.az.rad
+            elPC = phase_center.alt.rad
         elif isinstance(phase_center, ephem.Body):
             azPC = phase_center.az * 1.0
             elPC = phase_center.alt * 1.0
@@ -415,10 +415,10 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         elPC = np.pi/2.0
     else:
         if isinstance(phase_center, AltAz):
-            azPC = phase_center.az.radian
-            elPC = phase_center.alt.radian
+            azPC = phase_center.az.rad
+            elPC = phase_center.alt.rad
         elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
-            azPC = phase_center.az.radian
+            azPC = phase_center.az.rad
             elPC = phase_center.alt.radian
         elif isinstance(phase_center, ephem.Body):
             azPC = phase_center.az * 1.0
