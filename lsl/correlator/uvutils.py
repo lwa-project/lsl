@@ -28,7 +28,6 @@ from astropy.constants import c as speedOfLight
 from astropy.time import Time as AstroTime
 from astropy.coordinates import Angle as AstroAngle
 from astropy.coordinates import EarthLocation
-from astropy.coordinates.matrix_utilities import rotation_matrix
 
 from lsl import astro
 from lsl.common.stations import lwa1
