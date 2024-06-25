@@ -313,7 +313,7 @@ def clean(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10,
     
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
-    conv = np.ma.array(conv, mask=convMask)
+    conv = np.ma.masked_array(conv, mask=convMask, dtype=conv.dtype)
     conv *= ((img-working).max() / conv.max())
     
     if plot:
@@ -599,7 +599,7 @@ def clean_sources(aa, dataDict, aipyImg, srcs, input_image=None, size=80, res=0.
         
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
-    conv = np.ma.array(conv, mask=convMask)
+    conv = np.ma.masked_array(conv, mask=convMask, dtype=conv.dtype)
     conv *= ((img-working).max() / conv.max())
     
     if plot:
@@ -838,7 +838,7 @@ def lsq(aa, dataDict, aipyImg, input_image=None, size=80, res=0.50, wres=0.10, p
     
     # Restore
     conv = convolve(mdl2, beamClean, mode='same')
-    conv = np.ma.array(conv, mask=convMask)
+    conv = np.ma.masked_array(conv, mask=convMask, dtype=conv.dtype)
     
     if plot:
         # Make an image for comparison purposes if we are verbose
