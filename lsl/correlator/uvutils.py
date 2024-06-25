@@ -30,7 +30,7 @@ from astropy import units as astrounits
 from astropy.constants import c as speedOfLight
 from astropy.time import Time as AstroTime
 from astropy.coordinates import Angle as AstroAngle
-from astropy.coordinates import EarthLocation, HADec, GCRS
+from astropy.coordinates import EarthLocation
 from astropy.coordinates.matrix_utilities import rotation_matrix
 
 from lsl import astro
@@ -184,7 +184,7 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
         dec2 = dec*1.0
     else:
         dec2 = dec * np.pi/180
-    if isinstance(site, AstroEarthLocation):
+    if isinstance(site, EarthLocation):
         lat2 = site.lat.rad
     else:
         lat2 = site.lat
@@ -249,7 +249,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
         dec2 = dec.rad
     else:
         dec2 = dec * np.pi/180
-    if isinstance(site, AstroEarthLocation):
+    if isinstance(site, EarthLocation):
         lat2 = site.lat.rad
     else:
         lat2 = site.lat
