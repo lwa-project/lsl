@@ -18,9 +18,6 @@ coverage and time delays.  The functions in the module:
     Added support for ephem.Angle, astropy.coordinates.Angle, and 
     astropy.coordinates.EarthLocation instances in the compute_uvw() and 
     compute_uv_track() functions.
-
-.. versionchanged:: 3.0.0
-    Removed compute_uv_track()
 """
 
 import ephem
