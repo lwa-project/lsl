@@ -1564,6 +1564,9 @@ class ImgWPlus(aipy.img.ImgW):
         if isinstance(self._phase_center, astro.equ_posn):
             pc_ra = self._phase_center.ra
             pc_dec = self._phase_center.dec
+            pc_equinox = 'J2000'
+            pc = FK5(ra=pc_ra*astrounits.deg, dec=pc_dec*astrounits.deg, equinox=pc_equinox)
+            pc = self._phase_center.transform_to(FK5(equinox=obs_t))
         else:
             try:
                 pc = self._phase_center.transform_to(FK5(equinox=obs_t))

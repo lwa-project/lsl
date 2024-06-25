@@ -9,7 +9,11 @@ import sys
 import pytz
 import numpy as np
 import argparse
+
 from astropy.io import fits as astrofits
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import FK5
 
 from lsl import astro
 from lsl.sim import vis as simVis
@@ -188,6 +192,12 @@ def main(args):
             ## Load in the coordinates for the phase center
             pc_ra = np.degrees(dataDict.phase_center._ra)
             pc_dec = np.degrees(dataDict.phase_center._dec)
+            pc_equinox = AstroTime(dataDict.phase_center._epoch, astro.DJD_OFFSET, format='jd', scale='utc')
+            
+            ## Move from J2000 to epoch-of-date
+            pc_time = AstroTime(jdList[0], format='jd', scale='utc')
+            pc = FK5(ra=pc_ra*astrounits.deg, dec=pc_dec*astrounits.deg, equinox=pc_equinox)
+            pc = pc.transform_to(FK5(equinox=pc_time))
             
             ### Poll the ImgWPlus object for the proper pixel scale
             pixel_size = img1.pixel_size
@@ -205,15 +215,16 @@ def main(args):
                     hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
-                hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
-                hdu.header['CTYPE1'] = 'RA---SIN'
-                hdu.header['CRPIX1'] = img.shape[0]//2+1
-                hdu.header['CDELT1'] = -1 * np.degrees(pixel_size)
-                hdu.header['CRVAL1'] = pc_ra
-                hdu.header['CTYPE2'] = 'DEC--SIN'
-                hdu.header['CRPIX2'] = img.shape[1]//2+1
-                hdu.header['CDELT2'] = np.degrees(pixel_size)
-                hdu.header['CRVAL2'] = pc_dec
+                hdu.header['RADESYS'] = 'FK5',
+                hdu.header['EQUINOX'] = pc_time.jyear,
+                hdu.header['CTYPE1']  = 'RA---SIN'
+                hdu.header['CRPIX1']  = img.shape[0]//2+1
+                hdu.header['CDELT1']  = -1 * np.degrees(pixel_size)
+                hdu.header['CRVAL1']  = pc.ra.deg
+                hdu.header['CTYPE2']  = 'DEC--SIN'
+                hdu.header['CRPIX2']  = img.shape[1]//2+1
+                hdu.header['CDELT2']  = np.degrees(pixel_size)
+                hdu.header['CRVAL2']  = pc.dec.deg
                 hdu.header['LONPOLE'] = 180.0
                 hdu.header['LATPOLE'] = 90.0
                 
