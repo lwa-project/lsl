@@ -460,6 +460,8 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     Py_XDECREF(uu);
     Py_XDECREF(vv);
     Py_XDECREF(ww);
+    Py_XDECREF(vd);
+    Py_XDECREF(wd);
     
     output = Py_BuildValue("(OOO)", PyArray_Return(uvPlane), PyArray_Return(bmPlane), PyArray_Return(kernCorr));
     Py_XDECREF(uvPlane);
