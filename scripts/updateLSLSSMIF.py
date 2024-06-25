@@ -43,9 +43,9 @@ def _parse_index(index):
     
     # Clean it up in such a way that ElementTree can parse it
     myMassage = [(re.compile('<!([^--].*)>'), lambda match: '<!--' + match.group(1) + '-->'), 
-            (re.compile('<hr>'), lambda match: ''), 
-            (re.compile('&nbsp;'), lambda match: ' '), 
-            (re.compile('<a.*?>(.*)</a>'), lambda mtch: mtch.group(1))]
+                 (re.compile('<hr>'), lambda match: ''), 
+                 (re.compile('&nbsp;'), lambda match: ' '), 
+                 (re.compile('<a.*?>(.*)</a>'), lambda mtch: mtch.group(1))]
     for massage in myMassage:
         regex, replace = massage
         index = re.sub(regex, replace, index)
@@ -115,13 +115,12 @@ def main(args):
         try:
             ## Retrieve the list
             try:
-                ah = urlopen(_url, timeout=LSL_CONFIG.get('download.timeout'))
-                index = ah.read()
-                try:
-                    index = index.decode()
-                except AttributeError:
-                    pass
-                ah.close()
+                with urlopen(_url, timeout=LSL_CONFIG.get('download.timeout')) as ah:
+                    index = ah.read()
+                    try:
+                        index = index.decode()
+                    except AttributeError:
+                        pass
             except Exception as e:
                 print("Error:  Cannot download SSMIF listing, %s" % str(e))
                 
@@ -163,28 +162,27 @@ def main(args):
             print("Downloading %s" % urlToDownload)
             mtime = 0.0
             remote_size = 1
-            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
-            remote_size = int(ah.headers["Content-Length"])
-            mtime = ah.headers["Last-Modified"]
-            
-            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
-            mtime = calendar.timegm(mtime.timetuple())
-            
-            pbar = DownloadBar(max=remote_size)
-            while True:
-                new_data = ah.read(LSL_CONFIG.get('download.block_size'))
-                if len(new_data) == 0:
-                    break
-                pbar.inc(len(new_data))
-                try:
-                    newSSMIF += new_data
-                except NameError:
-                    newSSMIF = new_data
-                sys.stdout.write(pbar.show()+'\r')
+            with urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout')) as ah:
+                remote_size = int(ah.headers["Content-Length"])
+                mtime = ah.headers["Last-Modified"]
+                
+                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+                mtime = calendar.timegm(mtime.timetuple())
+                
+                pbar = DownloadBar(max=remote_size)
+                while True:
+                    new_data = ah.read(LSL_CONFIG.get('download.block_size'))
+                    if len(new_data) == 0:
+                        break
+                    pbar.inc(len(new_data))
+                    try:
+                        newSSMIF += new_data
+                    except NameError:
+                        newSSMIF = new_data
+                    sys.stdout.write(pbar.show()+'\r')
+                    sys.stdout.flush()
+                sys.stdout.write(pbar.show()+'\n')
                 sys.stdout.flush()
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
-            ah.close()
         except Exception as e:
             raise RuntimeError(f"Cannot download SSMIF: {str(e)}")
             
