@@ -12,6 +12,9 @@ import tempfile
 import unittest
 import subprocess
 
+from astropy.time import Time as AstroTime
+from astropy.coordinates import SkyCoord, AltAz
+
 from lsl import astro
 from lsl.imaging import utils
 from lsl.imaging import analysis
@@ -740,6 +743,27 @@ class imaging_tests(unittest.TestCase):
         fig = plt.figure()
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
+        
+    def test_radec_of(self):
+        """Test finding the RA/dec of a topocentric position as viewed by an observer."""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = np.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # RA/dec -> az/alt
+        el = lwa1.earth_location
+        ot = AstroTime(lwa1.date, astro.DJD_OFFSET, format='jd', scale='utc')
+        sc = SkyCoord('12h13m45.2s', '+15d10m13.4s', frame='fk5', equinox='J2000')
+        tp = sc.transform_to(AltAz(location=el, obstime=ot))
+        
+        # Convert back
+        eq = overlay._radec_of(aa, tp.az.deg, tp.alt.deg, degrees=True)
+        
+        # Compare with the original
+        self.assertAlmostEqual(eq[0], sc.ra.deg, 6)
+        self.assertAlmostEqual(eq[1], sc.dec.deg, 6)
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting_horizon(self):

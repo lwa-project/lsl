@@ -29,11 +29,23 @@ __version__ = "0.3"
 __all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt"]
 
 
-def _radec_of(antennaarray, az, alt):
+def _radec_of(antennaarray, az, alt, degrees=False):
+    """
+    Given a lsl.sim.vis.AntennaArray instance and an azimuth/elevation pair,
+    find the RA/dec of that point in the FK5 frame (equinox=J2000).
+    
+    .. note:: If 'degrees' is True then the input azimuth/elevation is taken to
+              be in degrees and the returned RA/dec is also in degrees.
+    """
+    
+    if not degrees:
+        # radians -> degrees
+        az = az * 180/np.pi
+        alt = alt * 180/np.pi
+        
     hrz = astro.hrz_posn()
-    # radians -> degrees
-    hrz.alt = alt*180/np.pi
-    hrz.az = az*180/np.pi % 360
+    hrz.alt = alt
+    hrz.az = az % 360
     
     geo = astro.geo_posn()
     # radians -> degrees
@@ -44,10 +56,13 @@ def _radec_of(antennaarray, az, alt):
     # az/el -> RA/dec
     equ = astro.get_equ_from_hrz(hrz, geo, antennaarray.date+astro.DJD_OFFSET)
     
-    # degrees -> radians
-    RA = equ.ra * np.pi/180.0
-    dec = equ.dec * np.pi/180.0
-    
+    RA = equ.ra
+    dec = equ.dec
+    if not degrees:
+        # degrees -> radians
+        RA = RA * np.pi/180.0
+        dec = dec * np.pi/180.0
+        
     return RA, dec 
 
 
@@ -99,7 +114,7 @@ def horizon(ax, antennaarray, phase_center='z', color='white'):
     x = np.zeros(361) + np.nan
     y = np.zeros(361) + np.nan
     for i in range(361):
-        ra, dec = _radec_of(antennaarray, i*np.pi/180.0, 0.0)
+        ra, dec = _radec_of(antennaarray, i*np.pi/180.0, 0.0, degrees=False)
         eq = aipy.coord.radec2eq((ra-pcRA,dec))
         top = np.dot(rot, eq)
         junk,alt = aipy.coord.top2azalt(top)
@@ -208,7 +223,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         y *= np.nan
         
         for i in range(361):
-            ra, dec = _radec_of(antennaarray, i*np.pi/180.0, el*np.pi/180.0)
+            ra, dec = _radec_of(antennaarray, i*np.pi/180.0, el*np.pi/180.0, degrees=False)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
             top = np.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
@@ -234,7 +249,7 @@ def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white
         y *= np.nan
         
         for i in range(81):
-            ra, dec = _radec_of(antennaarray, az*np.pi/180.0, i*np.pi/180.0)
+            ra, dec = _radec_of(antennaarray, az*np.pi/180.0, i*np.pi/180.0, degrees=False)
             eq = aipy.coord.radec2eq((ra-pcRA,dec))
             top = np.dot(rot, eq)
             junk,alt = aipy.coord.top2azalt(top)
