@@ -97,7 +97,7 @@ class _DataAccess(object):
             
         mtime = 0
         try:
-            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')):
+            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')) as uh:
                 mtime = uh.headers['Last-Modified']    
                 
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
