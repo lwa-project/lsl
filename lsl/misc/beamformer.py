@@ -86,8 +86,8 @@ def calc_delay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
     rAz = azimuth*np.pi/180.0
     rEl = elevation*np.pi/180.0
     source = np.array([np.cos(rEl)*np.sin(rAz), 
-                        np.cos(rEl)*np.cos(rAz), 
-                        np.sin(rEl)])
+                       np.cos(rEl)*np.cos(rAz), 
+                       np.sin(rEl)])
                         
     # Compute the stand positions relative to the average and loop over stands
     # to compute the time delays in seconds
@@ -379,8 +379,8 @@ def _phase_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_
         
     # Unit vector for the current on-sky location
     currPos = np.array([np.cos(rEl)*np.sin(rAz), 
-                    np.cos(rEl)*np.cos(rAz), 
-                    np.sin(rEl)])
+                        np.cos(rEl)*np.cos(rAz), 
+                        np.sin(rEl)])
     # Stand response in this direction
     currResponse = beam_shape
     
