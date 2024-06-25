@@ -307,11 +307,7 @@ class MemoryFile(object):
             
         contents = self._buffer.read(n)
         if not self._is_binary:
-            try:
-                contents = contents.decode()
-            except AttributeError:
-                # Python2 catch
-                pass
+            contents = contents.decode()
         return contents
         
     def readline(self, size=-1):
@@ -325,11 +321,7 @@ class MemoryFile(object):
             
         contents = self._buffer.readline(size)
         if not self._is_binary:
-            try:
-                contents = contents.decode()
-            except AttributeError:
-                # Python2 catch
-                pass
+            contents = contents.decode()
         return contents
         
     def write(self, s):
@@ -345,7 +337,7 @@ class MemoryFile(object):
             try:
                 s = s.encode()
             except AttributeError:
-                # Python2 catch
+                # Already encoded as binary
                 pass
         return self._buffer.write(s)
         

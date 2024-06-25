@@ -1118,7 +1118,7 @@ def _parse_ustec_map(filename_or_fh):
             try:
                 contents = contents.decode()
             except AttributeError:
-                # Python2 catch
+                # Already a string
                 pass
             contents = StringIO(contents)
             
