@@ -2,12 +2,6 @@
 Unit test for the lsl.misc.mathutils module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import unittest
 import math
 try:
@@ -16,7 +10,7 @@ except ImportError:
     from io import StringIO
 
 
-import numpy
+import numpy as np
 from scipy.special import sph_harm
 
 from lsl.misc import mathutils
@@ -34,7 +28,7 @@ class mathutils_tests(unittest.TestCase):
     def test_downsample(self):
         """Test mathutils.downsample() function."""
         
-        x = numpy.array((0, 1, 2, 3))
+        x = np.array((0, 1, 2, 3))
         
         y = mathutils.downsample(x, 2, False)
         self.assertEqual(len(y), 2)
@@ -86,7 +80,7 @@ class mathutils_tests(unittest.TestCase):
     def test_cpolar(self):
         """Test mathutils.cpolar() function."""
         
-        x = numpy.array((0+1j, 1+0j, 1+1j, -1+0j))
+        x = np.array((0+1j, 1+0j, 1+1j, -1+0j))
         mag = (1.0, 1.0, math.sqrt(2.0), 1.0)
         phase = (math.radians(90.0), 0.0, math.radians(45.0), math.radians(180.0))
         im = iter(mag)
@@ -130,10 +124,10 @@ class mathutils_tests(unittest.TestCase):
     def test_crect(self):
         """Test mathutils.crect() function."""
         
-        x = numpy.array(((1.0, math.radians(90.0)),
-                    (1.0, 0.0),
-                    (math.sqrt(2.0), math.radians(45.0)),
-                    (1.0, math.radians(180.0))))
+        x = np.array([[1.0,            math.radians(90.0)],
+                      [1.0,            0.0],
+                      [math.sqrt(2.0), math.radians(45.0)],
+                      [1.0,            math.radians(180.0)]])
         
         c = (0+1j, 1+0j, 1+1j, -1+0j)
         ic = iter(c)
@@ -149,9 +143,9 @@ class mathutils_tests(unittest.TestCase):
         
         yout = (0.0, 2.0, 4.0, 6.0, 8.0)
         
-        x = numpy.arange(0, 10, dtype = numpy.float32)
-        y = numpy.arange(0, 10, dtype = numpy.float32)
-        xnew = numpy.arange(0, 10, 2, dtype = numpy.float32)
+        x = np.arange(0, 10, dtype = np.float32)
+        y = np.arange(0, 10, dtype = np.float32)
+        xnew = np.arange(0, 10, 2, dtype = np.float32)
         
         ynew = mathutils.regrid(x, y, xnew, method = 'spline')
         iy = iter(yout)
@@ -163,29 +157,29 @@ class mathutils_tests(unittest.TestCase):
         for yn in ynew:
             self.assertAlmostEqual(yn, next(iy))
         
-        xnew = numpy.arange(-2, 10, 2, dtype = numpy.float32)    
+        xnew = np.arange(-2, 10, 2, dtype = np.float32)    
         self.assertRaises(ValueError, mathutils.regrid, x, y, xnew)
         
-        xnew = numpy.arange(0, 12, 2, dtype = numpy.float32)    
+        xnew = np.arange(0, 12, 2, dtype = np.float32)    
         self.assertRaises(ValueError, mathutils.regrid, x, y, xnew)
         
     def test_smooth(self):
         """Test mathutils.smooth() function."""
         
-        x = numpy.arange(0, 100, dtype = numpy.float32)
+        x = np.arange(0, 100, dtype = np.float32)
         mathutils.smooth(x)
         mathutils.smooth(x, window='flat')
         
     def test_to_dB(self):
         """Test mathutils.to_dB() function."""
         
-        x = numpy.random.randn(100) + 1000.0
+        x = np.random.randn(100) + 1000.0
         mathutils.to_dB(x)
 
     def test_from_dB(self):
         """Test mathutils.from_dB function."""
         
-        x = numpy.arange(1, 100, dtype = numpy.float32)
+        x = np.arange(1, 100, dtype = np.float32)
         mathutils.from_dB(x)
         
     def test_gaussian_gen(self):
@@ -196,7 +190,7 @@ class mathutils_tests(unittest.TestCase):
         center = 5.0
         width = 2.1
         gauFnc = mathutils.gaussian1d(height, center, width)
-        value = gauFnc(numpy.arange(0, 100))
+        value = gauFnc(np.arange(0, 100))
         
         # 2-D
         centerX = center
@@ -204,7 +198,7 @@ class mathutils_tests(unittest.TestCase):
         widthX = width
         widthY = widthX/2
         gauFnc = mathutils.gaussian2d(height, centerX, centerY, widthX, widthY)
-        value = gauFnc(numpy.arange(0, 100), numpy.arange(0,100))
+        value = gauFnc(np.arange(0, 100), np.arange(0,100))
         
     def test_gaussian_par(self):
         """Test 1-D and 2-D Gaussisan parameter estimation."""
@@ -215,7 +209,7 @@ class mathutils_tests(unittest.TestCase):
         width = 2.1
         gauFnc = mathutils.gaussian1d(height, center, width)
         
-        x = numpy.arange(0, 100)
+        x = np.arange(0, 100)
         value = gauFnc(x)
         
         params = mathutils.gaussparams(value)
@@ -231,8 +225,8 @@ class mathutils_tests(unittest.TestCase):
         widthY = widthX/2.0
         gauFnc = mathutils.gaussian2d(height, centerX, centerY, widthX, widthY)
         
-        x = numpy.zeros((100,100))
-        y = numpy.zeros_like(x)
+        x = np.zeros((100,100))
+        y = np.zeros_like(x)
         for i in range(100):
             x[i,:] = i
             y[:,i] = i
@@ -249,9 +243,9 @@ class mathutils_tests(unittest.TestCase):
     def test_sphval(self):
         """Test that the sphval() function runs."""
         
-        terms = numpy.array([1, 0.5, 0.4, 0.01, -0.02, -0.005])
-        az  = numpy.zeros((180,45))
-        alt = numpy.zeros((180,45))
+        terms = np.array([1, 0.5, 0.4, 0.01, -0.02, -0.005])
+        az  = np.zeros((180,45))
+        alt = np.zeros((180,45))
         for i in range(180):
             az[i,:] = 2*i
         for i in range(45):
@@ -265,22 +259,22 @@ class mathutils_tests(unittest.TestCase):
     def test_sphfit(self):
         """Test the sphfit() function."""
         
-        az  = numpy.zeros((180,45))
-        alt = numpy.zeros((180,45))
+        az  = np.zeros((180,45))
+        alt = np.zeros((180,45))
         for i in range(180):
             az[i,:] = 2*i
         for i in range(45):
             alt[:,i] = 2*i
         
         # Setup a nice, easy problem
-        out = 10*sph_harm(-1, 2, az*numpy.pi/180.0, alt*numpy.pi/180.0 + numpy.pi/2)
+        out = 10*sph_harm(-1, 2, az*np.pi/180.0, alt*np.pi/180.0 + np.pi/2)
 
         # Evaluate the fit
         terms = mathutils.sphfit(az, alt, out, lmax=2, degrees=True)
         
         # Make sure the term with the most power correspond to the 2,-1 mode
-        terms = (numpy.abs(terms) / numpy.abs(terms).max())**2
-        self.assertEqual(numpy.where(terms == 1)[0][0], 5)
+        terms = (np.abs(terms) / np.abs(terms).max())**2
+        self.assertEqual(np.where(terms == 1)[0][0], 5)
 
     
 class mathutils_test_suite(unittest.TestSuite):

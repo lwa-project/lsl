@@ -2,12 +2,6 @@
 Unit test for the lsl.astro module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import unittest
 import math
 import pickle

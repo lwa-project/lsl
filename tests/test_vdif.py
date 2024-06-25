@@ -2,18 +2,12 @@
 Unit test for the lsl.writer.vdif module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import unittest
 import tempfile
 import shutil
-import numpy
+import numpy as np
 
 from lsl.reader import tbw, tbn, vdif as vrdr, errors
 from lsl.writer import vdif
@@ -33,7 +27,7 @@ class vdif_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-vdif-', suffix='.tmp')
 
     def _get_tbw(self):
@@ -76,7 +70,7 @@ class vdif_tests(unittest.TestCase):
         # Write the data
         with open(testFile, 'wb') as fh:
             for frame in frames:
-                vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.payload.data[0,:].astype(numpy.int8), sample_rate=196e6)
+                vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.payload.data[0,:].astype(np.int8), sample_rate=196e6)
                 vFrame.write_raw_frame(fh)
                 
         # Read it back in
@@ -84,7 +78,7 @@ class vdif_tests(unittest.TestCase):
             for tFrame in frames:
                 vFrame = vrdr.read_frame(fh, sample_rate=196e6)
                 self.assertAlmostEqual(vFrame.time, tFrame.time, 6)
-                numpy.testing.assert_allclose((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(numpy.int8), atol=1e-6)
+                np.testing.assert_allclose((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(np.int8), atol=1e-6)
                 
     def test_vdif_complex(self):
         """Test writing complex data to VIDF format."""
@@ -114,9 +108,9 @@ class vdif_tests(unittest.TestCase):
                 vFrame = vrdr.read_frame(fh, sample_rate=102.4e3)
                 self.assertAlmostEqual(vFrame.time, tFrame.time, 6)
                 vData = vFrame.payload.data
-                vData.real = (vData.real*256-1).astype(numpy.int8)//2
-                vData.imag = (vData.imag*256-1).astype(numpy.int8)//2
-                numpy.testing.assert_allclose(vData, tFrame.payload.data, atol=1e-6)
+                vData.real = (vData.real*256-1).astype(np.int8)//2
+                vData.imag = (vData.imag*256-1).astype(np.int8)//2
+                np.testing.assert_allclose(vData, tFrame.payload.data, atol=1e-6)
                 
     def tearDown(self):
         """Remove the test path directory and its contents"""

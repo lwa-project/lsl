@@ -2,15 +2,9 @@
 Unit test for the lsl.misc.beamformer module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
-import numpy
+import numpy as np
 
 from lsl.misc import beamformer
 from lsl.common import stations
@@ -61,7 +55,7 @@ class beamformer_tests(unittest.TestCase):
         
         station = stations.lwa1
         antennas = station.antennas
-        data = numpy.random.rand(3, 1000)
+        data = np.random.rand(3, 1000)
         
         beam = beamformer.int_delay_and_sum(antennas[:3], data, azimuth=45.0, elevation=30.0)
         
@@ -87,8 +81,8 @@ class beamformer_tests(unittest.TestCase):
         out = beamformer.int_beam_shape(ants, azimuth=135.0, elevation=60.0)
         
         i = out.argmax()
-        azDiff = numpy.abs(135.0 - i / 90)
-        elDiff = numpy.abs(60.0 - i % 90)
+        azDiff = np.abs(135.0 - i / 90)
+        elDiff = np.abs(60.0 - i % 90)
         self.assertTrue(azDiff <= 1)
         self.assertTrue(elDiff <= 1)
         
@@ -100,7 +94,7 @@ class beamformer_tests(unittest.TestCase):
         
         station = stations.lwa1
         antennas = station.antennas
-        data = numpy.random.rand(3, 1000)
+        data = np.random.rand(3, 1000)
         
         beam = beamformer.phase_and_sum(antennas[:3], data, azimuth=45.0, elevation=30.0)
         
@@ -126,8 +120,8 @@ class beamformer_tests(unittest.TestCase):
         out = beamformer.phase_beam_shape(ants, azimuth=135.0, elevation=60.0)
         
         i = out.argmax()
-        azDiff = numpy.abs(135.0 - i / 90)
-        elDiff = numpy.abs(60.0 - i % 90)
+        azDiff = np.abs(135.0 - i / 90)
+        elDiff = np.abs(60.0 - i % 90)
         self.assertTrue(azDiff <= 1)
         self.assertTrue(elDiff <= 1)
 

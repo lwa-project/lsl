@@ -2,18 +2,12 @@
 Unit test for the lsl.sim.tbn/drx modules.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import copy
 import unittest
 import tempfile
 import shutil
-import numpy
+import numpy as np
 
 from lsl.reader import tbn as tbnReader
 from lsl.sim import tbn as tbnWriter
@@ -36,7 +30,7 @@ class fake_TBN_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
         
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-fakedata-', suffix='.tmp')
         
     def test_sim_frame(self):
@@ -204,7 +198,7 @@ class fake_DRX_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
         
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-fakedata-', suffix='.tmp')
         
     def test_sim_frame(self):

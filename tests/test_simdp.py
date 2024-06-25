@@ -2,15 +2,9 @@
 Unit test for the lsl.sim.dp module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
-import numpy
+import numpy as np
 import tempfile
 import shutil
 
@@ -34,7 +28,7 @@ class simdp_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-simdp-', suffix='.tmp')
         self.src = aipy.src.get_catalog(['cyg',])
         
@@ -90,7 +84,7 @@ class simdp_tests(unittest.TestCase):
         testFile = os.path.join(self.testPath, 'drx.dat')
 
         fh = open(testFile, 'wb')
-        dp.basic_signal(fh, numpy.array([1,2,3,4]), 10, mode='DRX', filter=6, ntuning=2, start_time=1000)
+        dp.basic_signal(fh, np.array([1,2,3,4]), 10, mode='DRX', filter=6, ntuning=2, start_time=1000)
         fh.close()
 
         # Check the file size

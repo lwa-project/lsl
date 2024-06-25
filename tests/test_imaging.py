@@ -2,17 +2,11 @@
 Unit tests for the lsl.imaging modules.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import copy
 import glob
 import time
-import numpy
+import numpy as np
 import shutil
 import tempfile
 import unittest
@@ -66,7 +60,7 @@ class imaging_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-imaging-', suffix='.tmp')
 
     def test_CorrelatedDataIDI(self):
@@ -128,15 +122,15 @@ class imaging_tests(unittest.TestCase):
         """
 
         # Frequency range
-        freq = numpy.arange(0,512)*20e6/512 + 40e6
+        freq = np.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa1
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
         blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
-        visData = numpy.random.rand(len(blList), len(freq))
-        visData = visData.astype(numpy.complex64)
+        visData = np.random.rand(len(blList), len(freq))
+        visData = visData.astype(np.complex64)
         
         return {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
         
@@ -156,7 +150,7 @@ class imaging_tests(unittest.TestCase):
         fits.set_frequency(data['freq']+30e6)
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+                          np.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         fits.close()
         
@@ -165,8 +159,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(idi.freq.size, 2*data['freq'].size)
         ds = idi.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
-        numpy.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
         
         idi.close()
         
@@ -311,7 +305,7 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data, data['vis'])
+        np.testing.assert_allclose(ds.XX.data, data['vis'])
         
         ms.close()
         
@@ -332,7 +326,7 @@ class imaging_tests(unittest.TestCase):
         fits.set_frequency(data['freq']+30e6)
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+                          np.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         fits.close()
         
@@ -341,8 +335,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
-        numpy.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
         
         ms.close()
         
@@ -363,7 +357,7 @@ class imaging_tests(unittest.TestCase):
         fits.set_frequency(data['freq']+30e6)
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+                          np.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         fits.close()
         
@@ -377,8 +371,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
-        numpy.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
         
         ms.close()
         
@@ -539,10 +533,10 @@ class imaging_tests(unittest.TestCase):
         self.assertTrue(getattr(ds2, 'U', None) is not None)
         self.assertTrue(getattr(ds2, 'V', None) is not None)
         
-        numpy.testing.assert_allclose(ds2.I.data, 2*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.Q.data, 0*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
+        np.testing.assert_allclose(ds2.I.data, 2*ds.XX.data)
+        np.testing.assert_allclose(ds2.Q.data, 0*ds.XX.data)
+        np.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
+        np.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
         
         idi.close()
         
@@ -573,10 +567,10 @@ class imaging_tests(unittest.TestCase):
         self.assertTrue(getattr(ds3, 'XY', None) is not None)
         self.assertTrue(getattr(ds3, 'YX', None) is not None)
         
-        numpy.testing.assert_allclose(ds3.XX.data, ds.XX.data)
-        numpy.testing.assert_allclose(ds3.YY.data, ds.XX.data)
-        numpy.testing.assert_allclose(ds3.XY.data, ds.XX.data)
-        numpy.testing.assert_allclose(ds3.YX.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.XX.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.YY.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.XY.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.YX.data, ds.XX.data)
         
         idi.close()
         
@@ -651,21 +645,21 @@ class imaging_tests(unittest.TestCase):
     def test_background(self):
         """Test the background estimation"""
         
-        img = numpy.random.randn(256, 256)*0.5 + 10
+        img = np.random.randn(256, 256)*0.5 + 10
         bkg = analysis.estimate_background(img)
         self.assertAlmostEqual(bkg.mean(), img.mean(), 0)
         
     def test_source_detection(self):
         """Test point source detection"""
         
-        img = numpy.random.randn(256, 256)*0.5 + 10
+        img = np.random.randn(256, 256)*0.5 + 10
         sx = ( 10, 56, 105)
         sy = (115, 35, 200)
         sf = ( 20, 30,  15)
         for i,j,f in zip(sx, sy, sf):
             for di in (-2, -1, 0, 1, 2):
                 for dj in (-2, -1, 0, 1, 2):
-                    s = numpy.exp(-(di**2+dj**2)/2.0/1.0**2)
+                    s = np.exp(-(di**2+dj**2)/2.0/1.0**2)
                     img[i+di,j+dj] += f*s
         img = img - analysis.estimate_background(img)
         cx, cy, pf, sh, ro = analysis.find_point_sources(img, threshold=10, verbose=False)
@@ -678,7 +672,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -696,7 +690,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -714,7 +708,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -733,7 +727,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -753,7 +747,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -775,7 +769,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -797,7 +791,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary

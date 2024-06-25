@@ -2,14 +2,8 @@
 Unit tests for the lsl.reader modules.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
-import numpy
+import numpy as np
 import unittest
 from datetime import timedelta
 
@@ -272,19 +266,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data)
+        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data)
         frameT *= 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data)
+        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data)
         frameT = frames[0] * frames[1]
-        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data)
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data)
         
         # Addition
         frameA = frames[0] + 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data)
+        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data)
         frameA += 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data)
+        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data)
         frameA = frames[0] + frames[1]
-        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data)
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data)
         
     ### TBN ###
     
@@ -412,19 +406,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
         
         # Addition
         frameA = frames[0] + 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
             
     ### TBW/TBN Mix-up ###
     
@@ -579,19 +573,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
         
         # Addition
         frameA = frames[0] + 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
             
     ### DR Spectrometer ###
     
@@ -719,19 +713,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        numpy.testing.assert_allclose(frameT.payload.XX0, 2*frames[0].payload.XX0, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.XX0, 2*frames[0].payload.XX0, atol=1e-6)
         frameT *= 2.0
-        numpy.testing.assert_allclose(frameT.payload.XX1, 4*frames[0].payload.XX1, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.XX1, 4*frames[0].payload.XX1, atol=1e-6)
         frameT = frames[0] * frames[1]
-        numpy.testing.assert_allclose(frameT.payload.YY0, frames[0].payload.YY0*frames[1].payload.YY0, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.YY0, frames[0].payload.YY0*frames[1].payload.YY0, atol=1e-6)
             
         # Addition
         frameA = frames[0] + 2.0
-        numpy.testing.assert_allclose(frameA.payload.XX0, 2+frames[0].payload.XX0, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.XX0, 2+frames[0].payload.XX0, atol=1e-6)
         frameA += 2.0
-        numpy.testing.assert_allclose(frameA.payload.XX0, 4+frames[0].payload.XX0, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.XX0, 4+frames[0].payload.XX0, atol=1e-6)
         frameA = frames[0] + frames[1]
-        numpy.testing.assert_allclose(frameA.payload.YY0, frames[0].payload.YY0+frames[1].payload.YY0, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.YY0, frames[0].payload.YY0+frames[1].payload.YY0, atol=1e-6)
             
     ### VDIF ###
     
@@ -874,19 +868,19 @@ class reader_tests(unittest.TestCase):
         
         # Multiplication
         frameT = frames[0] * 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
         frameT *= 2.0
-        numpy.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
         frameT = frames[0] * frames[1]
-        numpy.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
         
         # Addition
         frameA = frames[0] + 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
         frameA += 2.0
-        numpy.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
-        numpy.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
 
 
 class reader_test_suite(unittest.TestSuite):

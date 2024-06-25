@@ -2,16 +2,10 @@
 Unit test for the lsl.writer.sdfits module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import unittest
-import numpy
+import numpy as np
 import tempfile
 import shutil
 from astropy.io import fits as astrofits
@@ -32,7 +26,7 @@ class sdfits_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-sdfits-', suffix='.tmp')
 
     def _init_data(self):
@@ -45,14 +39,14 @@ class sdfits_tests(unittest.TestCase):
         """
 
         # Frequency range
-        freq = numpy.arange(0,512)*20e6/512 + 40e6
+        freq = np.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa_common.lwa1
         antennas = site.antennas[0:40:2]
         
         # Set data
-        specData = numpy.random.rand(len(antennas), len(freq))
-        specData = specData.astype(numpy.float32)
+        specData = np.random.rand(len(antennas), len(freq))
+        specData = specData.astype(np.float32)
 
         return {'freq': freq, 'site': site, 'antennas': antennas, 'spec': specData}
     
@@ -123,7 +117,7 @@ class sdfits_tests(unittest.TestCase):
                     i = i + 1
             
             # Extract the data and run the comparison
-            numpy.testing.assert_allclose(spec[0,0,0,:], data['spec'][i,:])
+            np.testing.assert_allclose(spec[0,0,0,:], data['spec'][i,:])
             i = i + 1
         
         hdulist.close()
