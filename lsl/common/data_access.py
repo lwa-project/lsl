@@ -128,32 +128,32 @@ class _DataAccess(object):
         try:
             mtime = 0.0
             remote_size = 1
-            uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-            remote_size = int(uh.headers["Content-Length"])
-            mtime = uh.headers['Last-Modified']
-            
-            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
-            mtime = calendar.timegm(mtime.timetuple())
-            
-            pbar = DownloadBar(max=remote_size)
-            received = 0
-            with self._data_cache.open(filename, 'wb') as fh:
-                while True:
-                    data = uh.read(DOWN_CONFIG.get('block_size'))
-                    if len(data) == 0:
-                        break
-                    received += len(data)
-                    pbar.inc(len(data))
-                    
-                    fh.write(data)
-                    
+            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')) as uh:
+                remote_size = int(uh.headers["Content-Length"])
+                mtime = uh.headers['Last-Modified']
+                
+                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+                mtime = calendar.timegm(mtime.timetuple())
+                
+                pbar = DownloadBar(max=remote_size)
+                received = 0
+                with self._data_cache.open(filename, 'wb') as fh:
+                    while True:
+                        data = uh.read(DOWN_CONFIG.get('block_size'))
+                        if len(data) == 0:
+                            break
+                        received += len(data)
+                        pbar.inc(len(data))
+                        
+                        fh.write(data)
+                        
+                    if is_interactive:
+                        sys.stdout.write(pbar.show()+'\r')
+                        sys.stdout.flush()
+                        
                 if is_interactive:
-                    sys.stdout.write(pbar.show()+'\r')
+                    sys.stdout.write(pbar.show()+'\n')
                     sys.stdout.flush()
-            uh.close()
-            if is_interactive:
-                sys.stdout.write(pbar.show()+'\n')
-                sys.stdout.flush()
         except IOError as e:
             warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
             received = 0
