@@ -54,9 +54,10 @@ import numpy as np
 import warnings
 from scipy.interpolate import interp1d
 
+from astropy import units as astrounits
 from astropy.constants import c as speedOfLight
 from astropy.time import Time as AstroTime
-from astropy.coordinates import AltAz, FK5
+from astropy.coordinates import AltAz, FK5, EarthLocation
 
 from lsl import astro
 from lsl.common.data_access import DataAccess
@@ -547,6 +548,18 @@ class AntennaArray(aipy.amp.AntennaArray):
         
     def __reduce__(self):
         return (AntennaArray, ((self.lat, self.lon, self.elev), self.ants))
+        
+    @property
+    def earth_location(self):
+        """
+        Return an astropy.coordinates.EarthLocation that corresponds to the array's
+        center.
+        """
+        
+        return EarthLocation.from_geodetic(self.long*astrounits.rad,
+                                           self.lat*astrounits.rad,
+                                           height=self.elev*astrounits.m,
+                                           ellipsoid='WGS84')
         
     def get_stands(self):
         """
