@@ -414,10 +414,11 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                     srcData = hdulist['SOURCE']
                     for row in srcData.data:
                         if row['SOURCE_ID'] == src_id:
+                            phase_time = AstroTime(row['EPOCH'], format='jyear', scale='utc')
                             phase_center = aipy.amp.RadioFixedBody(row['RAEPO'] * np.pi/180, 
                                                                    row['DECEPO'] * np.pi/180, 
                                                                    name=row['SOURCE'], 
-                                                                   epoch=(row['EPOCH'] - 2000.0)*365.24 + ephem.J2000)
+                                                                   epoch=phase_time.jd - astro.DJD_OFFSET)
                             
                 # Figure out if we have seperate WEIGHT data or not
                 seperateWeights = False
@@ -709,10 +710,11 @@ class CorrelatedDataUV(CorrelatedDataBase):
                     srcData = hdulist['AIPS SU']
                     for row in srcData.data:
                         if row['ID. NO.'] == src_id:
+                            phase_time = AstroTime(row['EPOCH'], format='jyear', scale='utc')
                             phase_center = aipy.amp.RadioFixedBody(row['RAEPO'] * np.pi/180, 
                                                                    row['DECEPO'] * np.pi/180, 
                                                                    name=row['SOURCE'], 
-                                                                   epoch=(row['EPOCH'] - 2000.0)*365.25 + ephem.J2000)
+                                                                   epoch=phase_time.jd - astro.DJD_OFFSET)
                             
                             
                 # Pull out the raw data from the table
