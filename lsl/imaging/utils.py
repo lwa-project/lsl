@@ -49,7 +49,7 @@ from astropy import units as astrounits
 from astropy.constants import c as vLight
 from astropy.io import fits as astrofits
 from astropy.time import Time as AstroTime
-from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK5
+from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK5, AltAz
 from astropy.wcs import WCS
 
 from lsl import astro
@@ -1732,7 +1732,10 @@ def get_image_radec(gimg, aa, phase_center='z', shifted=True):
         phase_center.compute(aa)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
-        pcRA, pcDec = aa.sidereal_time(), aa.lat
+        ot = AstroTime(aa.get_jultime(), format='jd', scale='utc')
+        tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
+        pc = tc.transform_to(FK5(equinox=ot))
+        pcRA, pcDec = pc.ra.rad, pc.dec.rad
     rotInv = aipy.coord.top2eq_m(0, pcDec)
     
     # Extract the raw topocentric coordinates and convert to equatorial
@@ -1777,18 +1780,13 @@ def get_image_azalt(gimg, aa, phase_center='z', shifted=True):
     """
     
     # Get the RA and dec. coordinates for each pixel
+    ot = AstroTime(aa.get_jultime(), format='jd', scale='utc')
     ra, dec = get_image_radec(gimg, aa, phase_center=phase_center, shifted=shifted)
     
-    # Convert to azimuth and elevation using PyEphem
-    bdy = aipy.amp.RadioFixedBody(0, 0)
-    
-    az, el = ra*0.0, dec*0.0
-    for i in range(az.shape[0]):
-        for j in range(az.shape[1]):
-            bdy._ra = ra[i,j]
-            bdy._dec = dec[i,j]
-            bdy.compute(aa)
-            az[i,j], el[i,j] = bdy.az, bdy.alt
+    # Convert to azimuth and elevation
+    eq = FK5(ra*astrounits.rad, dec*astrounits.rad, equinox=ot)
+    aa = eq.transform_to(AltAz(location=aa.earth_location, obstime=ot))
+    az, el = aa.az.rad, aa.alt.rad
     
     # Done
     return az, el
