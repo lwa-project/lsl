@@ -974,7 +974,7 @@ try:
             if src is not None:
                 for sdir,name in zip(src.col('DIRECTION'), src.col('NAME')):
                     sdir = sdir.flatten()
-                    self._sources.append( aipy.amp.RadioFixedBody(*sdir, name=name) )
+                    self._sources.append( aipy.amp.RadioFixedBody(*sdir, name=name, epoch=ephem.J2000) )
             else:
                 self._sources.append('z')
                 
