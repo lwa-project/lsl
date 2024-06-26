@@ -49,7 +49,7 @@ from astropy import units as astrounits
 from astropy.constants import c as vLight
 from astropy.io import fits as astrofits
 from astropy.time import Time as AstroTime
-from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK5, AltAz
+from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK5, AltAz, CartesianRepresentation
 from astropy.wcs import WCS
 
 from lsl import astro
@@ -1728,11 +1728,11 @@ def get_image_radec(gimg, aa, phase_center='z', shifted=True):
     """
     
     # Get the phase center
+    ot = AstroTime(aa.get_jultime(), format='jd', scale='utc')
     if phase_center != 'z':
         phase_center.compute(aa)
         pcRA, pcDec = phase_center.ra, phase_center.dec
     else:
-        ot = AstroTime(aa.get_jultime(), format='jd', scale='utc')
         tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
         pc = tc.transform_to(FK5(equinox=ot))
         pcRA, pcDec = pc.ra.rad, pc.dec.rad
@@ -1740,17 +1740,15 @@ def get_image_radec(gimg, aa, phase_center='z', shifted=True):
     
     # Extract the raw topocentric coordinates and convert to equatorial
     top = gimg.get_top()
-    oldShape = top[0].shape
-    top = (top[0].ravel(), top[1].ravel(), top[2].ravel())
-    eq = np.dot(rotInv, top)
-    eq = (eq[0].reshape(oldShape), eq[1].reshape(oldShape), eq[2].reshape(oldShape))
-    
-    # Over to RA/Dec
-    ra, dec = aipy.coord.eq2radec(eq)
+    tc = AltAz(CartesianRepresentation(top[1], top[0], top[2]),
+               location=aa.earth_location, obstime=ot)
+    eq = tc.transform_to(FK5(equinox=ot))
+    ra, dec = eq.ra.rad, eq.dec.rad
     
     # Correct for the phase_center
-    ra += pcRA
+    ra += pcRA - ra[0,0]
     ra %= 2*np.pi
+    dec += pcDec - dec[0,0]
     
     # Shift, if needed
     if shifted:
@@ -1785,8 +1783,8 @@ def get_image_azalt(gimg, aa, phase_center='z', shifted=True):
     
     # Convert to azimuth and elevation
     eq = FK5(ra*astrounits.rad, dec*astrounits.rad, equinox=ot)
-    aa = eq.transform_to(AltAz(location=aa.earth_location, obstime=ot))
-    az, el = aa.az.rad, aa.alt.rad
+    tc = eq.transform_to(AltAz(location=aa.earth_location, obstime=ot))
+    az, el = tc.az.rad, tc.alt.rad
     
     # Done
     return az, el
