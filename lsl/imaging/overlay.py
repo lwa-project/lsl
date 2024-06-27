@@ -11,15 +11,20 @@ is used for plotting.
 
 .. versionadded:: 1.0.1
 
-.. versionchanged:: 1.1.0
-    Added support for overlaying on images with non-zenith phase centers
+.. versionchanged:: 3.0.0
+    Switch to using imaging.utils.ImgWPlus for all image coordinate info.
 """
 
 import aipy
 import ephem
 import numpy as np
 
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import FK5, AltAz
+
 from lsl import astro
+from lsl.imaging.utils import ImgWPlus
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -66,200 +71,153 @@ def _radec_of(antennaarray, az, alt, degrees=False):
     return RA, dec 
 
 
-def sources(ax, antennaarray, srcs, phase_center='z', label=True, marker='x', color='white'):
+def sources(ax, gimg, srcs, phase_center='z', label=True, marker='x', color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the
     locations of the srcs given in the 'srcs' dictionary.
+    
+    .. versionchanged:: 3.0.0
+        Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
     
-    # Get the phase center
-    if phase_center != 'z':
-        phase_center.compute(antennaarray)
-        pcRA, pcDec = phase_center.ra, phase_center.dec
-    else:
-        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
-    rot = aipy.coord.eq2top_m(0, pcDec)
-        
+    # Setup
+    mjd = gimg.mjd
+    wcs = gimg.wcs
+    antennaarray = gimg.antennaarray
+    
     # Compute the positions of major sources and label the images
+    old_jultime = antennaarray.get_jultime()*1.0
+    antennaarray.set_jultime(mjd + astro.MJD_OFFSET)
     for name,src in srcs.items():
         src.compute(antennaarray)
-        eq = aipy.coord.radec2eq((src.ra-pcRA, src.dec))
-        top = np.dot(rot, eq)
-        junk,alt = aipy.coord.top2azalt(top)
-        if alt >= 0:
-            ax.plot(top[0], top[1], marker=marker, markerfacecolor='None', markeredgecolor=color, 
+        x, y = wcs.all_world2pix(src.ra*180/np.pi, src.dec*180/np.pi, 0)
+        
+        if src.alt >= 0:
+            ax.plot(x, y, marker=marker, markerfacecolor='None', markeredgecolor=color, 
                 linewidth=10.0, markersize=10)
             if label:
-                ax.text(top[0], top[1], name, color=color, size=12)
+                ax.text(x, y, name, color=color, size=12)
+    antennaarray.set_jultime(old_jultime)
 
 
-def horizon(ax, antennaarray, phase_center='z', color='white'):
+def horizon(ax, gimg, elevation_cut=1e-3, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the horizon.
+    
+    .. versionchanged:: 3.0.0
+        Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     
     .. versionchanged:: 1.1.0
         Added a new argument for the AntennaArray instance to provide a 
         uniform default call for all functions.
     """
-        
-    # Get the phase center
-    if phase_center != 'z':
-        phase_center.compute(antennaarray)
-        pcRA, pcDec = phase_center.ra, phase_center.dec
-    else:
-        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
-    rot = aipy.coord.eq2top_m(0, pcDec)
     
-    # Add in the horizon
-    x = np.zeros(361) + np.nan
-    y = np.zeros(361) + np.nan
-    for i in range(361):
-        ra, dec = _radec_of(antennaarray, i*np.pi/180.0, 0.0, degrees=False)
-        eq = aipy.coord.radec2eq((ra-pcRA,dec))
-        top = np.dot(rot, eq)
-        junk,alt = aipy.coord.top2azalt(top)
-        if alt >= -0.01:
-            x[i] = top[0]
-            y[i] = top[1]
+    # Setup
+    mjd = gimg.mjd
+    wcs = gimg.wcs
+    el = gimg.antennaarray.earth_location
+    
+    # Find the horizon (well elevation of 0.001 deg)
+    ot = AstroTime(mjd, format='mjd', scale='utc')
+    tc = AltAz(np.arange(361)*astrounits.deg, np.ones(361)*elevation_cut*astrounits.deg,
+               location=el, obstime=ot)
+    eq = tc.transform_to(FK5(equinox=ot))
+    
+    x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
     ax.plot(x, y, color=color)
 
 
-def graticule_radec(ax, antennaarray, phase_center='z', label=True, color='white'):
+def graticule_radec(ax, gimg, label=True, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant declinate and RA.  Declinations are spaced at 20 degree intervals
     and RAs are spaced at 2 hour intervals.
+    
+    .. versionchanged:: 3.0.0
+        Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
     
-    # Get the phase center
-    if phase_center != 'z':
-        phase_center.compute(antennaarray)
-        pcRA, pcDec = phase_center.ra, phase_center.dec
-    else:
-        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
-    rot = aipy.coord.eq2top_m(0, pcDec)
+    # Setup
+    mjd = gimg.mjd
+    wcs = gimg.wcs
+    el = gimg.antennaarray.earth_location
     
-    # Lines of constant declination first
-    decs = range(-80, 90, 20)
-    ras = np.linspace(0, 360, 800)
-    
-    x = np.zeros(ras.size) + np.nan
-    y = np.zeros(ras.size) + np.nan
-    for dec in decs:
-        x *= np.nan
-        y *= np.nan
+    # Lines of constant dec.
+    ot = AstroTime(mjd, format='mjd', scale='utc')
+    for dec in range(-80, 90, 20):
+        eq = FK5(np.arange(361)*astrounits.deg, np.ones(361)*dec*astrounits.deg,
+                 equinox=ot)
         
-        # Loop over RA to compute the topocentric coordinates (used by the image) for
-        # the lines.  Also, figure out the elevation for each point on the line so
-        # we can mask those below the horizon
-        for i,ra in enumerate(ras):
-            eq = aipy.coord.radec2eq((ra*np.pi/180-pcRA, dec*np.pi/180))
-            top = np.dot(rot, eq)
-            junk,alt = aipy.coord.top2azalt(top)
-            if alt >= -1e-5:
-                x[i] = top[0]
-                y[i] = top[1]
-                
+        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
         ax.plot(x, y, color=color, alpha=0.75)
         
-        eq = aipy.coord.radec2eq((pcRA-pcRA, (dec+5)*np.pi/180))
-        top = np.dot(rot, eq)
-        az,alt = aipy.coord.top2azalt(top)
-        if alt > 15*np.pi/180 and label:
-            ax.text(top[0], top[1], r'%+i$^\circ$' % dec, color=color)
+        eq = FK5(gimg.wcs.wcs.crval[0]*astrounits.deg, (dec+5)*astrounits.deg,
+                 equinox=ot)
+        tc = eq.transform_to(AltAz(location=el, obstime=ot))
+        
+        if tc.alt > 15*astrounits.deg and label:
+            x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+            ax.text(x, y, r'%+i$^\circ$' % dec, color=color)
             
-    # Lines of constant RA			
-    decs = np.linspace(-80, 80, 400)
-    ras = range(0, 360, 30)
-    
-    x = np.zeros(decs.size) + np.nan
-    y = np.zeros(decs.size) + np.nan
-    for ra in ras:
-        x *= np.nan
-        y *= np.nan
+    # Lines of constant RA
+    for ra in range(0, 360, 30):
+        eq = FK5(np.ones(161)*ra*astrounits.deg, (np.arange(161)-80)*astrounits.deg,
+                 equinox=ot)
         
-        # Loop over dec to compute the topocentric coordinates (used by the image) for
-        # the lines.  Also, figure out the elevation for each point on the line so
-        # we can mask those below the horizon
-        for i,dec in enumerate(decs):
-            eq = aipy.coord.radec2eq((ra*np.pi/180-pcRA, dec*np.pi/180))
-            top = np.dot(rot, eq)
-            junk,alt = aipy.coord.top2azalt(top)
-            if alt >= -1e-5:
-                x[i] = top[0]
-                y[i] = top[1]
-                
+        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
         ax.plot(x, y, color=color, alpha=0.75)
         
-        eq = aipy.coord.radec2eq((ra*np.pi/180-pcRA, 0))
-        top = np.dot(rot, eq)
-        az,alt = aipy.coord.top2azalt(top)
-        if alt > 20*np.pi/180 and label:
-            ax.text(top[0], top[1], '%i$^h$' % (ra/15,), color=color)
+        eq = FK5((ra-5)*astrounits.deg, '0deg',
+                 equinox=ot)
+        tc = eq.transform_to(AltAz(location=el, obstime=ot))
+        
+        if tc.alt > 20*astrounits.deg and label:
+            x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+            ax.text(x, y, '%i$^h$' % (ra/15,), color=color)
 
 
-def graticule_azalt(ax, antennaarray, phase_center='z', label=True, color='white'):
+def graticule_azalt(ax, gimg, label=True, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant azimuth and elevation.  Elevations are spaced at 20 degree intervals
-    and azimuths are spaced at 45 degree intervals
+    and azimuths are spaced at 45 degree intervals.
+
+    .. versionchanged:: 3.0.0
+        Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
     
-    # Get the phase center
-    if phase_center != 'z':
-        phase_center.compute(antennaarray)
-        pcRA, pcDec = phase_center.ra, phase_center.dec
-    else:
-        pcRA, pcDec = antennaarray.sidereal_time(), antennaarray.lat
-    rot = aipy.coord.eq2top_m(0, pcDec)
+    # Setup
+    mjd = gimg.mjd
+    wcs = gimg.wcs
+    el = gimg.antennaarray.earth_location
     
     # Lines of constant elevation
-    els = range(0, 90, 20)
-    
-    x = np.zeros(361) + np.nan
-    y = np.zeros(361) + np.nan
-    for el in els:
-        x *= np.nan
-        y *= np.nan
+    ot = AstroTime(mjd, format='mjd', scale='utc')
+    for alt in range(0, 90, 20):
+        tc = AltAz(np.arange(361)*astrounits.deg, np.ones(361)*alt*astrounits.deg,
+                   location=el, obstime=ot)
+        eq = tc.transform_to(FK5(equinox=ot))
         
-        for i in range(361):
-            ra, dec = _radec_of(antennaarray, i*np.pi/180.0, el*np.pi/180.0, degrees=False)
-            eq = aipy.coord.radec2eq((ra-pcRA,dec))
-            top = np.dot(rot, eq)
-            junk,alt = aipy.coord.top2azalt(top)
-            if alt >= -1e-5:
-                x[i] = top[0]
-                y[i] = top[1]
-                
-        ax.plot(x, y, color=color)
+        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+        ax.plot(x, y, color=color, alpha=0.75)
         
-        if el > 0 or phase_center != 'z':
+        if label:
             valid = np.where( np.isfinite(x) & np.isfinite(y) )[0]
-            pos = valid.size // 2 - valid.size // 5
             if valid.size > 10:
-                ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % el, color=color)
-            
+                pos = valid.size // 2 - valid.size // 5
+                ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % alt, color=color)
+        
     # Lines of constant azimuth
-    azs = range(0, 360, 45)
-    
-    x = np.zeros(81) + np.nan
-    y = np.zeros(81) + np.nan
-    for az in azs:
-        x *= np.nan
-        y *= np.nan
+    for az in range(0, 360, 45):
+        tc = AltAz(np.ones(161)*az*astrounits.deg, (np.arange(161)-80)*astrounits.deg,
+                   location=el, obstime=ot)
+        eq = tc.transform_to(FK5(equinox=ot))
         
-        for i in range(81):
-            ra, dec = _radec_of(antennaarray, az*np.pi/180.0, i*np.pi/180.0, degrees=False)
-            eq = aipy.coord.radec2eq((ra-pcRA,dec))
-            top = np.dot(rot, eq)
-            junk,alt = aipy.coord.top2azalt(top)
-            if alt >= -1e-5:
-                x[i] = top[0]
-                y[i] = top[1]
-                
-        ax.plot(x, y, color=color)
+        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+        ax.plot(x, y, color=color, alpha=0.75)
         
-        valid = np.where( np.isfinite(x) & np.isfinite(y) )[0]
-        pos = valid.size // 2 - valid.size // 5
-        if valid.size > 10:
-            ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % az, color=color)
+        if label:
+            valid = np.where( np.isfinite(x) & np.isfinite(y) )[0]
+            if valid.size > 10:
+                pos = valid.size // 2 - valid.size // 5
+                ax.text(x[valid[pos]], y[valid[pos]], r'%i$^\circ$' % az, color=color)
