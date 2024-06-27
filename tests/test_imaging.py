@@ -784,7 +784,7 @@ class imaging_tests(unittest.TestCase):
         fig = plt.figure()
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
-        overlay.horizon(ax, aa)
+        overlay.horizon(ax, img)
         del fig
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
@@ -806,7 +806,7 @@ class imaging_tests(unittest.TestCase):
         fig = plt.figure()
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
-        overlay.sources(ax, aa, vis.SOURCES)
+        overlay.sources(ax, img, vis.SOURCES)
         del fig
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
@@ -829,9 +829,9 @@ class imaging_tests(unittest.TestCase):
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
         with self.subTest(type='RA/Dec.'):
-            overlay.graticule_radec(ax, aa)
+            overlay.graticule_radec(ax, img)
         with self.subTest(type='az/alt'):
-            overlay.graticule_azalt(ax, aa)
+            overlay.graticule_azalt(ax, img)
         del fig
         
     def tearDown(self):
