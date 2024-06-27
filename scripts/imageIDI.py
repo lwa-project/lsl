@@ -171,17 +171,17 @@ def main(args):
             ax.yaxis.set_major_formatter( NullFormatter() )
             
             # Compute the positions of major sources and label the images
-            overlay.sources(ax, aa, simVis.SOURCES, label=not args.no_labels)
+            overlay.sources(ax, img, simVis.SOURCES, label=not args.no_labels)
             
             # Add in the horizon
-            overlay.horizon(ax, aa)
+            overlay.horizon(ax, img)
             
             # Add lines of constant RA and dec.
             if not args.no_grid:
                 if not args.topo:
-                    overlay.graticule_radec(ax, aa)
+                    overlay.graticule_radec(ax, img)
                 else:
-                    overlay.graticule_azalt(ax, aa)
+                    overlay.graticule_azalt(ax, img)
 
             # Reset the axes
             ax.set_xlim(xlim)
@@ -215,19 +215,10 @@ def main(args):
                     hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
-                hdu.header['RADESYS'] = 'FK5',
-                hdu.header['EQUINOX'] = pc_time.jyear,
-                hdu.header['CTYPE1']  = 'RA---SIN'
-                hdu.header['CRPIX1']  = img.shape[0]//2+1
-                hdu.header['CDELT1']  = -1 * np.degrees(pixel_size)
-                hdu.header['CRVAL1']  = pc.ra.deg
-                hdu.header['CTYPE2']  = 'DEC--SIN'
-                hdu.header['CRPIX2']  = img.shape[1]//2+1
-                hdu.header['CDELT2']  = np.degrees(pixel_size)
-                hdu.header['CRVAL2']  = pc.dec.deg
-                hdu.header['LONPOLE'] = 180.0
-                hdu.header['LATPOLE'] = 90.0
-                
+                wcs_hdr = img.wcs.to_header()
+                for key in wcs_hdr:
+                    hdu.header[key] = wcs_hdr[key]
+                    
                 ### Add the HDU to the list
                 hdulist.append(hdu)
                 
