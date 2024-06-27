@@ -153,7 +153,7 @@ class WriterBase(object):
         def get_uvw(self, HA, dec, el):
             uvw = compute_uvw(self.baselines, HA=HA, dec=dec, site=el, freq=1.0)
             return uvw[:,:,0]
-                
+            
         def argsort(self, mapper=None, shift=16):
             packed = []
             for a1,a2 in self.baselines:
