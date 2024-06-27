@@ -14,7 +14,7 @@ from datetime import datetime
 
 from astropy import units as astrounits
 from astropy.time import Time as AstroTime
-from astropy.coordinates import EarthLocation, AltAz, HADec, FK5
+from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -844,9 +844,9 @@ try:
                         sourceID = _sourceTable.index(name)
                         
                     ## Compute the uvw coordinates of all baselines
-                    ha = equ.transform_to(HADec(location=el, obstime=date))
-                    HA = ha.ha.hourangle
-                    dec = ha.dec.deg
+                    it = equ.transform_to(ITRS(location=el, obstime=date))
+                    HA = ((el.lon - it.spherical.lon).wrap_at('180deg')).hourangle
+                    dec = it.spherical.lat.deg
                     uvwCoords = dataSet.get_uvw(HA, dec, el)
                     
                     ## Populate the metadata

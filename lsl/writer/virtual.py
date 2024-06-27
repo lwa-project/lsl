@@ -13,7 +13,7 @@ from datetime import datetime
 from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight
-from astropy.coordinates import AltAz, HADec, FK5
+from astropy.coordinates import AltAz, ITRS, FK5
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -111,9 +111,9 @@ class VirtualWriter(WriterBase):
                       equinox=date)
             
         # Phase center coordinates
-        ha = equ.transform_to(HADec(location=self.el, obstime=date))
-        HA2 = ha.ha.rad
-        dec2 = ha.dec.rad
+        it = equ.transform_to(ITRS(location=self.el, obstime=date))
+        HA2 = ((el.lon - it.spherical.lon).wrap_at('180deg')).rad
+        dec2 = it.spherical.lat.rad
         lat2 = self.el.lat.rad
         
         # Coordinate transformation matrices
