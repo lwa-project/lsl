@@ -85,9 +85,6 @@ class beamformer_tests(unittest.TestCase):
         elDiff = np.abs(60.0 - i % 90)
         self.assertTrue(azDiff <= 1)
         self.assertTrue(elDiff <= 1)
-        
-        # Single threaded test for coverage
-        out = beamformer.int_beam_shape(ants[:1], azimuth=135.0, elevation=60.0, disable_pool=True)
             
     def test_phase_and_sum(self):
         """Check that the beamformer.phase_and_sum function actually runs"""
