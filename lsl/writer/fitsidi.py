@@ -19,6 +19,7 @@ import os
 import re
 import math
 import numpy as np
+import warnings
 from functools import total_ordering
 from datetime import datetime
 from collections import OrderedDict
@@ -29,6 +30,7 @@ from astropy.constants import c as speedOfLight
 from astropy.utils import iers
 from astropy.io import fits as astrofits
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
+from lsl.common.color import colorfy
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -1118,7 +1120,11 @@ class Idi(WriterBase):
                 sourceID = self._sourceTable.index(name) + 1
                 
                 ## Compute the uvw coordinates of all baselines
-                it = equ.transform_to(ITRS(location=el, obstime=date))
+                try:
+                    it = equ.transform_to(ITRS(location=el, obstime=date))
+                except TypeError:
+                    warning.warn(colorfy('{{%yellow}} astropy.coordiantes.ITRS does not support the \'location\' keyword, (u,v,w) accuracy may be degraded'))
+                    it = equ.transform_to(ITRS(obstime=date))
                 HA = ((el.lon - it.spherical.lon).wrap_at('180deg')).hourangle
                 dec = it.spherical.lat.deg
                 uvwCoords = dataSet.get_uvw(HA, dec, el)

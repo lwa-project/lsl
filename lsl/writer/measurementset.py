@@ -10,6 +10,7 @@ import glob
 import math
 import numpy as np
 import shutil
+import warning
 from datetime import datetime
 
 from astropy import units as astrounits
@@ -844,7 +845,11 @@ try:
                         sourceID = _sourceTable.index(name)
                         
                     ## Compute the uvw coordinates of all baselines
-                    it = equ.transform_to(ITRS(location=el, obstime=date))
+                    try:
+                        it = equ.transform_to(ITRS(location=el, obstime=date))
+                    except TypeError:
+                        warning.warn(colorfy('{{%yellow}} astropy.coordiantes.ITRS does not support the \'location\' keyword, (u,v,w) accuracy may be degraded'))
+                        it = equ.transform_to(ITRS(obstime=date))
                     HA = ((el.lon - it.spherical.lon).wrap_at('180deg')).hourangle
                     dec = it.spherical.lat.deg
                     uvwCoords = dataSet.get_uvw(HA, dec, el)
@@ -1099,7 +1104,6 @@ try:
             tb.close()
             
 except ImportError:
-    import warnings
     warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), RuntimeWarning)
     
     class Ms(WriterBase):

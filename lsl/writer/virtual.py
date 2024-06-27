@@ -8,6 +8,7 @@ directly worked with in the :mod:`lsl.imaging.utils` module.
 import aipy
 import ephem
 import numpy as np
+import warning
 from datetime import datetime
 
 from astropy import units as astrounits
@@ -22,6 +23,7 @@ from lsl.imaging.data import VisibilityData, VisibilityDataSet, PolarizationData
 from lsl.writer.fitsidi import WriterBase
 from lsl.sim.vis import build_sim_array
 from lsl.correlator.uvutils import compute_uvw
+from lsl.common.color import colorfy
 
 
 __version__ = '0.1'
@@ -107,7 +109,11 @@ class VirtualWriter(WriterBase):
                       equinox=date)
             
         # Phase center coordinates
-        it = equ.transform_to(ITRS(location=self.el, obstime=date))
+        try:
+            it = equ.transform_to(ITRS(location=self.el, obstime=date))
+        except TypeError:
+            warning.warn(colorfy('{{%yellow}} astropy.coordiantes.ITRS does not support the \'location\' keyword, (u,v,w) accuracy may be degraded'))
+            it = equ.transform_to(ITRS(obstime=date))
         HA = ((self.el.lon - it.spherical.lon).wrap_at('180deg')).deg
         dec = it.spherical.lat.deg
         
