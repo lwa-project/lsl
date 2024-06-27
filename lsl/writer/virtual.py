@@ -21,6 +21,7 @@ from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.imaging.data import VisibilityData, VisibilityDataSet, PolarizationDataSet
 from lsl.writer.fitsidi import WriterBase
 from lsl.sim.vis import build_sim_array
+from lsl.correlator.uvutils import compute_uvw
 
 
 __version__ = '0.1'
@@ -96,15 +97,10 @@ class VirtualWriter(WriterBase):
         baselines and source at the given UTC JD.
         """
         
-        Nbase = len(baselines)
-        Nchan = len(self.freq)
-        uvw = np.zeros((Nbase,3,Nchan), dtype=np.float32)
-        
         date = AstroTime(jd, format='jd', scale='utc')
         
         if source == 'z':
-            tc = AltAz(0.0*astrounits.deg, 90.0*astrounits.deg,
-                       location=self.el, obstime=date)
+            tc = AltAz('0deg', '90deg', location=self.el, obstime=date)
             equ = tc.transform_to(FK5(equinox=date))
         else:
             equ = FK5(source.a_ra*astrounits.rad, source.a_dec*astrounits.rad,
@@ -112,32 +108,11 @@ class VirtualWriter(WriterBase):
             
         # Phase center coordinates
         it = equ.transform_to(ITRS(location=self.el, obstime=date))
-        HA2 = ((el.lon - it.spherical.lon).wrap_at('180deg')).rad
-        dec2 = it.spherical.lat.rad
-        lat2 = self.el.lat.rad
+        HA = ((el.lon - it.spherical.lon).wrap_at('180deg')).deg
+        dec = it.spherical.lat.deg
         
-        # Coordinate transformation matrices
-        trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
-                           [1,  0,            0           ],
-                           [0,  np.cos(lat2), np.sin(lat2)]])
-        trans2 = np.array([[ np.sin(HA2),               np.cos(HA2),              0           ],
-                           [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
-                           [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
-        
-        # Frequency scaling
-        uscl = self.freq / speedOfLight
-        uscl.shape = (1,1,)+uscl.shape
-        
-        for i,(a1,a2) in enumerate(baselines):
-            # Go from a east, north, up coordinate system to a celestial equation, 
-            # east, north celestial pole system
-            xyzPrime = a1.stand - a2.stand
-            xyz = np.dot(trans1, np.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
-            
-            # Go from CE, east, NCP to u, v, w
-            temp = np.dot(trans2, xyz)
-            uvw[i,:,:] = temp
-        uvw *= uscl
+        # (u,v,w) coordinates
+        uvw = compute_uvw(baselines, HA=HA, dec=dec, freq=self.freq, site=self.el)
         
         return uvw
         

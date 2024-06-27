@@ -30,7 +30,7 @@ from astropy.coordinates import Angle as AstroAngle
 from astropy.coordinates import EarthLocation
 
 from lsl import astro
-from lsl.common.stations import lwa1
+from lsl.common.stations import lwa1, Antenna
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -123,7 +123,7 @@ def antennas_to_baseline(ant1, ant2, antennas, antennas2=None, baseline_list=Non
     return -1
 
 
-def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_auto=False):
+def compute_uvw(antennas_or_baselines, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_auto=False):
     """
     Compute the uvw converate of a baselines formed by a collection of 
     stands.  The coverage is computed at a given HA (in hours) and 
@@ -148,6 +148,9 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
         Added support for ephem.Angle and astropy.coordinates.Angle instances 
         for HA and dec.
         Added support for astropy.coordinates.EarthLocation instances for site.
+    
+    .. versionchanged:: 3.0.0
+        Updated to allowing a list of specific baselines to be passed in.
     """
     
     # Try this so that freq can be either a scalar, a list, or an array
@@ -157,7 +160,15 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
     except (AttributeError, AssertionError):
         freq = np.array(freq, ndmin=1)
         
-    baselines = get_baselines(antennas, include_auto=include_auto, indicies=True)
+    if isinstance(antennas_or_baselines[0], Antenna):
+        baselines = get_baselines(antennas_or_baselines, include_auto=include_auto, indicies=False)
+    elif isinstance(antennas_or_baselines[0], Tuple, List):
+        if isinstance(antennas_or_baselines[0][0], Antenna) and len(antennas_or_baselines[0]) == 2:
+            baselines = antennas_or_baselines
+        else:
+            raise TypeError("Expected a list of two-element tuples containing Antennas")
+    else:
+        raise ValueError("Expected a list of Antennas or a list of two-element tuples containing Antennas")
     Nbase = len(baselines)
     Nfreq = freq.size
     uvw = np.zeros((Nbase,3,Nfreq))
@@ -183,7 +194,7 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
     if isinstance(site, EarthLocation):
         lat2 = site.lat.rad
     else:
-        lat2 = site.lat
+        lat2 = site.lat*1.0
         
     # Coordinate transformation matrices
     trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
@@ -194,10 +205,10 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
                         [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
     
     # Compute the baselines and convert to wavelengths
-    for k,(i,j) in enumerate(baselines):
+    for k,(a1,a2) in enumerate(baselines):
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
-        xyzPrime = antennas[i].stand - antennas[j].stand
+        xyzPrime = a1.stand - a2.stand
         xyz = trans1*np.matrix([[xyzPrime[0]], [xyzPrime[1]], [xyzPrime[2]]])
         
         # Go from CE, east, NCP to u, v, w
@@ -209,7 +220,7 @@ def compute_uvw(antennas, HA=0.0, dec=34.070, freq=49.0e6, site=lwa1, include_au
     return uvw
 
 
-def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
+def compute_uv_track(antennas_or_baselines, dec=34.070, freq=49.0e6, site=lwa1):
     """
     Whereas compute_uvw provides the uvw coverage at a particular time, 
     compute_uv_track provides the complete uv plane track for a long 
@@ -231,10 +242,21 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
         Added support for ephem.Angle and astropy.coordinates.Angle instances 
         for dec.
         Added support for astropy.coordinates.EarthLocation instances for site.
+    
+    .. versionchanged:: 3.0.0
+        Updated to allowing a list of specific baselines to be passed in.
     """
     
-    N = len(antennas)
-    Nbase = N*(N-1)//2
+    if isinstance(antennas_or_baselines[0], Antenna):
+        baselines = get_baselines(antennas_or_baselines, include_auto=include_auto, indicies=False)
+    elif isinstance(antennas_or_baselines[0], Tuple, List):
+        if isinstance(antennas_or_baselines[0][0], Antenna) and len(antennas_or_baselines[0]) == 2:
+            baselines = antennas_or_baselines
+        else:
+            raise TypeError("Expected a list of two-element tuples containing Antennas")
+    else:
+        raise ValueError("Expected a list of Antennas or a list of two-element tuples containing Antennas")
+    Nbase = len(baselines)
     uvTrack = np.zeros((Nbase,2,512))
     
     # Phase center coordinates
@@ -248,7 +270,7 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
     if isinstance(site, EarthLocation):
         lat2 = site.lat.rad
     else:
-        lat2 = site.lat
+        lat2 = site.lat*1.0
         
     # Coordinate transformation matrices
     trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
@@ -256,10 +278,10 @@ def compute_uv_track(antennas, dec=34.070, freq=49.0e6, site=lwa1):
                         [0,  np.cos(lat2), np.sin(lat2)]])
     
     count = 0
-    for i,j in get_baselines(antennas, indicies=True):
+    for a1,a2 in baselines:
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
-        xyzPrime = antennas[i].stand - antennas[j].stand
+        xyzPrime = a1.stand - a2.stand
         xyz = trans1*np.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
         xyz = np.ravel(xyz)
         
