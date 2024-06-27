@@ -189,19 +189,6 @@ def main(args):
         plt.show()
         
         if args.fits is not None:
-            ## Load in the coordinates for the phase center
-            pc_ra = np.degrees(dataDict.phase_center._ra)
-            pc_dec = np.degrees(dataDict.phase_center._dec)
-            pc_equinox = AstroTime(dataDict.phase_center._epoch, astro.DJD_OFFSET, format='jd', scale='utc')
-            
-            ## Move from J2000 to epoch-of-date
-            pc_time = AstroTime(jdList[0], format='jd', scale='utc')
-            pc = FK5(ra=pc_ra*astrounits.deg, dec=pc_dec*astrounits.deg, equinox=pc_equinox)
-            pc = pc.transform_to(FK5(equinox=pc_time))
-            
-            ### Poll the ImgWPlus object for the proper pixel scale
-            pixel_size = img1.pixel_size
-        
             ## Loop over the images to build up the FITS file
             hdulist = [astrofits.PrimaryHDU(),]
             for img,pol in zip((img1,img2,img3,img4), (lbl1,lbl2,lbl3,lbl4)):
