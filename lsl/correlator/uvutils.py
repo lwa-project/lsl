@@ -162,7 +162,7 @@ def compute_uvw(antennas_or_baselines, HA=0.0, dec=34.070, freq=49.0e6, site=lwa
         
     if isinstance(antennas_or_baselines[0], Antenna):
         baselines = get_baselines(antennas_or_baselines, include_auto=include_auto, indicies=False)
-    elif isinstance(antennas_or_baselines[0], Tuple, List):
+    elif isinstance(antennas_or_baselines[0], tuple, list):
         if isinstance(antennas_or_baselines[0][0], Antenna) and len(antennas_or_baselines[0]) == 2:
             baselines = antennas_or_baselines
         else:
@@ -248,8 +248,8 @@ def compute_uv_track(antennas_or_baselines, dec=34.070, freq=49.0e6, site=lwa1):
     """
     
     if isinstance(antennas_or_baselines[0], Antenna):
-        baselines = get_baselines(antennas_or_baselines, include_auto=include_auto, indicies=False)
-    elif isinstance(antennas_or_baselines[0], Tuple, List):
+        baselines = get_baselines(antennas_or_baselines, include_auto=False, indicies=False)
+    elif isinstance(antennas_or_baselines[0], tuple, list):
         if isinstance(antennas_or_baselines[0][0], Antenna) and len(antennas_or_baselines[0]) == 2:
             baselines = antennas_or_baselines
         else:
