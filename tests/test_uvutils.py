@@ -137,6 +137,15 @@ class uvutils_tests(unittest.TestCase):
         np.testing.assert_allclose(out0, out1)
         np.testing.assert_allclose(out0, out2)
         
+        # Pass in a list of baselines
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=False)
+        out3 = uvutils.compute_uvw(bl, freq=freq)
+        self.assertEqual(len(out3), len(bl))
+        
+        # Pass in a list of baseline indicies
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=True)
+        self.assertRaises(TypeError, uvutils.compute_uvw, bl, {'freq': freq})
+        
     def test_compute_uv_track(self):
         """Test that the compute_uv_track function runs."""
         
@@ -147,6 +156,15 @@ class uvutils_tests(unittest.TestCase):
         
         # Make sure we have the right dimensions
         self.assertEqual(out.shape, (435,2,512))
+        
+        # Pass in a list of baselines
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=False)
+        out0 = uvutils.compute_uv_track(bl)
+        self.assertEqual(len(out0), len(bl))
+        
+        # Pass in a list of baseline indicies
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=True)
+        self.assertRaises(TypeError, uvutils.compute_uv_track, bl)
 
         
 class uvutils_test_suite(unittest.TestSuite):
