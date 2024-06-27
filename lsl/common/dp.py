@@ -634,7 +634,7 @@ class SoftwareDP(object):
         else:
             # Multiple inputs - loop over time
             output = [None for i in range(data.shape[0])]
-            with cf.ThreadPoolExecutor() as tpe:
+            with cf.ProcessPoolExecutor() as tpe:
                 futures = {}
                 for i in range(data.shape[0]):
                     task = tpe.submit(_process_stream_filter,

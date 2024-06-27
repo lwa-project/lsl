@@ -263,7 +263,7 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
             
     # Build the output array and loop over all azimuths and elevations
     output = np.zeros((360,90))
-    with cf.ThreadPoolExecutor() as tpe:
+    with cf.ProcessPoolExecutor() as tpe:
         futures = {}
         for az in list(range(360)):
             for el in list(range(90)):
