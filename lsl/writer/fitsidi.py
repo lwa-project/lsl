@@ -30,6 +30,7 @@ from astropy.constants import c as speedOfLight
 from astropy.utils import iers
 from astropy.io import fits as astrofits
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
+from lsl.correlator.uvutils import compute_uvw
 from lsl.common.color import colorfy
 
 from lsl import astro
@@ -150,34 +151,7 @@ class WriterBase(object):
             return self.obsTime
             
         def get_uvw(self, HA, dec, el):
-            Nbase = len(self.baselines)
-            uvw = np.zeros((Nbase,3), dtype=np.float32)
-            
-            # Phase center coordinates
-            # Convert numbers to radians and, for HA, hours to degrees
-            HA2 = HA * 15.0 * np.pi/180
-            dec2 = dec * np.pi/180
-            lat2 = el.lat.rad
-            
-            # Coordinate transformation matrices
-            trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
-                               [1,  0,            0           ],
-                               [0,  np.cos(lat2), np.sin(lat2)]])
-            trans2 = np.array([[ np.sin(HA2),               np.cos(HA2),              0           ],
-                               [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
-                               [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
-                    
-            for i,(a1,a2) in enumerate(self.baselines):
-                # Go from a east, north, up coordinate system to a celestial equator, 
-                # east, north celestial pole system
-                xyzPrime = a1.stand - a2.stand
-                xyz = np.dot(trans1, np.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
-                
-                # Go from CE, east, NCP to u, v, w
-                temp = np.dot(trans2, xyz)
-                uvw[i,:] = np.squeeze(temp) / speedOfLight
-                
-            return uvw
+            return compute_uvw(self.baselines, HA=HA, dec=dec, site=el, freq=1.0)
                 
         def argsort(self, mapper=None, shift=16):
             packed = []
