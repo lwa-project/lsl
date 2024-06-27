@@ -8,6 +8,8 @@ import os
 import sys
 import aipy
 import numpy as np
+import concurrent.futures as cf
+
 from astropy.constants import c as speedOfLight
 
 from lsl.common.data_access import DataAccess
@@ -209,7 +211,7 @@ def _int_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, elevation, beam_sh
     return sigHere
 
 
-def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, elevation=90.0, progress=False, disable_pool=False):
+def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, elevation=90.0, progress=False):
     """
     Given a list of antennas, compute the on-sky response of the delay-and-sum
     scheme implemented in int_delay_and_sum.  A 360x90 numpy array spanning azimuth
@@ -223,6 +225,9 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
     .. versionchanged:: 0.4.2
         Allowed for multiple polarization data to be delayed-and-summed correctly 
         and insured that a 2-D array is always returned (pol(s) by samples)
+    
+    .. versionchanged:: 3.0.0
+        Dropped the 'disable_pool' keyword.
     """
     
     # Build up a base time array, load in the cable delays, and get the stand 
@@ -248,26 +253,6 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
     # Load in the response of a single isolated stand
     standBeam = _load_stand_response(freq)
     
-    usePool = False
-    if not disable_pool:
-        # The multiprocessing module allows for the creation of worker pools to help speed
-        # things along.  If the processing module is found, use it.  Otherwise, set
-        # the 'usePool' variable to false and run single threaded.
-        try:
-            from multiprocessing import Pool, cpu_count
-            
-            # To get results pack from the pool, you need to keep up with the workers.  
-            # In addition, we need to keep up with which workers goes with which 
-            # baseline since the workers are called asynchronously.  Thus, we need a 
-            # taskList array to hold tuples of baseline ('count') and workers.
-            taskPool = Pool(processes=cpu_count())
-            taskList = []
-            
-            usePool = True
-            progress = False
-        except ImportError:
-            pass
-            
     # Build up the beam shape over all azimuths and elevations
     beam_shape =  np.zeros((360,90))
     for az in list(range(360)):
@@ -278,13 +263,23 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
             
     # Build the output array and loop over all azimuths and elevations
     output = np.zeros((360,90))
-    for az in list(range(360)):
-        for el in list(range(90)):
+    with cf.ThreadPoolExecutor() as tpe:
+        futures = {}
+        for az in list(range(360)):
+            for el in list(range(90)):
+                task = tpe.submit(_int_beep_and_sweep,
+                                  antennas, arrayXYZ, t, freq, az, el,
+                                  beam_shape=beam_shape[az,el], sample_rate=sample_rate,
+                                  direction=(azimuth, elevation))
+                futures[task] = (az,el)
+                
+        i = 0
+        for task in cf.as_completed(futures):
             # Display the progress meter if the `progress' keyword is set to True.  The
             # progress meter displays a `.' every 2% complete and the percentages every
             # 10%.  At 100%, `Done' is displayed.
             if progress:
-                fracDone = (az*90+el) / 32400.0 * 100
+                fracDone = i / 32400.0 * 100
                 if fracDone % 10 == 0 and round(fracDone, 2) != 100:
                     sys.stdout.write("%i%%" % fracDone)
                 elif round(fracDone, 2) == 100:
@@ -295,24 +290,10 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
                     pass
                 sys.stdout.flush()
                 
-            if usePool:
-                task = taskPool.apply_async(_int_beep_and_sweep, args=(antennas, arrayXYZ, t, freq, az, el), kwds={'beam_shape': beam_shape[az,el], 'sample_rate': sample_rate, 'direction': (azimuth, elevation)})
-                taskList.append((az,el,task))
-            else:
-                output[az,el] = _int_beep_and_sweep(antennas, arrayXYZ, t, freq, az, el, beam_shape=beam_shape[az,el], sample_rate=sample_rate, direction=(azimuth, elevation))
+            az,el = futures[task]
+            output[az,el] = task.result()
+            i += 1
                 
-    # If pooling... Close the pool so that it knows that no ones else is joining.
-    # Then, join the workers together and wait on the last one to finish before
-    # saving the results.
-    if usePool:
-        taskPool.close()
-        taskPool.join()
-        
-        # This is where he taskList list comes in handy.  We now know who did what
-        # when we unpack the various results
-        for az,el,task in taskList:
-            output[az,el] = task.get()
-            
     # Done
     return output
 
@@ -412,7 +393,7 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
     .. versionchanged:: 1.2.1
         Removed the 'disable_pool' keyword since recent optimztions to 
         the function have caused the multiprocessing.Pool feature to
-        actually be slower than the signle-threaded version.
+        actually be slower than the single-threaded version.
         
     .. versionchanged:: 0.4.0
         Switched over to passing in Antenna instances generated by the

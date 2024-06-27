@@ -12,6 +12,7 @@ filters and a software version of DP.
 """
 
 import numpy as np
+import concurrent.futures as cf
 from scipy.signal import freqz, lfilter
 from scipy.interpolate import interp1d
 
@@ -631,48 +632,21 @@ class SoftwareDP(object):
             # Single input
             output = _process_stream_filter(time, data, self.avaliableModes[self.mode][self.filter], self.central_freq)
         else:
-            try:
-                from multiprocessing import Pool, cpu_count
-                
-                # To get results pack from the pool, you need to keep up with the workers.  
-                # In addition, we need to keep up with which workers goes with which 
-                # baseline since the workers are called asynchronously.  Thus, we need a 
-                # taskList array to hold tuples of baseline ('count') and workers.
-                taskPool = Pool(processes=cpu_count())
-                taskList = []
-
-                usePool = True
-            except ImportError:
-                usePool = False
-                
-            # Turn off the thread pool if we are explicitly told not to use it.
-            if disable_pool:
-                usePool = False
-            
-            # Multiple inputs - loop over all of them
+            # Multiple inputs - loop over time
             output = [None for i in range(data.shape[0])]
-            
-            for i in range(data.shape[0]):
-                if usePool:
-                    # Use the pool
-                    task = taskPool.apply_async(_process_stream_filter, args=(time, data[i,:], self.avaliableModes[self.mode][self.filter], self.central_freq))
-                    taskList.append((i,task))
-                else:
-                    # The pool is closed
-                    output[i] = _process_stream_filter(time, data[i,:], self.avaliableModes[self.mode][self.filter], self.central_freq)
+            with cf.ThreadPoolExecutor() as tpe:
+                futures = {}
+                for i in range(data.shape[0]):
+                    task = tpe.submit(_process_stream_filter,
+                                      time, data[i,:],
+                                      self.avaliableModes[self.mode][self.filter],
+                                      self.central_freq)
+                    futures[task] = i
                     
-            if usePool:
-                taskPool.close()
-                taskPool.join()
-
-                # This is where he taskList list comes in handy.  We now know who did what
-                # when we unpack the various results
-                for i,task in taskList:
-                    output[i] = task.get()
-
-                # Destroy the taskPool
-                del(taskPool)
-                
+                for task in cf.as_completed(futures):
+                    i = futures[task]
+                    output[i] = task.result()
+                    
             output = np.array(output)
             
         return output
