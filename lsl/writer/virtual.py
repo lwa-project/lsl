@@ -108,7 +108,7 @@ class VirtualWriter(WriterBase):
             
         # Phase center coordinates
         it = equ.transform_to(ITRS(location=self.el, obstime=date))
-        HA = ((el.lon - it.spherical.lon).wrap_at('180deg')).deg
+        HA = ((self.el.lon - it.spherical.lon).wrap_at('180deg')).deg
         dec = it.spherical.lat.deg
         
         # (u,v,w) coordinates
