@@ -119,13 +119,9 @@ class Uv(WriterBase):
         arrayX, arrayY, arrayZ = site.geocentric_location
         
         xyz = np.zeros((len(stands),3))
-        i = 0
-        for ant in antennas:
+        for i,ant in enumerate(antennas):
             ecef = ant.stand.earth_location.itrs
-            xyz[i,0] = ecef.x.to('m').value
-            xyz[i,1] = ecef.y.to('m').value
-            xyz[i,2] = ecef.z.to('m').value
-            i += 1
+            xyz[i,:] = ecef.cartesian.xyz.to('m').value
             
         # Create the stand mapper
         mapper = {}
@@ -691,8 +687,7 @@ class Uv(WriterBase):
         sourceID = 0
         for dataSet in self.data:
             if dataSet.pol == self.stokes[0]:
-                utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-                date = AstroTime(utc, format='jd', scale='utc')
+                date = AstroTime(dataSet.obsTime, format='mjd', scale='tai')
                 
                 try:
                     currSourceName = dataSet.source.name

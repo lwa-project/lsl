@@ -424,9 +424,7 @@ class Idi(WriterBase):
         xyz = np.zeros((len(stands),3))
         for i,ant in enumerate(antennas):
             ecef = ant.stand.earth_location.itrs
-            xyz[i,0] = ecef.x.to('m').value
-            xyz[i,1] = ecef.y.to('m').value
-            xyz[i,2] = ecef.z.to('m').value
+            xyz[i,:] = ecef.cartesian.xyz.to('m').value
             
         # Create the stand mapper to deal with the fact that stands range from 
         # 1 to 258, not 1 to 255
@@ -869,8 +867,7 @@ class Idi(WriterBase):
         sourceID = 0
         for dataSet in self.data:
             if dataSet.pol == self.stokes[0]:
-                utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-                date = AstroTime(utc, format='jd', scale='utc')
+                date = AstroTime(dataSet.obsTime, format='mjd', scale='tai')
                 
                 try:
                     currSourceName = dataSet.source.name
