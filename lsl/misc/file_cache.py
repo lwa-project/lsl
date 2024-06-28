@@ -179,7 +179,7 @@ class FileCache(object):
 
 
 #: os.stat_result - like namedtuple for stat-ing a MemoryFile
-mf_stat_result = namedtuple('ms_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
+mf_stat_result = namedtuple('mf_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
                                                'st_uid', 'st_gid', 'st_size',
                                                'st_atime', 'st_mtime', 'st_ctime'])
 
