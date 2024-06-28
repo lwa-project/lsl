@@ -195,7 +195,6 @@ class Frame(FrameBase):
     
     _header_class = FrameHeader
     _payload_class = FramePayload
-    gain = None
     
     @property
     def is_tbn(self):
