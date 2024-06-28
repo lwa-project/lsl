@@ -1,4 +1,4 @@
-"""
+altitude"""
 Deconvolution support for images made with :func:`lsl.imaging.utils.build_gridded_image`.
 
 .. versionchanged:: 3.0.0
@@ -234,19 +234,19 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
         except IndexError:
             peakAz = az[peak_x, peak_y]
         try:
-            peakEl = _interpolate(alt, peak_x, peak_y)
+            peakAlt = _interpolate(alt, peak_x, peak_y)
         except IndexError:
-            peakEl = alt[peak_x, peak_y]
+            peakAlt = alt[peak_x, peak_y]
             
         if verbose:
             currRA  = deg_to_hms(peakRA * 180/np.pi)
             currDec = deg_to_dms(peakDec * 180/np.pi)
             currAz  = deg_to_dms(peakAz * 180/np.pi)
-            currEl  = deg_to_dms(peakEl * 180/np.pi)
+            currAlt = deg_to_dms(peakAlt * 180/np.pi)
             
             print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, np.log10(peakV), peak_x, peak_y))
             print("               -> RA: %s, Dec: %s" % (currRA, currDec))
-            print("               -> az: %s, el: %s" % (currAz, currEl))
+            print("               -> az: %s, el: %s" % (currAz, currAlt))
             
         # Check for the exit criteria
         if peakV < 0:
@@ -453,7 +453,7 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
         # Make sure the source is up
         src.compute(aa)
         if verbose:
-            print('Source: %s @ %s degrees elevation' % (name, src.alt))
+            print('Source: %s @ %s degrees altitude' % (name, src.alt))
         if src.alt <= 10*np.pi/180.0:
             continue
             
@@ -522,19 +522,19 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                 peak_xO, peak_yO = peak_x, peak_y
                 peakAz = az[peak_x, peak_y]
             try:
-                peakEl = _interpolate(alt, peak_x, peak_y)
+                peakAlt = _interpolate(alt, peak_x, peak_y)
             except IndexError:
-                peakEl = alt[peak_x, peak_y]
+                peakAlt = alt[peak_x, peak_y]
                 
             if verbose:
                 currRA  = deg_to_hms(peakRA * 180/np.pi)
                 currDec = deg_to_dms(peakDec * 180/np.pi)
                 currAz  = deg_to_dms(peakAz * 180/np.pi)
-                currEl  = deg_to_dms(peakEl * 180/np.pi)
+                currAlt = deg_to_dms(peakAlt * 180/np.pi)
                 
                 print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, np.log10(peakV), peak_x, peak_y))
                 print("               -> RA: %s, Dec: %s" % (currRA, currDec))
-                print("               -> az: %s, el: %s" % (currAz, currEl))
+                print("               -> az: %s, el: %s" % (currAz, currAlt))
                 
             # Check for the exit criteria
             if peakV < 0:

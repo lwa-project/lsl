@@ -4,7 +4,7 @@ include:
   * the locations and names of sources, 
   * the horizon, 
   * a graticle showing lines of constant RA and dec., and
-  * a graticle showing lines of constant azimuth and elevation.
+  * a graticle showing lines of constant azimuth and altitude.
 
 All of the functions in this module accept a matplotlib axes instances that 
 is used for plotting.
@@ -36,10 +36,10 @@ __all__ = ["sources", "horizon", "graticule_radec", "graticule_azalt"]
 
 def _radec_of(antennaarray, az, alt, degrees=False):
     """
-    Given a lsl.sim.vis.AntennaArray instance and an azimuth/elevation pair,
+    Given a lsl.sim.vis.AntennaArray instance and an azimuth/altitude pair,
     find the RA/dec of that point in the FK5 frame (equinox=J2000).
     
-    .. note:: If 'degrees' is True then the input azimuth/elevation is taken to
+    .. note:: If 'degrees' is True then the input azimuth/altitude is taken to
               be in degrees and the returned RA/dec is also in degrees.
     """
     
@@ -103,7 +103,7 @@ def sources(ax, gimg, srcs, phase_center='z', label=True, marker='x', color='whi
     antennaarray.set_jultime(old_jultime)
 
 
-def horizon(ax, gimg, elevation_cut=1e-3, color='white'):
+def horizon(ax, gimg, altitude_cut=1e-3, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the horizon.
     
@@ -120,9 +120,9 @@ def horizon(ax, gimg, elevation_cut=1e-3, color='white'):
     wcs = gimg.wcs
     el = gimg.antennaarray.earth_location
     
-    # Find the horizon (well elevation of 0.001 deg)
+    # Find the horizon (well altitude of 0.001 deg)
     ot = AstroTime(mjd, format='mjd', scale='utc')
-    tc = AltAz(np.arange(361)*astrounits.deg, np.ones(361)*elevation_cut*astrounits.deg,
+    tc = AltAz(np.arange(361)*astrounits.deg, np.ones(361)*altitude_cut*astrounits.deg,
                location=el, obstime=ot)
     sc = SkyCoord(tc)
     
@@ -181,7 +181,7 @@ def graticule_radec(ax, gimg, label=True, color='white'):
 def graticule_azalt(ax, gimg, label=True, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot lines of
-    constant azimuth and elevation.  Elevations are spaced at 20 degree intervals
+    constant azimuth and altitude.  Altitudes are spaced at 20 degree intervals
     and azimuths are spaced at 45 degree intervals.
 
     .. versionchanged:: 3.0.0
@@ -193,7 +193,7 @@ def graticule_azalt(ax, gimg, label=True, color='white'):
     wcs = gimg.wcs
     el = gimg.antennaarray.earth_location
     
-    # Lines of constant elevation
+    # Lines of constant altitude
     ot = AstroTime(mjd, format='mjd', scale='utc')
     for alt in range(0, 90, 20):
         tc = AltAz(np.arange(361)*astrounits.deg, np.ones(361)*alt*astrounits.deg,

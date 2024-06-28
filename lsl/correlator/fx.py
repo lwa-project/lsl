@@ -200,14 +200,14 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         
     .. versionchanged:: 1.0.0
         Added a phase-center keyword that accept a two-element tuple of 
-        azimuth and elelvation (in degrees) to change where the 
-        correlations are phased to
+        azimuth and altitude (in degrees) to change where the correlations are
+        phased to
         
     .. versionchanged:: 1.1.0
         Made the 'phase_center' keyword more flexible.  It can now be either:
          * 'z' to denote the zenith,
          * a ephem.Body instances which has been computed for the observer, or
-         * a two-element tuple of azimuth, elevation in degrees.
+         * a two-element tuple of azimuth, altitude in degrees.
          
     .. versionchanged:: 1.2.5
         Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
@@ -255,24 +255,24 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # pointing vector
     if phase_center == 'z':
         azPC = 0.0
-        elPC = np.pi/2.0
+        altPC = np.pi/2.0
     else:
         if isinstance(phase_center, AltAz):
             azPC = phase_center.az.rad
-            elPC = phase_center.alt.rad
+            altPC = phase_center.alt.rad
         elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
             azPC = phase_center.az.rad
-            elPC = phase_center.alt.rad
+            altPC = phase_center.alt.rad
         elif isinstance(phase_center, ephem.Body):
             azPC = phase_center.az * 1.0
-            elPC = phase_center.alt * 1.0
+            altPC = phase_center.alt * 1.0
         else:
             azPC = phase_center[0]*np.pi/180.0
-            elPC = phase_center[1]*np.pi/180.0
+            altPC = phase_center[1]*np.pi/180.0
             
-    source = np.array([np.cos(elPC)*np.sin(azPC), 
-                       np.cos(elPC)*np.cos(azPC), 
-                       np.sin(elPC)])
+    source = np.array([np.cos(altPC)*np.sin(azPC), 
+                       np.cos(altPC)*np.cos(azPC), 
+                       np.sin(altPC)])
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals
@@ -360,14 +360,14 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     .. versionchanged:: 1.0.0
         Added a phase_center keyword that accept a two-element tuple of 
-        azimuth and elelvation (in degrees) to change where the 
-        correlations are phased to
+        azimuth and altitude (in degrees) to change where the correlations are
+        phased to
         
     .. versionchanged:: 1.1.0
         Made the 'phase_center' keyword more flexible.  It can now be either:
          * 'z' to denote the zenith,
          * a ephem.Body instances which has been computed for the observer, or
-         * a two-element tuple of azimuth, elevation in degrees.
+         * a two-element tuple of azimuth, altitude in degrees.
          
     .. versionchanged:: 1.2.5
         Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
@@ -412,23 +412,23 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     # pointing vector
     if phase_center == 'z':
         azPC = 0.0
-        elPC = np.pi/2.0
+        altPC = np.pi/2.0
     else:
         if isinstance(phase_center, AltAz):
             azPC = phase_center.az.rad
-            elPC = phase_center.alt.rad
+            altPC = phase_center.alt.rad
         elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
             azPC = phase_center.az.rad
-            elPC = phase_center.alt.rad
+            altPC = phase_center.alt.rad
         elif isinstance(phase_center, ephem.Body):
             azPC = phase_center.az * 1.0
-            elPC = phase_center.alt * 1.0
+            altPC = phase_center.alt * 1.0
         else:
             azPC = phase_center[0]*np.pi/180.0
-            elPC = phase_center[1]*np.pi/180.0
-    source = np.array([np.cos(elPC)*np.sin(azPC), 
-                       np.cos(elPC)*np.cos(azPC), 
-                       np.sin(elPC)])
+            altPC = phase_center[1]*np.pi/180.0
+    source = np.array([np.cos(altPC)*np.sin(azPC), 
+                       np.cos(altPC)*np.cos(azPC), 
+                       np.sin(altPC)])
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals

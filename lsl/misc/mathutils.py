@@ -372,8 +372,8 @@ def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
     
     .. note::
         sphfit was designed to fit the LWA dipole response pattern as a function of
-        azimuth and elevation.  Elevation angles are mapped to theta angles by adding
-        pi/2 so that an elevation of 90 degrees corresponds to a theta of 180 degrees.
+        azimuth and altitude.  Altitude angles are mapped to theta angles by adding
+        pi/2 so that an altitude of 90 degrees corresponds to a theta of 180 degrees.
         To fit in terms of spherical coordianates, subtract pi/2 from the theta values
         before running.
     """
@@ -435,8 +435,8 @@ def sphval(terms, az, alt, degrees=False, real_only=False):
     
     .. note::
         sphfit was designed to fit the LWA dipole response pattern as a function of
-        azimuth and elevation.  Elevation angles are mapped to theta angles by adding
-        pi/2 so that an elevation of 90 degrees corresponds to a theta of 180 degrees.
+        azimuth and altitude.  Altitude angles are mapped to theta angles by adding
+        pi/2 so that an altitude of 90 degrees corresponds to a theta of 180 degrees.
         To spherical harmonics in terms of spherical coordianates, subtract pi/2 from 
         the theta values before running.
     """

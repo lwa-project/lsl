@@ -1518,7 +1518,7 @@ class BeamStep(object):
     Required Keywords:
      * pointing coordinate 1 (RA [hours] or azimuth [degrees] or ephem.hours/ephem.degrees 
        instance)
-     * pointing coordinate 2 (dec or elevation/altitude [degrees] or ephem.degrees instance)
+     * pointing coordinate 2 (dec or altitude [degrees] or ephem.degrees instance)
      * observation duration (HH:MM:SS.SSS string or timedelta instance)
      * observation tuning frequency 1 (Hz)
      * observation tuning frequency 1 (Hz)
@@ -1601,7 +1601,7 @@ class BeamStep(object):
         
     @property
     def c2(self):
-        """Coordinate 2 - degrees (J2000) if dec., degrees if elevation."""
+        """Coordinate 2 - degrees (J2000) if dec., degrees if altitude."""
         
         return self._c2
         
@@ -1618,7 +1618,7 @@ class BeamStep(object):
                 raise ValueError(f"Invalid value for dec. '{value:+.6f}' deg")
         else:
             if value < 0.0 or value > 90.0:
-                raise ValueError(f"Invalid value for elevation '{value:.6f}' deg")
+                raise ValueError(f"Invalid value for altitude '{value:.6f}' deg")
         self._c2 = value
         
     @property
