@@ -21,7 +21,7 @@ import numpy as np
 
 from astropy import units as astrounits
 from astropy.time import Time as AstroTime
-from astropy.coordinates import FK5, AltAz
+from astropy.coordinates import AltAz, SkyCoord
 
 from lsl import astro
 from lsl.imaging.utils import ImgWPlus
@@ -88,9 +88,12 @@ def sources(ax, gimg, srcs, phase_center='z', label=True, marker='x', color='whi
     # Compute the positions of major sources and label the images
     old_jultime = antennaarray.get_jultime()*1.0
     antennaarray.set_jultime(mjd + astro.MJD_OFFSET)
+    ot = AstroTime(mjd, format='mjd', scale='utc')
     for name,src in srcs.items():
         src.compute(antennaarray)
-        x, y = wcs.all_world2pix(src.ra*180/np.pi, src.dec*180/np.pi, 0)
+        sc = SkyCoord(src.ra*astrounits.rad, src.dec*astrounits.rad,
+                      frame='fk5', equinox=ot)
+        x, y = wcs.world_to_pixel(sc)
         
         if src.alt >= 0:
             ax.plot(x, y, marker=marker, markerfacecolor='None', markeredgecolor=color, 
@@ -121,9 +124,9 @@ def horizon(ax, gimg, elevation_cut=1e-3, color='white'):
     ot = AstroTime(mjd, format='mjd', scale='utc')
     tc = AltAz(np.arange(361)*astrounits.deg, np.ones(361)*elevation_cut*astrounits.deg,
                location=el, obstime=ot)
-    eq = tc.transform_to(FK5(equinox=ot))
+    sc = SkyCoord(tc)
     
-    x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+    x, y = wcs.world_to_pixel(sc)
     ax.plot(x, y, color=color)
 
 
@@ -145,34 +148,33 @@ def graticule_radec(ax, gimg, label=True, color='white'):
     # Lines of constant dec.
     ot = AstroTime(mjd, format='mjd', scale='utc')
     for dec in range(-80, 90, 20):
-        eq = FK5(np.arange(361)*astrounits.deg, np.ones(361)*dec*astrounits.deg,
-                 equinox=ot)
+        sc = SkyCoord(np.arange(361)*astrounits.deg, np.ones(361)*dec*astrounits.deg,
+                      frame='fk5', equinox=ot)
         
-        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+        x, y = wcs.world_to_pixel(sc)
         ax.plot(x, y, color=color, alpha=0.75)
         
-        eq = FK5(gimg.wcs.wcs.crval[0]*astrounits.deg, (dec+5)*astrounits.deg,
-                 equinox=ot)
-        tc = eq.transform_to(AltAz(location=el, obstime=ot))
+        sc = SkyCoord(wcs.wcs.crval[0]*astrounits.deg, (dec+5)*astrounits.deg,
+                      frame='fk5', equinox=ot)
+        tc = sc.transform_to(AltAz(location=el, obstime=ot))
         
         if tc.alt > 15*astrounits.deg and label:
-            x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+            x, y = wcs.world_to_pixel(sc)
             ax.text(x, y, r'%+i$^\circ$' % dec, color=color)
             
     # Lines of constant RA
     for ra in range(0, 360, 30):
-        eq = FK5(np.ones(161)*ra*astrounits.deg, (np.arange(161)-80)*astrounits.deg,
-                 equinox=ot)
+        sc = SkyCoord(np.ones(161)*ra*astrounits.deg, (np.arange(161)-80)*astrounits.deg,
+                      frame='fk5', equinox=ot)
         
-        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+        x, y = wcs.world_to_pixel(sc)
         ax.plot(x, y, color=color, alpha=0.75)
         
-        eq = FK5((ra-5)*astrounits.deg, '0deg',
-                 equinox=ot)
-        tc = eq.transform_to(AltAz(location=el, obstime=ot))
+        sc = SkyCoord((ra-5)*astrounits.deg, '0deg', frame='fk5', equinox=ot)
+        tc = sc.transform_to(AltAz(location=el, obstime=ot))
         
         if tc.alt > 20*astrounits.deg and label:
-            x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+            x, y = wcs.world_to_pixel(sc)
             ax.text(x, y, '%i$^h$' % (ra/15,), color=color)
 
 
@@ -196,9 +198,9 @@ def graticule_azalt(ax, gimg, label=True, color='white'):
     for alt in range(0, 90, 20):
         tc = AltAz(np.arange(361)*astrounits.deg, np.ones(361)*alt*astrounits.deg,
                    location=el, obstime=ot)
-        eq = tc.transform_to(FK5(equinox=ot))
+        sc = SkyCoord(tc)
         
-        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+        x, y = wcs.world_to_pixel(sc)
         ax.plot(x, y, color=color, alpha=0.75)
         
         if label:
@@ -211,9 +213,9 @@ def graticule_azalt(ax, gimg, label=True, color='white'):
     for az in range(0, 360, 45):
         tc = AltAz(np.ones(161)*az*astrounits.deg, (np.arange(161)-80)*astrounits.deg,
                    location=el, obstime=ot)
-        eq = tc.transform_to(FK5(equinox=ot))
+        sc = SkyCoord(tc)
         
-        x, y = wcs.all_world2pix(eq.ra.deg, eq.dec.deg, 0)
+        x, y = wcs.world_to_pixel(sc)
         ax.plot(x, y, color=color, alpha=0.75)
         
         if label:
