@@ -6,6 +6,7 @@ for ionospheric corrections.
 import os
 import sys
 import gzip
+import ephem
 import numpy as np
 import socket
 import tarfile
@@ -23,6 +24,8 @@ except ImportError:
     from scipy.special import factorial
 from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
+
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.stations import geo_to_ecef
 from lsl.common.data_access import DataAccess
@@ -335,8 +338,8 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
         
         ## Build the rotation matrix for ECEF to SEZ
         rot = np.array([[ np.sin(lt)*np.cos(ln), np.sin(lt)*np.sin(ln), -np.cos(lt)], 
-                    [-np.sin(ln),               np.cos(ln),                0            ],
-                    [ np.cos(lt)*np.cos(ln), np.cos(lt)*np.sin(ln),  np.sin(lt)]])
+                        [-np.sin(ln),            np.cos(ln),             0         ],
+                        [ np.cos(lt)*np.cos(ln), np.cos(lt)*np.sin(ln),  np.sin(lt)]])
                     
         ## Apply and extract
         sez = np.dot(rot, np.array([Bx,By,Bz]))
@@ -1432,6 +1435,17 @@ def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
     elev = site.elev + height
     x0 = (lat, lon)
     
+    # Convert
+    if isinstance(az, AstroAngle):
+        az = az.deg
+    elif isinstance(az, ephem.Angle):
+        az = az * 180/np.pi
+        
+    if isinstance(el, AstroAngle):
+        el = el.deg
+    elif isinstance(el, ephem.Angle):
+        el = el * 180/np.pi
+        
     # Optimize
     output = fmin(err2, x0, args=(np.array([az, el]), []), disp=verbose)
     
