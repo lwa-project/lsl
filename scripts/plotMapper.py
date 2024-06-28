@@ -54,11 +54,8 @@ def main(args):
     # Load in the positions of all of the stands
     xyz = np.zeros((len(antennas), 3))
     i = 0
-    for ant in antennas:
-        xyz[i,0] = ant.stand.x
-        xyz[i,1] = ant.stand.y
-        xyz[i,2] = ant.stand.z
-        i += 1
+    for i,ant in enumerate(antennas):
+        xyz[i,:] = ant.stand.xyz
 
     # Begin the plot
     fig = plt.figure()

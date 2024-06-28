@@ -41,12 +41,8 @@ def main(args):
     # Load in the stand position data
     data = np.zeros((len(stands)//2,3))
     
-    i = 0
-    for stand in stands[::2]:
-        data[i,0] = stand.x
-        data[i,1] = stand.y
-        data[i,2] = stand.z
-        i += 1
+    for i,stand in enumerate(stands[::2]):
+        data[i,:] = stand.xyz
         
     # Color-code the stands by their elevation
     color = data[:,2]

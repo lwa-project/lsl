@@ -896,7 +896,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     # Build an array of AIPY Antenna objects
     ants = []
     for antenna in antennas:
-        top = np.array([antenna.stand.x, antenna.stand.y, antenna.stand.z])
+        top = np.array(antenna.stand.xyz)
         top += (2*pos_error*np.random.rand(3)-pos_error)	# apply a random positional error if needed
         top.shape = (3,)
         eq = np.dot( aipy.coord.top2eq_m(0.0, station.lat), top )

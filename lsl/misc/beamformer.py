@@ -88,9 +88,7 @@ def calc_delay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
         if ant.stand.id <= 256:
             good.append(i)
             
-        xyz[i,0] = ant.stand.x
-        xyz[i,1] = ant.stand.y
-        xyz[i,2] = ant.stand.z
+        xyz[i,:] = ant.stand.xyz
         i += 1
         
     arrayX = xyz[good,0].mean()
@@ -264,9 +262,7 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
         if ant.stand.id <= 256:
             good.append(i)
             
-        xyz[i,0] = ant.stand.x
-        xyz[i,1] = ant.stand.y
-        xyz[i,2] = ant.stand.z
+        xyz[i,:] = ant.stand.xyz
         i += 1
         
     arrayX = xyz[good,0].mean()
@@ -445,9 +441,7 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
         if ant.stand.id <= 256:
             good.append(i)
             
-        xyz[i,0] = ant.stand.x
-        xyz[i,1] = ant.stand.y
-        xyz[i,2] = ant.stand.z
+        xyz[i,:] = ant.stand.xyz
         i += 1
         
     arrayX = xyz[good,0].mean()
