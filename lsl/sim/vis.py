@@ -90,8 +90,12 @@ class RadioFixedBody(aipy.amp.RadioFixedBody):
     coordinate/source classes.
     """
     
+    _astropy = None
+    
     @classmethod
     def from_astropy(kls, skycoord, name='', jys=0.0, index=-1, mfreq=0.15, ionref=(0.0, 0.0), srcshape=(0.0, 0.0, 0.0)):
+        self._astropy = skycoord
+        
         eq = skycoord.transform_to(FK5(equinox='J2000'))
         return aipy.amp.RadioFixedBody(eq.ra.rad, eq.dec.rad,
                                        name=name, epoch=ephem.J2000,
@@ -100,8 +104,11 @@ class RadioFixedBody(aipy.amp.RadioFixedBody):
         
     @property
     def astropy(self):
-        return FK5(self._ra*astrounits.rad, self._dec*astrounits.rad,
-                   equinox=AstroTime(self._epoch + astro.DJD_OFFSET, format='jd', scale='utc'))
+        if self._astropy is not None:
+            return self._astropy
+        else:
+            return FK5(self._ra*astrounits.rad, self._dec*astrounits.rad,
+                       equinox=AstroTime(self._epoch + astro.DJD_OFFSET, format='jd', scale='utc'))
 
 
 class RadioEarthSatellite(object):
