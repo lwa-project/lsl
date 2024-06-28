@@ -628,6 +628,10 @@ class Stand(object):
         return out
         
     @property
+    def xyz(self):
+        return (self.x, self.y, self.z)
+        
+    @property
     def earth_location(self):
         if self._parent is None:
             raise RuntimeError("Cannot determine stands location without a reference point")
