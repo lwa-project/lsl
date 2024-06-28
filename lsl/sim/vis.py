@@ -94,13 +94,11 @@ class RadioFixedBody(aipy.amp.RadioFixedBody):
     
     @classmethod
     def from_astropy(kls, skycoord, name='', jys=0.0, index=-1, mfreq=0.15, ionref=(0.0, 0.0), srcshape=(0.0, 0.0, 0.0)):
-        self._astropy = skycoord
-        
         eq = skycoord.transform_to(FK5(equinox='J2000'))
-        return aipy.amp.RadioFixedBody(eq.ra.rad, eq.dec.rad,
-                                       name=name, epoch=ephem.J2000,
-                                       jys=jys, index=index, mfreq=mfreq,
-                                       ionref=ionref, srcshape=srcshape)
+        _rfb = kls(eq.ra.rad, eq.dec.rad, name=name, epoch=ephem.J2000,
+                   jys=jys, index=index, mfreq=mfreq, ionref=ionref, srcshape=srcshape)
+        _rfb._astropy = skycoord
+        return _rfb
         
     @property
     def astropy(self):
