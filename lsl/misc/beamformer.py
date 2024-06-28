@@ -7,10 +7,12 @@ beamforming for TBN time series data (delayAndSum).
 import os
 import sys
 import aipy
+import ephem
 import numpy as np
 import concurrent.futures as cf
 
 from astropy.constants import c as speedOfLight
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.data_access import DataAccess
 from lsl.common import dp as dp_common
@@ -61,6 +63,17 @@ def calc_delay(antennas, freq=49.0e6, azimuth=0.0, elevation=90.0):
         Changed the computed array center to exclude stands #257 through #260
     """
     
+    # Convert
+    if isinstance(azimuth, AstroAngle):
+        azimuth = azimuth.deg
+    elif isinstance(azimuth, ephem.Angle):
+        azimuth = azimuth * 180/np.pi
+        
+    if isinstance(elevation, AstroAngle):
+        elevation = elevation.deg
+    elif isinstance(elevation, ephem.Angle):
+        elevation = elevation * 180/np.pi
+        
     # Make sure the pointing coordinates make sense
     if elevation < 0 or elevation > 90:
         raise ValueError(f"Pointing elevation ({elevation:.2f} deg) is out of range [0, 90]")
@@ -230,6 +243,17 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, e
         Dropped the 'disable_pool' keyword.
     """
     
+    # Convert
+    if isinstance(azimuth, AstroAngle):
+        azimuth = azimuth.deg
+    elif isinstance(azimuth, ephem.Angle):
+        azimuth = azimuth * 180/np.pi
+        
+    if isinstance(elevation, AstroAngle):
+        elevation = elevation.deg
+    elif isinstance(elevation, ephem.Angle):
+        elevation = elevation * 180/np.pi
+        
     # Build up a base time array, load in the cable delays, and get the stand 
     # positions for geometric delay calculations.
     t = np.arange(0,1500)/sample_rate
@@ -401,6 +425,16 @@ def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, az
         numbers.
     """
     
+    if isinstance(azimuth, AstroAngle):
+        azimuth = azimuth.deg
+    elif isinstance(azimuth, ephem.Angle):
+        azimuth = azimuth * 180/np.pi
+        
+    if isinstance(elevation, AstroAngle):
+        elevation = elevation.deg
+    elif isinstance(elevation, ephem.Angle):
+        elevation = elevation * 180/np.pi
+        
     # Build up a base time array, load in the cable delays, and get the stand 
     # positions for geometric delay calculations.
     t = np.arange(0,1500)/sample_rate

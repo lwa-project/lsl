@@ -1,9 +1,12 @@
 import os
 import sys
 import h5py
+import ephem
 import numpy as np
 from collections import OrderedDict
 from scipy.interpolate import interp1d, RegularGridInterpolator
+
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.data_access import DataAccess
 
@@ -107,7 +110,7 @@ def _load_response_fitted(frequency, corrected=False):
     return output
 
 
-def _load_response_full(frequency, model='feko'):
+def _load_response_full(frequency, model='nec_004'):
     """
     Given an observing frequency in Hz, load in data from an electromagnetic
     model for an isolated LWA dipole as a function of frequency, azimuth, and
@@ -189,9 +192,15 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
     Mueller matrix with shape (4,4)+az.shape.
     """
     
-    # Convert az/alt if needed
-    if not degrees:
+    # Convert
+    if isinstance(az, AstroAngle):
+        az = az.deg
+    elif isinstance(az, ephem.Angle) or not degrees:
         az = az * 180/np.pi
+    
+    if isinstance(alt, AstroAngle):
+        alt = alt.deg
+    elif isinstance(az, ephem.Angle) or not degrees:
         alt = alt * 180/np.pi
         
     # Load in correct the Jones matrix
@@ -274,8 +283,14 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
     """
     
     # Convert
-    if not degrees:
+    if isinstance(az, AstroAngle):
+        az = az.deg
+    elif isinstance(az, ephem.Angle) or not degrees:
         az = az * 180/np.pi
+    
+    if isinstance(alt, AstroAngle):
+        alt = alt.deg
+    elif isinstance(az, ephem.Angle) or not degrees:
         alt = alt * 180/np.pi
         
     # Load
