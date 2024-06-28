@@ -138,7 +138,7 @@ class FrameHeader(FrameHeaderBase):
         Convert the tuning word to a frequency in Hz.
         """
 
-        return dp_common.fS * self.tuning_word / 2**32
+        return dp_common.word_to_freq(self.tuning_word)
         
     @property
     def filter_code(self):

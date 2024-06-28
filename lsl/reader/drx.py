@@ -146,7 +146,7 @@ class FramePayload(FramePayloadBase):
         Function to set the central frequency of the DRX data in Hz.
         """
 
-        return dp_common.fS * self.tuning_word / 2**32
+        return dp_common.word_to_freq(self.tuning_word)
 
 
 class Frame(FrameBase):
