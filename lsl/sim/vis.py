@@ -1032,7 +1032,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         pcEl = 90.0
         
         ot = AstroTime(jd, format='jd', scale='utc')
-        tc = AltAz('0deg', '90deg', location=aa._station.earth_location, obstime=ot)
+        tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
         pc = tc.transform_to(FK5(equinox=ot))
         
         UVData.phase_center = aipy.amp.RadioFixedBody(pc.ra.rad, pc.dec.rad,
