@@ -72,8 +72,9 @@ telemetry.track_module()
 
 
 __version__ = '0.6'
-__all__ = ['SOURCES', 'RadioEarthSatellite', 'BeamAlm', 'Antenna', 'AntennaArray', 
-           'build_sim_array', 'build_sim_data', 'scale_data', 'shift_data', 'add_baseline_noise']
+__all__ = ['SOURCES', 'RadioFixedBody', 'RadioEarthSatellite', 'BeamAlm', 'Antenna',
+           'AntennaArray', 'build_sim_array', 'build_sim_data', 'scale_data',
+           'shift_data', 'add_baseline_noise']
 
 
 speedOfLight = speedOfLight.to('m/s').value
@@ -83,9 +84,29 @@ speedOfLight = speedOfLight.to('m/s').value
 SOURCES = aipy.src.get_catalog(srcs=['Sun', 'Jupiter', 'cas', 'crab', 'cyg', 'her', 'sgr', 'vir'])
 
 
+class RadioFixedBody(aipy.amp.RadioFixedBody):
+    """
+    Sub-class of aipy.amp.RadioFixedBody that allows conversion to/from astropy
+    coordinate/source classes.
+    """
+    
+    @classmethod
+    def from_astropy(kls, skycoord, name='', jys=0.0, index=-1, mfreq=0.15, ionref=(0.0, 0.0), srcshape=(0.0, 0.0, 0.0)):
+        eq = skycoord.transform_to(FK5(equinox='J2000'))
+        return aipy.amp.RadioFixedBody(eq.ra.rad, eq.dec.rad,
+                                       name=name, epoch=ephem.J2000,
+                                       jys=jys, index=index, mfreq=mfreq,
+                                       ionref=ionref, srcshape=srcshape)
+        
+    @property
+    def astropy(self):
+        return FK5(self._ra*astrounits.rad, self._dec*astrounits.rad,
+                   equinox=AstroTime(self._epoch + astro.DJD_OFFSET, format='jd', scale='utc'))
+
+
 class RadioEarthSatellite(object):
     """
-    Implement a aipy.amp.RadioBody-lime simulation object for an Earth-
+    Implement a aipy.amp.RadioBody-like simulation object for an Earth-
     orbiting satellite using a two-line element set.
     """
     
@@ -1035,9 +1056,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
         pc = tc.transform_to(FK5(equinox=ot))
         
-        UVData.phase_center = aipy.amp.RadioFixedBody(pc.ra.rad, pc.dec.rad,
-                                                      name=f"ZA{pc.ra.to_string(sep='')}",
-                                                      epoch=ot.jd - astro.DJD_OFFSET)
+        UVData.phase_center = RadioFixedBody.from_astropy(pc)
         UVData.phase_center.compute(aa)
         
     for p,pol in enumerate(pols):

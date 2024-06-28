@@ -21,7 +21,7 @@ from lsl.reader.base import FrameTimestamp
 from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.imaging.data import VisibilityData, VisibilityDataSet, PolarizationDataSet
 from lsl.writer.fitsidi import WriterBase
-from lsl.sim.vis import build_sim_array
+from lsl.sim.vis import build_sim_array, RadioFixedBody
 from lsl.correlator.uvutils import compute_uvw
 from lsl.common.color import colorfy
 
@@ -168,9 +168,7 @@ class VirtualWriter(WriterBase):
             tc = AltAz('0deg', '90deg', location=self.el, obstime=ot)
             pc = tc.transform_to(FK5(equinox=ot))
         
-            phase_center = aipy.amp.RadioFixedBody(pc.ra.rad, pc.dec.rad,
-                                                   name=f"ZA{pc.ra.to_string(sep='')}",
-                                                   epoch=ot.jd - astro.DJD_OFFSET)
+            phase_center = RadioFixedBody.from_astropy(pc, name=f"ZA{pc.ra.to_string(sep='')}")
             old_obs_date = self.antenna_array.date
             self.antenna_array.date = ot.iso
             phase_center.compute(self.antenna_array)
