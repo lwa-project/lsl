@@ -45,6 +45,7 @@ import pytz
 import numpy as np
 import ctypes
 import struct
+from functools import reduce
 from datetime import datetime
 
 from astropy import units as astrounits
@@ -828,83 +829,22 @@ def mode_to_string(mode):
         raise ValueError(f"Invalid observing mode {mode}")
 
 
-def flat_to_multi(inputList, dim1, dim2=None, dim3=None, dim4=None):
-    if dim4 is not None:
-        return _flat_to_four(inputList, dim1, dim2, dim3, dim4)
+def flat_to_multi(inputList, *shape):
+    """
+    Convert a 1-D list into a multi-dimension list of shape 'shape'.
+    
+    .. versionchanged:: 3.0.0
+        Switch from explicit 'dim1', 'dim2', etc. to a catch-all 'shape'.
+    """
+    
+    if reduce(lambda x, y: x*y, shape, 1) != len(inputList):
+        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={' by '.join([str(s) for s in shape])}")
         
-    elif dim3 is not None:
-        return _flat_to_three(inputList, dim1, dim2, dim3)
-
-    elif dim2 is not None:
-        return _flat_to_two(inputList, dim1, dim2)
+    outputList = list(inputList)
+    while len(shape) > 1:
+        outputList = [outputList[i:i+shape[-1]] for i in range(0, len(outputList), shape[-1])]
+        shape = shape[:-1]
         
-    else:
-        return list(inputList)
-
-
-def _flat_to_two(inputList, dim1, dim2):
-    """
-    Convert a flatten list into a two-dimensional list.  This is useful
-    for converting flat lists of ctypes into their two-dimensional forms.
-    """
-    
-    if dim1*dim2 < len(inputList):
-        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={dim1} by {dim2}")
-    
-    outputList = []
-    for i in range(dim1):
-        outputList.append( [None for k in range(dim2)] )
-        for j in range(dim2):
-            try:
-                outputList[i][j] = inputList[dim2*i+j]
-            except IndexError:
-                pass
-    
-    return outputList
-
-
-def _flat_to_three(inputList, dim1, dim2, dim3):
-    """
-    Convert a flatten list into a three-dimensional list.  This is useful
-    for converting flat lists of ctypes into their three-dimensional forms.
-    """
-    
-    if dim1*dim2*dim3 < len(inputList):
-        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={dim1} by {dim2} by {dim3}")
-    
-    outputList = []
-    for i in range(dim1):
-        outputList.append( [[None for l in range(dim3)] for k in range(dim2)] )
-        for j in range(dim2):
-            for k in range(dim3):
-                try:
-                    outputList[i][j][k] = inputList[dim2*dim3*i+dim3*j+k]
-                except IndexError:
-                    pass
-    
-    return outputList
-
-
-def _flat_to_four(inputList, dim1, dim2, dim3, dim4):
-    """
-    Convert a flatten list into a four-dimensional list.  This is useful
-    for converting flat lists of ctypes into their four-dimensional forms.
-    """
-    
-    if dim1*dim2*dim3*dim4 < len(inputList):
-        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={dim1} by {dim2} by {dim3} by {dim4}")
-    
-    outputList = []
-    for i in range(dim1):
-        outputList.append( [[[None for m in range(dim4)] for l in range(dim3)] for k in range(dim2)] )
-        for j in range(dim2):
-            for k in range(dim3):
-                for l in range(dim4):
-                    try:
-                        outputList[i][j][k][l] = inputList[dim2*dim3*dim4*i+dim3*dim4*j+dim4*k+l]
-                    except IndexError:
-                        pass
-    
     return outputList
 
 
