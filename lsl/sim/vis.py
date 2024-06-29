@@ -57,7 +57,7 @@ from scipy.interpolate import interp1d
 from astropy import units as astrounits
 from astropy.constants import c as speedOfLight
 from astropy.time import Time as AstroTime
-from astropy.coordinates import AltAz, FK5, EarthLocation
+from astropy.coordinates import SkyCoord, AltAz, ICRS, FK4, FK5, EarthLocation
 
 from lsl import astro
 from lsl.common.data_access import DataAccess
@@ -93,11 +93,18 @@ class RadioFixedBody(aipy.amp.RadioFixedBody):
     _astropy = None
     
     @classmethod
-    def from_astropy(kls, skycoord, name='', jys=0.0, index=-1, mfreq=0.15, ionref=(0.0, 0.0), srcshape=(0.0, 0.0, 0.0)):
-        eq = skycoord.transform_to(FK5(equinox='J2000'))
+    def from_astropy(kls, value, name='', jys=0.0, index=-1, mfreq=0.15, ionref=(0.0, 0.0), srcshape=(0.0, 0.0, 0.0)):
+        if not isinstance(value, (SkyCoord, ICRS, FK4, FK5)):
+            raise TypeError("Expected an object of type SkyCoord, ICRS, FK4, or FK5")
+            
+        if isinstance(value, SkyCoord):
+            if not isinstance(value.frame, (ICRS, FK4, FK5)):
+                raise TypeError("Expected a SkyCoord in the frame of ICRS, FK4, or FK5")
+                
+        eq = value.transform_to(FK5(equinox='J2000'))
         _rfb = kls(eq.ra.rad, eq.dec.rad, name=name, epoch=ephem.J2000,
                    jys=jys, index=index, mfreq=mfreq, ionref=ionref, srcshape=srcshape)
-        _rfb._astropy = skycoord
+        _rfb._astropy = value
         return _rfb
         
     @property
