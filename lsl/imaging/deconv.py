@@ -1,4 +1,4 @@
-altitude"""
+"""
 Deconvolution support for images made with :func:`lsl.imaging.utils.build_gridded_image`.
 
 .. versionchanged:: 3.0.0
