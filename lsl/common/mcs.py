@@ -68,7 +68,7 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
-           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode', 'summary_to_string', 'SubsystemID', 'CommandID', 
+           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode', 'SubsystemID', 'CommandID', 
            'ObservingMode', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
@@ -658,29 +658,25 @@ class SummaryCode(enum.Enum):
     BOOTING = 4
     SHUTDWN = 5
     UNK     = 6
-
-
-def summary_to_string(code):
-    """
-    Convert a MCS subsystem status code to an explination.
-    """
     
-    if code == SummaryCode.NULL:
-        return "Not normally used"
-    elif code == SummaryCode.NORMAL:
-        return "Normal"
-    elif code == SummaryCode.WARNING:
-        return "Warning - issue(s) found, but still fully operational"
-    elif code == SummaryCode.ERROR:
-        return "Error - problems found which limit or prevent proper function"
-    elif code == SummaryCode.BOOTING:
-        return "Booting - initializing; not yet fully operational"
-    elif code == SummaryCode.SHUTDWN:
-        return "Shutdown - shutting down; not ready for operation"
-    elif code == SummaryCode.UNK:
-        return "Unknown"
-    else:
-        raise ValueError(f"Unknown summary code '{code}'")
+    @property
+    def description(self):
+        if self.value == 0:
+            return "Not normally used"
+        elif self.value == 1:
+            return "Normal"
+        elif self.value == 2:
+            return "Warning - issue(s) found, but still fully operational"
+        elif self.value == 3:
+            return "Error - problems found which limit or prevent proper function"
+        elif self.value == 4:
+            return "Booting - initializing; not yet fully operational"
+        elif self.value == 5:
+            return "Shutdown - shutting down; not ready for operation"
+        elif self.value == 6:
+            return "Unknown"
+        else:
+            raise ValueError(f"Unknown summary code '{code}'")
 
 
 class SubsystemID(enum.Enum):
