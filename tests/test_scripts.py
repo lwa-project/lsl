@@ -12,7 +12,9 @@ from lsl.common.paths import MODULE_BUILD
 
 run_scripts_tests = False
 try:
-    from pylint import epylint as lint
+    from io import StringIO
+    from pylint.lint import Run
+    from pylint.reporters.text import TextReporter
     run_scripts_tests = True
 except ImportError:
     pass
@@ -40,11 +42,12 @@ def _test_generator(script):
     """
     
     def test(self):
-        out, err = lint.py_run("%s -E --extension-pkg-whitelist=numpy --init-hook='import sys; sys.path=[%s]; sys.path.insert(0, \"%s\")'" % (script, ",".join(['"%s"' % p for p in sys.path]), os.path.dirname(MODULE_BUILD)), return_std=True)
-        out_lines = out.read().split('\n')
-        err_lines = err.read().split('\n')
-        out.close()
-        err.close()
+        pylint_output = StringIO()
+        reporter = TextReporter(pylint_output)
+        pylint_args = [script, "-E", "--extension-pkg-whitelist=numpy", "--init-hook='import sys; sys.path=[%s]; sys.path.insert(0, \"%s\")'" % (",".join(['"%s"' % p for p in sys.path]), os.path.dirname(MODULE_BUILD))]
+        Run(pylint_args, reporter=reporter, exit=False)
+        out = pylint_output.getvalue()
+        out_lines = out.split('\n')
         
         for line in out_lines:
             mtch = _LINT_RE.match(line)
