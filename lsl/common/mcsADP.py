@@ -45,8 +45,8 @@ from datetime import datetime
 
 from lsl.common import adp as adpCommon
 from lsl.common.mcs import parse_c_struct as _parse_c_struct
-from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, status_to_string, \
-                           summary_to_string, sid_to_string, cid_to_string, mode_to_string, \
+from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, StatusCode, SummaryCode, \
+                           summary_to_string, SubsystemID, CommandID, ObservingMode, \
                            flat_to_multi, apply_pointing_correction, MIB_REC_TYPE_BRANCH, \
                            MIB_REC_TYPE_VALUE, MIB_INDEX_FIELD_LENGTH, MIB_LABEL_FIELD_LENGTH, \
                            MIB_VAL_FIELD_LENGTH, MIB, MIBEntry
@@ -56,7 +56,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NROACH', 'ME_MAX_NROACHCH', 'ME_MAX_ROACHID_LENGTH', 
@@ -66,8 +66,8 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
-           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
-           'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
+           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode', 'summary_to_string', 'SubsystemID', 'CommandID', 
+           'ObservingMode', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
 ME_SSMIF_FORMAT_VERSION = 9	# SSMIF format version code

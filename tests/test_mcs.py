@@ -52,31 +52,31 @@ class mcs_tests(unittest.TestCase):
         """Test valid summary values"""
         
         for i in range(0, 6+1):
-            mcs.summary_to_string(i)
-        self.assertRaises(ValueError, mcs.summary_to_string, 7)
+            mcs.SummaryCode(i)
+        self.assertRaises(ValueError, mcs.SummaryCode, 7)
         
     def test_sid_limits(self):
         """Test valid subsystem ID values"""
         
         for i in range(1, 19+1):
-            mcs.sid_to_string(i)
-        self.assertRaises(ValueError, mcs.sid_to_string, 0)
-        self.assertRaises(ValueError, mcs.sid_to_string, 20)
+            mcs.SubsystemID(i)
+        self.assertRaises(ValueError, mcs.SubsystemID, 0)
+        self.assertRaises(ValueError, mcs.SubsystemID, 20)
         
     def test_cid_limits(self):
         """Test valid command ID values"""
         
         for i in range(0, 41+1):
-            mcs.cid_to_string(i)
-        self.assertRaises(ValueError, mcs.cid_to_string, 42)
+            mcs.CommandID(i)
+        self.assertRaises(ValueError, mcs.CommandID, 42)
         
     def test_mode_limits(self):
         """Test valid observing mode values"""
         
         for i in range(1, 9+1):
-            mcs.mode_to_string(i)
-        self.assertRaises(ValueError, mcs.mode_to_string, 0)
-        self.assertRaises(ValueError, mcs.mode_to_string, 10)
+            mcs.ObservingMode(i)
+        self.assertRaises(ValueError, mcs.ObservingMode, 0)
+        self.assertRaises(ValueError, mcs.ObservingMode, 10)
         
     def test_pointing_correction(self):
         """Test the pointing correction function"""

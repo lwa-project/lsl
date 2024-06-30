@@ -217,10 +217,10 @@ def read_cs_file(filename):
                 
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
                                'ignore_time': True if action.bASAP else False, 
-                               'subsystem_id': sid_to_string(action.sid),
-                               'command_id': cid_to_string(action.cid), 
+                               'subsystem_id': SubsystemID(action.sid),
+                               'command_id': CommandID(action.cid), 
                                'command_length': action.len, 'data': data}
-                if actionPrime['subsystem_id'] == 'DP':
+                if actionPrime['subsystem_id'] == SubsystemID.DP:
                     raise RuntimeError("Command script references DP not ADP")
                     
                 commands.append( actionPrime )

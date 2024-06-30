@@ -40,6 +40,7 @@ The other functions:
 
 import re
 import dbm
+import enum
 import math
 import pytz
 import numpy as np
@@ -57,7 +58,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
@@ -67,8 +68,8 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
-           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
-           'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
+           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode', 'summary_to_string', 'SubsystemID', 'CommandID', 
+           'ObservingMode', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
 ME_SSMIF_FORMAT_VERSION = 7	# SSMIF format version code
@@ -634,199 +635,143 @@ def datetime_to_mjdmpm(dt):
     return (mjd, mpm)
 
 
-def status_to_string(code):
+class StatusCode(enum.Enum):
     """
-    Convert a numerical MCS status code to a string.
+    MCS component status code.
     """
     
-    # Make sure we have an integer
-    code = int(code)
+    NOTINSTALLED = 0
+    BAD          = 1
+    SUSPECT      = 2
+    OK           = 3
+
+
+class SummaryCode(enum.Enum):
+    """
+    MCS subsystem summary codes.
+    """
     
-    # Loop through the options
-    if code == 0:
-        return "Not installed"
-    elif code == 1:
-        return "Bad"
-    elif code == 2:
-        return "Suspect, possibly bad"
-    elif code == 3:
-        return "OK"
-    else:
-        raise ValueError(f"Unknown status code '{code}'")
+    NULL    = 0
+    NORMAL  = 1
+    WARNING = 2
+    ERROR   = 3
+    BOOTING = 4
+    SHUTDWN = 5
+    UNK     = 6
 
 
 def summary_to_string(code):
     """
-    Convert a numerical MCS overall status code to an explination.
+    Convert a MCS subsystem status code to an explination.
     """
     
-    if code == 0:
+    if code == SummaryCode.NULL:
         return "Not normally used"
-    elif code == 1:
+    elif code == SummaryCode.NORMAL:
         return "Normal"
-    elif code == 2:
+    elif code == SummaryCode.WARNING:
         return "Warning - issue(s) found, but still fully operational"
-    elif code == 3:
+    elif code == SummaryCode.ERROR:
         return "Error - problems found which limit or prevent proper function"
-    elif code == 4:
+    elif code == SummaryCode.BOOTING:
         return "Booting - initializing; not yet fully operational"
-    elif code == 5:
+    elif code == SummaryCode.SHUTDWN:
         return "Shutdown - shutting down; not ready for operation"
-    elif code == 6:
+    elif code == SummaryCode.UNK:
         return "Unknown"
     else:
         raise ValueError(f"Unknown summary code '{code}'")
 
 
-def sid_to_string(sid):
+class SubsystemID(enum.Enum):
     """
-    Convert a MCS subsystem ID code into a string.
-    """
-    
-    if sid > 0 and sid <= 9:
-        return "Null subsystem #%i" % sid
-    elif sid == 10:
-        return "MCS"
-    elif sid == 11:
-        return "SHL"
-    elif sid == 12:
-        return "ASP"
-    elif sid == 13:
-        return "DP"
-    elif sid == 14:
-        return "DR #1"
-    elif sid == 15:
-        return "DR #2"
-    elif sid == 16:
-        return "DR #3"
-    elif sid == 17:
-        return "DR #4"
-    elif sid == 18:
-        return "DR #5"
-    elif sid == 19:
-        return "ADP"
-    else:
-        raise ValueError(f"Invalid sid code {sid}")
-
-
-def cid_to_string(cid):
-    """
-    Convert a MCS command code into a string.
+    MCS subsystem IDs.
     """
     
-    if cid == 0:
-        return "MCSSHT"
-    elif cid == 1:
-        return "PNG"
-    elif cid == 2:
-        return "RPT"
-    elif cid == 3:
-        return "SHT"
-    elif cid == 4:
-        return "INI"
-    elif cid == 5:
-        return "TMP"
-    elif cid == 6:
-        return "DIF"
-    elif cid == 7:
-        return "PWR"
-    elif cid == 8:
-        return "FIL"
-    elif cid == 9:
-        return "AT1"
-    elif cid == 10:
-        return "AT2"
-    elif cid == 11:
-        return "ATS"
-    elif cid == 12:
-        return "FPW"
-    elif cid == 13:
-        return "RXP"
-    elif cid == 14:
-        return "FEP"
-    elif cid == 15:
-        return "TBW"
-    elif cid == 16:
-        return "TBN"
-    elif cid == 17:
-        return "DRX"
-    elif cid == 18:
-        return "BAM"
-    elif cid == 19:
-        return "FST"
-    elif cid == 20:
-        return "CLK"
-    elif cid == 21:
-        return "REC"
-    elif cid == 22:
-        return "DEL"
-    elif cid == 23:
-        return "STP"
-    elif cid == 24:
-        return "GET"
-    elif cid == 25:
-        return "CPY"
-    elif cid == 26:
-        return "DMP"
-    elif cid == 27:
-        return "FMT"
-    elif cid == 28:
-        return "DWN"
-    elif cid == 29:
-        return "UP_"
-    elif cid == 30:
-        return "SEL"
-    elif cid == 31:
-        return "SYN"
-    elif cid == 32:
-        return "TST"
-    elif cid == 33:
-        return "BUF"
-    elif cid == 34:
-        return "NUL"
-    elif cid == 35:
-        return "ESN"
-    elif cid == 36:
-        return "ESF"
-    elif cid == 37:
-        return "OBS"
-    elif cid == 38:
-        return "OBE"
-    elif cid == 39:
-        return "SPC"
-    elif cid == 40:
-        return "TBF"
-    elif cid == 41:
-        return "COR"
-    else:
-        raise ValueError(f"Invalid cid code {cid}")
+    NU1 = 1
+    NU2 = 2
+    NU3 = 3
+    NU4 = 4
+    NU5 = 5
+    NU6 = 6
+    NU7 = 7
+    NU8 = 8
+    NU9 = 9
+    MCS = 10
+    SHL = 11
+    ASP = 12
+    DP  = 13
+    DR1 = 14
+    DR2 = 15
+    DR3 = 16
+    DR4 = 17
+    DR5 = 18
+    ADP = 19
 
 
-def mode_to_string(mode):
+class CommandID(enum.Enum):
     """
-    Convert a MCS numeric observing mode into a string.
+    MCS Command IDs.
     """
     
-    if mode == 1:
-        return "TRK_RADEC"
-    elif mode == 2:
-        return "TRK_SOL"
-    elif mode == 3:
-        return "TRK_JOV"
-    elif mode == 4:
-        return "STEPPED"
-    elif mode == 5:
-        return "TBW"
-    elif mode == 6:
-        return "TBN"
-    elif mode == 7:
-        return "DIAG1"
-    elif mode == 8:
-        return "TBF"
-    elif mode == 9:
-        return "TRK_LUN"
-    else:
-        raise ValueError(f"Invalid observing mode {mode}")
+    MCSSHT = 0
+    PNG    = 1
+    RPT    = 2
+    SHT    = 3
+    INI    = 4
+    TMP    = 5
+    DIF    = 6
+    PWR    = 7
+    FIL    = 8
+    AT1    = 9
+    AT2    = 10
+    ATS    = 11
+    FPW    = 12
+    RXP    = 13
+    FEP    = 14
+    TBW    = 15
+    TBN    = 16
+    DRX    = 17
+    BAM    = 18
+    FST    = 19
+    CLK    = 20
+    REC    = 21
+    DEL    = 22
+    STP    = 23
+    GET    = 24
+    CPY    = 25
+    DMP    = 26
+    FMT    = 27
+    DWN    = 28
+    UP_    = 29
+    SEL    = 30
+    SYN    = 31
+    TST    = 32
+    BUF    = 33
+    NUL    = 34
+    ESN    = 35
+    ESF    = 36
+    OBS    = 37
+    OBE    = 38
+    SPC    = 39
+    TBF    = 40
+    COR    = 41
+
+
+class ObservingMode(enum.Enum):
+    """
+    MCS Observing Modes.
+    """
+    
+    TRK_RADEC = 1
+    TRK_SOL   = 2
+    TRK_JOV   = 3
+    STEPPED   = 4
+    TBW       = 5
+    TBN       = 6
+    DIAG1     = 7
+    TBF       = 8
+    TRK_LUN   = 9
 
 
 def flat_to_multi(inputList, *shape):

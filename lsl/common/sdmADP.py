@@ -5,7 +5,7 @@ files (as defined in MCS0031, v5).
 
 from datetime import datetime
 
-from lsl.common.mcsADP import summary_to_string, parse_c_struct, flat_to_multi, \
+from lsl.common.mcsADP import SummaryCode, summary_to_string, parse_c_struct, flat_to_multi, \
                         STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, \
                         ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_NRPD, ME_MAX_NSEP, ME_MAX_NARB, \
                         ME_MAX_NROACH, ME_MAX_NSERVER, ME_MAX_NDR
@@ -26,12 +26,12 @@ class SubSystemStatus(object):
     
     def __init__(self, name, summary=6, info='UNK', time=0):
         self.name = name
-        self.summary = int(summary)
+        self.summary = SummaryCode(summary)
         self.info = str(info)
         self.time = float(time)
         
     def __str__(self):
-        return "%s at %s: %s [%i = %s]" % (self.name, datetime.utcfromtimestamp(self.time), self.info, self.summary, summary_to_string(self.summary))
+        return "%s at %s: %s [%s = %s]" % (self.name, datetime.utcfromtimestamp(self.time), self.info, self.summary, summary_to_string(self.summary))
         
     def binary_read(self, fh):
         """
