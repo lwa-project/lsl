@@ -13,6 +13,7 @@ from textwrap import fill as tw_fill
 from functools import total_ordering
 
 from astropy import units as astrounits
+from astropy.time import Time as AstroTime
 from astropy.coordinates import EarthLocation, AltAz, CartesianRepresentation, ITRS
 from astropy.constants import c as speedOfLight
 
@@ -636,17 +637,18 @@ class Stand(object):
         if self._parent is None:
             raise RuntimeError("Cannot determine stands location without a reference point")
             
+        epoch = AstroTime(2000, format='jyear', scale='utc')
         center = self._parent.earth_location
         aa = AltAz(CartesianRepresentation(self.y*astrounits.m, self.x*astrounits.m, self.z*astrounits.m),
-                   location=center)
+                   location=center, obstime=epoch)
         try:
-            aa = aa.transform_to(ITRS(location=center))
-            aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz)
+            aa = aa.transform_to(ITRS(location=center, obstime=epoch))
+            aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz, obstime=epoch)
         except TypeError:
-            aa = aa.transform_to(ITRS(obstime='J2000'))
-            rf = AltAz(CartesianRepresentation('0.01mm', '0.01mm', '0.01mm'), location=center, obstime='J2000')
-            rf = rf.transform_to(ITRS(obstime='J2000'))
-            aa = ITRS(aa.cartesian.xyz + (center.itrs.cartesian.xyz-rf.cartesian.xyz), obstime='J2000')
+            aa = aa.transform_to(ITRS(obstime=epoch))
+            rf = AltAz(CartesianRepresentation('0.01mm', '0.01mm', '0.01mm'), location=center, obstime=epoch)
+            rf = rf.transform_to(ITRS(obstime=epoch))
+            aa = ITRS(aa.cartesian.xyz + (center.itrs.cartesian.xyz-rf.cartesian.xyz), obstime=epoch)
         return EarthLocation.from_geocentric(aa.x, aa.y, aa.z)
 
 
