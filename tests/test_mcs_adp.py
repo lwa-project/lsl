@@ -52,7 +52,7 @@ class mcs_adp_tests(unittest.TestCase):
         """Test valid summary values"""
         
         for i in range(0, 6+1):
-            mcsADP.summary_to_string(mcsADP.SummaryCode(i))
+            mcsADP.SummaryCode(i)
         self.assertRaises(ValueError, mcsADP.SummaryCode, 7)
         
     def test_sid_limits(self):
