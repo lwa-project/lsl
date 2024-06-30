@@ -1016,6 +1016,8 @@ class MIBEntry(object):
          * i8u:   integer, 8 bytes, unsigned, litte-endian (=uint64)
          * f4:    float, 4 bytes, little-endian (=float32)
          * f4r:   float, 4 bytes, big-ending (=float32)
+         * f8:    float, 8 bytes, little-endian (=float64)
+         * f8r:   float, 8 bytes, big-ending (=float64)
         """
         
         if dataType == 'NUL':
@@ -1070,6 +1072,16 @@ class MIBEntry(object):
         elif dataType[:2] == 'f4':
             try:
                 return struct.unpack('<1f', value)[0]
+            except struct.error:
+                return 0.0
+        elif dataType[:3] == 'f8r':
+            try:
+                return struct.unpack('>1d', value)[0]
+            except struct.error:
+                return 0.0
+        elif dataType[:2] == 'f8':
+            try:
+                return struct.unpack('<1d', value)[0]
             except struct.error:
                 return 0.0
         else:
