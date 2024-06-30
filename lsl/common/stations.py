@@ -364,8 +364,11 @@ class LWAStation(ephem.Observer, LWAStationBase):
             ecefTo = ecefTo.itrs
             
         aa = AltAz(location=ecefFrom, obstime=ecefTo.obstime, pressure=0)
-        pd = ITRS(ecefTo.cartesian.xyz-ecefFrom.cartesian.xyz, obstime=ecefTo.obstime, location=ecefFrom).transform_to(aa)
-        
+        try:
+            pd = ITRS(ecefTo.cartesian.xyz-ecefFrom.cartesian.xyz, obstime=ecefTo.obstime, location=ecefFrom).transform_to(aa)
+        except TypeError:
+            pd = ITRS(ecefTo.cartesian.xyz-ecefFrom.cartesian.xyz, obstime=ecefTo.obstime).transform_to(aa)
+            
         return (pd.az.rad, pd.alt.rad, pd.distance.to('m').value)
         
     @property
