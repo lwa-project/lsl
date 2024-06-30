@@ -639,8 +639,14 @@ class Stand(object):
         center = self._parent.earth_location
         aa = AltAz(CartesianRepresentation(self.y*astrounits.m, self.x*astrounits.m, self.z*astrounits.m),
                    location=center)
-        aa = aa.transform_to(ITRS(location=center))
-        aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz)
+        try:
+            aa = aa.transform_to(ITRS(location=center))
+            aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz)
+        except TypeError:
+            aa = aa.transform_to(ITRS()
+            rf = AltAz(CartesianRepresentation('0.01mm', '0.01mm', '0.01mm'), location=center)
+            rf = rf.transform_to(ITRS())
+            aa = ITRS(aa.cartesian.xyz + (center.itrs.cartesian.xyz-rf.cartesian.xyz))
         return EarthLocation.from_geocentric(aa.x, aa.y, aa.z)
 
 
