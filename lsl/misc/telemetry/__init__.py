@@ -65,6 +65,7 @@ class _TelemetryClient(object):
         # Setup
         self.key = key
         self.version = version
+        self.py_version = "%i.%i" % (sys.version_info.major, sys.version_info.minor)
         self.max_entries = TELE_CONFIG.get('max_entries')
         self.timeout = TELE_CONFIG.get('timeout')
         
@@ -127,6 +128,7 @@ class _TelemetryClient(object):
                     payload = urlencode({'timestamp'   : int(tNow),
                                          'key'         : self.key, 
                                          'version'     : self.version,
+                                         'py_version'  : self.py_version,
                                          'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
                                          'payload'     : payload})
                     try:
