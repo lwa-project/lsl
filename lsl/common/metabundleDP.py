@@ -14,13 +14,13 @@ import os
 import re
 import copy
 import glob
+from functools import lru_cache
 from datetime import datetime, timedelta
 
 from lsl.common._metabundle_utils import *
 from lsl.common import stations, sdmDP, sdf
 from lsl.common.mcs import *
 from lsl.common.dp import word_to_freq, fS
-from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
@@ -220,11 +220,13 @@ def read_cs_file(filename):
                     
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
                                'ignore_time': True if action.bASAP else False, 
-                               'subsystem_id': sid_to_string(action.sid),
-                               'command_id': cid_to_string(action.cid), 
+                               'subsystem_id': SubsystemID(action.sid),
+                               'command_id': CommandID(action.cid), 
                                'command_length': action.len, 'data': data}
-                if actionPrime['subsystem_id'] == 'ADP':
+                if actionPrime['subsystem_id'] == SubsystemID.ADP:
                     raise RuntimeError("Command script references ADP not DP")
+                if actionPrime['subsystem_id'] == SubsystemID.NDP:
+                    raise RuntimeError("Command script references NDP not ADP")
                     
                 commands.append( actionPrime )
             except IOError:

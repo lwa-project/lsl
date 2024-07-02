@@ -2,9 +2,6 @@
 Module to make a blinking ASCII busy indicator.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-
 import sys
 import time
 import threading
@@ -71,7 +68,7 @@ class BusyIndicator(object):
             self.stop()
             
         self.thread = threading.Thread(target=self._run, name='indicator')
-        self.thread.setDaemon(1)
+        self.thread.daemon = 1
         self.alive.set()
         self.thread.start()
         
@@ -108,7 +105,7 @@ class BusyIndicator(object):
         Internal function used by the thread to make/change the displayed text.
         """
         
-        while self.alive.isSet():
+        while self.alive.is_set():
             if self.color is None:
                 out = "%s%s%s\r" % (self.message,
                                     '.'*self._i,
@@ -133,7 +130,7 @@ class BusyIndicatorPlus(BusyIndicator):
         BusyIndicator.__init__(self, message, interval, 0, color)
         
         if style not in self._styles:
-            raise ValueError("Unknown BusyIndicatorPlus style '%s'" % style)
+            raise ValueError(f"Unknown BusyIndicatorPlus style '{style}'")
         self.style = style
         self.width = width
         self._dir = 1
@@ -219,11 +216,10 @@ class BusyIndicatorPlus(BusyIndicator):
         """
         
         self.t0 = time.time()
-        while self.alive.isSet():
+        while self.alive.is_set():
             out = getattr(self, "_render_%s" % self.style)(active=True)
             out = "%s%s%s\r" % (self.message, out, self._pprint())
             sys.stdout.write(out)
             sys.stdout.flush()
             
             time.sleep(self.interval)
-

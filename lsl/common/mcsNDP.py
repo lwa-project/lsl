@@ -38,16 +38,13 @@ The other functions:
  * Parse the binary packed metadata, 
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-
 import re
 import ctypes
 from datetime import datetime
 
 from lsl.common import ndp as ndpCommon
-from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, status_to_string, \
-                           summary_to_string, sid_to_string, cid_to_string, mode_to_string, \
+from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, StatusCode, \
+                           SummaryCode, SubsystemID, CommandID, ObservingMode, \
                            flat_to_multi, apply_pointing_correction, MIB_REC_TYPE_BRANCH, \
                            MIB_REC_TYPE_VALUE, MIB_INDEX_FIELD_LENGTH, MIB_LABEL_FIELD_LENGTH, \
                            MIB_VAL_FIELD_LENGTH, MIB, MIBEntry
@@ -67,8 +64,9 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
-           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
-           'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
+           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode',
+           'SubsystemID', 'CommandID', 'ObservingMode', 'parse_c_struct', 'flat_to_multi',
+           'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
 ME_SSMIF_FORMAT_VERSION = 10	# SSMIF format version code

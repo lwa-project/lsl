@@ -42,12 +42,6 @@ this module also includes a simple parser for SD files.
     ephem.degrees instances
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
 import copy
@@ -65,9 +59,10 @@ from lsl.common.stations import lwasv
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.tbf import FRAME_CHANNEL_COUNT as TBFChanCount
 
+from lsl.common._sdf_utils import *
 from lsl.common.sdf import Observer, ProjectOffice
 from lsl.common.sdf import Project as _Project, Session as _Session
-from lsl.common.sdf import UCF_USERNAME_RE, parse_time, Observation, TBN, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
+from lsl.common.sdf import UCF_USERNAME_RE, Observation, TBN, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -128,12 +123,12 @@ class Project(_Project):
             clean = ''
             if ses.comments:
                 clean = UCF_USERNAME_RE.sub('', ses.comments)
-            ses.comments = 'ucfuser:%s' % ses.ucf_username
+            ses.comments = f"ucfuser:{ses.ucf_username}"
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
         ## Project office comments, including the data return method
         if pos != 'None' and pos is not None:
-            pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
+            pos = f"Requested data return method is {ses.dataReturnMethod};;{pos}"
             
         ## PI Information
         output = ""
@@ -152,7 +147,7 @@ class Project(_Project):
         output += "SESSION_ID       %s\n" % (ses.id,)
         output += "SESSION_TITLE    %s\n" % ('None provided' if ses.name is None else ses.name,)
         output += "SESSION_REMPI    %s\n" % (ses.comments[:4090] if ses.comments else 'None provided',)
-        output += "SESSION_REMPO    %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090],)
+        output += "SESSION_REMPO    %s\n" % (f"Requested data return method is {ses.dataReturnMethod}" if pos == 'None' or pos is None else pos[:4090],)
         if ses.configuration_authority != 0:
             output += "SESSION_CRA      %i\n" % (ses.configuration_authority,)
         if ses.drx_beam != -1:
@@ -183,7 +178,7 @@ class Project(_Project):
             output += "OBS_TITLE        %s\n" % (obs.name if obs.name else 'None provided',)
             output += "OBS_TARGET       %s\n" % (obs.target if obs.target else 'None provided',)
             output += "OBS_REMPI        %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
-            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % self._render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] is None else poo[i],)
+            output += "OBS_REMPO        %s\n" % ("Estimated data volume for this observation is %s" % render_file_size(obs.dataVolume) if poo[i] == 'None' or poo[i] is None else poo[i],)
             output += "OBS_START_MJD    %i\n" % (obs.mjd,)
             output += "OBS_START_MPM    %i\n" % (obs.mpm,)
             output += "OBS_START        %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
@@ -198,12 +193,12 @@ class Project(_Project):
                 output += "OBS_FREQ2        %i\n" % (obs.freq2,)
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_BW+          %s\n" % (render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TBN':
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
                 output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_BW+          %s\n" % (render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_RADEC':
                 output += "OBS_RA           %.9f\n" % (obs.ra,)
                 output += "OBS_DEC          %+.9f\n" % (obs.dec,)
@@ -213,7 +208,7 @@ class Project(_Project):
                 output += "OBS_FREQ2        %i\n" % (obs.freq2,)
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_BW+          %s\n" % (render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_SOL':
                 output += "OBS_B            %s\n" % (obs.beam,)
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
@@ -221,7 +216,7 @@ class Project(_Project):
                 output += "OBS_FREQ2        %i\n" % (obs.freq2,)
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_BW+          %s\n" % (render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_JOV':
                 output += "OBS_B            %s\n" % (obs.beam,)
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
@@ -229,7 +224,7 @@ class Project(_Project):
                 output += "OBS_FREQ2        %i\n" % (obs.freq2,)
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_BW+          %s\n" % (render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'TRK_LUN':
                 output += "OBS_B            %s\n" % (obs.beam,)
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
@@ -237,10 +232,10 @@ class Project(_Project):
                 output += "OBS_FREQ2        %i\n" % (obs.freq2,)
                 output += "OBS_FREQ2+       %.9f MHz\n" % (obs.frequency2/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_BW+          %s\n" % (render_bandwidth(obs.filter, obs.filter_codes),)
             elif obs.mode == 'STEPPED':
                 output += "OBS_BW           %i\n" % (obs.filter,)
-                output += "OBS_BW+          %s\n" % (self._render_bandwidth(obs.filter, obs.filter_codes),)
+                output += "OBS_BW+          %s\n" % (render_bandwidth(obs.filter, obs.filter_codes),)
                 output += "OBS_STP_N        %i\n" % (len(obs.steps),)
                 output += "OBS_STP_RADEC    %i\n" % (obs.steps[0].is_radec,)
                 for j,step in enumerate(obs.steps):
@@ -418,27 +413,25 @@ class TBF(Observation):
         # Basic - Sample size, frequency, and filter
         if self.samples > 5*196000000:
             if verbose:
-                print("[%i] Error: Invalid number of samples (%i > %s)" % (os.getpid(), self.samples, 5*196e6))
+                pid_print(f"Error: Invalid number of samples ({self.samples} > {5*196000000})")
             failures += 1
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 1 is outside of the %s tuning range" % (os.getpid(),
-                                                                                                          be_name))
+                pid_print(f"Error: Specified frequency for tuning 1 is outside of the {be_name} tuning range")
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 2 is outside of the %s tuning range" % (os.getpid(),
-                                                                                                          be_name))
+                pid_print(f"Error: Specified frequency for tuning 2 is outside of the {be_name} tuning range")
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
-                print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
+                pid_print(f"Error: Invalid filter code '{self.filter}'")
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
             if verbose:
-                print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
+                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
             
         # Advanced - ASP
@@ -497,7 +490,7 @@ class Session(_Session):
             if self.observations[0].mode ==  'TBF':
                 if self.drx_beam != 1:
                     if verbose:
-                        print("[%i] Error: TBF can only run on beam 1" % os.getpid())
+                        pid_print("Error: TBF can only run on beam 1")
                     failures += 1
                     
         if failures == 0:
@@ -541,7 +534,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
     if verbose:
-        print("[%i] Obs %i is mode %s" % (os.getpid(), obs_temp['id'], mode))
+        pid_print(f"Obs {obs_temp['id']} is mode {mode}")
         
     if mode == 'TBF':
         obsOut = TBF(obs_temp['name'], obs_temp['target'], utcString, f1, f2, obs_temp['filter'], obs_temp['tbfSamples'], comments=obs_temp['comments'])
@@ -557,7 +550,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
-            print("[%i] -> found %i steps" % (os.getpid(), len(beam_temps)))
+            pid_print(f"-> found {len(beam_temps)} steps")
             
         obsOut = Stepped(obs_temp['name'], obs_temp['target'], utcString, obs_temp['filter'], is_radec=obs_temp['stpRADec'], steps=[], gain=obs_temp['gain'], comments=obs_temp['comments'])
         for beam_temp in beam_temps:
@@ -580,7 +573,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
                     
             obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
     else:
-        raise RuntimeError("Invalid mode encountered: %s" % mode)
+        raise RuntimeError(f"Invalid mode encountered: {mode}")
         
     # Set the beam-dipole mode information (if applicable)
     if obs_temp['beamDipole'] is not None:
@@ -773,8 +766,8 @@ def parse_sdf(filename, verbose=False):
                 project.project_office.observations[0].append( None )
             
                 if verbose:
-                    print("[%i] Started obs %i" % (os.getpid(), int(value)))
-                
+                    pid_print(f"Started obs {value}")
+                    
                 continue
             if keyword == 'OBS_TITLE':
                 obs_temp['name'] = value
@@ -1016,7 +1009,7 @@ def parse_sdf(filename, verbose=False):
             
             # Keywords that might indicate this is for DP-based stations/actually an IDF
             if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'RUN_ID'):
-                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+                raise RuntimeError(f"Invalid keyword encountered: {keyword}")
             
         # Create the final observation
         if obs_temp['id'] != 0:

@@ -1,25 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Utility for updating/changing the LWA station SSMIF files in between LSL 
 releases.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    input = raw_input
-    
 import os
 import re
 import sys
-import time
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
 import hashlib
 import argparse
 import calendar
@@ -45,10 +34,7 @@ def _parse_index(index):
     """
     
     from xml.etree import ElementTree as ET
-    try:
-        from BeautifulSoup import BeautifulSoup
-    except ImportError:
-        from bs4 import BeautifulSoup
+    from bs4 import BeautifulSoup
     
     # Find the table
     start = index.find('<table>')
@@ -57,9 +43,9 @@ def _parse_index(index):
     
     # Clean it up in such a way that ElementTree can parse it
     myMassage = [(re.compile('<!([^--].*)>'), lambda match: '<!--' + match.group(1) + '-->'), 
-            (re.compile('<hr>'), lambda match: ''), 
-            (re.compile('&nbsp;'), lambda match: ' '), 
-            (re.compile('<a.*?>(.*)</a>'), lambda mtch: mtch.group(1))]
+                 (re.compile('<hr>'), lambda match: ''), 
+                 (re.compile('&nbsp;'), lambda match: ' '), 
+                 (re.compile('<a.*?>(.*)</a>'), lambda mtch: mtch.group(1))]
     for massage in myMassage:
         regex, replace = massage
         index = re.sub(regex, replace, index)
@@ -133,13 +119,12 @@ def main(args):
         try:
             ## Retrieve the list
             try:
-                ah = urlopen(_url, timeout=LSL_CONFIG.get('download.timeout'))
-                index = ah.read()
-                try:
-                    index = index.decode()
-                except AttributeError:
-                    pass
-                ah.close()
+                with urlopen(_url, timeout=LSL_CONFIG.get('download.timeout')) as ah:
+                    index = ah.read()
+                    try:
+                        index = index.decode()
+                    except AttributeError:
+                        pass
             except Exception as e:
                 print("Error:  Cannot download SSMIF listing, %s" % str(e))
                 
@@ -181,48 +166,39 @@ def main(args):
             print("Downloading %s" % urlToDownload)
             mtime = 0.0
             remote_size = 1
-            ah = urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout'))
-            try:
+            with urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout')) as ah:
                 remote_size = int(ah.headers["Content-Length"])
                 mtime = ah.headers["Last-Modified"]
-            except AttributeError:
-                pass
-            try:
-                meta = ah.info()
-                remote_size = int(meta.getheaders("Content-Length")[0])
-                mtime = meta.getheaders("Last-Modified")[0]
-            except AttributeError:
-                pass
-            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
-            mtime = calendar.timegm(mtime.timetuple())
-            
-            pbar = DownloadBar(max=remote_size)
-            while True:
-                new_data = ah.read(LSL_CONFIG.get('download.block_size'))
-                if len(new_data) == 0:
-                    break
-                pbar.inc(len(new_data))
-                try:
-                    newSSMIF += new_data
-                except NameError:
-                    newSSMIF = new_data
-                sys.stdout.write(pbar.show()+'\r')
+                
+                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+                mtime = calendar.timegm(mtime.timetuple())
+                
+                pbar = DownloadBar(max=remote_size)
+                while True:
+                    new_data = ah.read(LSL_CONFIG.get('download.block_size'))
+                    if len(new_data) == 0:
+                        break
+                    pbar.inc(len(new_data))
+                    try:
+                        newSSMIF += new_data
+                    except NameError:
+                        newSSMIF = new_data
+                    sys.stdout.write(pbar.show()+'\r')
+                    sys.stdout.flush()
+                sys.stdout.write(pbar.show()+'\n')
                 sys.stdout.flush()
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
-            ah.close()
         except Exception as e:
-            raise RuntimeError("Cannot download SSMIF: %s" % str(e))
+            raise RuntimeError(f"Cannot download SSMIF: {str(e)}")
             
         ## Save
         try:
             with DataAccess.open(_ssmif, 'wb') as fh:
                 fh.write(newSSMIF)
             with DataAccess.open(_ssmif+"_meta", 'w') as fh:
-                fh.write("created: %.0f\n" % time.time())
-                fh.write("source: %s\n" % urlToDownload)
-                fh.write("source size: %i B\n" % remote_size)
-                fh.write("source last modified: %.0f\n" % mtime))
+                fh.write(f"created: {time.time():.0f}\n")
+                fh.write(f"source: {urlToDownload}\n")
+                fh.write(f"source size: {remote_size} B\n")
+                fh.write(f"source last modified: {mtime:.0f}\n")
         except Exception as e:
             raise RuntimeError("Cannot %s SSMIF: %s" % ('update' if args.update else 'revert', str(e)))
             
@@ -251,10 +227,10 @@ def main(args):
             break
             
     print("LSL %s SSMIF%s:" % (_name.upper(), ' (updated)' if args.update else '',))
-    print("  Size: %i bytes" % size)
+    print(f"  Size: {size} bytes")
     print("  SSMIF Version: %s" % version.strftime("%Y %b %d"))
     print("  File Last Modified: %s (%i day%s ago)" % (mtime.strftime("%Y-%m-%d %H:%M:%S UTC"), age.days, 's' if age.days != 1 else ''))
-    print("  MD5 Sum: %s" % md5)
+    print(f"  MD5 Sum: {md5}")
 
 
 if __name__ == "__main__":

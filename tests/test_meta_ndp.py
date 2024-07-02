@@ -11,6 +11,7 @@ if sys.version_info < (3,):
 import os
 import unittest
 
+from lsl.common.mcsNDP import CommandID
 from lsl.common import metabundle, metabundleNDP
 from lsl.common.paths import DATA_BUILD
 
@@ -79,14 +80,14 @@ class metabundle_tests_ndp(unittest.TestCase):
         self.assertEqual(len(cmnds), 10)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
-        self.assertEqual(cmnds[-2]['command_id'], 'STP')
-        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], CommandID.NUL)
+        self.assertEqual(cmnds[-2]['command_id'], CommandID.STP)
+        self.assertEqual(cmnds[-1]['command_id'], CommandID.ESN)
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['command_id'] == 'BAM':
+            if cmnd['command_id'] == CommandID.BAM:
                 nBAM += 1
         self.assertEqual(nBAM, 1)
         

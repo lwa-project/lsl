@@ -2,14 +2,7 @@
 Unit test for regressions in the lsl.common.progress module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
-import numpy
 import unittest
 
 from lsl.common import progress

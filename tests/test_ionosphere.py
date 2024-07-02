@@ -2,15 +2,9 @@
 Unit test for the lsl.misc.ionosphere module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
-import numpy
+import numpy as np
 
 from lsl.common.stations import lwa1
 from lsl.misc import ionosphere
@@ -127,9 +121,9 @@ class ionosphere_tests(unittest.TestCase):
         
         # https://gssc.esa.int/navipedia/index.php/Klobuchar_Ionospheric_Model
         psi = 0.0137/(el/180.0+0.11) - 0.022
-        lat = lwa1.lat/numpy.pi + psi*numpy.cos(az*numpy.pi/180)
+        lat = lwa1.lat/np.pi + psi*np.cos(az*np.pi/180)
         lat *= 180.0
-        lng = lwa1.lon/numpy.pi + psi*numpy.sin(az*numpy.pi/180)/numpy.cos(lat*numpy.pi/180)
+        lng = lwa1.lon/np.pi + psi*np.sin(az*np.pi/180)/np.cos(lat*np.pi/180)
         lng *= 180.0
         
         self.assertAlmostEqual(pos[0], lat, 1)

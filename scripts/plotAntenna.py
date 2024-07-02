@@ -1,19 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Example script to plot the relative response of an isolated LWA antenna 
-as a function of azimuth and elevation.
+as a function of azimuth and altitude.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
-import numpy
+import numpy as np
 import argparse
 
 from scipy.interpolate import interp1d
@@ -28,9 +22,9 @@ telemetry.track_script()
 
 
 def main(args):
-    # Build the grid of azimuth and elevations to plot
-    az = numpy.zeros((90,360))
-    alt = numpy.zeros((90,360))
+    # Build the grid of azimuth and altitude to plot
+    az = np.zeros((90,360))
+    alt = np.zeros((90,360))
     for i in range(360):
         az[:,i] = i
     for i in range(90):
@@ -52,7 +46,7 @@ def main(args):
             p = ax1.imshow(pattern, origin='lower', vmin=0, vmax=1)
             ax1.set_title('X pol. @ %.2f MHz' % (args.frequency/1e6))
             ax1.set_xlabel('Azimuth [deg.]')
-            ax1.set_ylabel('Elevation [deg.]')
+            ax1.set_ylabel('Altitude [deg.]')
             
             cb = fig.colorbar(p, ax=ax1)
             cb.ax.set_ylabel('Relative Response')
@@ -61,7 +55,7 @@ def main(args):
             p = ax2.imshow(pattern, origin='lower', vmin=0, vmax=1)
             ax2.set_title('Y pol. @ %.2f MHz' % (args.frequency/1e6))
             ax2.set_xlabel('Azimuth [deg.]')
-            ax2.set_ylabel('Elevation [deg.]')
+            ax2.set_ylabel('Altitude [deg.]')
     
             cb = fig.colorbar(p, ax=ax2)
             cb.ax.set_ylabel('Relative Response')

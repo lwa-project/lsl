@@ -4,21 +4,18 @@ Module for writing correlator output to a CASA measurement set.
 .. versionadded:: 1.2.1
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import gc
 import glob
 import math
-import ephem
-import numpy
+import numpy as np
 import shutil
-from astropy.time import Time as AstroTime
+import warnings
 from datetime import datetime
+
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -29,7 +26,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['Ms', 'STOKES_CODES', 'NUMERIC_STOKES']
 
 
@@ -77,33 +74,33 @@ try:
             Represents one MS UV visibility data set for a given observation time.
             """
         
-            def get_uvw(self, HA, dec, obs):
+            def get_uvw(self, HA, dec, el):
                 Nbase = len(self.baselines)
-                uvw = numpy.zeros((Nbase,3), dtype=numpy.float32)
+                uvw = np.zeros((Nbase,3), dtype=np.float32)
                 
                 # Phase center coordinates
                 # Convert numbers to radians and, for HA, hours to degrees
-                HA2 = HA * 15.0 * numpy.pi/180
-                dec2 = dec * numpy.pi/180
-                lat2 = obs.lat
+                HA2 = HA * 15.0 * np.pi/180
+                dec2 = dec * np.pi/180
+                lat2 = el.lat.rad
                 
                 # Coordinate transformation matrices
-                trans1 = numpy.array([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                                      [1,  0,               0],
-                                      [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-                trans2 = numpy.array([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                                      [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                                      [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
+                trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
+                                   [1,  0,            0           ],
+                                   [0,  np.cos(lat2), np.sin(lat2)]])
+                trans2 = np.array([[ np.sin(HA2),               np.cos(HA2),              0           ],
+                                   [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
+                                   [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
                         
                 for i,(a1,a2) in enumerate(self.baselines):
-                    # Go from a east, north, up coordinate system to a celestial equation, 
+                    # Go from a east, north, up coordinate system to a celestial equator, 
                     # east, north celestial pole system
                     xyzPrime = a1.stand - a2.stand
-                    xyz = numpy.dot(trans1, numpy.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
+                    xyz = np.dot(trans1, np.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
                     
                     # Go from CE, east, NCP to u, v, w
-                    temp = numpy.dot(trans2, xyz)
-                    uvw[i,:] = numpy.squeeze(temp)
+                    temp = np.dot(trans2, xyz)
+                    uvw[i,:] = np.squeeze(temp)
                     
                 return uvw
                     
@@ -115,14 +112,14 @@ try:
                     else:
                         s1, s2 = mapper.index(a1.stand.id), mapper.index(a2.stand.id)
                     packed.append( merge_baseline(s1, s2, shift=shift) )
-                packed = numpy.array(packed, dtype=numpy.int32)
+                packed = np.array(packed, dtype=np.int32)
                 
-                return numpy.argsort(packed)
+                return np.argsort(packed)
                 
         def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new Measurment Set object using a filename and a reference time
-            given in seconds since the UNIX 1970 ephem, a python datetime object, or a
+            given in seconds since the UNIX 1970 epoch, a python datetime object, or a
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
             
@@ -134,7 +131,7 @@ try:
                 if overwrite:
                     shutil.rmtree(filename, ignore_errors=False)
                 else:
-                    raise IOError("File '%s' already exists" % filename)
+                    raise IOError(f"File '{filename}' already exists")
             self.basename = filename
             
         def set_geometry(self, site, antennas, bits=8):
@@ -149,23 +146,20 @@ try:
             stands = []
             for ant in antennas:
                 stands.append(ant.stand.id)
-            stands = numpy.array(stands)
+            stands = np.array(stands)
             
             arrayX, arrayY, arrayZ = site.geocentric_location
             
-            xyz = numpy.zeros((len(stands),3))
+            xyz = np.zeros((len(stands),3))
             for i,ant in enumerate(antennas):
-                xyz[i,0] = ant.stand.x
-                xyz[i,1] = ant.stand.y
-                xyz[i,2] = ant.stand.z
+                ecef = ant.stand.earth_location.itrs
+                xyz[i,:] = ecef.cartesian.xyz.to('m').value
                 
             # Create the stand mapper
             mapper = []
             ants = []
-            topo2eci = site.eci_transform_matrix
             for i in range(len(stands)):
-                eci = numpy.dot(topo2eci, xyz[i,:])
-                ants.append( self._Antenna(stands[i], eci[0], eci[1], eci[2], bits=bits) )
+                ants.append( self._Antenna(stands[i], xyz[i,0], xyz[i,1], xyz[i,2], bits=bits) )
                 mapper.append( stands[i] )
                 
             self.nAnt = len(ants)
@@ -229,7 +223,7 @@ try:
             tb = table("%s" % self.basename, readonly=False, ack=False)
             tb.putinfo({'type':'Measurement Set', 
                         'readme':'This is a MeasurementSet Table holding measurements from a Telescope'})
-            tb.putkeyword('MS_VERSION', numpy.float32(2.0))
+            tb.putkeyword('MS_VERSION', np.float32(2.0))
             for filename in sorted(glob.glob('%s/*' % self.basename)):
                 if os.path.isdir(filename):
                     tname = os.path.basename(filename)
@@ -282,7 +276,7 @@ try:
             desc = tableutil.maketabdesc([col1, col2, col3, col4, col5, col6, col7, col8])
             tb = table("%s/ANTENNA" % self.basename, desc, nrow=self.nAnt, ack=False)
             
-            tb.putcol('OFFSET', numpy.zeros((self.nAnt,3)), 0, self.nAnt)
+            tb.putcol('OFFSET', np.zeros((self.nAnt,3)), 0, self.nAnt)
             tb.putcol('TYPE', ['GROUND-BASED,']*self.nAnt, 0, self.nAnt)
             tb.putcol('DISH_DIAMETER', [2.0,]*self.nAnt, 0, self.nAnt)
             tb.putcol('FLAG_ROW', [False,]*self.nAnt, 0, self.nAnt)
@@ -312,8 +306,8 @@ try:
             
             # Polarization
             
-            stks = numpy.array(self.stokes)
-            prds = numpy.zeros((2,self.nStokes), dtype=numpy.int32)
+            stks = np.array(self.stokes)
+            prds = np.zeros((2,self.nStokes), dtype=np.int32)
             for i,stk in enumerate(self.stokes):
                 stks[i] = stk
                 if stk > 4:
@@ -386,7 +380,7 @@ try:
                                           col9, col10, col11, col12])
             tb = table("%s/FEED" % self.basename, desc, nrow=self.nAnt, ack=False)
             
-            presp = numpy.zeros((self.nAnt,2,2), dtype=numpy.complex64)
+            presp = np.zeros((self.nAnt,2,2), dtype=np.complex64)
             if self.stokes[0] > 8:
                 ptype = [['X', 'Y'] for i in range(self.nAnt)]
                 presp[:,0,0] = 1.0
@@ -406,11 +400,11 @@ try:
                 presp[:,1,0] = 0.0
                 presp[:,1,1] = 1.0
                 
-            tb.putcol('POSITION', numpy.zeros((self.nAnt,3)), 0, self.nAnt)
-            tb.putcol('BEAM_OFFSET', numpy.zeros((self.nAnt,2,2)), 0, self.nAnt)
-            tb.putcol('POLARIZATION_TYPE', numpy.array(ptype, dtype='S'), 0, self.nAnt)
+            tb.putcol('POSITION', np.zeros((self.nAnt,3)), 0, self.nAnt)
+            tb.putcol('BEAM_OFFSET', np.zeros((self.nAnt,2,2)), 0, self.nAnt)
+            tb.putcol('POLARIZATION_TYPE', np.array(ptype, dtype='S'), 0, self.nAnt)
             tb.putcol('POL_RESPONSE', presp, 0, self.nAnt)
-            tb.putcol('RECEPTOR_ANGLE', numpy.zeros((self.nAnt,2)), 0, self.nAnt)
+            tb.putcol('RECEPTOR_ANGLE', np.zeros((self.nAnt,2)), 0, self.nAnt)
             tb.putcol('ANTENNA_ID', list(range(self.nAnt)), 0, self.nAnt)
             tb.putcol('BEAM_ID', [-1,]*self.nAnt, 0, self.nAnt)
             tb.putcol('FEED_ID', [0,]*self.nAnt, 0, self.nAnt)
@@ -475,28 +469,16 @@ try:
             
             # Source
             
-            arrayGeo = astro.rect_posn(*self.array[0]['center'])
-            arrayGeo = astro.get_geo_from_rect(arrayGeo)
-            
-            obs = ephem.Observer()
-            obs.lat = arrayGeo.lat * numpy.pi/180
-            obs.lon = arrayGeo.lng * numpy.pi/180
-            obs.elev = arrayGeo.elv * numpy.pi/180
-            obs.pressure = 0
+            el = EarthLocation.from_geocentric(self.array[0]['center'][0]*astrounits.m,
+                                               self.array[0]['center'][1]*astrounits.m,
+                                               self.array[0]['center'][2]*astrounits.m,)
             
             nameList = []
             posList = []
             sourceID = 0
             for dataSet in self.data:
                 if dataSet.pol == self.stokes[0]:
-                    utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-                    date = astro.get_date(utc)
-                    date.hours = 0
-                    date.minutes = 0
-                    date.seconds = 0
-                    utc0 = date.to_jd()
-                    
-                    obs.date = utc - astro.DJD_OFFSET
+                    date = AstroTime(dataSet.obsTime, format='mjd', scale='tai')
                     
                     try:
                         currSourceName = dataSet.source.name
@@ -508,23 +490,28 @@ try:
                         
                         if dataSet.source == 'z':
                             ## Zenith pointings
-                            equ = astro.equ_posn( obs.sidereal_time()*180/numpy.pi, obs.lat*180/numpy.pi )
+                            tc = AltAz(0.0*astrounits.deg, 90.0*astrounits.deg,
+                                       location=el, obstime=date)
+                            equ = tc.transform_to(FK5(equinox=date))
                             
                             # format 'source' name based on local sidereal time
-                            raHms = astro.deg_to_hms(equ.ra)
+                            raHms = astro.deg_to_hms(equ.ra.deg)
                             (tsecs, secs) = math.modf(raHms.seconds)
                             
                             name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
-                            equPo = astro.get_equ_prec2(equ, utc, astro.J2000_UTC_JD)
+                            equPo = equ.transform_to(FK5(equinox='J2000'))
+                            
+                            equ = astro.equ_posn.from_astropy(equ)
+                            equPo = astro.equ_posn.from_astropy(equPo)
                             
                         else:
                             ## Real-live sources (ephem.Body instances)
                             name = dataSet.source.name
-                            equ = astro.equ_posn(dataSet.source.ra*180/numpy.pi, dataSet.source.dec*180/numpy.pi)
-                            equPo = astro.equ_posn(dataSet.source.a_ra*180/numpy.pi, dataSet.source.a_dec*180/numpy.pi)
+                            equ = astro.equ_posn(dataSet.source.ra*180/np.pi, dataSet.source.dec*180/np.pi)
+                            equPo = astro.equ_posn(dataSet.source.a_ra*180/np.pi, dataSet.source.a_dec*180/np.pi)
                             
                         # J2000 zenith equatorial coordinates
-                        posList.append( [[equPo.ra*numpy.pi/180, equPo.dec*numpy.pi/180],] )
+                        posList.append( [[equPo.ra*np.pi/180, equPo.dec*np.pi/180],] )
                         
                         # name
                         nameList.append(name)
@@ -582,8 +569,8 @@ try:
             tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
             
             for i in range(nSource):
-                tb.putcell('DIRECTION', i, numpy.array(posList[i]))
-                tb.putcell('PROPER_MOTION', i, numpy.array([[0.0, 0.0],]))
+                tb.putcell('DIRECTION', i, np.array(posList[i]))
+                tb.putcell('PROPER_MOTION', i, np.array([[0.0, 0.0],]))
                 tb.putcell('CALIBRATION_GROUP', i, 0)
                 tb.putcell('CODE', i, 'none')
                 tb.putcell('INTERVAL', i, 0.0)
@@ -636,9 +623,9 @@ try:
             tb = table("%s/FIELD" % self.basename, desc, nrow=nSource, ack=False)
             
             for i in range(nSource):
-                tb.putcell('DELAY_DIR', i, numpy.array(posList[i]))
-                tb.putcell('PHASE_DIR', i, numpy.array(posList[i]))
-                tb.putcell('REFERENCE_DIR', i, numpy.array(posList[i]))
+                tb.putcell('DELAY_DIR', i, np.array(posList[i]))
+                tb.putcell('PHASE_DIR', i, np.array(posList[i]))
+                tb.putcell('REFERENCE_DIR', i, np.array(posList[i]))
                 tb.putcell('CODE', i, 'None')
                 tb.putcell('FLAG_ROW', i, False)
                 tb.putcell('NAME', i, nameList[i])
@@ -666,7 +653,7 @@ try:
                                                        'MEASINFO':{'type':'frequency', 
                                                                    'VarRefCol':'MEAS_FREQ_REF', 
                                                                    'TabRefTypes':['REST','LSRK','LSRD','BARY','GEO','TOPO','GALACTO','LGROUP','CMB','Undefined'],
-                                                                   'TabRefCodes':numpy.array([0,1,2,3,4,5,6,7,8,64], dtype=numpy.uint32)}
+                                                                   'TabRefCodes':np.array([0,1,2,3,4,5,6,7,8,64], dtype=np.uint32)}
                                                        })
             col3  = tableutil.makescacoldesc('REF_FREQUENCY', self.refVal, 
                                              comment='The reference frequency', 
@@ -674,7 +661,7 @@ try:
                                                        'MEASINFO':{'type':'frequency', 
                                                                    'VarRefCol':'MEAS_FREQ_REF', 
                                                                    'TabRefTypes':['REST','LSRK','LSRD','BARY','GEO','TOPO','GALACTO','LGROUP','CMB','Undefined'],
-                                                                   'TabRefCodes':numpy.array([0,1,2,3,4,5,6,7,8,64], dtype=numpy.uint32)}
+                                                                   'TabRefCodes':np.array([0,1,2,3,4,5,6,7,8,64], dtype=np.uint32)}
                                                        })
             col4  = tableutil.makearrcoldesc('CHAN_WIDTH', 0.0, 1, 
                                              comment='Channel width for each channel', 
@@ -709,7 +696,7 @@ try:
             
             for i,freq in enumerate(self.freq):
                 tb.putcell('MEAS_FREQ_REF', i, 0)
-                tb.putcell('CHAN_FREQ', i, self.refVal + freq.bandFreq + numpy.arange(self.nChan)*self.channelWidth)
+                tb.putcell('CHAN_FREQ', i, self.refVal + freq.bandFreq + np.arange(self.nChan)*self.channelWidth)
                 tb.putcell('REF_FREQUENCY', i, self.refVal)
                 tb.putcell('CHAN_WIDTH', i, [freq.chWidth for j in range(self.nChan)])
                 tb.putcell('EFFECTIVE_BW', i, [freq.chWidth for j in range(self.nChan)])
@@ -735,14 +722,9 @@ try:
             
             nBand = len(self.freq)
             
-            arrayGeo = astro.rect_posn(*self.array[0]['center'])
-            arrayGeo = astro.get_geo_from_rect(arrayGeo)
-            
-            obs = ephem.Observer()
-            obs.lat = arrayGeo.lat * numpy.pi/180
-            obs.lon = arrayGeo.lng * numpy.pi/180
-            obs.elev = arrayGeo.elv * numpy.pi/180
-            obs.pressure = 0
+            el = EarthLocation.from_geocentric(self.array[0]['center'][0]*astrounits.m,
+                                               self.array[0]['center'][1]*astrounits.m,
+                                               self.array[0]['center'][2]*astrounits.m,)
             
             mapper = self.array[0]['mapper']
             
@@ -830,24 +812,26 @@ try:
                 if dataSet.pol == self.stokes[0]:
                     ## Figure out the new date/time for the observation
                     utc = astro.taimjd_to_utcjd(dataSet.obsTime)
-                    date = astro.get_date(utc)
-                    date.hours = 0
-                    date.minutes = 0
-                    date.seconds = 0
-                    utc0 = date.to_jd()
+                    date = AstroTime(utc, format='jd', scale='utc')
+                    utc0 = AstroTime(f"{date.ymdhms[0]}-{date.ymdhms[1]}-{date.ymdhms[2]} 00:00:00", format='iso', scale='utc')
+                    utc0 = utc0.jd
                     
                     ## Update the observer so we can figure out where the source is
-                    obs.date = utc - astro.DJD_OFFSET
                     if dataSet.source == 'z':
                         ### Zenith pointings
-                        equ = astro.equ_posn( obs.sidereal_time()*180/numpy.pi, obs.lat*180/numpy.pi )
+                        tc = AltAz(0.0*astrounits.deg, 90.0*astrounits.deg,
+                                   location=el, obstime=date)
+                        equ = tc.transform_to(FK5(equinox=date))
                         
                         ### format 'source' name based on local sidereal time
-                        raHms = astro.deg_to_hms(equ.ra)
+                        raHms = astro.deg_to_hms(equ.ra.deg)
                         (tsecs, secs) = math.modf(raHms.seconds)
                         name = "ZA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
                     else:
                         ### Real-live sources (ephem.Body instances)
+                        equ = FK5(dataSet.source.a_ra*astrounits.rad, dataSet.source.a_dec*astrounits.rad,
+                                  equinox=date)
+                        
                         name = dataSet.source.name
                         
                     ## Update the source ID
@@ -858,13 +842,10 @@ try:
                         sourceID = _sourceTable.index(name)
                         
                     ## Compute the uvw coordinates of all baselines
-                    if dataSet.source == 'z':
-                        HA = 0.0
-                        dec = equ.dec
-                    else:
-                        HA = (obs.sidereal_time() - dataSet.source.ra) * 12/numpy.pi
-                        dec = dataSet.source.dec * 180/numpy.pi
-                    uvwCoords = dataSet.get_uvw(HA, dec, obs)
+                    it = equ.transform_to(ITRS(location=el, obstime=date))
+                    HA = ((el.lon - it.spherical.lon).wrap_at('180deg')).hourangle
+                    dec = it.spherical.lat.deg
+                    uvwCoords = dataSet.get_uvw(HA, dec, el)
                     
                     ## Populate the metadata
                     ### Add in the baselines
@@ -900,7 +881,7 @@ try:
                         matrix.shape = (len(order), self.nStokes, nBand*self.nChan)
                         matrix *= 0.0
                     except NameError:
-                        matrix = numpy.zeros((len(order), self.nStokes, self.nChan*nBand), dtype=numpy.complex64)
+                        matrix = np.zeros((len(order), self.nStokes, self.nChan*nBand), dtype=np.complex64)
                         
                 # Save the visibility data in the right order
                 matrix[:,self.stokes.index(dataSet.pol),:] = dataSet.visibilities[order,:]
@@ -913,10 +894,10 @@ try:
                     matrix.shape = (len(order), self.nStokes, nBand, self.nChan)
                     
                     for j in range(nBand):
-                        fg = numpy.zeros((nBL,self.nStokes,self.nChan), dtype=bool)
-                        fc = numpy.zeros((nBL,self.nStokes,self.nChan,1), dtype=bool)
-                        wg = numpy.ones((nBL,self.nStokes))
-                        sg = numpy.ones((nBL,self.nStokes))*9999
+                        fg = np.zeros((nBL,self.nStokes,self.nChan), dtype=bool)
+                        fc = np.zeros((nBL,self.nStokes,self.nChan,1), dtype=bool)
+                        wg = np.ones((nBL,self.nStokes))
+                        sg = np.ones((nBL,self.nStokes))*9999
                         
                         tb.putcol('UVW', uvwList, i, nBL)
                         tb.putcol('FLAG', fg.transpose(0,2,1), i, nBL)
@@ -1116,7 +1097,6 @@ try:
             tb.close()
             
 except ImportError:
-    import warnings
     warnings.warn(colorfy('{{%yellow Cannot import casacore.tables, MS support disabled}}'), RuntimeWarning)
     
     class Ms(WriterBase):
@@ -1130,7 +1110,7 @@ except ImportError:
         def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
             """
             Initialize a new Measurement Set object using a filename and a reference time
-            given in seconds since the UNIX 1970 ephem, a python datetime object, or a 
+            given in seconds since the UNIX 1970 epoch, a python datetime object, or a 
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
             

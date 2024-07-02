@@ -8,6 +8,9 @@ import os
 
 from lsl.common import metabundleDP, metabundleADP, metabundleNDP
 
+from lsl.misc import telemetry
+telemetry.track_module()
+
 __version__ = '1.2'
 __all__ = ['get_sdm', 'get_beamformer_min_delay', 'get_station',
            'get_session_metadata', 'get_session_spec', 'get_observation_spec',
@@ -184,6 +187,10 @@ def get_asp_configuration(tarname, which='beginning'):
     
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
+        
+    which = which.lower()
+    if which not in ('beginning', 'begin', 'end'):
+        raise ValueError(f"Unknown configuration time '{which}'")
         
     for backend in (metabundleDP, metabundleADP, metabundleNDP):
         try:

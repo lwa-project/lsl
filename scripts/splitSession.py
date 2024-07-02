@@ -1,24 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Script for splitting a DRX file based on the information contained in a MCS
 metadata tarball.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    input = raw_input
-    
 import os
 import sys
 import time
 import argparse
 from datetime import datetime, timedelta
 
-from lsl.common.mcs import mjdmpm_to_datetime, mode_to_string
+from lsl.common.mcs import mjdmpm_to_datetime
 from lsl.common import metabundle, metabundleADP, metabundleNDP
 from lsl.reader import tbw, tbn, drx, errors
 
@@ -76,7 +69,7 @@ def main(args):
 
         print("Observation #%i" % (o['obs_id']))
         print(" Start: %i, %i -> %s" % (o['mjd'], o['mpm'], tStart[-1]))
-        print(" Mode: %s" % mode_to_string(o['mode']))
+        print(" Mode: %s" % str(o['mode']))
         print(" BW: %i" % o['bw'])
         print(" Target: %s" % sdf.sessions[0].observations[o['obs_id']-1].target)
     print(" ")
@@ -99,7 +92,7 @@ def main(args):
 
         ## Get observation properties
         oStart = tStart[i]
-        oMode = mode_to_string(oDetails[i]['m'])
+        oMode = str(oDetails[i]['m'])
         oDur  = oDetails[i]['d']
         oBW   = oDetails[i]['f']
         print("Seeking %s observation of %.3f seconds at %s" % (oMode, oDur, oStart))
@@ -229,7 +222,7 @@ def main(args):
             else:
                 outname = '%s_%i_%i.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
                 
-            oMode = mode_to_string(oDetails[i]['m'])
+            oMode = str(oDetails[i]['m'])
 
             ## Get the correct reader to use
             if oMode == 'TBW':

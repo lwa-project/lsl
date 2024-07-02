@@ -2,15 +2,9 @@
 Unit test for the lsl.common.stations module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import ephem
-import numpy
+import numpy as np
 import pickle
 import unittest
 from datetime import datetime
@@ -108,7 +102,53 @@ class stations_tests(unittest.TestCase):
         lng = 0.0
         elev = 0.0
         x, y, z = stations.geo_to_ecef(lat, lng, elev)
-        numpy.testing.assert_allclose((x,y,z), (6378137.0,0.0,0.0))
+        np.testing.assert_allclose((x,y,z), (6378137.0,0.0,0.0))
+        
+    def test_round_trip_geo(self):
+        """Test round trip geodetic -> topocentric -> geodetic transformations."""
+        
+        station = stations.lwa1
+        ant = station.antennas[0]
+        
+        lwasv_enz = station.get_enz_offset(stations.lwasv)
+        ant.stand.x = lwasv_enz[0]
+        ant.stand.y = lwasv_enz[1]
+        ant.stand.z = lwasv_enz[2]
+        
+        lwasv_el = ant.stand.earth_location
+        self.assertAlmostEqual(lwasv_el.lat.rad, stations.lwasv.lat, 6)
+        self.assertAlmostEqual(lwasv_el.lon.rad, stations.lwasv.lon, 6)
+        self.assertAlmostEqual(lwasv_el.height.to('m').value, stations.lwasv.elev, 3)
+        
+        az, el, d = station.get_pointing_and_distance(lwasv_el)
+        d_act = np.sqrt(ant.stand.x**2 + ant.stand.y**2 + ant.stand.z**2)
+        self.assertAlmostEqual(d, d_act, 3)
+        
+        lwasv_geo = [lwasv_el.lat.deg, lwasv_el.lon.deg, lwasv_el.height.to('m').value]
+        az, el, d = station.get_pointing_and_distance(lwasv_geo)
+        d_act = np.sqrt(ant.stand.x**2 + ant.stand.y**2 + ant.stand.z**2)
+        self.assertAlmostEqual(d, d_act, 3)
+        
+    def test_round_trip_topo(self):
+        """Test round trip topocentric -> geodetic -> topocentric."""
+        
+        station = stations.lwa1
+        ant = station.antennas[0]
+        
+        ant_el = ant.stand.earth_location
+        xyz = station.get_enz_offset(ant_el)
+        self.assertAlmostEqual(xyz[0], ant.stand.x, 3)
+        self.assertAlmostEqual(xyz[1], ant.stand.y, 3)
+        self.assertAlmostEqual(xyz[2], ant.stand.z, 3)
+        
+        az, el, d = station.get_pointing_and_distance(ant_el)
+        d_act = np.sqrt(ant.stand.x**2 + ant.stand.y**2 + ant.stand.z**2)
+        self.assertAlmostEqual(d, d_act, 3)
+        
+        ant_geo = [ant_el.lat.deg, ant_el.lon.deg, ant_el.height.to('m').value]
+        az, el, d = station.get_pointing_and_distance(ant_geo)
+        d_act = np.sqrt(ant.stand.x**2 + ant.stand.y**2 + ant.stand.z**2)
+        self.assertAlmostEqual(d, d_act, 3)
         
     def test_interfaces(self):
         """Test retrieving LSL interface information."""

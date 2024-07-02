@@ -38,23 +38,19 @@ The other functions:
  * Parse the binary packed metadata, 
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    import anydbm as dbm
-else:
-    import dbm
-    
 import re
-import aipy
+import dbm
+import enum
 import math
 import pytz
-import numpy
+import numpy as np
 import ctypes
 import struct
+from functools import reduce
 from datetime import datetime
+
+from astropy import units as astrounits
+from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
 
 from lsl.common import dp as dpCommon
 
@@ -62,7 +58,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
@@ -72,8 +68,8 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
-           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
-           'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
+           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode', 'SubsystemID', 'CommandID', 
+           'ObservingMode', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
 ME_SSMIF_FORMAT_VERSION = 7	# SSMIF format version code
@@ -347,12 +343,19 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     """
     
     # Process the macro overrides dictionary
-    if overrides is None:
-        overrides = {}
+    dp_macros = {a: globals()[a] for a in __all__}
+    if overrides is not None:
+        dp_macros.update(overrides)
+    not_int = []
+    for k in dp_macros:
+        if not isinstance(dp_macros[k], (int, np.integer)):
+            not_int.append(k)
+    for k in not_int:
+        del dp_macros[k]
         
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):
-        raise RuntimeError("Unknown character mode: '%s'" % char_mode)
+        raise RuntimeError(f"Unknown character mode: '{char_mode}'")
     if char_mode == 'str':
         baseCharType = ctypes.c_char
     else:
@@ -379,7 +382,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         ## the next structure variable
         mtch = _cDecRE.search(line)
         if mtch is None:
-            raise RuntimeError("Unparseable line: '%s'" % line)
+            raise RuntimeError(f"Unparseable line: '{line}'")
         
         dec = mtch.group('type')
         dec = dec.rstrip()
@@ -388,30 +391,18 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         try:
             d1 = mtch.group('d1')
             if d1 is not None:
-                try:
-                    d1 = overrides[d1]
-                except KeyError:
-                    d1 = eval(d1)
+                d1 = eval(d1, None, dp_macros)
             d2 = mtch.group('d2')
             if d2 is not None:
-                try:
-                    d2 = overrides[d2]
-                except KeyError:
-                    d2 = eval(d2)
+                d2 = eval(d2, None, dp_macros)
             d3 = mtch.group('d3')
             if d3 is not None:
-                try:
-                    d3 = overrides[d3]
-                except KeyError:
-                    d3 = eval(d3)
+                d3 = eval(d3, None, dp_macros)
             d4 = mtch.group('d4')
             if d4 is not None:
-                try:
-                    d4 = overrides[d4]
-                except KeyError:
-                    d4 = eval(d4)
+                d4 = eval(d4, None, dp_macros)
         except NameError:
-            raise RuntimeError("Unknown value in array index: '%s'" % line)
+            raise RuntimeError(f"Unknown value in array index: '{line}'")
         
         ## Basic data types
         if dec in ('signed int', 'int'):
@@ -441,7 +432,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         elif dec == 'unsigned char':
             typ = ctypes.c_ubyte
         else:
-            raise RuntimeError("Unparseable line: '%s' -> type: %s, name: %s, dims: %s, %s, %s %s" % (line, dec, name, d1, d2, d3, d4))
+            raise RuntimeError(f"Unparseable line: '{line}' -> type: {dec}, name: {name}, dims: {d1}, {d2}, {d3}, {d4}")
         
         ## Array identification and construction
         dims2[name] = []
@@ -464,10 +455,10 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         ## Append
         fields.append( (name, typ) )
     
-    # ctypes creation - endianess
+    # ctypes creation - endianness
     endianness = endianness.lower()
     if endianness not in ('little', 'big', 'network', 'native'):
-        raise RuntimeError("Unknown endianness: '%s'" % endianness)
+        raise RuntimeError(f"Unknown endianness: '{endianness}'")
     
     if endianness == 'little':
         endianness = ctypes.LittleEndianStructure
@@ -507,7 +498,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
             
             out = ''
             for f,d in self._fields_:
-                out += '%s (%s): %s\n' % (f, d, eval("self.%s" % f))
+                out += f"{f} ({d}): "+str(getattr(self, f))+'\n'
             return out
             
         def sizeof(self):
@@ -525,7 +516,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
             
             output = {}
             for f,d in self._fields_:
-                output[f] = eval("self.%s" % f)
+                output[f] = getattr(self, f)
             return output
     
     # Create and return
@@ -644,280 +635,158 @@ def datetime_to_mjdmpm(dt):
     return (mjd, mpm)
 
 
-def status_to_string(code):
+class StatusCode(enum.Enum):
     """
-    Convert a numerical MCS status code to a string.
-    """
-    
-    # Make sure we have an integer
-    code = int(code)
-    
-    # Loop through the options
-    if code == 0:
-        return "Not installed"
-    elif code == 1:
-        return "Bad"
-    elif code == 2:
-        return "Suspect, possibly bad"
-    elif code == 3:
-        return "OK"
-    else:
-        raise ValueError("Unknown status code '%i'" % code)
-
-
-def summary_to_string(code):
-    """
-    Convert a numerical MCS overall status code to an explination.
+    MCS component status code.
     """
     
-    if code == 0:
-        return "Not normally used"
-    elif code == 1:
-        return "Normal"
-    elif code == 2:
-        return "Warning - issue(s) found, but still fully operational"
-    elif code == 3:
-        return "Error - problems found which limit or prevent proper function"
-    elif code == 4:
-        return "Booting - initializing; not yet fully operational"
-    elif code == 5:
-        return "Shutdown - shutting down; not ready for operation"
-    elif code == 6:
-        return "Unknown"
-    else:
-        raise ValueError("Unknown summary code '%i'" % code)
+    NOTINSTALLED = 0
+    BAD          = 1
+    SUSPECT      = 2
+    OK           = 3
 
 
-def sid_to_string(sid):
+class SummaryCode(enum.Enum):
     """
-    Convert a MCS subsystem ID code into a string.
+    MCS subsystem summary codes.
     """
     
-    if sid > 0 and sid <= 9:
-        return "Null subsystem #%i" % sid
-    elif sid == 10:
-        return "MCS"
-    elif sid == 11:
-        return "SHL"
-    elif sid == 12:
-        return "ASP"
-    elif sid == 13:
-        return "DP"
-    elif sid == 14:
-        return "DR #1"
-    elif sid == 15:
-        return "DR #2"
-    elif sid == 16:
-        return "DR #3"
-    elif sid == 17:
-        return "DR #4"
-    elif sid == 18:
-        return "DR #5"
-    elif sid == 19:
-        return "ADP"
-    elif sid == 20:
-        return "NDP"
-    else:
-        raise ValueError("Invalid sid code %i" % sid)
+    NULL    = 0
+    NORMAL  = 1
+    WARNING = 2
+    ERROR   = 3
+    BOOTING = 4
+    SHUTDWN = 5
+    UNK     = 6
+    
+    @property
+    def description(self):
+        if self.value == 0:
+            return "Not normally used"
+        elif self.value == 1:
+            return "Normal"
+        elif self.value == 2:
+            return "Warning - issue(s) found, but still fully operational"
+        elif self.value == 3:
+            return "Error - problems found which limit or prevent proper function"
+        elif self.value == 4:
+            return "Booting - initializing; not yet fully operational"
+        elif self.value == 5:
+            return "Shutdown - shutting down; not ready for operation"
+        elif self.value == 6:
+            return "Unknown"
+        else:
+            raise ValueError(f"Unknown summary code '{code}'")
 
 
-def cid_to_string(cid):
+class SubsystemID(enum.Enum):
     """
-    Convert a MCS command code into a string.
+    MCS subsystem IDs.
     """
     
-    if cid == 0:
-        return "MCSSHT"
-    elif cid == 1:
-        return "PNG"
-    elif cid == 2:
-        return "RPT"
-    elif cid == 3:
-        return "SHT"
-    elif cid == 4:
-        return "INI"
-    elif cid == 5:
-        return "TMP"
-    elif cid == 6:
-        return "DIF"
-    elif cid == 7:
-        return "PWR"
-    elif cid == 8:
-        return "FIL"
-    elif cid == 9:
-        return "AT1"
-    elif cid == 10:
-        return "AT2"
-    elif cid == 11:
-        return "ATS"
-    elif cid == 12:
-        return "FPW"
-    elif cid == 13:
-        return "RXP"
-    elif cid == 14:
-        return "FEP"
-    elif cid == 15:
-        return "TBW"
-    elif cid == 16:
-        return "TBN"
-    elif cid == 17:
-        return "DRX"
-    elif cid == 18:
-        return "BAM"
-    elif cid == 19:
-        return "FST"
-    elif cid == 20:
-        return "CLK"
-    elif cid == 21:
-        return "REC"
-    elif cid == 22:
-        return "DEL"
-    elif cid == 23:
-        return "STP"
-    elif cid == 24:
-        return "GET"
-    elif cid == 25:
-        return "CPY"
-    elif cid == 26:
-        return "DMP"
-    elif cid == 27:
-        return "FMT"
-    elif cid == 28:
-        return "DWN"
-    elif cid == 29:
-        return "UP_"
-    elif cid == 30:
-        return "SEL"
-    elif cid == 31:
-        return "SYN"
-    elif cid == 32:
-        return "TST"
-    elif cid == 33:
-        return "BUF"
-    elif cid == 34:
-        return "NUL"
-    elif cid == 35:
-        return "ESN"
-    elif cid == 36:
-        return "ESF"
-    elif cid == 37:
-        return "OBS"
-    elif cid == 38:
-        return "OBE"
-    elif cid == 39:
-        return "SPC"
-    elif cid == 40:
-        return "TBF"
-    elif cid == 41:
-        return "COR"
-    else:
-        raise ValueError("Invalid cid code %i" % cid)
+    NU1 = 1
+    NU2 = 2
+    NU3 = 3
+    NU4 = 4
+    NU5 = 5
+    NU6 = 6
+    NU7 = 7
+    NU8 = 8
+    NU9 = 9
+    MCS = 10
+    SHL = 11
+    ASP = 12
+    DP  = 13
+    DR1 = 14
+    DR2 = 15
+    DR3 = 16
+    DR4 = 17
+    DR5 = 18
+    ADP = 19
+    NDP = 20
 
 
-def mode_to_string(mode):
+class CommandID(enum.Enum):
     """
-    Convert a MCS numeric observing mode into a string.
+    MCS Command IDs.
     """
     
-    if mode == 1:
-        return "TRK_RADEC"
-    elif mode == 2:
-        return "TRK_SOL"
-    elif mode == 3:
-        return "TRK_JOV"
-    elif mode == 4:
-        return "STEPPED"
-    elif mode == 5:
-        return "TBW"
-    elif mode == 6:
-        return "TBN"
-    elif mode == 7:
-        return "DIAG1"
-    elif mode == 8:
-        return "TBF"
-    elif mode == 9:
-        return "TRK_LUN"
-    else:
-        raise ValueError("Invalid observing mode %i" % mode)
+    MCSSHT = 0
+    PNG    = 1
+    RPT    = 2
+    SHT    = 3
+    INI    = 4
+    TMP    = 5
+    DIF    = 6
+    PWR    = 7
+    FIL    = 8
+    AT1    = 9
+    AT2    = 10
+    ATS    = 11
+    FPW    = 12
+    RXP    = 13
+    FEP    = 14
+    TBW    = 15
+    TBN    = 16
+    DRX    = 17
+    BAM    = 18
+    FST    = 19
+    CLK    = 20
+    REC    = 21
+    DEL    = 22
+    STP    = 23
+    GET    = 24
+    CPY    = 25
+    DMP    = 26
+    FMT    = 27
+    DWN    = 28
+    UP_    = 29
+    SEL    = 30
+    SYN    = 31
+    TST    = 32
+    BUF    = 33
+    NUL    = 34
+    ESN    = 35
+    ESF    = 36
+    OBS    = 37
+    OBE    = 38
+    SPC    = 39
+    TBF    = 40
+    COR    = 41
 
 
-def flat_to_multi(inputList, dim1, dim2=None, dim3=None, dim4=None):
-    if dim4 is not None:
-        return _flat_to_four(inputList, dim1, dim2, dim3, dim4)
+class ObservingMode(enum.Enum):
+    """
+    MCS Observing Modes.
+    """
+    
+    TRK_RADEC = 1
+    TRK_SOL   = 2
+    TRK_JOV   = 3
+    STEPPED   = 4
+    TBW       = 5
+    TBN       = 6
+    DIAG1     = 7
+    TBF       = 8
+    TRK_LUN   = 9
+
+
+def flat_to_multi(inputList, *shape):
+    """
+    Convert a 1-D list into a multi-dimension list of shape 'shape'.
+    
+    .. versionchanged:: 3.0.0
+        Switch from explicit 'dim1', 'dim2', etc. to a catch-all 'shape'.
+    """
+    
+    if reduce(lambda x, y: x*y, shape, 1) != len(inputList):
+        raise ValueError(f"Incompatiable dimensions: input={len(inputList)}, output={' by '.join([str(s) for s in shape])}")
         
-    elif dim3 is not None:
-        return _flat_to_three(inputList, dim1, dim2, dim3)
-
-    elif dim2 is not None:
-        return _flat_to_two(inputList, dim1, dim2)
+    outputList = list(inputList)
+    while len(shape) > 1:
+        outputList = [outputList[i:i+shape[-1]] for i in range(0, len(outputList), shape[-1])]
+        shape = shape[:-1]
         
-    else:
-        return list(inputList)
-
-
-def _flat_to_two(inputList, dim1, dim2):
-    """
-    Convert a flatten list into a two-dimensional list.  This is useful
-    for converting flat lists of ctypes into their two-dimensional forms.
-    """
-    
-    if dim1*dim2 < len(inputList):
-        raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i" % (len(inputList), dim1, dim2))
-    
-    outputList = []
-    for i in range(dim1):
-        outputList.append( [None for k in range(dim2)] )
-        for j in range(dim2):
-            try:
-                outputList[i][j] = inputList[dim2*i+j]
-            except IndexError:
-                pass
-    
-    return outputList
-
-
-def _flat_to_three(inputList, dim1, dim2, dim3):
-    """
-    Convert a flatten list into a three-dimensional list.  This is useful
-    for converting flat lists of ctypes into their three-dimensional forms.
-    """
-    
-    if dim1*dim2*dim3 < len(inputList):
-        raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i by %i" % (len(inputList), dim1, dim2, dim3))
-    
-    outputList = []
-    for i in range(dim1):
-        outputList.append( [[None for l in range(dim3)] for k in range(dim2)] )
-        for j in range(dim2):
-            for k in range(dim3):
-                try:
-                    outputList[i][j][k] = inputList[dim2*dim3*i+dim3*j+k]
-                except IndexError:
-                    pass
-    
-    return outputList
-
-
-def _flat_to_four(inputList, dim1, dim2, dim3, dim4):
-    """
-    Convert a flatten list into a four-dimensional list.  This is useful
-    for converting flat lists of ctypes into their four-dimensional forms.
-    """
-    
-    if dim1*dim2*dim3*dim4 < len(inputList):
-        raise ValueError("Incompatiable dimensions: input=%i, output=%i by %i by %i by %i" % (len(inputList), dim1, dim2, dim3, dim4))
-    
-    outputList = []
-    for i in range(dim1):
-        outputList.append( [[[None for m in range(dim4)] for l in range(dim3)] for k in range(dim2)] )
-        for j in range(dim2):
-            for k in range(dim3):
-                for l in range(dim4):
-                    try:
-                        outputList[i][j][k][l] = inputList[dim2*dim3*dim4*i+dim3*dim4*j+dim4*k+l]
-                    except IndexError:
-                        pass
-    
     return outputList
 
 
@@ -929,17 +798,17 @@ def _get_rotation_matrix(theta, phi, psi, degrees=True):
     """
     
     if degrees:
-        theta = theta * numpy.pi/180.0
-        phi   = phi * numpy.pi/180.0
-        psi   = psi * numpy.pi/180.0
+        theta = theta * np.pi/180.0
+        phi   = phi * np.pi/180.0
+        psi   = psi * np.pi/180.0
         
     # Axis
-    u = numpy.array([numpy.cos(phi)*numpy.sin(theta), numpy.sin(phi)*numpy.sin(theta), numpy.cos(theta)])
+    u = np.array([np.cos(phi)*np.sin(theta), np.sin(phi)*np.sin(theta), np.cos(theta)])
     
     # Rotation matrix
-    rot  = numpy.eye(3)*numpy.cos(psi) 
-    rot += numpy.sin(psi)*numpy.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]]) 
-    rot += (1-numpy.cos(psi))*numpy.tensordot(u, u, axes=0)
+    rot  = np.eye(3)*np.cos(psi) 
+    rot += np.sin(psi)*np.array([[0, -u[2], u[1]], [u[2], 0, -u[0]], [-u[1], u[0], 0]]) 
+    rot += (1-np.cos(psi))*np.tensordot(u, u, axes=0)
     
     return rot
 
@@ -957,17 +826,25 @@ def apply_pointing_correction(az, el, theta, phi, psi, lat=34.070, degrees=True)
     
     # Convert the az,alt coordinates to the unit vector
     if degrees:
-        xyz = aipy.coord.azalt2top((az*numpy.pi/180.0, el*numpy.pi/180.0))
+        az = az*astrounits.deg
+        el = el*astrounits.deg
     else:
-        xyz = aipy.coord.azalt2top((az, el))
-        
-    # Rotate
-    xyzP = numpy.dot(rot, xyz)
+        az = az*astrounits.rad
+        el = el*astrounits.rad
+    sph = SphericalRepresentation(az, el, 1)
+    xyz = sph.to_cartesian()
     
-    azP, elP = aipy.coord.top2azalt(xyzP)
+    # Rotate
+    yxz = xyz.xyz[[1,0,2]]
+    xyzP = CartesianRepresentation((rot @ yxz)[[1,0,2]])
+    
+    sph = SphericalRepresentation.from_cartesian(xyzP)
     if degrees:
-        azP *= 180/numpy.pi
-        elP *= 180/numpy.pi
+        azP = sph.lon.deg
+        elP = sph.lat.deg
+    else:
+        azP = sph.lon.rad
+        elP = sph.lat.rad
         
     return azP, elP
 
@@ -991,7 +868,7 @@ class MIB(object):
         
         nEntry = len(self.entries.keys())
         times = [self.entries[k].updateTime for k in self.entries.keys()]
-        return "MIB containing %i entries from %s to %s" % (nEntry, min(times), max(times))
+        return f"MIB containing {nEntry} entries from {min(times)} to {max(times)}"
         
     def __getitem__(self, key):
         """
@@ -1117,7 +994,7 @@ class MIBEntry(object):
         Represent the class as a string for display purposes.
         """
         
-        return "Index: %s; Value: %s; Updated at %s" % (self.index, self.value, self.updateTime)
+        return f"Index: {self.index}; Value: {self.value}; Updated at {self.updateTime}"
         
     def _parse_value(self, value, dataType):
         """
@@ -1136,6 +1013,8 @@ class MIBEntry(object):
          * i8u:   integer, 8 bytes, unsigned, litte-endian (=uint64)
          * f4:    float, 4 bytes, little-endian (=float32)
          * f4r:   float, 4 bytes, big-ending (=float32)
+         * f8:    float, 8 bytes, little-endian (=float64)
+         * f8r:   float, 8 bytes, big-ending (=float64)
         """
         
         if dataType == 'NUL' or dataType == '':
@@ -1192,8 +1071,18 @@ class MIBEntry(object):
                 return struct.unpack('<1f', value)[0]
             except struct.error:
                 return 0.0
+        elif dataType[:3] == 'f8r':
+            try:
+                return struct.unpack('>1d', value)[0]
+            except struct.error:
+                return 0.0
+        elif dataType[:2] == 'f8':
+            try:
+                return struct.unpack('<1d', value)[0]
+            except struct.error:
+                return 0.0
         else:
-            raise ValueError("Unknown data type '%s'" % dataType)
+            raise ValueError(f"Unknown data type '{dataType}'")
             
     def from_entry(self, value):
         """
@@ -1239,9 +1128,9 @@ class MIBEntry(object):
             raise ValueError("Cannot interpret MIB branch entries")
         try:
             if index[0] not in ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9'):
-                raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
+                raise ValueError(f"Entry index '{record.index}' does not appear to be numeric")
         except IndexError:
-            raise ValueError("Entry index '%s' does not appear to be numeric" % record.index)
+            raise ValueError(f"Entry index '{record.index}' does not appear to be numeric")
             
         # Basic information
         self.eType = int(record.eType)

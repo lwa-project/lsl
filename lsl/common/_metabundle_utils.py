@@ -7,7 +7,7 @@ import shutil
 import tarfile
 import tempfile
 
-from lsl.misc.lru_cache import lru_cache
+from functools import lru_cache
 
 
 __version__ = '0.1'

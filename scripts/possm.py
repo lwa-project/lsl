@@ -1,18 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Utility script similar to the AIPS task 'possm' for plotting visibility data
 stored in a file.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import sys
-import numpy
+import numpy as np
 import argparse
 
 from lsl import astro
@@ -66,7 +60,7 @@ def main(args):
                 print("        %s now has %i baselines" % (pol, len(dataDict.baselines)))
                 
         # Pull out the right channels
-        toWork = numpy.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
+        toWork = np.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
             raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
         if args.frequency:
@@ -103,10 +97,10 @@ def main(args):
                     plt.draw()
                     break
 
-                amp = numpy.abs(vis)
+                amp = np.abs(vis)
                 if args.log:
-                    amp = numpy.log10(amp)
-                phs = numpy.angle(vis)*180/numpy.pi
+                    amp = np.log10(amp)
+                phs = np.angle(vis)*180/np.pi
 
                 ax = fig.add_subplot(gs[j//ncol*2+0, j%ncol])
                 if ((phs+360)%360).std() < phs.std():

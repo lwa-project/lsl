@@ -95,13 +95,13 @@ PyObject *read_drx8(PyObject *self, PyObject *args) {
         }
         Py_XDECREF(data);
         return NULL;
-    } else if( PyString_GET_SIZE(buffer) != sizeof(cFrame) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != sizeof(cFrame) ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(data);
         Py_XDECREF(buffer);
         return NULL;
     }
-    memcpy(&cFrame, PyString_AS_STRING(buffer), sizeof(cFrame));
+    memcpy(&cFrame, PyBytes_AS_STRING(buffer), sizeof(cFrame));
     Py_XDECREF(buffer);
         
     Py_BEGIN_ALLOW_THREADS

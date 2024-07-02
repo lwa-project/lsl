@@ -68,12 +68,12 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
         }
         return NULL;
-    } else if( PyString_GET_SIZE(buffer) != sizeof(cFrame) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != sizeof(cFrame) ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(buffer);
         return NULL;
     }
-    memcpy(&cFrame, PyString_AS_STRING(buffer), sizeof(cFrame));
+    memcpy(&cFrame, PyBytes_AS_STRING(buffer), sizeof(cFrame));
     Py_XDECREF(buffer);
     
     // Determine the number of stands in the frame - default to 256 for
@@ -99,13 +99,13 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
         }
         free(raw_data);
         return NULL;
-    } else if( PyString_GET_SIZE(buffer) != 12*nstand*2*1 ) {
+    } else if( PyBytes_GET_SIZE(buffer) != 12*nstand*2*1 ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(buffer);
         free(raw_data);
         return NULL;
     }
-    memcpy(raw_data, PyString_AS_STRING(buffer), 12*nstand*2*1);
+    memcpy(raw_data, PyBytes_AS_STRING(buffer), 12*nstand*2*1);
     Py_XDECREF(buffer);
     
     // Create the output data array

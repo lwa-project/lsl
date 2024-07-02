@@ -58,31 +58,31 @@ class mcs_ndp_tests(unittest.TestCase):
         """Test valid summary values"""
         
         for i in range(0, 6+1):
-            mcsNDP.summary_to_string(i)
-        self.assertRaises(ValueError, mcsNDP.summary_to_string, 7)
+            mcsNDP.SummaryCode(i)
+        self.assertRaises(ValueError, mcsNDP.SummaryCode, 7)
         
     def test_sid_limits(self):
         """Test valid subsystem ID values"""
         
         for i in range(1, 20+1):
-            mcsNDP.sid_to_string(i)
-        self.assertRaises(ValueError, mcsNDP.sid_to_string, 0)
-        self.assertRaises(ValueError, mcsNDP.sid_to_string, 21)
+            mcsNDP.SubsystemID(i)
+        self.assertRaises(ValueError, mcsNDP.SubsystemID, 0)
+        self.assertRaises(ValueError, mcsNDP.SubsystemID, 21)
         
     def test_cid_limits(self):
         """Test valid command ID values"""
         
         for i in range(0, 41+1):
-            mcsNDP.cid_to_string(i)
-        self.assertRaises(ValueError, mcsNDP.cid_to_string, 42)
+            mcsNDP.CommandID(i)
+        self.assertRaises(ValueError, mcsNDP.CommandID, 42)
         
     def test_mode_limits(self):
         """Test valid observing mode values"""
         
         for i in range(1, 9+1):
-            mcsNDP.mode_to_string(i)
-        self.assertRaises(ValueError, mcsNDP.mode_to_string, 0)
-        self.assertRaises(ValueError, mcsNDP.mode_to_string, 10)
+            mcsNDP.ObservingMode(i)
+        self.assertRaises(ValueError, mcsNDP.ObservingMode, 0)
+        self.assertRaises(ValueError, mcsNDP.ObservingMode, 10)
         
     def test_pointing_correction(self):
         """Test the pointing correction function"""

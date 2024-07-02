@@ -10,13 +10,7 @@ http://iopscience.iop.org/0004-637X/584/2/782/fulltext/56392.text.html
     seconds.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 
 from lsl.statistics import robust
 
@@ -34,8 +28,8 @@ def thin(t, tau):
     thin screen.
     """
 
-    g  = 1.0/tau * numpy.exp(-t/tau)
-    g  = numpy.where(t >= 0, g, 0)
+    g  = 1.0/tau * np.exp(-t/tau)
+    g  = np.where(t >= 0, g, 0)
     g /= g.sum()
 
     return g
@@ -52,9 +46,9 @@ def thick(t, tau):
 
     tPrime = t + 1e-15
     
-    g  = numpy.sqrt(numpy.pi*tau/4/tPrime**3)
-    g *= numpy.exp(-numpy.pi**2*tau/16/tPrime)
-    g  = numpy.where(t > 0, g, 0)
+    g  = np.sqrt(np.pi*tau/4/tPrime**3)
+    g *= np.exp(-np.pi**2*tau/16/tPrime)
+    g  = np.where(t > 0, g, 0)
     g /= g.sum()
     
     return g
@@ -71,9 +65,9 @@ def uniform(t, tau):
 
     tPrime = t + 1e-15
     
-    g  = numpy.sqrt(numpy.pi**5*tau**3/8/tPrime**5)
-    g *= numpy.exp(-numpy.pi**2*tau/4/tPrime)
-    g  = numpy.where(t > 0, g, 0)
+    g  = np.sqrt(np.pi**5*tau**3/8/tPrime**5)
+    g *= np.exp(-np.pi**2*tau/4/tPrime)
+    g  = np.where(t > 0, g, 0)
     g /= g.sum()
 
     return g
@@ -96,7 +90,7 @@ def _positivity(t, raw, resids, cc):
     sigma = robust.std(raw)
     
     temp = -resids - x*sigma
-    f  = (resids**2 * numpy.where(temp>=0, 1, 0)).mean()
+    f  = (resids**2 * np.where(temp>=0, 1, 0)).mean()
     f *= m/sigma**2
 
     return f
@@ -130,7 +124,7 @@ def _figure_of_merit(t, raw, resids, cc):
     s = robust.std(raw)
     
     # Find the fraction of noise-like points in the residuals
-    n = len( numpy.where( numpy.abs(resids - m) <= 3*s )[0] )
+    n = len( np.where( np.abs(resids - m) <= 3*s )[0] )
     n = float(n) / raw.size
 
     # Compute the positivity and skewness
@@ -179,9 +173,9 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     sigma = robust.std(raw)
 
     # Loop over tScat values
-    best = numpy.inf
+    best = np.inf
     bestTau = None
-    for tScat in numpy.arange(tScatMin, tScatMax, tScatStep):
+    for tScat in np.arange(tScatMin, tScatMax, tScatStep):
         ## Setup the temporary variables
         working = raw*1.0
         cc = raw*0.0
@@ -190,7 +184,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
         i = 0
         while i < max_iter:
             ### Find the peak and make sure it is really a peak
-            peak = numpy.where( working == working.max() )[0][0]
+            peak = np.where( working == working.max() )[0][0]
             if working.max() < 3./2.*sigma:
                 break
 
@@ -237,9 +231,9 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
         
     # Restore the profile using a Gaussian with a sigma value of 5 time steps
     sigmaRestore = 5*(t[1]-t[0])
-    restoreFunction = numpy.exp(-t**2 / (2*sigmaRestore**2))
+    restoreFunction = np.exp(-t**2 / (2*sigmaRestore**2))
     restoreFunction /= restoreFunction.sum()
-    out = numpy.convolve(cc, restoreFunction, 'same')
+    out = np.convolve(cc, restoreFunction, 'same')
     
     # Add back in the residuals
     out += resids
