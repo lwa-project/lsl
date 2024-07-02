@@ -364,11 +364,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             ecefTo = ecefTo.itrs
             
         aa = AltAz(location=ecefFrom, obstime=ecefTo.obstime, pressure=0)
-        try:
-            pd = ITRS(ecefTo.cartesian.xyz-ecefFrom.cartesian.xyz, obstime=ecefTo.obstime, location=ecefFrom).transform_to(aa)
-        except TypeError:
-            pd = ITRS(ecefTo.cartesian.xyz-ecefFrom.cartesian.xyz, obstime=ecefTo.obstime).transform_to(aa)
-            
+        pd = ITRS(ecefTo.cartesian.xyz-ecefFrom.cartesian.xyz, obstime=ecefTo.obstime, location=ecefFrom).transform_to(aa)
         return (pd.az.rad, pd.alt.rad, pd.distance.to('m').value)
         
     @property
@@ -644,14 +640,9 @@ class Stand(object):
         center = self._parent.earth_location
         aa = AltAz(CartesianRepresentation(self.y*astrounits.m, self.x*astrounits.m, self.z*astrounits.m),
                    location=center, obstime=epoch)
-        try:
-            aa = aa.transform_to(ITRS(location=center, obstime=epoch))
-            aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz, obstime=epoch)
-        except TypeError:
-            aa = aa.transform_to(ITRS(obstime=epoch))
-            rf = AltAz(CartesianRepresentation('0.01mm', '0.01mm', '0.01mm'), location=center, obstime=epoch)
-            rf = rf.transform_to(ITRS(obstime=epoch))
-            aa = ITRS(aa.cartesian.xyz + (center.itrs.cartesian.xyz-rf.cartesian.xyz), obstime=epoch)
+         
+        aa = aa.transform_to(ITRS(location=center, obstime=epoch))
+        aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz, obstime=epoch)
         return EarthLocation.from_geocentric(aa.x, aa.y, aa.z)
 
 

@@ -11,7 +11,6 @@ import os
 import gc
 import math
 import numpy as np
-import warnings
 from datetime import datetime
 
 from astropy import units as astrounits
@@ -300,11 +299,7 @@ class Uv(WriterBase):
                 sourceID = self._sourceTable.index(name) + 1
                 
                 ## Compute the uvw coordinates of all baselines
-                try:
-                    it = equ.transform_to(ITRS(location=el, obstime=date))
-                except TypeError:
-                    warnings.warn(colorfy('{{%yellow}} astropy.coordiantes.ITRS does not support the \'location\' keyword, (u,v,w) accuracy may be degraded'))
-                    it = equ.transform_to(ITRS(obstime=date))
+                it = equ.transform_to(ITRS(location=el, obstime=date))
                 RA = equ.ra.deg
                 HA = ((el.lon - it.spherical.lon).wrap_at('180deg')).hourangle
                 dec = it.spherical.lat.deg

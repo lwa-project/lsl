@@ -8,7 +8,6 @@ directly worked with in the :mod:`lsl.imaging.utils` module.
 import aipy
 import ephem
 import numpy as np
-import warnings
 from datetime import datetime
 
 from astropy import units as astrounits
@@ -109,11 +108,7 @@ class VirtualWriter(WriterBase):
                       equinox=date)
             
         # Phase center coordinates
-        try:
-            it = equ.transform_to(ITRS(location=self.el, obstime=date))
-        except TypeError:
-            warnings.warn(colorfy('{{%yellow}} astropy.coordiantes.ITRS does not support the \'location\' keyword, (u,v,w) accuracy may be degraded'))
-            it = equ.transform_to(ITRS(obstime=date))
+        it = equ.transform_to(ITRS(location=self.el, obstime=date))
         HA = ((self.el.lon - it.spherical.lon).wrap_at('180deg')).deg
         dec = it.spherical.lat.deg
         
