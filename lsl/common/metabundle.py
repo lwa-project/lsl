@@ -15,7 +15,7 @@ __version__ = '1.2'
 __all__ = ['get_sdm', 'get_beamformer_min_delay', 'get_station',
            'get_session_metadata', 'get_session_spec', 'get_observation_spec',
            'get_sdf', 'get_command_script', 'get_asp_configuration',
-           'get_asp_configuration_summary']
+           'get_asp_configuration_summary', 'is_valid', 'get_style']
 
 
 def get_sdm(tarname):
@@ -218,3 +218,40 @@ def get_asp_configuration_summary(tarname, which='beginning'):
             except:
                 pass
     raise RuntimeError("Failed to get ASP configuration summary for '%s'" % which)
+
+
+def is_valid(tarname, verbose=False):
+    """
+    Given a filename, see if it is valid metadata tarball or not.
+    
+    .. versionadded:: 1.2.0
+    """
+    
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
+    valid = False
+    for backend in (metabundleDP, metabundleADP, metabundleNDP):
+        valid |= backend.is_valid(tarname, verbose=False)
+        if valid:
+            break
+    return valid
+
+
+def get_style(tarname, verbose=False):
+    """
+    Given a filename, determine which metadata style (DP, ADP, or NDP) it
+    corresponds to.  Returns a string of the module name that can read it, None
+    if one cannot be found.
+    
+    .. versionadded:: 3.0.0
+    """
+    
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
+    provider = None
+    for backend in (metabundleDP, metabundleADP, metabundleNDP):
+        if backend.is_valid(tarname, verbose=False):
+            provider = backend.__name__
+    return provider
