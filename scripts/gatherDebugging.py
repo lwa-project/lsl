@@ -65,7 +65,7 @@ def main(args):
             print(f"{mod}: not found")
             
     ## Optional
-    for mod in ('matplotlib', 'h5py', 'psrfits_utils'):
+    for mod in ('casacore', 'matplotlib', 'h5py', 'psrfits_utils'):
         if modSpec != None:
             modInfo = importlib.util.module_from_spec(modSpec)
             modSpec.loader.exec_module(modInfo)
