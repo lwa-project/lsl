@@ -20,7 +20,10 @@
  * Added the Fermi 3FGL, 4FGL, and 4FGL-DR4 catalogs
  * Updated many functions to be flexible with angle inputs so that accept float, astropy Angle or ephem Angle instances
  * Fixed how lsl.reader.vdif and lsl.writer.vdif deal with non-zero reference epochs
- * 
+ * Added support for LWA-NA and other NDP-based stations
+ * Changed lsl.common.metabundle into a general module that can work with metadata from any station
+ * Added a DRX8 reader for future data format support
+ * Updated gatherDebugging.py to make it more useful
 
 2.2.0
  * Add a keyword to lsl.imaging.selfcal functions that will return whether or not a call converged
