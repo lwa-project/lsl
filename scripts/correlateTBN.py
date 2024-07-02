@@ -1,20 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Example script that reads in TBN data and runs a cross-correlation on it.  
 The results are saved in the FITS IDI format.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import time
-import numpy
+import numpy as np
 import argparse
 
 from lsl.reader.ldp import LWADataFile, TBNFile
@@ -90,7 +84,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
             blList, freq, vis = fxc.FXMaster(data, mapper, LFFT=LFFT, overlap=overlap, pfb=pfb, include_auto=True, verbose=False, sample_rate=sample_rate, central_freq=central_freq, pol=pol, return_baselines=True, gain_correct=True)
             
             # Select the right range of channels to save
-            toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
+            toUse = np.where( (freq>5.0e6) & (freq<93.0e6) )
             toUse = toUse[0]
             
             # If we are in the first polarazation product of the first iteration,  setup

@@ -3,13 +3,7 @@ Python module for creating creating, validating, and writing simulated
 TBN frames to a file.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 
 from lsl.common.dp import fS
 from lsl.reader import tbn
@@ -29,7 +23,7 @@ def frame_to_frame(tbn_frame):
     """
 
     # The raw frame
-    rawFrame = numpy.zeros(tbn.FRAME_SIZE, dtype=numpy.uint8)
+    rawFrame = np.zeros(tbn.FRAME_SIZE, dtype=np.uint8)
 
     # Part 1: The header
     ## Sync. words (0xDEC0DE5C)
@@ -65,16 +59,16 @@ def frame_to_frame(tbn_frame):
     rawFrame[23] = tbn_frame.payload.timetag & 255
     ## Data
     if tbn_frame.payload.data.dtype == CI8:
-        iq = tbn_frame.payload.data.view(numpy.int8).ravel().copy()
+        iq = tbn_frame.payload.data.view(np.int8).ravel().copy()
     else:
         iq = tbn_frame.payload.data
         iq.real
         ### Round and convert to unsigned integers
-        iq = numpy.round(iq)
-        if iq.dtype == numpy.complex128:
-            iq = iq.astype(numpy.complex64)
-        iq = iq.view(numpy.float32)
-        iq = iq.astype(numpy.int8)
+        iq = np.round(iq)
+        if iq.dtype == np.complex128:
+            iq = iq.astype(np.complex64)
+        iq = iq.view(np.float32)
+        iq = iq.astype(np.int8)
         
     rawFrame[24:] = iq
     
@@ -166,31 +160,31 @@ class SimFrame(tbn.Frame):
         # Is the stand number reasonable?
         if stand == 0 or stand > 260:
             if raise_errors:
-                raise ValueError("Invalid stand: '%s'" % stand)
+                raise ValueError(f"Invalid stand: '{stand}'")
             return False
 
         # Is the polarization reasonable?
         if pol not in [0, 1]:
             if raise_errors:
-                raise ValueError("Invalid polarization: '%s'" % tune)
+                raise ValueError(f"Invalid polarization: '{tune}'")
             return False
 
         # Is there data loaded into frame.payload.data?
         if self.payload.data is None:
             if raise_errors:
-                raise ValueError("Invalid data payload: '%s'" % self.payload.data)
+                raise ValueError(f"Invalid data payload: '{self.payload.data}'")
             return False
 
         # Does the data length make sense?
         if self.payload.data.shape[0] != 512:
             if raise_errors:
-                raise ValueError("Invalid data length: %i", self.payload.data.shape[0])
+                raise ValueError(f"Invalid data length: {self.payload.data.shape[0]}")
             return False
 
         # Does the data type make sense?
         if self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c':
             if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
+                raise ValueError(f"Invalid data type: '{self.payload.data.dtype.kind}'")
             return False
             
         # If we made it this far, it's valid
@@ -223,4 +217,4 @@ class SimFrame(tbn.Frame):
         if self.stand is None:
             return "Empty TBN SimFrame object"
         else:
-            return "TBN SimFrame for stand %i, pol. %i @ time %i" % (self.stand, self.pol, self.obs_time)
+            return f"TBN SimFrame for stand {self.stand}, pol. {self.pol} @ time {self.obs_time}"

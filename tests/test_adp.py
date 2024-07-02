@@ -2,15 +2,9 @@
 Unit test for the lsl.common.adp module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import warnings
 import unittest
-import numpy
+import numpy as np
 
 from lsl.common import adp
 from lsl.common import stations
@@ -27,7 +21,7 @@ class adp_bandpass_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy and python warnings."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         warnings.simplefilter('ignore')
     
     def test_tbn_bandpass(self):

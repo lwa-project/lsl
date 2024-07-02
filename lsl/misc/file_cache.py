@@ -9,10 +9,7 @@ import glob
 import time
 import contextlib
 from threading import Lock
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO, BytesIO
+from io import StringIO, BytesIO
 from collections import namedtuple
     
 from lsl.misc.file_lock import FileLock, MemoryLock
@@ -182,7 +179,7 @@ class FileCache(object):
 
 
 #: os.stat_result - like namedtuple for stat-ing a MemoryFile
-mf_stat_result = namedtuple('ms_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
+mf_stat_result = namedtuple('mf_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
                                                'st_uid', 'st_gid', 'st_size',
                                                'st_atime', 'st_mtime', 'st_ctime'])
 
@@ -251,7 +248,7 @@ class MemoryFile(object):
         """
         
         if not self._closed:
-            raise IOError("MemoryFile:%s is already open" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is already open")
             
         self._lock.acquire(True)
         
@@ -275,7 +272,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         self._buffer.seek(pos, whence)
         
@@ -285,7 +282,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         return self._buffer.tell()
         
@@ -306,15 +303,11 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         contents = self._buffer.read(n)
         if not self._is_binary:
-            try:
-                contents = contents.decode()
-            except AttributeError:
-                # Python2 catch
-                pass
+            contents = contents.decode()
         return contents
         
     def readline(self, size=-1):
@@ -324,15 +317,11 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         contents = self._buffer.readline(size)
         if not self._is_binary:
-            try:
-                contents = contents.decode()
-            except AttributeError:
-                # Python2 catch
-                pass
+            contents = contents.decode()
         return contents
         
     def write(self, s):
@@ -342,13 +331,13 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         if self._is_binary:
             try:
                 s = s.encode()
             except AttributeError:
-                # Python2 catch
+                # Already encoded as binary
                 pass
         return self._buffer.write(s)
         
@@ -358,7 +347,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         self._buffer.flush()
         if self.mode.startswith('w') or self.mode.startswith('a'):

@@ -11,13 +11,8 @@ words and functions for calculating the magnitude response of the TBN and DRX
 filters and a software version of DP.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
+import concurrent.futures as cf
 from scipy.signal import freqz, lfilter
 from scipy.interpolate import interp1d
 
@@ -402,23 +397,23 @@ def tbn_filter(sample_rate=1e5, npts=_N_PTS):
     R = decimationCIC
     
     # Part 1 - CIC filter
-    h = numpy.linspace(0, numpy.pi/decimationCIC/2, num=npts, endpoint=True)
-    wCIC = (numpy.sin(h*R)/numpy.sin(h/2))**N
+    h = np.linspace(0, np.pi/decimationCIC/2, num=npts, endpoint=True)
+    wCIC = (np.sin(h*R)/np.sin(h/2))**N
     wCIC[0] = (2*R)**N
     
     # Part 2 - FIR filter
     h, wFIR = freqz(_TBN_FIR, 1, npts)
     
     # Cascade
-    w = numpy.abs(wCIC) * numpy.abs(wFIR)
+    w = np.abs(wCIC) * np.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= fS / decimation / numpy.pi
-    w = numpy.abs(w)**2
+    h *= fS / decimation / np.pi
+    w = np.abs(w)**2
     
     # Mirror
-    h = numpy.concatenate([-h[::-1], h[1:]])
-    w = numpy.concatenate([ w[::-1], w[1:]])
+    h = np.concatenate([-h[::-1], h[1:]])
+    w = np.concatenate([ w[::-1], w[1:]])
     
     # Return the interpolating function
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
@@ -440,23 +435,23 @@ def drx_filter(sample_rate=19.6e6, npts=_N_PTS):
     R = decimationCIC
         
     # Part 1 - CIC filter
-    h = numpy.linspace(0, numpy.pi/decimationCIC/2, num=npts, endpoint=True)
-    wCIC = (numpy.sin(h*R)/numpy.sin(h/2))**N
+    h = np.linspace(0, np.pi/decimationCIC/2, num=npts, endpoint=True)
+    wCIC = (np.sin(h*R)/np.sin(h/2))**N
     wCIC[0] = (2*R)**N
     
     # Part 2 - FIR filter
     h, wFIR = freqz(_DRX_FIR, 1, npts)
     
     # Cascade
-    w = numpy.abs(wCIC) * numpy.abs(wFIR)
+    w = np.abs(wCIC) * np.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= fS / decimation / numpy.pi
-    w = numpy.abs(w)**2
+    h *= fS / decimation / np.pi
+    w = np.abs(w)**2
     
     # Mirror
-    h = numpy.concatenate([-h[::-1], h[1:]])
-    w = numpy.concatenate([w[::-1], w[1:]])
+    h = np.concatenate([-h[::-1], h[1:]])
+    w = np.concatenate([w[::-1], w[1:]])
     
     # Return the interpolating function
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
@@ -468,16 +463,16 @@ def _process_stream_filter(time, data, filter_pack, central_freq):
     """
     
     # Mix with the NCO
-    temp = data*numpy.exp(-2j*numpy.pi*central_freq*(time/fS))
+    temp = data*np.exp(-2j*np.pi*central_freq*(time/fS))
 
     # CIC filter + decimation
     temp = lfilter(filter_pack['CIC'], 1, temp)[::filter_pack['cicD']] / filter_pack['cicD']
-    scale = numpy.round( numpy.log10(numpy.array(filter_pack['CIC']).sum()) / numpy.log10(2.0) )
+    scale = np.round( np.log10(np.array(filter_pack['CIC']).sum()) / np.log10(2.0) )
     temp /= 2**scale
     
     # FIR filter + decimation
     temp = lfilter(filter_pack['FIR'], 1, temp)[::filter_pack['firD']] / filter_pack['firD']
-    scale = numpy.round( numpy.log10(numpy.array(filter_pack['FIR']).sum()) / numpy.log10(2.0) )
+    scale = np.round( np.log10(np.array(filter_pack['FIR']).sum()) / np.log10(2.0) )
     temp /= 2**scale
     
     return temp
@@ -526,13 +521,13 @@ class SoftwareDP(object):
         
         # Set the mode and make sure it is valid
         if mode not in self.avaliableModes:
-            raise ValueError("Unknown mode '%s'" % mode)
+            raise ValueError(f"Unknown mode '{mode}'")
         self.mode = mode
         
         # Set the filter and make sure it is valid
         filter = int(filter)
         if filter not in self.avaliableModes[self.mode]:
-            raise ValueError("Unknown or unsupported filter for %s, '%i'" % (self.mode, filter))
+            raise ValueError(f"Unknown or unsupported filter for {self.mode}, '{filter}'")
         self.filter = filter
         
         # Set the tuning frequency and make sure it is valid
@@ -541,11 +536,11 @@ class SoftwareDP(object):
         
         if central_word < (DRX_TUNING_WORD_MIN if self.mode == 'DRX' else TBN_TUNING_WORD_MIN) \
            or central_word > (DRX_TUNING_WORD_MAX if self.mode == 'DRX' else TBN_TUNING_WORD_MAX):
-            raise ValueError("Central frequency of %.2f MHz outside the DP tuning range." % (central_freq/1e6,))
+            raise ValueError(f"Central frequency of {central_freq/1e6:.2f} MHz outside the DP tuning range.")
         self.central_freq = central_freq
         
     def __str__(self):
-        return "Sofware DP: %s with filter %i at %.3f MHz" % (self.mode, self.filter, self.central_freq/1e6)
+        return f"Sofware DP: {self.mode} with filter {self.filter} at {self.central_freq/1e6:.3f} MHz"
         
     def set_mode(self, mode):
         """
@@ -553,7 +548,7 @@ class SoftwareDP(object):
         """
         
         if mode not in self.avaliableModes:
-            raise ValueError("Unknown mode '%s'" % mode)
+            raise ValueError(f"Unknown mode '{mode}'")
         self.mode = mode
         
     def set_filter(self, filter):
@@ -564,7 +559,7 @@ class SoftwareDP(object):
         filter = int(filter)
         
         if filter not in self.avaliableModes[self.mode]:
-            raise ValueError("Unknown or unsupported filter for %s, '%i'" % (self.mode, filter))
+            raise ValueError(f"Unknown or unsupported filter for {self.mode}, '{filter}'")
         self.filter = filter
         
     def set_tuning_freq(self, central_freq):
@@ -577,7 +572,7 @@ class SoftwareDP(object):
         
         if central_word < (DRX_TUNING_WORD_MIN if self.mode == 'DRX' else TBN_TUNING_WORD_MIN) \
            or central_word > (DRX_TUNING_WORD_MAX if self.mode == 'DRX' else TBN_TUNING_WORD_MAX):
-            raise ValueError("Central frequency of %.2f MHz outside the DP tuning range." % (central_freq/1e6,))
+            raise ValueError(f"Central frequency of {central_freq/1e6:.2f} MHz outside the DP tuning range.")
         self.central_freq = central_freq
         
     def set_delay_firs(self, channel, coeffs):
@@ -615,10 +610,10 @@ class SoftwareDP(object):
         form a beam.  Returns a two-element tuple, one for each beam polarization.
         """
         
-        filters = numpy.array(self.delayFIRs, dtype=numpy.int16)
-        course  = numpy.array(course_delays, dtype=numpy.int16)
-        fine    = numpy.array(fine_delays, dtype=numpy.int16)
-        gain    = (numpy.array(gains)*32767).astype(numpy.int16)		
+        filters = np.array(self.delayFIRs, dtype=np.int16)
+        course  = np.array(course_delays, dtype=np.int16)
+        fine    = np.array(fine_delays, dtype=np.int16)
+        gain    = (np.array(gains)*32767).astype(np.int16)		
         return _fir.integerBeamformer(data, filters, course, fine, gain)
 
         
@@ -637,48 +632,21 @@ class SoftwareDP(object):
             # Single input
             output = _process_stream_filter(time, data, self.avaliableModes[self.mode][self.filter], self.central_freq)
         else:
-            try:
-                from multiprocessing import Pool, cpu_count
-                
-                # To get results pack from the pool, you need to keep up with the workers.  
-                # In addition, we need to keep up with which workers goes with which 
-                # baseline since the workers are called asynchronously.  Thus, we need a 
-                # taskList array to hold tuples of baseline ('count') and workers.
-                taskPool = Pool(processes=cpu_count())
-                taskList = []
-
-                usePool = True
-            except ImportError:
-                usePool = False
-                
-            # Turn off the thread pool if we are explicitly told not to use it.
-            if disable_pool:
-                usePool = False
-            
-            # Multiple inputs - loop over all of them
+            # Multiple inputs - loop over time
             output = [None for i in range(data.shape[0])]
-            
-            for i in range(data.shape[0]):
-                if usePool:
-                    # Use the pool
-                    task = taskPool.apply_async(_process_stream_filter, args=(time, data[i,:], self.avaliableModes[self.mode][self.filter], self.central_freq))
-                    taskList.append((i,task))
-                else:
-                    # The pool is closed
-                    output[i] = _process_stream_filter(time, data[i,:], self.avaliableModes[self.mode][self.filter], self.central_freq)
+            with cf.ProcessPoolExecutor() as tpe:
+                futures = {}
+                for i in range(data.shape[0]):
+                    task = tpe.submit(_process_stream_filter,
+                                      time, data[i,:],
+                                      self.avaliableModes[self.mode][self.filter],
+                                      self.central_freq)
+                    futures[task] = i
                     
-            if usePool:
-                taskPool.close()
-                taskPool.join()
-
-                # This is where he taskList list comes in handy.  We now know who did what
-                # when we unpack the various results
-                for i,task in taskList:
-                    output[i] = task.get()
-
-                # Destroy the taskPool
-                del(taskPool)
-                
-            output = numpy.array(output)
+                for task in cf.as_completed(futures):
+                    i = futures[task]
+                    output[i] = task.result()
+                    
+            output = np.array(output)
             
         return output

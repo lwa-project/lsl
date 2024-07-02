@@ -1,12 +1,12 @@
 Requirements
 ============
- * python >= 2.7
+ * python >= 3.8
  * fftw3 >= 3.2 (single precision version)
  * gsl >= 2.4
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
- * astropy < 3.0 (2.7) or >= 3.0 (3.0+)
+ * astropy >= 5.1
  * ephem >= 3.7.5.3
  * aipy >= 3.0.1
  * pytz >= 2012c

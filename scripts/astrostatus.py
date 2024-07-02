@@ -1,15 +1,9 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 Application to calculate real-time ephemeris for a LWA site.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 import time
 import curses

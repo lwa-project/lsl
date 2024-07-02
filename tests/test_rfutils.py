@@ -2,17 +2,11 @@
 Unit test for the lsl.misc.rfutils module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import warnings
 import unittest
-import numpy
+import numpy as np
 
 from lsl.misc import rfutils
 
@@ -47,7 +41,7 @@ class rfutils_tests(unittest.TestCase):
         """Test the SEFD calculator"""
         
         # https://web.njit.edu/~gary/728/Lecture5.html
-        sefd = rfutils.calculate_sefd(100.0, gain=0.04, area=numpy.pi*10**2)
+        sefd = rfutils.calculate_sefd(100.0, gain=0.04, area=np.pi*10**2)
         self.assertAlmostEqual(sefd, 100/0.04, 6)
         
     def test_Jy(self):

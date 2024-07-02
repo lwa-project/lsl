@@ -2,21 +2,18 @@
 Unit tests for the lsl.imaging modules.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import copy
 import glob
 import time
-import numpy
+import numpy as np
 import shutil
 import tempfile
 import unittest
 import subprocess
+
+from astropy.time import Time as AstroTime
+from astropy.coordinates import SkyCoord, AltAz
 
 from lsl import astro
 from lsl.imaging import utils
@@ -66,7 +63,7 @@ class imaging_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings and create the temporary file directory."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-imaging-', suffix='.tmp')
 
     def test_CorrelatedDataIDI(self):
@@ -128,15 +125,15 @@ class imaging_tests(unittest.TestCase):
         """
 
         # Frequency range
-        freq = numpy.arange(0,512)*20e6/512 + 40e6
+        freq = np.arange(0,512)*20e6/512 + 40e6
         # Site and stands
         site = lwa1
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
         blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
-        visData = numpy.random.rand(len(blList), len(freq))
-        visData = visData.astype(numpy.complex64)
+        visData = np.random.rand(len(blList), len(freq))
+        visData = visData.astype(np.complex64)
         
         return {'freq': freq, 'site': site, 'antennas': antennas, 'bl': blList, 'vis': visData}
         
@@ -156,7 +153,7 @@ class imaging_tests(unittest.TestCase):
         fits.set_frequency(data['freq']+30e6)
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+                          np.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         fits.close()
         
@@ -165,8 +162,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(idi.freq.size, 2*data['freq'].size)
         ds = idi.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
-        numpy.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
         
         idi.close()
         
@@ -221,7 +218,7 @@ class imaging_tests(unittest.TestCase):
         self.assertAlmostEqual(station1.elev, station2.elev, 1)
         
         # Check antennas
-        ants1 = [a for a in station1.antennas if a.pol == 0]
+        ants1 = idi1.station.antennas
         ants2 = station2.antennas
         for a1,a2 in zip(ants1, ants2):
             self.assertEqual(a1.id, a2.id)
@@ -311,7 +308,7 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data, data['vis'])
+        np.testing.assert_allclose(ds.XX.data, data['vis'])
         
         ms.close()
         
@@ -332,7 +329,7 @@ class imaging_tests(unittest.TestCase):
         fits.set_frequency(data['freq']+30e6)
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+                          np.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         fits.close()
         
@@ -341,8 +338,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
-        numpy.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
         
         ms.close()
         
@@ -363,7 +360,7 @@ class imaging_tests(unittest.TestCase):
         fits.set_frequency(data['freq']+30e6)
         fits.set_geometry(data['site'], data['antennas'])
         fits.add_data_set(astro.utcjd_to_taimjd(astro.unix_to_utcjd(testTime)), 6.0, data['bl'], 
-                          numpy.concatenate([data['vis'], 10*data['vis']], axis=1))
+                          np.concatenate([data['vis'], 10*data['vis']], axis=1))
         fits.write()
         fits.close()
         
@@ -377,8 +374,8 @@ class imaging_tests(unittest.TestCase):
         self.assertEqual(ms.freq.size, 2*data['freq'].size)
         ds = ms.get_data_set(1, include_auto=True)
         
-        numpy.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
-        numpy.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,:data['freq'].size], data['vis'])
+        np.testing.assert_allclose(ds.XX.data[:,data['freq'].size:], 10*data['vis'])
         
         ms.close()
         
@@ -539,10 +536,10 @@ class imaging_tests(unittest.TestCase):
         self.assertTrue(getattr(ds2, 'U', None) is not None)
         self.assertTrue(getattr(ds2, 'V', None) is not None)
         
-        numpy.testing.assert_allclose(ds2.I.data, 2*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.Q.data, 0*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
-        numpy.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
+        np.testing.assert_allclose(ds2.I.data, 2*ds.XX.data)
+        np.testing.assert_allclose(ds2.Q.data, 0*ds.XX.data)
+        np.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
+        np.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
         
         idi.close()
         
@@ -573,10 +570,10 @@ class imaging_tests(unittest.TestCase):
         self.assertTrue(getattr(ds3, 'XY', None) is not None)
         self.assertTrue(getattr(ds3, 'YX', None) is not None)
         
-        numpy.testing.assert_allclose(ds3.XX.data, ds.XX.data)
-        numpy.testing.assert_allclose(ds3.YY.data, ds.XX.data)
-        numpy.testing.assert_allclose(ds3.XY.data, ds.XX.data)
-        numpy.testing.assert_allclose(ds3.YX.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.XX.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.YY.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.XY.data, ds.XX.data)
+        np.testing.assert_allclose(ds3.YX.data, ds.XX.data)
         
         idi.close()
         
@@ -651,21 +648,21 @@ class imaging_tests(unittest.TestCase):
     def test_background(self):
         """Test the background estimation"""
         
-        img = numpy.random.randn(256, 256)*0.5 + 10
+        img = np.random.randn(256, 256)*0.5 + 10
         bkg = analysis.estimate_background(img)
         self.assertAlmostEqual(bkg.mean(), img.mean(), 0)
         
     def test_source_detection(self):
         """Test point source detection"""
         
-        img = numpy.random.randn(256, 256)*0.5 + 10
+        img = np.random.randn(256, 256)*0.5 + 10
         sx = ( 10, 56, 105)
         sy = (115, 35, 200)
         sf = ( 20, 30,  15)
         for i,j,f in zip(sx, sy, sf):
             for di in (-2, -1, 0, 1, 2):
                 for dj in (-2, -1, 0, 1, 2):
-                    s = numpy.exp(-(di**2+dj**2)/2.0/1.0**2)
+                    s = np.exp(-(di**2+dj**2)/2.0/1.0**2)
                     img[i+di,j+dj] += f*s
         img = img - analysis.estimate_background(img)
         cx, cy, pf, sh, ro = analysis.find_point_sources(img, threshold=10, verbose=False)
@@ -678,7 +675,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -689,14 +686,14 @@ class imaging_tests(unittest.TestCase):
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.clean(aa, out, img, max_iter=5, verbose=False, plot=run_plotting_tests)
+            deconv.clean(out, img, max_iter=5, verbose=False, plot=run_plotting_tests)
             
     def test_clean_sources(self):
         """Test CLEANing around specific sources"""
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -707,14 +704,14 @@ class imaging_tests(unittest.TestCase):
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.clean_sources(aa, out, img, vis.SOURCES, max_iter=5, verbose=False, plot=run_plotting_tests)
+            deconv.clean_sources(out, img, vis.SOURCES, max_iter=5, verbose=False, plot=run_plotting_tests)
             
     def test_clean_leastsq(self):
         """Test CLEANing using least squares in the image plane"""
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -725,7 +722,7 @@ class imaging_tests(unittest.TestCase):
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.lsq(aa, out, img, max_iter=2, verbose=False, plot=run_plotting_tests)
+            deconv.lsq(out, img, max_iter=2, verbose=False, plot=run_plotting_tests)
             
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting(self):
@@ -733,7 +730,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -746,6 +743,27 @@ class imaging_tests(unittest.TestCase):
         fig = plt.figure()
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
+        
+    def test_radec_of(self):
+        """Test finding the RA/dec of a topocentric position as viewed by an observer."""
+        
+        # Setup
+        antennas = lwa1.antennas[0:20]
+        freqs = np.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # RA/dec -> az/alt
+        el = lwa1.earth_location
+        ot = AstroTime(lwa1.date, astro.DJD_OFFSET, format='jd', scale='utc')
+        sc = SkyCoord('12h13m45.2s', '+15d10m13.4s', frame='fk5', equinox='J2000')
+        tp = sc.transform_to(AltAz(location=el, obstime=ot))
+        
+        # Convert back
+        eq = overlay._radec_of(aa, tp.az.deg, tp.alt.deg, degrees=True)
+        
+        # Compare with the original
+        self.assertAlmostEqual(eq[0], sc.ra.deg, 6)
+        self.assertAlmostEqual(eq[1], sc.dec.deg, 6)
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting_horizon(self):
@@ -753,7 +771,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -766,7 +784,7 @@ class imaging_tests(unittest.TestCase):
         fig = plt.figure()
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
-        overlay.horizon(ax, aa)
+        overlay.horizon(ax, img)
         del fig
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
@@ -775,7 +793,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -788,7 +806,7 @@ class imaging_tests(unittest.TestCase):
         fig = plt.figure()
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
-        overlay.sources(ax, aa, vis.SOURCES)
+        overlay.sources(ax, img, vis.SOURCES)
         del fig
         
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
@@ -797,7 +815,7 @@ class imaging_tests(unittest.TestCase):
         
         # Setup
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -811,9 +829,9 @@ class imaging_tests(unittest.TestCase):
         ax = fig.gca()
         utils.plot_gridded_image(ax, img)
         with self.subTest(type='RA/Dec.'):
-            overlay.graticule_radec(ax, aa)
+            overlay.graticule_radec(ax, img)
         with self.subTest(type='az/alt'):
-            overlay.graticule_azalt(ax, aa)
+            overlay.graticule_azalt(ax, img)
         del fig
         
     def tearDown(self):

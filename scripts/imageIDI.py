@@ -1,22 +1,19 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Script for making and displaying images of correlated data files.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    input = raw_input
-    
 import os
 import sys
 import pytz
-import numpy
+import numpy as np
 import argparse
+
 from astropy.io import fits as astrofits
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import FK5
 
 from lsl import astro
 from lsl.sim import vis as simVis
@@ -77,7 +74,7 @@ def main(args):
         lst = str(lo.sidereal_time())   # pylint:disable=no-member
         
         # Pull out the right channels
-        toWork = numpy.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
+        toWork = np.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
             raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
             
@@ -174,17 +171,17 @@ def main(args):
             ax.yaxis.set_major_formatter( NullFormatter() )
             
             # Compute the positions of major sources and label the images
-            overlay.sources(ax, aa, simVis.SOURCES, label=not args.no_labels)
+            overlay.sources(ax, img, simVis.SOURCES, label=not args.no_labels)
             
             # Add in the horizon
-            overlay.horizon(ax, aa)
+            overlay.horizon(ax, img)
             
             # Add lines of constant RA and dec.
             if not args.no_grid:
                 if not args.topo:
-                    overlay.graticule_radec(ax, aa)
+                    overlay.graticule_radec(ax, img)
                 else:
-                    overlay.graticule_azalt(ax, aa)
+                    overlay.graticule_azalt(ax, img)
 
             # Reset the axes
             ax.set_xlim(xlim)
@@ -192,13 +189,6 @@ def main(args):
         plt.show()
         
         if args.fits is not None:
-            ## Load in the coordinates for the phase center
-            pc_ra = numpy.degrees(dataDict.phase_center._ra)
-            pc_dec = numpy.degrees(dataDict.phase_center._dec)
-            
-            ### Poll the ImgWPlus object for the proper pixel scale
-            pixel_size = img1.pixel_size
-        
             ## Loop over the images to build up the FITS file
             hdulist = [astrofits.PrimaryHDU(),]
             for img,pol in zip((img1,img2,img3,img4), (lbl1,lbl2,lbl3,lbl4)):
@@ -212,18 +202,10 @@ def main(args):
                     hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
-                hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
-                hdu.header['CTYPE1'] = 'RA---SIN'
-                hdu.header['CRPIX1'] = img.shape[0]//2+1
-                hdu.header['CDELT1'] = -1 * numpy.degrees(pixel_size)
-                hdu.header['CRVAL1'] = pc_ra
-                hdu.header['CTYPE2'] = 'DEC--SIN'
-                hdu.header['CRPIX2'] = img.shape[1]//2+1
-                hdu.header['CDELT2'] = numpy.degrees(pixel_size)
-                hdu.header['CRVAL2'] = pc_dec
-                hdu.header['LONPOLE'] = 180.0
-                hdu.header['LATPOLE'] = 90.0
-                
+                wcs_hdr = img.wcs.to_header()
+                for key in wcs_hdr:
+                    hdu.header[key] = wcs_hdr[key]
+                    
                 ### Add the HDU to the list
                 hdulist.append(hdu)
                 

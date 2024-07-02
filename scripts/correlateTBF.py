@@ -1,20 +1,14 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Example script that reads in TBF data and runs a cross-correlation on it.  
 The results are saved in the FITS IDI format.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import time
-import numpy
+import numpy as np
 import argparse
 
 from astropy.constants import c as speedOfLight
@@ -95,19 +89,19 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         ## Split the polarizations
         antennasX, antennasY = [a for i,a in enumerate(antennas) if a.pol == 0 and i in toKeep], [a for i,a in enumerate(antennas) if a.pol == 1 and i in toKeep]
         dataX, dataY = data[0::2,:,:], data[1::2,:,:]
-        validX = numpy.ones((dataX.shape[0],dataX.shape[2]), dtype=numpy.uint8)
-        validY = numpy.ones((dataY.shape[0],dataY.shape[2]), dtype=numpy.uint8)
+        validX = np.ones((dataX.shape[0],dataX.shape[2]), dtype=np.uint8)
+        validY = np.ones((dataY.shape[0],dataY.shape[2]), dtype=np.uint8)
         
         ## Apply the cable delays as phase rotations
         for i in range(dataX.shape[0]):
-            gain = numpy.sqrt( antennasX[i].cable.gain(freq) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasX[i].cable.delay(freq) \
+            gain = np.sqrt( antennasX[i].cable.gain(freq) )
+            phaseRot = np.exp(2j*np.pi*freq*(antennasX[i].cable.delay(freq) \
                                                    -antennasX[i].stand.z/speedOfLight))
             for j in range(dataX.shape[2]):
                 dataX[i,:,j] *= phaseRot / gain
         for i in range(dataY.shape[0]):
-            gain = numpy.sqrt( antennasY[i].cable.gain(freq) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq*(antennasY[i].cable.delay(freq)\
+            gain = np.sqrt( antennasY[i].cable.gain(freq) )
+            phaseRot = np.exp(2j*np.pi*freq*(antennasY[i].cable.delay(freq)\
                                                    -antennasY[i].stand.z/speedOfLight))
             for j in range(dataY.shape[2]):
                 dataY[i,:,j] *= phaseRot / gain
@@ -142,7 +136,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             vis = XEngine2(d1, d2, v1, v2)
             
             # Select the right range of channels to save
-            toUse = numpy.where( (freq>5.0e6) & (freq<93.0e6) )
+            toUse = np.where( (freq>5.0e6) & (freq<93.0e6) )
             toUse = toUse[0]
             
             # If we are in the first polarazation product of the first iteration,  setup

@@ -2,14 +2,8 @@
 Unit test for the lsl.correlator.filterbank module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
-import numpy
+import numpy as np
 import unittest
 
 from lsl.correlator import filterbank
@@ -26,7 +20,7 @@ class filterbank_tests(unittest.TestCase):
     module."""
     
     def run_filterbank_test(self, dtype, ntap=2, nchan=256, window=null_window):
-        data = numpy.random.rand(nchan*ntap*4)
+        data = np.random.rand(nchan*ntap*4)
         data = data.astype(dtype)
         fnc = "fft%i" % ntap
         if hasattr(filterbank, fnc):
@@ -38,7 +32,7 @@ class filterbank_tests(unittest.TestCase):
         """Test that the filtebank works on real-valued data."""
         
         for ntap in (1, 2, 4, 8, 16):
-            for dtype in (numpy.float32, numpy.float64):
+            for dtype in (np.float32, np.float64):
                 with self.subTest(ntap=ntap, dtype=dtype):
                     self.run_filterbank_test(dtype, ntap=ntap)
                     
@@ -46,7 +40,7 @@ class filterbank_tests(unittest.TestCase):
         """Test that the filtebank works on real-valued data."""
         
         for ntap in (1, 2, 4, 8, 16):
-            for dtype in (numpy.complex64, numpy.complex128):
+            for dtype in (np.complex64, np.complex128):
                 with self.subTest(ntap=ntap, dtype=dtype):
                     self.run_filterbank_test(dtype, ntap=ntap)
                     
@@ -58,18 +52,18 @@ class filterbank_tests(unittest.TestCase):
         #
         
         for ntap in (1, 2, 4, 8, 16):
-            for dtype in (numpy.float32, numpy.float64):
+            for dtype in (np.float32, np.float64):
                 with self.subTest(ntap=ntap, dtype=dtype):
-                    self.run_filterbank_test(dtype, ntap=ntap, window=numpy.blackman)
+                    self.run_filterbank_test(dtype, ntap=ntap, window=np.blackman)
                     
         #
         # Complex
         #
         
         for ntap in (1, 2, 4, 8, 16):
-            for dtype in (numpy.float32, numpy.float64):
+            for dtype in (np.float32, np.float64):
                 with self.subTest(ntap=ntap, dtype=dtype):
-                    self.run_filterbank_test(dtype, ntap=ntap, window=numpy.hamming)
+                    self.run_filterbank_test(dtype, ntap=ntap, window=np.hamming)
 
 
 class filterbank_test_suite(unittest.TestSuite):

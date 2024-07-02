@@ -15,13 +15,7 @@ filters.
     filters
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 from scipy.signal import freqz
 from scipy.interpolate import interp1d
 
@@ -172,15 +166,15 @@ def tbn_filter(sample_rate=1e5, npts=_N_PTS):
     
     # Part 0 - FIR filter
     h, wFIR = freqz(_TBN_FIR, 1, npts)
-    w = numpy.abs(wFIR)
+    w = np.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= sample_rate / 2.0 / numpy.pi
-    w = numpy.abs(w)**2
+    h *= sample_rate / 2.0 / np.pi
+    w = np.abs(w)**2
     
     # Mirror
-    h = numpy.concatenate([-h[::-1], h[1:]])
-    w = numpy.concatenate([ w[::-1], w[1:]])
+    h = np.concatenate([-h[::-1], h[1:]])
+    w = np.concatenate([ w[::-1], w[1:]])
     
     # Return the interpolating function
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
@@ -195,15 +189,15 @@ def drx_filter(sample_rate=19.6e6, npts=_N_PTS):
     """
     # Part 0 - FIR filter
     h, wFIR = freqz(_DRX_FIR, 1, npts)
-    w = numpy.abs(wFIR)
+    w = np.abs(wFIR)
     
     # Convert to a "real" frequency and magnitude response
-    h *= sample_rate / 2.0 / numpy.pi
-    w = numpy.abs(w)**2
+    h *= sample_rate / 2.0 / np.pi
+    w = np.abs(w)**2
     
     # Mirror
-    h = numpy.concatenate([-h[::-1], h[1:]])
-    w = numpy.concatenate([w[::-1], w[1:]])
+    h = np.concatenate([-h[::-1], h[1:]])
+    w = np.concatenate([w[::-1], w[1:]])
     
     # Return the interpolating function
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)

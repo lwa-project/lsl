@@ -88,11 +88,11 @@ PyObject *read_tbw(PyObject *self, PyObject *args) {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
         }
         goto fail;
-    } else if( PyString_GET_SIZE(buffer) != sizeof(cFrame) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != sizeof(cFrame) ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         goto fail;
     }
-    memcpy(&cFrame, PyString_AS_STRING(buffer), sizeof(cFrame));
+    memcpy(&cFrame, PyBytes_AS_STRING(buffer), sizeof(cFrame));
     Py_XDECREF(buffer);
     
     Py_BEGIN_ALLOW_THREADS

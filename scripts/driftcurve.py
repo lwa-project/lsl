@@ -1,19 +1,13 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 Predict driftcurve for a given site using a given antenna model.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import math
-import numpy
+import numpy as np
 import pylab
 import argparse
 
@@ -66,8 +60,8 @@ def main(args):
     bfunc = lambda x, y: beam_response(model, pol, x, y, frequency=args.frequency, degrees=True)
     
     if args.do_plot:
-        az = numpy.zeros((90,360))
-        alt = numpy.zeros((90,360))
+        az = np.zeros((90,360))
+        alt = np.zeros((90,360))
         for i in range(360):
             az[:,i] = i
         for i in range(90):
@@ -84,7 +78,7 @@ def main(args):
     t0 = astro.get_julian_from_sys()
     lst = astro.get_local_sidereal_time(sta.long*180.0/math.pi, t0) / 24.0
     t0 -= lst*(23.933/24.0) # Compensate for shorter sidereal days
-    times = numpy.arange(0.0, 1.0, args.time_step/1440.0) + t0
+    times = np.arange(0.0, 1.0, args.time_step/1440.0) + t0
     
     lstList = []
     powListAnt = [] 

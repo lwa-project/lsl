@@ -5,24 +5,24 @@ directly worked with in the :mod:`lsl.imaging.utils` module.
 .. versionadded:: 2.1.3
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import sys
-import numpy
+import aipy
+import ephem
+import numpy as np
 from datetime import datetime
+
+from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 from astropy.constants import c as speedOfLight
+from astropy.coordinates import AltAz, ITRS, FK5
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
 from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.imaging.data import VisibilityData, VisibilityDataSet, PolarizationDataSet
 from lsl.writer.fitsidi import WriterBase
-from lsl.sim.vis import build_sim_array
+from lsl.sim.vis import build_sim_array, RadioFixedBody
+from lsl.correlator.uvutils import compute_uvw
+from lsl.common.color import colorfy
 
 
 __version__ = '0.1'
@@ -41,7 +41,7 @@ class VirtualWriter(WriterBase):
     def __init__(self, ref_time=0.0, verbose=False):
         """
         Initialize a new virtual writer object using a reference time given in
-        seconds since the UNIX 1970 ephem, a python datetime object, or a
+        seconds since the UNIX 1970 epoch, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         """
         
@@ -86,7 +86,7 @@ class VirtualWriter(WriterBase):
         ref_jd = mjd + mpm/1000.0 / 86400 + astro.MJD_OFFSET
         
         # Create the observer and antenna array
-        self.observer = self.site.get_observer()
+        self.el= self.site.earth_location
         self.antenna_array = build_sim_array(self.site, self.antennas,
                                              self.freq/1e9, jd=ref_jd)
         
@@ -98,50 +98,22 @@ class VirtualWriter(WriterBase):
         baselines and source at the given UTC JD.
         """
         
-        Nbase = len(baselines)
-        Nchan = len(self.freq)
-        uvw = numpy.zeros((Nbase,3,Nchan), dtype=numpy.float32)
-        
-        old_date = self.observer.date*1.0
-        self.observer.date = jd - astro.DJD_OFFSET
+        date = AstroTime(jd, format='jd', scale='utc')
         
         if source == 'z':
-            HA = 0.0
-            dec = self.observer.lat * 180/numpy.pi
+            tc = AltAz('0deg', '90deg', location=self.el, obstime=date)
+            equ = tc.transform_to(FK5(equinox=date))
         else:
-            HA = (self.observer.sidereal_time() - source.ra) * 12/numpy.pi
-            dec = source.dec * 180/numpy.pi
+            equ = FK5(source.a_ra*astrounits.rad, source.a_dec*astrounits.rad,
+                      equinox=date)
             
         # Phase center coordinates
-        # Convert numbers to radians and, for HA, hours to degrees
-        HA2 = HA * 15.0 * numpy.pi/180
-        dec2 = dec * numpy.pi/180
-        lat2 = self.observer.lat
+        it = equ.transform_to(ITRS(location=self.el, obstime=date))
+        HA = ((self.el.lon - it.spherical.lon).wrap_at('180deg')).deg
+        dec = it.spherical.lat.deg
         
-        # Coordinate transformation matrices
-        trans1 = numpy.array([[0, -numpy.sin(lat2), numpy.cos(lat2)],
-                              [1,  0,               0],
-                              [0,  numpy.cos(lat2), numpy.sin(lat2)]])
-        trans2 = numpy.array([[ numpy.sin(HA2),                  numpy.cos(HA2),                 0],
-                              [-numpy.sin(dec2)*numpy.cos(HA2),  numpy.sin(dec2)*numpy.sin(HA2), numpy.cos(dec2)],
-                              [ numpy.cos(dec2)*numpy.cos(HA2), -numpy.cos(dec2)*numpy.sin(HA2), numpy.sin(dec2)]])
-        
-        # Frequency scaling
-        uscl = self.freq / speedOfLight
-        uscl.shape = (1,1,)+uscl.shape
-        
-        for i,(a1,a2) in enumerate(baselines):
-            # Go from a east, north, up coordinate system to a celestial equation, 
-            # east, north celestial pole system
-            xyzPrime = a1.stand - a2.stand
-            xyz = numpy.dot(trans1, numpy.array([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]]))
-            
-            # Go from CE, east, NCP to u, v, w
-            temp = numpy.dot(trans2, xyz)
-            uvw[i,:,:] = temp
-        uvw *= uscl
-        
-        self.observer.date = old_date
+        # (u,v,w) coordinates
+        uvw = compute_uvw(baselines, HA=HA, dec=dec, freq=self.freq, site=self.el)
         
         return uvw
         
@@ -186,12 +158,25 @@ class VirtualWriter(WriterBase):
         for (a1,a2) in baselines:
             numericBaselines.append((self.antennas.index(a1), self.antennas.index(a2)))
             
+        if source == 'z':
+            ot = AstroTime(obsTime, format='mjd', scale='tai').utc
+            tc = AltAz('0deg', '90deg', location=self.el, obstime=ot)
+            pc = tc.transform_to(FK5(equinox=ot))
+        
+            phase_center = RadioFixedBody.from_astropy(pc, name=f"ZA{pc.ra.to_string(sep='')}")
+            old_obs_date = self.antenna_array.date
+            self.antenna_array.date = ot.iso
+            phase_center.compute(self.antenna_array)
+            self.antenna_array.date = old_obs_date
+        else:
+            phase_center = source
+                                                      
         obsJD = astro.taimjd_to_utcjd(obsTime)
         uvw = self._build_uvw(obsJD, baselines, source)
         pds = PolarizationDataSet(pol, visibilities, weight=weights)
         vds = VisibilityDataSet(obsJD, self.freq, numericBaselines, uvw,
                                 antennaarray=self.antenna_array,
-                                phase_center=source)
+                                phase_center=phase_center)
         vds.append(pds)
         return vds
         
@@ -221,7 +206,7 @@ class VirtualWriter(WriterBase):
         
         raise NotImplementedError
         
-    def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=numpy.inf):
+    def get_data_set(self, sets, include_auto=False, sort=True, min_uv=0, max_uv=np.inf):
         """
         Return a :class:`lsl.imaging.data.VisibilityDataSet` or 
         :class:`lsl.imaging.data.VisibilityData` object for all 
@@ -250,7 +235,7 @@ class VirtualWriter(WriterBase):
         # Prune
         if not include_auto and min_uv == 0:
             min_uv = 1e-3
-        if min_uv != 0 or max_uv != numpy.inf:
+        if min_uv != 0 or max_uv != np.inf:
             dataSets = dataSets.get_uv_range(min_uv=min_uv, max_uv=max_uv)
             
         # Prune a different way
