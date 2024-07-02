@@ -2,15 +2,9 @@
 Unit test for the lsl.misc.parser module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import unittest
 import ephem
-import numpy
+import numpy as np
 import argparse
 from astropy.constants import c
 
@@ -172,8 +166,8 @@ class parser_tests(unittest.TestCase):
     def test_hours(self):
         """Test the parser.hours conversion function."""
         
-        self.assertAlmostEqual(parser.hours('5'), 5*numpy.pi/12, 15)
-        self.assertAlmostEqual(parser.hours('5:01:02.3'), (5+1/60.+2.3/3600.)*numpy.pi/12, 15)
+        self.assertAlmostEqual(parser.hours('5'), 5*np.pi/12, 15)
+        self.assertAlmostEqual(parser.hours('5:01:02.3'), (5+1/60.+2.3/3600.)*np.pi/12, 15)
         
         self.assertRaises(argparse.ArgumentTypeError, parser.hours, 'c')
         
@@ -199,8 +193,8 @@ class parser_tests(unittest.TestCase):
     def test_degrees(self):
         """Test the parser.degrees conversion function."""
         
-        self.assertAlmostEqual(parser.degrees('5'), 5*numpy.pi/180, 15)
-        self.assertAlmostEqual(parser.degrees('5:01:02.3'), (5+1/60.+2.3/3600.)*numpy.pi/180, 15)
+        self.assertAlmostEqual(parser.degrees('5'), 5*np.pi/180, 15)
+        self.assertAlmostEqual(parser.degrees('5:01:02.3'), (5+1/60.+2.3/3600.)*np.pi/180, 15)
         
         self.assertRaises(argparse.ArgumentTypeError, parser.degrees, 'c')
         

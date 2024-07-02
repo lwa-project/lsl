@@ -1,19 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Given a TBN file, plot the time averaged spectra for each digitizer input.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import math
-import numpy
+import numpy as np
 import argparse
 
 from lsl.common import stations, metabundle, metabundleADP
@@ -122,17 +116,17 @@ def main(args):
         
     # Setup the window function to use
     if args.bartlett:
-        window = numpy.bartlett
+        window = np.bartlett
     elif args.blackman:
-        window = numpy.blackman
+        window = np.blackman
     elif args.hanning:
-        window = numpy.hanning
+        window = np.hanning
     else:
         window = fxc.null_window
         
     # Master loop over all of the file chunks
-    masterWeight = numpy.zeros((nChunks, antpols, LFFT))
-    masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
+    masterWeight = np.zeros((nChunks, antpols, LFFT))
+    masterSpectra = np.zeros((nChunks, antpols, LFFT))
     
     for i in range(nChunks):
         print("Working on chunk #%i of %i" % (i+1, nChunks))
@@ -160,7 +154,7 @@ def main(args):
                 
     # Now that we have read through all of the chunks, perform the final averaging by
     # dividing by all of the chunks
-    spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
+    spec = np.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Put the frequencies in the best units possible
     freq += central_freq
@@ -168,10 +162,10 @@ def main(args):
     
     # Deal with the `keep` options
     if args.keep == 'all':
-        antpolsDisp = int(numpy.ceil(antpols/20))
+        antpolsDisp = int(np.ceil(antpols/20))
         js = [i for i in range(antpols)]
     else:
-        antpolsDisp = int(numpy.ceil(len(args.keep)*2/20))
+        antpolsDisp = int(np.ceil(len(args.keep)*2/20))
         if antpolsDisp < 1:
             antpolsDisp = 1
             
@@ -187,7 +181,7 @@ def main(args):
             figsY = 4
         else:
             figsY = 2
-        figsX = int(numpy.ceil(1.0*nPlot/figsY))
+        figsX = int(np.ceil(1.0*nPlot/figsY))
     else:
         figsY = 4
         figsX = 5
@@ -198,7 +192,7 @@ def main(args):
         for k in range(i*figsN, i*figsN+figsN):
             try:
                 j = js[k]
-                currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
+                currSpectra = np.squeeze( np.log10(spec[j,:])*10.0 )
             except IndexError:
                 break
             ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)
@@ -214,7 +208,7 @@ def main(args):
                         continue
                         
                     # Calculate the difference between the spectra and plot
-                    subspectra = numpy.squeeze( numpy.log10(masterSpectra[l,j,:])*10.0 )
+                    subspectra = np.squeeze( np.log10(masterSpectra[l,j,:])*10.0 )
                     diff = subspectra - currSpectra
                     ax.plot(freq, diff)
                     

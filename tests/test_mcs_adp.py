@@ -2,12 +2,6 @@
 Unit test for the lsl.common.mcsADP module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
 from datetime import datetime
@@ -58,31 +52,31 @@ class mcs_adp_tests(unittest.TestCase):
         """Test valid summary values"""
         
         for i in range(0, 6+1):
-            mcsADP.summary_to_string(i)
-        self.assertRaises(ValueError, mcsADP.summary_to_string, 7)
+            mcsADP.SummaryCode(i)
+        self.assertRaises(ValueError, mcsADP.SummaryCode, 7)
         
     def test_sid_limits(self):
         """Test valid subsystem ID values"""
         
         for i in range(1, 19+1):
-            mcsADP.sid_to_string(i)
-        self.assertRaises(ValueError, mcsADP.sid_to_string, 0)
-        self.assertRaises(ValueError, mcsADP.sid_to_string, 20)
+            mcsADP.SubsystemID(i)
+        self.assertRaises(ValueError, mcsADP.SubsystemID, 0)
+        self.assertRaises(ValueError, mcsADP.SubsystemID, 20)
         
     def test_cid_limits(self):
         """Test valid command ID values"""
         
         for i in range(0, 41+1):
-            mcsADP.cid_to_string(i)
-        self.assertRaises(ValueError, mcsADP.cid_to_string, 42)
+            mcsADP.CommandID(i)
+        self.assertRaises(ValueError, mcsADP.CommandID, 42)
         
     def test_mode_limits(self):
         """Test valid observing mode values"""
         
         for i in range(1, 9+1):
-            mcsADP.mode_to_string(i)
-        self.assertRaises(ValueError, mcsADP.mode_to_string, 0)
-        self.assertRaises(ValueError, mcsADP.mode_to_string, 10)
+            mcsADP.ObservingMode(i)
+        self.assertRaises(ValueError, mcsADP.ObservingMode, 0)
+        self.assertRaises(ValueError, mcsADP.ObservingMode, 10)
         
     def test_pointing_correction(self):
         """Test the pointing correction function"""

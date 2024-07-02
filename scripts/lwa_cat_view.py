@@ -1,15 +1,9 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 Simple LWA1 astronomical source catalogue display application.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 import argparse
 import Tkinter

@@ -2,17 +2,11 @@
 Unit test for the lsl.misc.scattering module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import warnings
 import unittest
-import numpy
+import numpy as np
 
 from lsl.misc import scattering
 
@@ -25,12 +19,12 @@ class scattering_tests(unittest.TestCase):
     module."""
     
     def setUp(self):
-        self.t = numpy.linspace(0.0, 1.333, 512)
-        self.intrinsic = numpy.zeros(self.t.shape, dtype=numpy.float32)
+        self.t = np.linspace(0.0, 1.333, 512)
+        self.intrinsic = np.zeros(self.t.shape, dtype=np.float32)
         self.intrinsic[128] += 10
         self.intrinsic[128+32] += 5
         screen = scattering.thin(self.t, 0.015)
-        self.scattered = numpy.abs(numpy.fft.ifft(numpy.fft.fft(self.intrinsic)*numpy.fft.fft(screen[::-1]).conj()))
+        self.scattered = np.abs(np.fft.ifft(np.fft.fft(self.intrinsic)*np.fft.fft(screen[::-1]).conj()))
         
     def test_thin(self):
         """Test thin screen descattering"""

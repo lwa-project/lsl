@@ -6,12 +6,6 @@ These errors are currently meant to deal with file I/O problems.
     Removed numpyError and re-enumerated
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -35,7 +29,7 @@ class BaseReaderError(IOError):
         IOError.__init__(self, errno, strerror, filename)
         
     def __str__(self):
-        return "%s" % self.strerror
+        return str(self.strerror)
 
 
 class EOFError(BaseReaderError):
@@ -67,9 +61,9 @@ class SyncError(BaseReaderError):
     def __str__(self):
         output = self.strerror
         if self.location is not None:
-            output = '%s at byte %i' % (output, self.location)
+            output = f"{output} at byte {self.location}"
         if self.syncWord[0] is not None:
-            output = '%s: %02X %02X %02X %02X' % (output, self.syncWord[0], self.syncWord[1], self.syncWord[2], self.syncWord[3])
+            output = f"{output}: {self.syncWord[0]:02X} {self.syncWord[1]:02X} {self.syncWord[2]:02X} {self.syncWord[3]:02X}"
         return output
 
 

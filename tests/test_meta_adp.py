@@ -2,15 +2,10 @@
 Unit test for the lsl.common.metabundleADP module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
 
+from lsl.common.mcsADP import CommandID
 from lsl.common import metabundleADP
 
 
@@ -70,14 +65,14 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(len(cmnds), 50)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
-        self.assertEqual(cmnds[-2]['command_id'], 'STP')
-        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], CommandID.NUL)
+        self.assertEqual(cmnds[-2]['command_id'], CommandID.STP)
+        self.assertEqual(cmnds[-1]['command_id'], CommandID.ESN)
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['command_id'] == 'BAM':
+            if cmnd['command_id'] == CommandID.BAM:
                 nBAM += 1
         self.assertEqual(nBAM, 40)
         

@@ -3,29 +3,19 @@ A collection of utilities for retrieving parameters that may be relevant
 for ionospheric corrections.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
+import sys
 import gzip
-import numpy
+import ephem
+import numpy as np
 import socket
 import tarfile
 import warnings
 import subprocess
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from io import StringIO
+from urllib.request import urlopen
 from datetime import datetime, timedelta
-from ftplib import FTP_TLS, error_perm as FTP_ERROR
+from ftplib import FTP_TLS, error_perm as FTP_ERROR_PERM, error_temp as FTP_ERROR_TEMP
 
 from scipy.special import lpmv
 try:
@@ -34,6 +24,8 @@ except ImportError:
     from scipy.special import factorial
 from scipy.optimize import fmin
 from scipy.interpolate import RectBivariateSpline
+
+from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.stations import geo_to_ecef
 from lsl.common.data_access import DataAccess
@@ -107,20 +99,20 @@ def _load_igrf(fh):
         ## Must be data...  parse it
         fields = line.split(None)
         t, n, m = fields[0], int(fields[1]), int(fields[2])
-        c = numpy.array([float(v) for v in fields[3:]])
+        c = np.array([float(v) for v in fields[3:]])
         
         ## Sort out cosine (g) vs. sine (h)
         if t == 'g':
             try:
                 dataCos[n][m] = c
             except KeyError:
-                dataCos[n] = [numpy.zeros(len(years)+1) for i in range(n+1)]
+                dataCos[n] = [np.zeros(len(years)+1) for i in range(n+1)]
                 dataCos[n][m] = c
         else:
             try:
                 dataSin[n][m] = c
             except KeyError:
-                dataSin[n] = [numpy.zeros(len(years)+1) for i in range(n+1)]
+                dataSin[n] = [np.zeros(len(years)+1) for i in range(n+1)]
                 dataSin[n][m] = c
                 
     # Build the output
@@ -147,11 +139,11 @@ def _compute_igrf_coefficents(year, coeffs):
     
     # Figure out the closest model point(s) to the requested year taking into
     # account that a new model comes out every five years
-    best = numpy.where( numpy.abs(year - numpy.array(coeffs['years'])) < 5 )[0]
+    best = np.where( np.abs(year - np.array(coeffs['years'])) < 5 )[0]
     
     if year < min(coeffs['years']):
         # If the requested year is before 1900 we can't do anything
-        raise RuntimeError("Invalid year %i" % year)
+        raise RuntimeError(f"Invalid year {year}")
     else:
         # Otherwise, figure out the coefficients using a simple linear interpolation 
         # or extrapolation using the secular changes in the model
@@ -213,9 +205,9 @@ def _Snm(n, m):
     """
     
     if m == 0:
-        return numpy.sqrt(factorial(n-m)/factorial(n+m))
+        return np.sqrt(factorial(n-m)/factorial(n+m))
     else:
-        return numpy.sqrt(2.0*factorial(n-m)/factorial(n+m))
+        return np.sqrt(2.0*factorial(n-m)/factorial(n+m))
 
 
 def _Pnm(n, m, mu):
@@ -236,7 +228,7 @@ def _dPnm(n, m, mu):
     """
     
     o = n*mu*_Pnm(n, m, mu) - (n+m)*_Pnm(n-1, m, mu)
-    o /= numpy.sqrt(1.0 - mu**2)
+    o /= np.sqrt(1.0 - mu**2)
     return o
 
 
@@ -280,15 +272,15 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     # Convert the geodetic position provided to a geocentric one for calculation
     ## Deal with the poles
     if 90.0 - lat < 0.001:
-        xyz = numpy.array(geo_to_ecef(89.999*numpy.pi/180, lng*numpy.pi/180, elev))
+        xyz = np.array(geo_to_ecef(89.999*np.pi/180, lng*np.pi/180, elev))
     elif 90.0 + lat < 0.001:
-        xyz = numpy.array(geo_to_ecef(-89.999*numpy.pi/180, lng*numpy.pi/180, elev))
+        xyz = np.array(geo_to_ecef(-89.999*np.pi/180, lng*np.pi/180, elev))
     else:
-        xyz = numpy.array(geo_to_ecef(lat*numpy.pi/180, lng*numpy.pi/180, elev))
+        xyz = np.array(geo_to_ecef(lat*np.pi/180, lng*np.pi/180, elev))
     ## To geocentric
-    r = numpy.sqrt( (xyz**2).sum() )
-    lt = numpy.arcsin(xyz[2]/r)
-    ln = numpy.arctan2(xyz[1], xyz[0])
+    r = np.sqrt( (xyz**2).sum() )
+    lt = np.arcsin(xyz[2]/r)
+    ln = np.arctan2(xyz[1], xyz[0])
     
     # Load in the coefficients
     try:
@@ -306,26 +298,26 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     Br, Bth, Bph = 0.0, 0.0, 0.0
     for n in coeffs['g'].keys():
         for m in range(0, n+1):
-            Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
-            Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
+            Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*np.cos(m*ln) * _Pnm(n, m, np.sin(lt))
+            Br  += (n+1.0)*(_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*np.sin(m*ln) * _Pnm(n, m, np.sin(lt))
             
-            Bth -= (_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*numpy.cos(m*ln) * _dPnm(n, m, numpy.sin(lt))
-            Bth -= (_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*numpy.sin(m*ln) * _dPnm(n, m, numpy.sin(lt))
+            Bth -= (_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['g'][n][m]*np.cos(m*ln) * _dPnm(n, m, np.sin(lt))
+            Bth -= (_RADIUS_EARTH/r)**(n+2) * _Snm(n,m)*coeffs['h'][n][m]*np.sin(m*ln) * _dPnm(n, m, np.sin(lt))
             
-            Bph += (_RADIUS_EARTH/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['g'][n][m]*m*numpy.sin(m*ln) * _Pnm(n, m, numpy.sin(lt))
-            Bph -= (_RADIUS_EARTH/r)**(n+2)/numpy.cos(lt) * _Snm(n,m)*coeffs['h'][n][m]*m*numpy.cos(m*ln) * _Pnm(n, m, numpy.sin(lt))
+            Bph += (_RADIUS_EARTH/r)**(n+2)/np.cos(lt) * _Snm(n,m)*coeffs['g'][n][m]*m*np.sin(m*ln) * _Pnm(n, m, np.sin(lt))
+            Bph -= (_RADIUS_EARTH/r)**(n+2)/np.cos(lt) * _Snm(n,m)*coeffs['h'][n][m]*m*np.cos(m*ln) * _Pnm(n, m, np.sin(lt))
     ## And deal with NaNs
-    if numpy.isnan(Br):
+    if np.isnan(Br):
         Br = 0.0
-    if numpy.isnan(Bth):
+    if np.isnan(Bth):
         Bth = 0.0
-    if numpy.isnan(Bph):
+    if np.isnan(Bph):
         Bph = 0.0
         
     # Convert from spherical to ECEF
-    Bx = Br*numpy.cos(lt)*numpy.cos(ln) + Bth*numpy.sin(lt)*numpy.cos(ln) - Bph*numpy.sin(ln)
-    By = Br*numpy.cos(lt)*numpy.sin(ln) + Bth*numpy.sin(lt)*numpy.sin(ln) + Bph*numpy.cos(ln)
-    Bz = Br*numpy.sin(lt) - Bth*numpy.cos(lt)
+    Bx = Br*np.cos(lt)*np.cos(ln) + Bth*np.sin(lt)*np.cos(ln) - Bph*np.sin(ln)
+    By = Br*np.cos(lt)*np.sin(ln) + Bth*np.sin(lt)*np.sin(ln) + Bph*np.cos(ln)
+    Bz = Br*np.sin(lt) - Bth*np.cos(lt)
     
     # Are we done?
     if ecef:
@@ -335,22 +327,22 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     else:
         # Convert from ECEF to topocentric (geodetic)
         ## Update the coordinates for geodetic
-        lt = lat*numpy.pi/180.0
+        lt = lat*np.pi/180.0
         if 90.0 - lat < 0.001:
-            lt = 89.999*numpy.pi/180.0
+            lt = 89.999*np.pi/180.0
         elif 90.0 + lat < 0.001:
-            lt = -89.999*numpy.pi/180.0
+            lt = -89.999*np.pi/180.0
         else:
-            lt = lat*numpy.pi/180.0
-        ln = lng*numpy.pi/180.0
+            lt = lat*np.pi/180.0
+        ln = lng*np.pi/180.0
         
         ## Build the rotation matrix for ECEF to SEZ
-        rot = numpy.array([[ numpy.sin(lt)*numpy.cos(ln), numpy.sin(lt)*numpy.sin(ln), -numpy.cos(lt)], 
-                    [-numpy.sin(ln),               numpy.cos(ln),                0            ],
-                    [ numpy.cos(lt)*numpy.cos(ln), numpy.cos(lt)*numpy.sin(ln),  numpy.sin(lt)]])
+        rot = np.array([[ np.sin(lt)*np.cos(ln), np.sin(lt)*np.sin(ln), -np.cos(lt)], 
+                        [-np.sin(ln),            np.cos(ln),             0         ],
+                        [ np.cos(lt)*np.cos(ln), np.cos(lt)*np.sin(ln),  np.sin(lt)]])
                     
         ## Apply and extract
-        sez = numpy.dot(rot, numpy.array([Bx,By,Bz]))
+        sez = np.dot(rot, np.array([Bx,By,Bz]))
         Bn, Be, Bz = -sez[0], sez[1], sez[2]
         
         outputField = Bn, Be, Bz
@@ -371,17 +363,17 @@ def compute_magnetic_declination(Bn, Be, Bz):
     """
     
     # Compute the horizontal field strength
-    Bh = numpy.sqrt(Bn**2+Be**2)
+    Bh = np.sqrt(Bn**2+Be**2)
     
     # Compute the declination
-    decl = 2.0*numpy.arctan2(Be, Bh+Bn)
+    decl = 2.0*np.arctan2(Be, Bh+Bn)
     
     # Check for bounds
     if Bh < 100.0:
-        decl = numpy.nan
+        decl = np.nan
         
     # Convert to degrees and done
-    return decl*180.0/numpy.pi
+    return decl*180.0/np.pi
 
 
 def compute_magnetic_inclination(Bn, Be, Bz):
@@ -392,14 +384,14 @@ def compute_magnetic_inclination(Bn, Be, Bz):
     """
     
     # Compute the horizontal field strength
-    Bh = numpy.sqrt(Bn**2+Be**2)
+    Bh = np.sqrt(Bn**2+Be**2)
     
     # Compute the inclination.  This has an extra negative sign because of the
     # convention used in get_magnetic_field().
-    incl = numpy.arctan2(-Bz, Bh)
+    incl = np.arctan2(-Bz, Bh)
     
     # Convert to degrees and done
-    return incl*180.0/numpy.pi
+    return incl*180.0/np.pi
 
 
 def _convert_to_gzip(filename):
@@ -427,7 +419,7 @@ def _download_worker_cddis(url, filename):
     is_interactive = sys.__stdin__.isatty()
     
     # Attempt to download the data
-    print("Downloading %s" % url)
+    print(f"Downloading {url}")
     ## Login
     ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))
     status = ftps.login("anonymous", "lwa@unm.edu")
@@ -445,7 +437,7 @@ def _download_worker_cddis(url, filename):
     remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
     try:
         remote_size = ftps.size(remote_path)
-    except FTP_ERROR:
+    except (FTP_ERROR_TEMP, FTP_ERROR_PERM):
         ftps.close()
         return False
         
@@ -458,10 +450,13 @@ def _download_worker_cddis(url, filename):
                 sys.stdout.write(pbar.show()+'\r')
                 sys.stdout.flush()
                 
-        status = ftps.retrbinary('RETR %s' % remote_path, write, blocksize=DOWN_CONFIG.get('block_size'))
-        if is_interactive:
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
+        try:
+            status = ftps.retrbinary(f"RETR {remote_path}", write, blocksize=DOWN_CONFIG.get('block_size'))
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\n')
+                sys.stdout.flush()
+        except (FTP_ERROR_TEMP, FTP_ERROR_PERM):
+            status = 'FAILED'
             
     if not status.startswith("226"):
         _CACHE_DIR.remove(filename)
@@ -486,19 +481,11 @@ def _download_worker_standard(url, filename):
     is_interactive = sys.__stdin__.isatty()
     
     # Attempt to download the data
-    print("Downloading %s" % url)
+    print(f"Downloading {url}")
     try:
         tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-        remote_size = 1
-        try:
-            remote_size = int(tecFH.headers["Content-Length"])
-        except AttributeError:
-            pass
-        try:
-            meta = tecFH.info()
-            remote_size = int(meta.getheaders("Content-Length")[0])
-        except AttributeError:
-            pass
+        remote_size = int(tecFH.headers["Content-Length"])
+        
         pbar = DownloadBar(max=remote_size)
         while True:
             new_data = tecFH.read(DOWN_CONFIG.get('block_size'))
@@ -584,7 +571,7 @@ def _download_igs(mjd, type='final'):
         long_filename = 'IGS0OPSRAP_%04i%03i0000_01D_02H_GIM.INX.gz' % (year, dayOfYear)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     for fname in (long_filename, filename):
@@ -624,7 +611,7 @@ def _download_jpl(mjd, type='final'):
         filename = 'jprg%03i0.%02ii.Z' % (dayOfYear, year%100)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_url'), year, dayOfYear, filename), filename)
@@ -663,7 +650,7 @@ def _download_emr(mjd, type='final'):
         long_filename = 'EMR0OPSRAP_%04i%03i0000_01D_01H_GIM.INX.gz' % (year, dayOfYear)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     for fname in (long_filename, filename):
@@ -703,7 +690,7 @@ def _download_uqr(mjd, type='final'):
         filename = 'uqrg%03i0.%02ii.Z' % (dayOfYear, year%100)
     else:
         ## ???
-        raise ValueError("Unknown TEC file type '%s'" % type)
+        raise ValueError(f"Unknown TEC file type '{type}'")
         
     # Attempt to download the data
     status = _download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_url'), year, dayOfYear, filename), filename)
@@ -764,7 +751,7 @@ def _download_ustec(mjd):
     month = dt.month
     dateStr = dt.strftime("%Y%m%d")
     # Build up the filename
-    filename = '%s_ustec.tar.gz' % dateStr
+    filename = f"{dateStr}_ustec.tar.gz"
     
     # Attempt to download the data
     return _download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, filename), filename)
@@ -867,7 +854,7 @@ def _parse_tec_map(filename_or_fh):
                     
                     cmap.append( [] )
                     lats.append( lat )
-                    lngs = list(numpy.arange(lng1, lng2+dlng, dlng))
+                    lngs = list(np.arange(lng1, lng2+dlng, dlng))
                     
                     inBlock = True
                     continue
@@ -875,8 +862,8 @@ def _parse_tec_map(filename_or_fh):
                 ## Process the data block keeping in mind that missing values are stored 
                 ## as 9999
                 if inBlock:
-                    fields = numpy.array([float(v)/10.0 for v in line.split(None)])
-                    fields[numpy.where( fields == 999.9 )] = numpy.nan
+                    fields = np.array([float(v)/10.0 for v in line.split(None)])
+                    fields[np.where( fields == 999.9 )] = np.nan
                     
                     cmap[-1].extend( fields )
                     continue
@@ -885,18 +872,18 @@ def _parse_tec_map(filename_or_fh):
         fh.close()
         
     # Combine everything together
-    dates = numpy.array(dates, dtype=numpy.float64)
-    tec = numpy.array(tecMaps, dtype=numpy.float32)
-    rms = numpy.array(rmsMaps, dtype=numpy.float32)
-    lats = numpy.array(lats, dtype=numpy.float32)
-    lngs = numpy.array(lngs, dtype=numpy.float32)
+    dates = np.array(dates, dtype=np.float64)
+    tec = np.array(tecMaps, dtype=np.float32)
+    rms = np.array(rmsMaps, dtype=np.float32)
+    lats = np.array(lats, dtype=np.float32)
+    lngs = np.array(lngs, dtype=np.float32)
     
     # Do we have a valid RMS map?  If not, make one.
     if rms.size != tec.size:
         rms = tec*0.05
         
     # Make lats and lngs 2-D to match the data
-    lngs, lats = numpy.meshgrid(lngs, lats)
+    lngs, lats = np.meshgrid(lngs, lats)
     
     # Build up the output
     output = {'dates': dates, 'lats': lats, 'lngs': lngs, 'height': height, 'tec': tec, 'rms': rms}
@@ -964,10 +951,10 @@ def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
             fh.close()
             
     # Bring it into NumPy
-    lats = numpy.array(lats)
-    lngs = numpy.array(lngs)
-    lngs,lats = numpy.meshgrid(lngs,lats)
-    data = numpy.array(data)
+    lats = np.array(lats)
+    lngs = np.array(lngs)
+    lngs,lats = np.meshgrid(lngs,lats)
+    data = np.array(data)
     
     # Check for an associated RMS file
     if rmsname_or_fh is not None:
@@ -1015,9 +1002,9 @@ def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
                 fh.close()
                 
         # Bring it into NumPy
-        rlats = numpy.array(rlats)
-        rlngs = numpy.array(rlngs)
-        rdata = numpy.array(rdata)
+        rlats = np.array(rlats)
+        rlngs = np.array(rlngs)
+        rdata = np.array(rdata)
         
         # For some reason the RMS map has a lower resolution than the actual TEC map.
         # Interpolate up the the resolution of the actual TEC map so that we have an
@@ -1088,8 +1075,8 @@ def _parse_ustec_height(filename_or_fh):
             fh.close()
             
     # Bring it into Numpy and get an average height
-    heights = numpy.array(heights)
-    data = numpy.array(data)
+    heights = np.array(heights)
+    data = np.array(data)
     height = (heights*data).sum() / data.sum()
     
     # Done
@@ -1134,7 +1121,7 @@ def _parse_ustec_map(filename_or_fh):
             try:
                 contents = contents.decode()
             except AttributeError:
-                # Python2 catch
+                # Already a string
                 pass
             contents = StringIO(contents)
             
@@ -1189,9 +1176,9 @@ def _parse_ustec_map(filename_or_fh):
             tf.close()
             
     # Combine everything together
-    dates = numpy.array(dates, dtype=numpy.float64)
-    tec = numpy.array(tecMaps, dtype=numpy.float32)
-    rms = numpy.array(rmsMaps, dtype=numpy.float32)
+    dates = np.array(dates, dtype=np.float64)
+    tec = np.array(tecMaps, dtype=np.float32)
+    rms = np.array(rmsMaps, dtype=np.float32)
     
     # Build up the output
     output = {'dates': dates, 'lats': lats, 'lngs': lngs, 'height': height, 'tec': tec, 'rms': rms}
@@ -1274,7 +1261,7 @@ def _load_map(mjd, type='IGS'):
         filenameAltTemplate = '%s_ustec.tar.gz'
         
     else:
-        raise ValueError("Unknown data source '%s'" % type)
+        raise ValueError(f"Unknown data source '{type}'")
         
     try:
         # Is it already in the on-line cache?
@@ -1363,11 +1350,11 @@ def get_tec_value(mjd, lat=None, lng=None, include_rms=False, type='IGS'):
     if type.upper() == 'USTEC':
         # Figure out the closest model point(s) to the requested MJD taking into
         # account that a new model is generated every fifteen minutes
-        best = numpy.where( numpy.abs((tecMap['dates']-mjd)) < 15/60./24.0 )[0]
+        best = np.where( np.abs((tecMap['dates']-mjd)) < 15/60./24.0 )[0]
     else:
         # Figure out the closest model point(s) to the requested MJD taking into
         # account that a new model is generated every two hours
-        best = numpy.where( numpy.abs((tecMap['dates']-mjd)) < 2/24.0 )[0]
+        best = np.where( np.abs((tecMap['dates']-mjd)) < 2/24.0 )[0]
         
     # Interpolate in time
     ## TEC
@@ -1425,12 +1412,12 @@ def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
         lat,lon = params
         
         az,el,d = site.get_pointing_and_distance((lat, lon, elev))
-        az %= (2*numpy.pi)
+        az %= (2*np.pi)
         
-        az *= 180/numpy.pi
-        el *= 180/numpy.pi
+        az *= 180/np.pi
+        el *= 180/np.pi
         
-        return numpy.array([az, el])
+        return np.array([az, el])
         
     ## Error function that computes the difference between the input and the 
     ## model used in func().
@@ -1443,13 +1430,24 @@ def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
         return (err(params, ydata, xdata)**2).sum()
         
     # Initial conditions for the optimization - we start directly overhead
-    lat = site.lat * 180/numpy.pi
-    lon = site.lon * 180/numpy.pi
+    lat = site.lat * 180/np.pi
+    lon = site.lon * 180/np.pi
     elev = site.elev + height
     x0 = (lat, lon)
     
+    # Convert
+    if isinstance(az, AstroAngle):
+        az = az.deg
+    elif isinstance(az, ephem.Angle):
+        az = az * 180/np.pi
+        
+    if isinstance(el, AstroAngle):
+        el = el.deg
+    elif isinstance(el, ephem.Angle):
+        el = el * 180/np.pi
+        
     # Optimize
-    output = fmin(err2, x0, args=(numpy.array([az, el]), []), disp=verbose)
+    output = fmin(err2, x0, args=(np.array([az, el]), []), disp=verbose)
     
     # Done
     return output[0], output[1], height

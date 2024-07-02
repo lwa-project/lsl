@@ -267,11 +267,11 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() drspec_method");
         }
         goto fail;
-    } else if( PyString_GET_SIZE(buffer) != sizeof(DRSpecHeader) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != sizeof(DRSpecHeader) ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         goto fail;
     }
-    memcpy(&header, PyString_AS_STRING(buffer), sizeof(header));
+    memcpy(&header, PyBytes_AS_STRING(buffer), sizeof(header));
     Py_XDECREF(buffer);
     
     // Check the header's magic numbers
@@ -343,7 +343,7 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     // Read in the data section
     if( drspec_size_dat == NULL ) {
         drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
-    } else if( PyInt_AsLong(drspec_size_dat) != sizeof(float)*nSets*header.nFreqs ) {
+    } else if( PyLong_AsLong(drspec_size_dat) != sizeof(float)*nSets*header.nFreqs ) {
         Py_XDECREF(drspec_size_dat);
         drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
     }
@@ -355,11 +355,11 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() drspec_method");
         }
         goto fail;
-    } else if( PyString_GET_SIZE(buffer) != sizeof(float)*nSets*header.nFreqs ) {
+    } else if( PyBytes_GET_SIZE(buffer) != sizeof(float)*nSets*header.nFreqs ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         goto fail;
     }
-    memcpy(data, PyString_AS_STRING(buffer), sizeof(float)*nSets*header.nFreqs);
+    memcpy(data, PyBytes_AS_STRING(buffer), sizeof(float)*nSets*header.nFreqs);
     Py_XDECREF(buffer);
     
     Py_BEGIN_ALLOW_THREADS

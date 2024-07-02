@@ -31,13 +31,7 @@ handle as an input and returns a fully-filled Frame object.
 .. versionadded:: 1.2.0
 """
 
-# Python1 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 
 from lsl.common import adp as adp_common
 from lsl.reader.base import *
@@ -99,7 +93,7 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        return (numpy.arange(NCHAN_COR, dtype=numpy.float32)+self.first_chan) * adp_common.fC
+        return (np.arange(NCHAN_COR, dtype=np.float32)+self.first_chan) * adp_common.fC
 
 
 class FramePayload(FramePayloadBase):

@@ -1,18 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Example script to read in the positions of stands at LWA-1 and make a plot
 of the site.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import sys
-import numpy
+import numpy as np
 import argparse
 
 from lsl.common import stations, metabundle, metabundleADP
@@ -26,7 +20,7 @@ telemetry.track_script()
 
 def main(args):
     # Parse command line
-    toMark = numpy.array(args.stand)-1
+    toMark = np.array(args.stand)-1
     
     # Setup the LWA station information
     if args.metadata is not None:
@@ -45,14 +39,10 @@ def main(args):
     stands.sort()
 
     # Load in the stand position data
-    data = numpy.zeros((len(stands)//2,3))
+    data = np.zeros((len(stands)//2,3))
     
-    i = 0
-    for stand in stands[::2]:
-        data[i,0] = stand.x
-        data[i,1] = stand.y
-        data[i,2] = stand.z
-        i += 1
+    for i,stand in enumerate(stands[::2]):
+        data[i,:] = stand.xyz
         
     # Color-code the stands by their elevation
     color = data[:,2]
@@ -69,7 +59,7 @@ def main(args):
     ax1.set_xlim([-80, 80])
     ax1.set_ylabel('$\Delta$Y [N-S; m]')
     ax1.set_ylim([-80, 80])
-    ax1.set_title('%s Site:  %.3f$^\circ$N, %.3f$^\circ$W' % (station.name, station.lat*180.0/numpy.pi, -station.long*180.0/numpy.pi))
+    ax1.set_title('%s Site:  %.3f$^\circ$N, %.3f$^\circ$W' % (station.name, station.lat*180.0/np.pi, -station.long*180.0/np.pi))
     
     ax2.scatter(data[:,0], data[:,2], c=color, s=40.0)
     ax2.xaxis.set_major_formatter( NullFormatter() )

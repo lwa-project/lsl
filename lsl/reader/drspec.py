@@ -38,14 +38,8 @@ For describing the format of data in the file, three function are provided:
     spectrometer file.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import copy
-import numpy
+import numpy as np
 
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
@@ -238,7 +232,7 @@ class FramePayload(FramePayloadBase):
                 if sub is not None:
                     packed.append(sub)
                     dtype.append(("%s%i" % (p, t), packed[-1].dtype))
-        return numpy.rec.array(packed, dtype=dtype)
+        return np.rec.array(packed, dtype=dtype)
         
     @property
     def central_freq(self):
@@ -246,7 +240,7 @@ class FramePayload(FramePayloadBase):
         Function to set the central frequency of the DRX data in Hz.
         """
         
-        return [dp_common.fS * i / 2**32 for i in self.tuning_words]
+        return [dp_common.word_to_freq(i) for i in self.tuning_words]
 
 
 class Frame(FrameBase):
@@ -395,9 +389,9 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) + getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot add {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) + numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) + np.float32(y)
                 setattr(self.payload, attr, temp)
             
         return self
@@ -424,9 +418,9 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) - getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot add %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot add {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) - numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) - np.float32(y)
                 setattr(self.payload, attr, temp)
             
         return self
@@ -453,9 +447,9 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) * getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) * numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) * np.float32(y)
                 setattr(self.payload, attr, temp)
                 
         return self
@@ -482,9 +476,9 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) // getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) // numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) // np.float32(y)
                 setattr(self.payload, attr, temp)
                 
         return self
@@ -511,9 +505,9 @@ class Frame(FrameBase):
                 try:
                     temp = getattr(self.payload, attr, None) / getattr(y.payload, attr, None)
                 except TypeError:
-                    raise RuntimeError("Cannot multiply %s with %s" % (str(attrs), str(y.header.get_data_products())))
+                    raise RuntimeError(f"Cannot multiply {str(attrs)} with {str(y.header.get_data_products())}")
                 except AttributeError:
-                    temp = getattr(self.payload, attr, None) / numpy.float32(y)
+                    temp = getattr(self.payload, attr, None) / np.float32(y)
                 setattr(self.payload, attr, temp)
                 
         return self

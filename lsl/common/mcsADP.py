@@ -38,16 +38,15 @@ The other functions:
  * Parse the binary packed metadata, 
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-
 import re
 import ctypes
+import numpy as np
 from datetime import datetime
 
 from lsl.common import adp as adpCommon
-from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, status_to_string, \
-                           summary_to_string, sid_to_string, cid_to_string, mode_to_string, \
+from lsl.common.mcs import parse_c_struct as _parse_c_struct
+from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, StatusCode, SummaryCode, \
+                           SubsystemID, CommandID, ObservingMode, \
                            flat_to_multi, apply_pointing_correction, MIB_REC_TYPE_BRANCH, \
                            MIB_REC_TYPE_VALUE, MIB_INDEX_FIELD_LENGTH, MIB_LABEL_FIELD_LENGTH, \
                            MIB_VAL_FIELD_LENGTH, MIB, MIBEntry
@@ -57,7 +56,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NROACH', 'ME_MAX_NROACHCH', 'ME_MAX_ROACHID_LENGTH', 
@@ -67,8 +66,8 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
-           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'status_to_string', 'summary_to_string', 'sid_to_string', 'cid_to_string', 
-           'mode_to_string', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
+           'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode', 'SubsystemID', 'CommandID', 
+           'ObservingMode', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
 ME_SSMIF_FORMAT_VERSION = 9	# SSMIF format version code
@@ -322,206 +321,19 @@ OSF2_STRUCT = """
     unsigned int       alignment;
 """
 
-
-_cDecRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
-
-
 def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None):
-    """
-    Function to take a C structure declaration and build a ctypes.Structure out 
-    of it with the appropriate alignment, character interpretation*, and endianness
-    (little, big, network, or native).
-    
-    .. note::  ctypes converts character arrays to Python strings until the first null is
-    incountered.  This behavior causes problems for multi-dimension arrays of null
-    filled strings.  By setting char_mode to 'int', all char types are retuned as 
-    bytes which can be converted to strings via chr().
-    """
-    
-    # Process the macro overrides dictionary
-    if overrides is None:
-        overrides = {}
+    adp_macros = {a: globals()[a] for a in __all__}
+    if overrides is not None:
+        adp_macros.update(overrides)
+    not_int = []
+    for k in adp_macros:
+        if not isinstance(adp_macros[k], (int, np.integer)):
+            not_int.append(k)
+    for k in not_int:
+        del adp_macros[k]
         
-    # Figure out how to deal with character arrays
-    if char_mode not in ('str', 'int'):
-        raise RuntimeError("Unknown character mode: '%s'" % char_mode)
-    if char_mode == 'str':
-        baseCharType = ctypes.c_char
-    else:
-        baseCharType = ctypes.c_byte
-    
-    # Hold the basic fields and dimensions
-    fields = []
-    dims2 = {}
-    
-    # Split into lines and go!
-    cStruct = cStruct.split('\n')
-    for line in cStruct:
-        ## Skip structure declaration, blank lines, comments, and lines too short to hold a 
-        ## declaration
-        line = line.strip().rstrip()
-        if '{' in line or '}' in line:
-            continue
-        if line[:2] == '//':
-            continue
-        if len(line) < 5:
-            continue
-            
-        ## RegEx the line to find the type, name, and dimensions (if needed) for
-        ## the next structure variable
-        mtch = _cDecRE.search(line)
-        if mtch is None:
-            raise RuntimeError("Unparseable line: '%s'" % line)
-        
-        dec = mtch.group('type')
-        dec = dec.rstrip()
-        name = mtch.group('name')
-        
-        try:
-            d1 = mtch.group('d1')
-            if d1 is not None:
-                try:
-                    d1 = overrides[d1]
-                except KeyError:
-                    d1 = eval(d1)
-            d2 = mtch.group('d2')
-            if d2 is not None:
-                try:
-                    d2 = overrides[d2]
-                except KeyError:
-                    d2 = eval(d2)
-            d3 = mtch.group('d3')
-            if d3 is not None:
-                try:
-                    d3 = overrides[d3]
-                except KeyError:
-                    d3 = eval(d3)
-            d4 = mtch.group('d4')
-            if d4 is not None:
-                try:
-                    d4 = overrides[d4]
-                except KeyError:
-                    d4 = eval(d4)
-        except NameError:
-            raise RuntimeError("Unknown value in array index: '%s'" % line)
-        
-        ## Basic data types
-        if dec in ('signed int', 'int'):
-            typ = ctypes.c_int
-        elif dec == 'unsigned int':
-            typ = ctypes.c_uint
-        elif dec in ('signed short int', 'signed short', 'short int', 'short'):
-            typ = ctypes.c_short
-        elif dec in ('unsigned short int', 'unsigned short'):
-            typ = ctypes.c_ushort
-        elif dec in ('signed long int', 'signed long', 'long int', 'long'):
-            typ = ctypes.c_long
-        elif dec in ('unsigned long int', 'unsigned long'):
-            typ = ctypes.c_ulong
-        elif dec in ('signed long long', 'long long'):
-            typ = ctypes.c_longlong
-        elif dec == 'unsigned long long':
-            typ = ctypes.c_uint64
-        elif dec == 'float':
-            typ = ctypes.c_float
-        elif dec == 'double':
-            typ = ctypes.c_double
-        elif dec == 'char':
-            typ = baseCharType
-        elif dec == 'signed char':
-            typ = ctypes.c_byte
-        elif dec == 'unsigned char':
-            typ = ctypes.c_ubyte
-        else:
-            raise RuntimeError("Unparseable line: '%s' -> type: %s, name: %s, dims: %s, %s, %s %s" % (line, dec, name, d1, d2, d3, d4))
-        
-        ## Array identification and construction
-        dims2[name] = []
-        if d1 is not None:
-            count = d1
-            dims2[name].append(d1)
-            
-            if d2 is not None:
-                count *= d2
-                dims2[name].append(d2)
-            if d3 is not None:
-                count *= d3
-                dims2[name].append(d3)
-            if d4 is not None:
-                count *= d4
-                dims2[name].append(d4)
-                
-            typ *= count
-        
-        ## Append
-        fields.append( (name, typ) )
-    
-    # ctypes creation - endianess
-    endianness = endianness.lower()
-    if endianness not in ('little', 'big', 'network', 'native'):
-        raise RuntimeError("Unknown endianness: '%s'" % endianness)
-    
-    if endianness == 'little':
-        endianness = ctypes.LittleEndianStructure
-    elif endianness == 'big':
-        endianness = ctypes.BigEndianStructure
-    elif endianness == 'network':
-        endianness = ctypes.BigEndianStructure
-    else:
-        endianness = ctypes.Structure
-    
-    # ctypes creation - actual
-    class MyStruct(endianness):
-        """
-        ctypes.Structure of the correct endianness for the provided
-        C structure.  
-        
-        In addition to the standard attributes defined for a ctypes.Structure 
-        instance there are a few additional attributes related to the parsed C
-        structure.  They are:
-         * origC - String containing the original C structure
-         * dims  - Dictionary of the dimensionallity of the data, if needed, 
-                   keyed by variable name
-        """
-        
-        origC = '\n'.join(cStruct)
-        
-        _fields_ = fields
-        _pack_ = 8	# Pack it like we are 64-bit
-        dims = dims2
-        
-        def __str__(self):
-            """
-            Print out the structure in a nice easy-to-read formation that
-            captures the various structure elements, their data types, and 
-            their values.
-            """
-            
-            out = ''
-            for f,d in self._fields_:
-                out += '%s (%s): %s\n' % (f, d, eval("self.%s" % f))
-            return out
-            
-        def sizeof(self):
-            """
-            Return the size, in bytes, of the structure.
-            """
-            
-            return ctypes.sizeof(self)
-            
-        def returnDict(self):
-            """
-            Return the structure as a simple Python dictionary keyed off the
-            structure elements.
-            """
-            
-            output = {}
-            for f,d in self._fields_:
-                output[f] = eval("self.%s" % f)
-            return output
-    
-    # Create and return
-    return MyStruct()
+    return _parse_c_struct(cStruct, char_mode=char_mode, endianness=endianness,
+                           overrides=adp_macros)
 
 
 def _two_bytes_swap(value):

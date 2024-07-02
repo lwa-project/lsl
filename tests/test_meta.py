@@ -2,15 +2,10 @@
 Unit test for the lsl.common.metabundle module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
 
+from lsl.common.mcs import CommandID
 from lsl.common import metabundle
 
 
@@ -69,14 +64,14 @@ class metabundle_tests(unittest.TestCase):
         self.assertEqual(len(cmnds), 150)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
-        self.assertEqual(cmnds[-2]['command_id'], 'OBE')
-        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], CommandID.NUL)
+        self.assertEqual(cmnds[-2]['command_id'], CommandID.OBE)
+        self.assertEqual(cmnds[-1]['command_id'], CommandID.ESN)
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['command_id'] == 'BAM':
+            if cmnd['command_id'] == CommandID.BAM:
                 nBAM += 1
         self.assertEqual(nBAM, 143)
         
@@ -193,14 +188,14 @@ class metabundle_tests_old_0(unittest.TestCase):
         self.assertEqual(len(cmnds), 491)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
-        self.assertEqual(cmnds[-2]['command_id'], 'OBE')
-        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], CommandID.NUL)
+        self.assertEqual(cmnds[-2]['command_id'], CommandID.OBE)
+        self.assertEqual(cmnds[-1]['command_id'], CommandID.ESN)
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['command_id'] == 'BAM':
+            if cmnd['command_id'] == CommandID.BAM:
                 nBAM += 1
         self.assertEqual(nBAM, 484)
         
@@ -273,14 +268,14 @@ class metabundle_tests_old_1(unittest.TestCase):
         self.assertEqual(len(cmnds), 8)
         
         # Check the first and last commands
-        self.assertEqual(cmnds[ 0]['command_id'], 'NUL')
-        self.assertEqual(cmnds[-2]['command_id'], 'OBE')
-        self.assertEqual(cmnds[-1]['command_id'], 'ESN')
+        self.assertEqual(cmnds[ 0]['command_id'], CommandID.NUL)
+        self.assertEqual(cmnds[-2]['command_id'], CommandID.OBE)
+        self.assertEqual(cmnds[-1]['command_id'], CommandID.ESN)
         
         # Check the counds of DP BAM commands
         nBAM = 0
         for cmnd in cmnds:
-            if cmnd['command_id'] == 'BAM':
+            if cmnd['command_id'] == CommandID.BAM:
                 nBAM += 1
         self.assertEqual(nBAM, 1)
         

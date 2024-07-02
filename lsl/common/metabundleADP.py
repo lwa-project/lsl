@@ -4,12 +4,6 @@ it and putting those bits into Python objects, e.g, :class:`lsl.common.stations.
 and :class:`lsl.common.sdm.SDM`.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
 import copy
@@ -17,12 +11,12 @@ import glob
 import shutil
 import tarfile
 import tempfile
+from functools import lru_cache
 from datetime import datetime, timedelta
 
 from lsl.common import stations, sdmADP, sdfADP
 from lsl.common.mcsADP import *
 from lsl.common.adp import word_to_freq, fS
-from lsl.misc.lru_cache import lru_cache
 from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
@@ -158,12 +152,12 @@ def read_obs_file(filename):
             fh.readinto(alignment)
             
             if alignment.block != (2**32 - 2):
-                raise IOError("Byte alignment lost at byte %i" % fh.tell())
+                raise IOError(f"Byte alignment lost at byte {fh.tell()}")
                 
         fh.readinto(bfooter)
         
         if bfooter.alignment != (2**32 - 1):
-            raise IOError("Byte alignment lost at byte %i" % fh.tell())
+            raise IOError(f"Byte alignment lost at byte {fh.tell()}")
             
     output = {'version': bheader.FORMAT_VERSION,
               'project_id': bheader.PROJECT_ID.lstrip().rstrip(), 'session_id': bheader.SESSION_ID,
@@ -223,10 +217,10 @@ def read_cs_file(filename):
                 
                 actionPrime = {'time': action.tv[0] + action.tv[1]/1.0e6, 
                                'ignore_time': True if action.bASAP else False, 
-                               'subsystem_id': sid_to_string(action.sid),
-                               'command_id': cid_to_string(action.cid), 
+                               'subsystem_id': SubsystemID(action.sid),
+                               'command_id': CommandID(action.cid), 
                                'command_length': action.len, 'data': data}
-                if actionPrime['subsystem_id'] == 'DP':
+                if actionPrime['subsystem_id'] == SubsystemID.DP:
                     raise RuntimeError("Command script references DP not ADP")
                     
                 commands.append( actionPrime )
@@ -553,7 +547,7 @@ def get_asp_configuration(tarname, which='beginning'):
     
     which = which.lower()
     if which not in ('beginning', 'begin', 'end'):
-        raise ValueError("Unknown configuration time '%s'" % which)
+        raise ValueError(f"Unknown configuration time '{which}'")
         
     # Stub ASP configuration
     aspConfig = {'asp_filter':      [-1 for i in range(264)],

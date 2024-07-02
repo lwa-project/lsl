@@ -2,12 +2,6 @@
 LWA astronomical source catalogs.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import math
 import abc
@@ -133,7 +127,7 @@ class Catalog(Mapping):
         
         entry = self.lookup(key)
         if entry is None:
-            raise KeyError("name %s not in catalog" % repr(key))
+            raise KeyError(f"name {key} not in catalog")
         return entry
         
     def __iter__(self):
@@ -201,7 +195,7 @@ class LWA_Catalog(Catalog):
                     decMinutes = int(line[25:27], 10)
                     decSeconds = float(line[28:32])
                 except ValueError as err:
-                    raise RuntimeError("file %s, line %d incorectly formated: \'%s\' : %s]" % (fileName, lineNum, line, err))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated: '{line}' : {err}]")
                     
                 name = name.rstrip()           
                 
@@ -266,7 +260,7 @@ class PSR_Catalog(Catalog):
                         raSeconds = 0.0
                     else:
                         if debug:
-                            print('Bad format for RAJ line : '+line)
+                            print(f"Bad format for RAJ line: {line}")
                         bad = True
                     raHours = int(raHours)
                     raMinutes = int(raMinutes)
@@ -275,7 +269,7 @@ class PSR_Catalog(Catalog):
                         ra = astro.hms(raHours, raMinutes, raSeconds)
                     except:
                         if debug:
-                            print('PSRCAT: Bad RA for ', psrj, " : ", rastr)
+                            print(f"PSRCAT: Bad RA for {psrj}: {rastr}")
                         bad = True
                 if line.startswith('DECJ'):
                     decstr = line.split()[1]
@@ -287,7 +281,7 @@ class PSR_Catalog(Catalog):
                         decSeconds = 0.0
                     else:
                         if debug:
-                            print('PSRCAT: Bad format for DECJ line : '+line)
+                            print(f"PSRCAT: Bad format for DECJ line: {line}")
                         bad = True
                         continue
                     if decDegrees.startswith('-'):
@@ -302,7 +296,7 @@ class PSR_Catalog(Catalog):
                         dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
                     except:
                         if debug:
-                            print('PSRCAT: Bad DEC for ', psrj, " : ", decstr)
+                            print(f"PSRCAT: Bad DEC for {psrj}: {decstr}")
                         bad = True
                         
                 if line.startswith('@-'):
@@ -385,7 +379,7 @@ class PKS_Catalog(Catalog):
                     decMinutes = int(line[37:39])
                     decSeconds = int(line[40:42])
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
                     
                 ra = astro.hms(raHours, raMinutes, raSeconds)
                 if decSign == '-':
@@ -449,7 +443,7 @@ class PKS90_Catalog(Catalog):
                     decMinutes = int(line[27:29])
                     decSeconds = float(line[30:34])
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
                     
                 ra = astro.hms(raHours, raMinutes, raSeconds)
                 if decSign == '-':
@@ -508,7 +502,7 @@ class C3C_Catalog(Catalog):
                     decDegrees = int(line[28:30])
                     decMinutes = float(line[31:35])
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName} line {lineNum} incorectly formated [{line}]")
                     
                 name = ('3C' + name.strip())         
                 
@@ -563,7 +557,7 @@ class C4C_Catalog(Catalog):
                     decMinutes = float(line[26:30])
                     alias = line[64:-1]
                 except ValueError:
-                    raise RuntimeError("file %s, line %d incorectly formated [%s]" % (fileName, lineNum, line))
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
                     
                 name = name.strip()        
                 name = ('4C' + name)
@@ -593,27 +587,28 @@ class C4C_Catalog(Catalog):
                 lineNum += 1      
 
 
-class F2FGL_Catalog(Catalog):
+class Fermi_LAT_Catalog(Catalog):
     """
-    Specific definition for Fermi LAT 2-year point source catalog.
+    Base definition for the Fermi LAT point source catalogs.
     """
     
-    def __init__(self):
+    def __init__(self, name, filename):
         """
-        Create a 2FGL catalog instance.
+        Create a Fermi LAT catalog instance.
         """
         
-        Catalog.__init__(self, '2FGL')
+        self._filename = filename
+        Catalog.__init__(self, name)
         
     def parse_file(self):
         """
-        Read a source catalogue data file.
+        Read a source catalog data file.
         """
         
         from astropy.io import fits as astrofits
         
         # open data file
-        fileName = os.path.join(self.get_directory(), 'gll_psc_v08.fit')
+        fileName = os.path.join(self.get_directory(), self._filename)
         with DataAccess.open(fileName, 'rb') as fh:
             catFile = astrofits.open(fh)
             
@@ -628,41 +623,53 @@ class F2FGL_Catalog(Catalog):
                 transform.CelestialPosition((ra, dec), name=name))
                 self.source_map[name] = entry
                 
-                alias = str(row.field('0FGL_Name'))
-                if len(alias):
-                    alias = alias.replace(' ', '_')
-                    self.alias_map[alias] = entry
-                    entry.alias_list.append(alias)
-                    
-                alias = str(row.field('1FGL_Name'))
-                if len(alias):
-                    alias = alias.replace(' ', '_')
-                    self.alias_map[alias] = entry
-                    entry.alias_list.append(alias)
-                    
-                alias = str(row.field('ASSOC_GAM1'))
-                if len(alias):
-                    alias = alias.replace(' ', '_')
-                    self.alias_map[alias] = entry
-                    entry.alias_list.append(alias)
-                    
-                alias = str(row.field('ASSOC_GAM2'))
-                if len(alias):
-                    alias = alias.replace(' ', '_')
-                    self.alias_map[alias] = entry
-                    entry.alias_list.append(alias)
-                    
-                alias = str(row.field('ASSOC1'))
-                if len(alias):
-                    alias = alias.replace(' ', '_')
-                    self.alias_map[alias] = entry
-                    entry.alias_list.append(alias)
-                    
-                alias = str(row.field('ASSOC2'))
-                if len(alias):
-                    alias = alias.replace(' ', '_')
-                    self.alias_map[alias] = entry
-                    entry.alias_list.append(alias)
+                for fieldname in ('0FGL_NAME', '1FGL_NAME', '2FGL_NAME',
+                                  'ASSOC_FGL', 'ASSOC_GAM1', 'ASSOC_GAM2', 'ASSOC_GAM3',
+                                  'ASSOC1', 'ASSOC2'):
+                    try:
+                        alias = str(row.field(fieldname))
+                        if len(alias):
+                            alias = alias.replace(' ', '_')
+                            self.alias_map[alias] = entry
+                            entry.alias_list.append(alias)
+                    except KeyError:
+                        pass
+
+
+class F2FGL_Catalog(Fermi_LAT_Catalog):
+    """
+    Specific definition for Fermi LAT 2-year point source catalog.
+    """
+    
+    def __init__(self):
+        Fermi_LAT_Catalog.__init__(self, '2FGL', 'gll_psc_v08.fit')
+
+
+class F3FGL_Catalog(Fermi_LAT_Catalog):
+    """
+    Specific definition for Fermi LAT 4-year point source catalog.
+    """
+    
+    def __init__(self):
+        Fermi_LAT_Catalog.__init__(self, '3FGL', 'gll_psc_v16.fit')
+
+
+class F4FGL_Catalog(Fermi_LAT_Catalog):
+    """
+    Specific definition for Fermi LAT 8-year point source catalog.
+    """
+    
+    def __init__(self):
+        Fermi_LAT_Catalog.__init__(self, '4FGL', 'gll_psc_v22.fit')
+
+
+class F4FGLDR4_Catalog(Fermi_LAT_Catalog):
+    """
+    Specific definition for Fermi LAT 14-year point source catalog.
+    """
+    
+    def __init__(self):
+        Fermi_LAT_Catalog.__init__(self, '4FGL-DR4', 'gll_psc_v33.fit')
 
 
 class CatalogFactory(object):
@@ -674,13 +681,16 @@ class CatalogFactory(object):
     # a mapping of catalog names to classes
     catalog_class_map = \
                     {
-                        'LWA'   : LWA_Catalog,
-                        'PSR'   : PSR_Catalog,
-                        'PKS'   : PKS_Catalog,
-                        'PKS90' : PKS90_Catalog,
-                        '3C'    : C3C_Catalog,
-                        '4C'    : C4C_Catalog,
-                        '2FGL'  : F2FGL_Catalog,
+                        'LWA'     : LWA_Catalog,
+                        'PSR'     : PSR_Catalog,
+                        'PKS'     : PKS_Catalog,
+                        'PKS90'   : PKS90_Catalog,
+                        '3C'      : C3C_Catalog,
+                        '4C'      : C4C_Catalog,
+                        '2FGL'    : F2FGL_Catalog,
+                        '3FGL'    : F3FGL_Catalog,
+                        '4FGL'    : F4FGL_Catalog,
+                        '4FGL-DR4': F4FGLDR4_Catalog,
                     }
                     
     # a mapping of catalog names to instances
@@ -695,7 +705,7 @@ class CatalogFactory(object):
         
         # check parameters
         if name not in list(klass.catalog_class_map.keys()):
-            raise ValueError("unknown catalog \'%s\'" % name)
+            raise ValueError(f"unknown catalog '{name}'")
             
         # try to find an already created instance
         # if not found, create a new instance and cache

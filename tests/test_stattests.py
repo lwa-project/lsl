@@ -2,16 +2,10 @@
 Unit test for the lsl.statistics.tests module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import unittest
-import numpy
+import numpy as np
 
 from lsl.statistics import stattests
 
@@ -27,7 +21,7 @@ class stattests_tests(unittest.TestCase):
     def test_wald_wolfowitz(self):
         """Test the Wald-Wolfowitz (runs) test"""
 
-        data = numpy.random.randn(1024)
+        data = np.random.randn(1024)
         pValue = stattests.wald_wolfowitz(data)
 
 

@@ -8,12 +8,6 @@ of value formats, including:
 .. versionadded:: 1.2.4
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import re
 import ephem
 from argparse import ArgumentTypeError
@@ -42,10 +36,10 @@ def positive_or_zero_int(string):
     try:
         value = int(string, 10)
     except ValueError:
-        msg = "%r is a non-integer value" % string
+        msg = f"{string} is a non-integer value"
         raise ArgumentTypeError(msg)
     if value < 0:
-        msg = "%r < 0" % string
+        msg = f"{string} < 0"
         raise ArgumentTypeError(msg)
     return value
 
@@ -57,7 +51,7 @@ def positive_int(string):
     
     value = positive_or_zero_int(string)
     if value <= 0:
-        msg = "%r <= 0" % string
+        msg = f"{string} <= 0"
         raise ArgumentTypeError(msg)
     return value
 
@@ -70,10 +64,10 @@ def positive_or_zero_float(string):
     try:
         value = float(string)
     except ValueError:
-        msg = "%r is a non-float value" % string
+        msg = f"{string} is a non-float value"
         raise ArgumentTypeError(msg)
     if value < 0.0:
-        msg = "%r < 0.0" % string
+        msg = f"{string} < 0.0"
         raise ArgumentTypeError(msg)
     return value
 
@@ -85,7 +79,7 @@ def positive_float(string):
     
     value = positive_or_zero_float(string)
     if value <= 0.0:
-        msg = "%r <= 0.0" % string
+        msg = f"{string} <= 0.0"
         raise ArgumentTypeError(msg)
     return value
 
@@ -122,7 +116,7 @@ def _quantitiy_to_hz(value):
             value = units.quantity.Quantity(value)
             value = value.to(units.Hz, equivalencies=units.spectral()).value
         except Exception as e:
-            msg = "%r %s" % (value, str(e))
+            msg = f"{value} {str(e)}"
             raise ArgumentTypeError(msg)
     return value
 
@@ -140,7 +134,7 @@ def _quantitiy_to_m(value):
             value = units.quantity.Quantity(value)
             value = value.to(units.meter, equivalencies=units.spectral()).value
         except Exception as e:
-            msg = "%r %s" % (value, str(e))
+            msg = f"{value} {str(e)}"
             raise ArgumentTypeError(msg)
     return value
 
@@ -170,7 +164,7 @@ def _frequency_conversion_base(string):
             units1 = _get_units(start)
             units2 = _get_units(stop)
             if units1 is not None and units2 is None:
-                msg = "%r must have units specified for the second value" % string
+                msg = f"{string} must have units specified for the second value"
                 raise ArgumentTypeError(msg)
             elif units2 is not None and units1 is None:
                 start = start+units2
@@ -197,7 +191,7 @@ def frequency(string):
     value = _frequency_conversion_base(string)
     try:
         len(value)
-        msg = "%r does not appear to be a single frequency" % string
+        msg = f"{string} does not appear to be a single frequency"
         raise ArgumentTypeError(msg)
     except TypeError:
         pass
@@ -220,7 +214,7 @@ def frequency_range(string):
     try:
         len(value)
     except TypeError:
-        msg = "%r does not appear to be a frequency range" % string
+        msg = f"{string} does not appear to be a frequency range"
         raise ArgumentTypeError(msg)
     return value
 
@@ -250,7 +244,7 @@ def _wavelength_conversion_base(string):
             units1 = _get_units(start)
             units2 = _get_units(stop)
             if units1 is not None and units2 is None:
-                msg = "%r must have units specified for the second value" % string
+                msg = f"{string} must have units specified for the second value"
                 raise ArgumentTypeError(msg)
             elif units2 is not None and units1 is None:
                 start = start+units2
@@ -277,7 +271,7 @@ def wavelength(string):
     value = _wavelength_conversion_base(string)
     try:
         len(value)
-        msg = "%r does not appear to be a single wavelength" % string
+        msg = f"{string} does not appear to be a single wavelength"
         raise ArgumentTypeError(msg)
     except TypeError:
         pass
@@ -300,7 +294,7 @@ def wavelength_range(string):
     try:
         len(value)
     except TypeError:
-        msg = "%r does not appear to be a wavelength range" % string
+        msg = f"{string} does not appear to be a wavelength range"
         raise ArgumentTypeError(msg)
     return value
 
@@ -319,7 +313,7 @@ def date(string):
         try:
             dt = datetime.strptime("%s 00:00:00" % cstring, "%Y/%m/%d %H:%M:%S")
         except ValueError:
-            msg = "%r cannot be interpretted as an MJD or date string" % string
+            msg = f"{string} cannot be interpretted as an MJD or date string"
             raise ArgumentTypeError(msg)
             
     date = dt.strftime('%Y/%m/%d')
@@ -340,7 +334,7 @@ def mjd(string):
             dt = datetime.strptime("%s 00:00:00" % cstring, "%Y/%m/%d %H:%M:%S")
             mjd, mpm = datetime_to_mjdmpm(dt)
         except ValueError:
-            msg = "%r cannot be interpretted as an MJD or date string" % string
+            msg = f"{string} cannot be interpretted as an MJD or date string"
             raise ArgumentTypeError(msg)
             
     return mjd
@@ -355,7 +349,7 @@ def time(string):
     try:
         mpm = int(string, 10)
         if mpm < 0 or mpm > (86400*1000 + 999):
-            msg = "%r is out of range for an MPM value"
+            msg = f"{mpm} is out of range for an MPM value"
             raise ArgumentTypeError(msg)
         s, f = mpm/1000, mpm%1000
         h = s / 3600
@@ -369,7 +363,7 @@ def time(string):
             try:
                 dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S")
             except ValueError:
-                msg = "%r cannot be interpretted as a time string" % string
+                msg = f"{string} cannot be interpretted as a time string"
                 raise ArgumentTypeError(msg)
         stime = "%i:%02i:%02i.%06i" % (dt.hour, dt.minute, dt.second, dt.microsecond)
     return stime
@@ -383,7 +377,7 @@ def mpm(string):
     try:
         mpm = int(string, 10)
         if mpm < 0 or mpm > (86400*1000 + 999):
-            msg = "%r is out of range for an MPM value"
+            msg = f"{mpm} is out of range for an MPM value"
             raise ArgumentTypeError(msg)
     except ValueError:
         try:
@@ -392,7 +386,7 @@ def mpm(string):
             try:
                 dt = datetime.strptime("2000/1/1 %s" % string, "%Y/%m/%d %H:%M:%S")
             except ValueError:
-                msg = "%r cannot be interpretted as a time string" % string
+                msg = f"{string} cannot be interpretted as a time string"
                 raise ArgumentTypeError(msg)
         mjd, mpm = datetime_to_mjdmpm(dt)
     return mpm
@@ -406,7 +400,7 @@ def hours(string):
     try:
         value = ephem.hours(string)
     except ValueError as e:
-        msg = "%s: %s" % (str(e), string)
+        msg = f"{str(e)}: {string}"
         raise ArgumentTypeError(msg)
     return value
 
@@ -435,7 +429,7 @@ def degrees(string):
     try:
         value = ephem.degrees(string)
     except ValueError as e:
-        msg = "%s: %s" % (str(e), string)
+        msg = f"{str(e)}: {string}"
         raise ArgumentTypeError(msg)
     return value
 
@@ -486,7 +480,7 @@ def csv_int_list(string):
             try:
                 subvalue = _int_item_or_range(item)
             except ValueError:
-                msg = "%r contains non-integer values" % string
+                msg = f"{string} contains non-integer values"
                 raise ArgumentTypeError(msg)
             value.extend(subvalue)
     return value
@@ -512,13 +506,13 @@ def csv_baseline_list(string):
             try:
                 ant1, ant2 = item.split('-', 1)
             except ValueError:
-                msg = "%s contains non-baseline or non-integer values" % string
+                msg = f"{string} contains non-baseline or non-integer values"
                 raise ArgumentTypeError(msg)
             try:
                 ant1 = _int_item_or_range(ant1)
                 ant2 = _int_item_or_range(ant2)
             except ValueError:
-                msg = "%r contains non-integer values" % string
+                msg = f"{string} contains non-integer values"
                 raise ArgumentTypeError(msg)
             for i in ant1:
                 for j in ant2:
@@ -580,7 +574,7 @@ def csv_hostname_list(string):
                     start = int(mtch.group('start'), 10)
                     stop = int(mtch.group('stop'), 10)
                 except ValueError:
-                    msg = "%r contains non-integer hostname values" % string
+                    msg = f"{string} contains non-integer hostname values"
                     raise ArgumentTypeError(msg)
                 items = ['%s%i' % (hostbase, i) for i in range(start, stop+1)]
             else:
@@ -589,7 +583,7 @@ def csv_hostname_list(string):
                     ## Single hostname
                     items = [mtch.group('hostname'),]
                 else:
-                    msg = "%r contains invalid hostname values" % string
+                    msg = f"{string} contains invalid hostname values"
                     raise ArgumentTypeError(msg)
         value.extend( items )
     return value

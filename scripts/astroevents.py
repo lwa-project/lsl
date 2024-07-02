@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 LWA_Common.astro module informal unit test / demo: give LWA-1 observation data
@@ -6,12 +6,6 @@ at current system clock time
 
 Moved out of the lsl.astro module into this script and updated for LWA-1
 """
-
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
 
 import math    
 import argparse

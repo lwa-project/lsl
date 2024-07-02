@@ -9,14 +9,9 @@ handle.
     :mod:`lsl.sim.tbw`
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
-import ephem
+import numpy as np
+
+from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
 
 from lsl.common import dp as dp_common
 import lsl.astro as astro
@@ -25,11 +20,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['Frame',]
-
-VDIF_EPOCH = ephem.Date('2000/01/01 00:00:00.00')
-UNIX_EPOCH = ephem.Date('1970/01/01 00:00:00.00')
 
 
 class Frame(object):
@@ -42,7 +34,7 @@ class Frame(object):
         self.stand = stand
         self.time = time
         self.bits = bits
-        self.data = numpy.squeeze(data)
+        self.data = np.squeeze(data)
         self.sample_rate = sample_rate
         if data.dtype.kind == 'c':
             self.dataReal = False
@@ -55,7 +47,7 @@ class Frame(object):
         
         # Validate
         if self.bits not in (1, 2, 4, 8):
-            raise ValueError("Unsupported output bitdepth: %i" % self.bits)
+            raise ValueError(f"Unsupported output bitdepth: {self.bits}")
             
         # Convert the time from UNIX to epoch and make the data ready to 
         # be written to the disk.
@@ -70,14 +62,14 @@ class Frame(object):
         """
         
         if self.dataReal:
-            interlaced = self.data.astype(numpy.int32)
+            interlaced = self.data.astype(np.int32)
         else:
-            interlaced = numpy.zeros(2*len(self.data), dtype=numpy.int32)
-            interlaced[0::2] = self.data.real.astype(numpy.int32)
-            interlaced[1::2] = self.data.imag.astype(numpy.int32)
+            interlaced = np.zeros(2*len(self.data), dtype=np.int32)
+            interlaced[0::2] = self.data.real.astype(np.int32)
+            interlaced[1::2] = self.data.imag.astype(np.int32)
         
         biased = interlaced + 2**(self.bits-1)
-        biased = biased.astype(numpy.uint32) & (2**self.bits-1)
+        biased = biased.astype(np.uint32) & (2**self.bits-1)
         
         self.data = biased
         
@@ -94,18 +86,18 @@ class Frame(object):
             seconds_i = int(self.time)
             seconds_f = self.time - seconds_i
                 
-        # UNIX time to seconds since DJD  = 0
-        curEpoch = float(UNIX_EPOCH)*astro.SECS_IN_DAY + seconds_i
-        self.epoch = 0
+        # Seconds since the UNIX epoch
+        curEpoch = AstroTime(seconds_i, seconds_f, format='unix', scale='utc')
         # Seconds since the VDIF epoch
-        epochSeconds = curEpoch - float(VDIF_EPOCH)*astro.SECS_IN_DAY
+        self.epoch = 2*(curEpoch.ymdhms[0] - 2000) + (curEpoch.ymdhms[1] > 6)
+        epochSeconds = curEpoch - AstroTime(f"{curEpoch.ymdhms[0]}-{(curEpoch.ymdhms[1]//7)*6+1}-1 00:00:00", format='iso', scale='utc')
         # Integer seconds
-        self.seconds = int(epochSeconds)
+        self.seconds = int(epochSeconds.sec)
         
         # Compute the frames since the beginning of the second
-        frame = (epochSeconds - self.seconds + seconds_f) * (self.sample_rate/(len(self.data)//(2-self.dataReal)))
+        frame = (epochSeconds.sec - self.seconds) * (self.sample_rate/(len(self.data)//(2-self.dataReal)))
         self.frame = int(round(frame))
-
+        
     def create_raw_frame(self):
         """
         Using the data and information stored in the object, create a
@@ -115,7 +107,7 @@ class Frame(object):
         # Find out how many samples can be packed into a work and build
         # the corresponding numpy array.
         samplesPerWord = int(32 // self.bits)
-        raw = numpy.zeros(32 + 4*len(self.data)//samplesPerWord, dtype=numpy.uint8)
+        raw = np.zeros(32 + 4*len(self.data)//samplesPerWord, dtype=np.uint8)
 
         # Valid data, standard (not legacy) 32-bit header, and seconds since 
         # the 01/01/2000 epoch.

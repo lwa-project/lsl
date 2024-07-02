@@ -5,12 +5,6 @@ termainals.
 ..versionadded:: 1.2.1
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import re
 
 from lsl.misc import telemetry

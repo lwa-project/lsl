@@ -1,3 +1,3 @@
 from lsl.version import version
 
-print("lsl %s" % version)
+print(f"lsl {version}")

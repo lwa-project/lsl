@@ -2,15 +2,9 @@
 Unit test for the lsl.common.dp module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import warnings
 import unittest
-import numpy
+import numpy as np
 
 from lsl.common import dp
 from lsl.common import stations
@@ -28,7 +22,7 @@ class dp_bandpass_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy and python warnings."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         warnings.simplefilter('ignore')
     
     def test_tbn_bandpass(self):
@@ -51,7 +45,7 @@ class dp_software_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy and python warnings."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         warnings.simplefilter('ignore')
         
     def test_modes(self):
@@ -101,8 +95,8 @@ class dp_software_tests(unittest.TestCase):
         sdp = dp.SoftwareDP()
         
         npts = 10000
-        time = numpy.arange(npts)
-        data = numpy.random.rand(npts)
+        time = np.arange(npts)
+        data = np.random.rand(npts)
         
         sdp.set_mode("DRX")
         sdp.set_filter(7)
@@ -119,14 +113,14 @@ class dp_software_tests(unittest.TestCase):
         antennas = stations.lwa1.antennas
         
         npts = 10000
-        time = numpy.arange(npts)
-        data = numpy.random.rand(len(antennas), npts)*2048 - 1024
-        data = data.astype(numpy.int16)
+        time = np.arange(npts)
+        data = np.random.rand(len(antennas), npts)*2048 - 1024
+        data = data.astype(np.int16)
         
-        course = numpy.zeros(data.shape[0])
+        course = np.zeros(data.shape[0])
         course[0] = 2
-        fine = numpy.zeros(data.shape[0])
-        gains = numpy.zeros((data.shape[0]//2, 4))
+        fine = np.zeros(data.shape[0])
+        gains = np.zeros((data.shape[0]//2, 4))
         gains[0,0] = 1
         gains[1,1] = 1
         
@@ -135,8 +129,8 @@ class dp_software_tests(unittest.TestCase):
         sdp.set_tuning_freq(40e6)
         
         beamX, beamY = sdp.form_beam(antennas, time, data, course, fine, gains)
-        beamX = numpy.round(beamX).astype(numpy.int16)
-        beamY = numpy.round(beamY).astype(numpy.int16)
+        beamX = np.round(beamX).astype(np.int16)
+        beamY = np.round(beamY).astype(np.int16)
         
         self.assertEqual(beamX[0], data[0,0])
         self.assertEqual(beamY[0], data[2,2])

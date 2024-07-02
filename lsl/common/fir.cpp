@@ -17,8 +17,6 @@
 
 #include "numpy/arrayobject.h"
 
-#include "py3_compat.h"
-
 
 /*
 applyFIR - Given a pointer to a 16-bit integer data stream, the number of data samples to 
@@ -482,14 +480,14 @@ Outputs:\n\
 ");
 
 
-static PyMethodDef FIRMethods[] = {
+static PyMethodDef fir_methods[] = {
     {"integer16",         (PyCFunction) integerFIR,        METH_VARARGS, integerFIR_doc       }, 
     {"integer16Delayed",  (PyCFunction) integerFIRDelayed, METH_VARARGS, integerFIRDelayed_doc}, 
     {"integerBeamformer", (PyCFunction) integerBeamformer, METH_VARARGS, integerBeamformer_doc}, 
     {NULL,                NULL,              0,            NULL                 }
 };
 
-PyDoc_STRVAR(FIRMethods_doc, \
+PyDoc_STRVAR(fir_doc, \
 "This module contains a collection of function to speed up FIR filtering of TBW\n\
 data (represented as numpy.int16 arrays) and the SoftwareDP class.  The funtions\n\
 provided in this module are:\n\
@@ -503,27 +501,38 @@ provided in this module are:\n\
 Module Setup - Initialization
 */
 
-MOD_INIT(_fir) {
-    PyObject *m, *all;
-    
-    Py_Initialize();
-    
-    // Module definitions and functions
-    MOD_DEF(m, "_fir", FIRMethods, FIRMethods_doc);
-    if( m == NULL ) {
-        return MOD_ERROR_VAL;
-    }
+static int fir_exec(PyObject *module) {
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.2"));
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.2"));
     
     // Function listings
-    all = PyList_New(0);
-    PyList_Append(all, PyString_FromString("integer16"));
-    PyList_Append(all, PyString_FromString("integer16Delayed"));
-    PyList_Append(all, PyString_FromString("integerBeamformer"));
-    PyModule_AddObject(m, "__all__", all);
-    
-    return MOD_SUCCESS_VAL(m);
+    PyObject *all = PyList_New(0);
+    PyList_Append(all, PyUnicode_FromString("integer16"));
+    PyList_Append(all, PyUnicode_FromString("integer16Delayed"));
+    PyList_Append(all, PyUnicode_FromString("integerBeamformer"));
+    PyModule_AddObject(module, "__all__", all);
+    return 0;
+}
+
+static PyModuleDef_Slot fir_slots[] = {
+    {Py_mod_exec, (void *)&fir_exec},
+    {0,           NULL}
+};
+
+static PyModuleDef fir_def = {
+    PyModuleDef_HEAD_INIT,    /* m_base */
+    "_fir",                   /* m_name */
+    fir_doc,                  /* m_doc */
+    0,                        /* m_size */
+    fir_methods,              /* m_methods */
+    fir_slots,                /* m_slots */
+    NULL,                     /* m_traverse */
+    NULL,                     /* m_clear */
+    NULL,                     /* m_free */
+};
+
+PyMODINIT_FUNC PyInit__fir(void) {
+    return PyModuleDef_Init(&fir_def);
 }

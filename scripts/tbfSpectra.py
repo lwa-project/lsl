@@ -1,19 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Given a TBF file, plot the time averaged spectra for each digitizer input.
 """
-
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
     
 import os
 import sys
 import math
-import numpy
+import numpy as np
 import argparse
 
 from lsl.reader import tbf, errors
@@ -92,9 +86,9 @@ def main(args):
     mapper.sort()
     
     # Calculate the frequencies
-    freq = numpy.zeros(nchannels)
+    freq = np.zeros(nchannels)
     for i,c in enumerate(mapper):
-        freq[i*12:i*12+12] = c + numpy.arange(12)
+        freq[i*12:i*12+12] = c + np.arange(12)
     freq *= 25e3
     
     # File summary
@@ -106,8 +100,8 @@ def main(args):
     print("===")
     print("Chunks: %i" % nChunks)
     
-    spec = numpy.zeros((nchannels,256,2))
-    norm = numpy.zeros_like(spec)
+    spec = np.zeros((nchannels,256,2))
+    norm = np.zeros_like(spec)
     for i in range(nChunks):
         # Inner loop that actually reads the frames into the data array
         for j in range(nFramesPerObs):
@@ -132,7 +126,7 @@ def main(args):
                 aStand = mapper.index(first_chan)
             
             # Actually load the data.
-            spec[aStand*12:aStand*12+12,:,:] += numpy.abs(cFrame.payload.data)**2
+            spec[aStand*12:aStand*12+12,:,:] += np.abs(cFrame.payload.data)**2
             norm[aStand*12:aStand*12+12,:,:] += 1
             
     spec /= norm
@@ -153,10 +147,10 @@ def main(args):
     
     # Deal with the `keep` options
     if args.keep == 'all':
-        antpolsDisp = int(numpy.ceil(antpols/20))
+        antpolsDisp = int(np.ceil(antpols/20))
         js = [i for i in range(antpols)]
     else:
-        antpolsDisp = int(numpy.ceil(len(args.keep)*2/20))
+        antpolsDisp = int(np.ceil(len(args.keep)*2/20))
         if antpolsDisp < 1:
             antpolsDisp = 1
             
@@ -172,7 +166,7 @@ def main(args):
             figsY = 4
         else:
             figsY = 2
-        figsX = int(numpy.ceil(1.0*nPlot/figsY))
+        figsX = int(np.ceil(1.0*nPlot/figsY))
     else:
         figsY = 4
         figsX = 4
@@ -183,7 +177,7 @@ def main(args):
         for k in range(i*figsN, i*figsN+figsN):
             try:
                 j = js[k]
-                currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
+                currSpectra = np.squeeze( np.log10(spec[j,:])*10.0 )
             except IndexError:
                 break
             ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)

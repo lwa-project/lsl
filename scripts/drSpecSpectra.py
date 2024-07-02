@@ -1,19 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Given a DR spectrometer file, plot the time averaged spectra for each 
 polarization product.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import sys
 import math
-import numpy
+import numpy as np
 import argparse
 
 from lsl.reader.ldp import LWADataFile, DRSpecFile
@@ -81,8 +75,8 @@ def main(args):
     beginDate = idf.get_info('start_time').datetime
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
-    freq = numpy.fft.fftfreq(LFFT, d=1.0/srate)
-    freq = numpy.fft.fftshift(freq)
+    freq = np.fft.fftfreq(LFFT, d=1.0/srate)
+    freq = np.fft.fftshift(freq)
     
     # File summary
     print("Filename: %s" % args.filename)
@@ -107,8 +101,8 @@ def main(args):
         raise RuntimeError("Requested integration time+offset is greater than file length")
         
     # Master loop over all of the file chunks
-    masterWeight = numpy.zeros((nChunks, 2*len(products), LFFT))
-    masterSpectra = numpy.zeros((nChunks, 2*len(products), LFFT))
+    masterWeight = np.zeros((nChunks, 2*len(products), LFFT))
+    masterSpectra = np.zeros((nChunks, 2*len(products), LFFT))
     for i in range(nChunks):
         print("Working on chunk #%i of %i" % (i+1, nChunks))
         
@@ -131,7 +125,7 @@ def main(args):
         
     # Now that we have read through all of the chunks, perform the final averaging by
     # dividing by all of the chunks
-    spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
+    spec = np.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Frequencies
     freq1 = freq + central_freq1
@@ -154,7 +148,7 @@ def main(args):
             units = units2
             
         ax = fig.add_subplot(figsX,figsY,i+1)
-        currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
+        currSpectra = np.squeeze( np.log10(spec[i,:])*10.0 )
         ax.plot(freq, currSpectra, label='%i (avg)' % (i+1))
         
         # If there is more than one chunk, plot the difference between the global 
@@ -167,7 +161,7 @@ def main(args):
                     continue
                     
                 # Calculate the difference between the spectra and plot
-                subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
+                subspectra = np.squeeze( np.log10(masterSpectra[j,i,:])*10.0 )
                 diff = subspectra - currSpectra
                 ax.plot(freq, diff, label='%i' % j)
                 
@@ -177,7 +171,7 @@ def main(args):
         ax.set_xlim([freq.min(), freq.max()])
         ax.legend(loc=0)
         
-        print("For beam %i, tune. %i, %s maximum in PSD at %.3f %s" % (beam, i//len(products), products[i % len(products)], freq[numpy.where( spec[i,:] == spec[i,:].max() )][0], units))
+        print("For beam %i, tune. %i, %s maximum in PSD at %.3f %s" % (beam, i//len(products), products[i % len(products)], freq[np.where( spec[i,:] == spec[i,:].max() )][0], units))
         
     print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
     plt.subplots_adjust(hspace=0.35, wspace=0.30)

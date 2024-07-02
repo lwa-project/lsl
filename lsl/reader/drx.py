@@ -49,14 +49,6 @@ get_frames_per_obs
     Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
-
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_drx, read_drx_ci8
@@ -154,7 +146,7 @@ class FramePayload(FramePayloadBase):
         Function to set the central frequency of the DRX data in Hz.
         """
 
-        return dp_common.fS * self.tuning_word / 2**32
+        return dp_common.word_to_freq(self.tuning_word)
 
 
 class Frame(FrameBase):

@@ -59,14 +59,6 @@ get_frames_per_obs
     Support for ECR 11 TBN header format change.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
-
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbn, read_tbn_ci8
@@ -146,7 +138,7 @@ class FrameHeader(FrameHeaderBase):
         Convert the tuning word to a frequency in Hz.
         """
 
-        return dp_common.fS * self.tuning_word / 2**32
+        return dp_common.word_to_freq(self.tuning_word)
         
     @property
     def filter_code(self):
@@ -203,7 +195,6 @@ class Frame(FrameBase):
     
     _header_class = FrameHeader
     _payload_class = FramePayload
-    gain = None
     
     @property
     def is_tbn(self):
