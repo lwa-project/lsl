@@ -5,6 +5,7 @@ Basic telemetry client for LSL to help establish usage patterns
 """
 
 import os
+import sys
 import time
 import uuid
 import atexit
