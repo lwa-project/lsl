@@ -6,12 +6,6 @@ C libraries, numpy installation, and LSL installation to help with
 debugging and install issues.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
 import imp
@@ -138,7 +132,7 @@ def main(args):
             pass
         o = o.split('\n')
         
-        for lib in ('libfftw3f', 'libgdbm', 'librt'):
+        for lib in ('libfftw3f', 'libgdbm', 'librt', 'libgsl'):
             libBaseName = lib.replace('lib', '')
             if libBaseName in libsFound:
                 continue

@@ -5,12 +5,6 @@ Utility to display observation information contained in a MCS metadata
 tarball.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import sys
 import pytz
 import argparse

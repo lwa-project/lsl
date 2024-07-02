@@ -45,12 +45,6 @@ get_frames_per_obs
     Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_drx8
