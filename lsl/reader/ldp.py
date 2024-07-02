@@ -11,9 +11,9 @@ Data format objects included are:
   * TBFFile
   * CORFILE
 
-Also included are the LWA1DataFile, LWASVDataFile, and LWADataFile functions 
-that take a filename and try to determine the correct data format object to
-use.
+Also included are the LWA1DataFile, LWASVDataFile, LWANADataFile, and LWADataFile
+functions that take a filename and try to determine the correct data format
+object to use.
 
 .. versionchanged:: 2.1.6
     Added support for LWA-NA NDP data

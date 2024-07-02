@@ -10,7 +10,7 @@ import math
 import numpy as np
 import argparse
 
-from lsl.common import stations, metabundle, metabundleADP
+from lsl.common import stations, metabundle
 from lsl.correlator import uvutils
 from lsl.misc import parser as aph
 
@@ -27,13 +27,7 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            try:
-                station = metabundle.get_station(args.metadata, apply_sdm=True)
-            except:
-                try:
-                    station = metabundleADP.get_station(args.metadata, apply_sdm=True)
-                except:
-                    station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
     elif args.lwana:

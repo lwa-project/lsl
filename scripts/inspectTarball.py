@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from lsl.common import stations
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
-from lsl.common import metabundleDP, metabundleADP, metabundleNDP
+from lsl.common import metabundle
 from lsl.common.sdf import get_observation_start_stop
 
 from lsl.misc import telemetry
@@ -28,49 +28,29 @@ _FORMAT_STRING = '%Y/%m/%d %H:%M:%S.%f %Z'
 
 
 def main(args):
-    # Get the site and observer
-    site = stations.lwa1
-    observer = site.get_observer()
-    
     # Filenames in an easier format
     inputTGZ  = args.filename
     
-    # Parse the input file and get the dates of the observations.  Be default 
-    # this is for LWA1 but we switch over to LWA-SV or LWA-NA if an error occurs.
-    try:
-        # LWA1
-        project = metabundleDP.get_sdf(inputTGZ)
-        obsImpl = metabundleDP.get_observation_spec(inputTGZ)
-        fileInfo = metabundleDP.get_session_metadata(inputTGZ)
-        aspConfigB = metabundleDP.get_asp_configuration_summary(inputTGZ, which='Beginning')
-        aspConfigE = metabundleDP.get_asp_configuration_summary(inputTGZ, which='End')
-        mdStyle = metabundleDP.__name__
-    except:
-        try:
-            # LWA-SV
-            ## Site changes
+    # Parse the input file and get the dates of the observations.
+    project = metabundle.get_sdf(inputTGZ)
+    obsImpl = metabundle.get_observation_spec(inputTGZ)
+    fileInfo = metabundle.get_session_metadata(inputTGZ)
+    aspConfigB = metabundle.get_asp_configuration_summary(inputTGZ, which='Beginning')
+    aspConfigE = metabundle.get_asp_configuration_summary(inputTGZ, which='End')
+    mdStyle = metabundle.get_style(inputTGZ)
+    site = metabundle.get_station(inputTGZ)
+    if site is None:
+        if mdStyle.endswith('ADP'):
+            # Assume LWA-SV
             site = stations.lwasv
-            observer = site.get_observer()
-            ## Try again
-            project = metabundleADP.get_sdf(inputTGZ)
-            obsImpl = metabundleADP.get_observation_spec(inputTGZ)
-            fileInfo = metabundleADP.get_session_metadata(inputTGZ)
-            aspConfigB = metabundleADP.get_asp_configuration_summary(inputTGZ, which='Beginning')
-            aspConfigE = metabundleADP.get_asp_configuration_summary(inputTGZ, which='End')
-            mdStyle = metabundleADP.__name__
-        except:
-            # LWA-NA
-            ## Site changes
+        elif mdStyle.endswith('NDP'):
+            # Assume LWA-NA
             site = stations.lwana
-            observer = site.get_observer()
-            ## Try again
-            project = metabundleNDP.get_sdf(inputTGZ)
-            obsImpl = metabundleNDP.get_observation_spec(inputTGZ)
-            fileInfo = metabundleNDP.get_session_metadata(inputTGZ)
-            aspConfigB = metabundleNDP.get_asp_configuration_summary(inputTGZ, which='Beginning')
-            aspConfigE = metabundleNDP.get_asp_configuration_summary(inputTGZ, which='End')
-            mdStyle = metabundleNDP.__name__
-            
+        else:
+            # Assume LWA1
+            site = stations.lwa1
+    observer = site.get_observer()
+    
     nObs = len(project.sessions[0].observations)
     tStart = [None,]*nObs
     for i in range(nObs):

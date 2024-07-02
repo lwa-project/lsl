@@ -11,7 +11,7 @@ import numpy as np
 import argparse
 
 from lsl.common import stations, metabundle
-from lsl.reader.ldp import LWA1DataFile, TBWFile
+from lsl.reader.ldp import LWADataFile, TBWFile
 from lsl.correlator import fx as fxc
 from lsl.misc import parser as aph
 
@@ -44,7 +44,7 @@ def main(args):
     # should stick with
     maxFrames = (30000*260)
     
-    idf = LWA1DataFile(args.filename)
+    idf = LWADataFile(args.filename)
     if not isinstance(idf, TBWFile):
         raise RuntimeError("File '%s' does not appear to be a valid TBW file" % os.path.basename(filename))
         

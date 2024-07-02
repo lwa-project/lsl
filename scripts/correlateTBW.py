@@ -11,7 +11,7 @@ import time
 import numpy as np
 import argparse
 
-from lsl.reader.ldp import LWA1DataFile, TBWFile
+from lsl.reader.ldp import LWADataFile, TBWFile
 from lsl.common import stations, metabundle
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi, measurementset

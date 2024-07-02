@@ -11,7 +11,7 @@ import numpy as np
 import argparse
 
 from lsl.reader import tbf, errors
-from lsl.common import stations, metabundleADP, metabundleNDP
+from lsl.common import stations, metabundle
 from lsl.common import adp as adp_common
 from lsl.common import ndp as ndp_common
 from lsl.misc import parser as aph
@@ -54,10 +54,7 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            try:
-                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
-            except:
-                station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwana:
         station = stations.lwana
     else:

@@ -9,7 +9,7 @@ import sys
 import numpy as np
 import argparse
 
-from lsl.common import stations, metabundle, metabundleADP, metabundleNDP
+from lsl.common import stations, metabundle
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -27,13 +27,7 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            try:
-                station = metabundle.get_station(args.metadata, apply_sdm=True)
-            except:
-                try:
-                    station = metabundleADP.get_station(args.metadata, apply_sdm=True)
-                except:
-                    station = metabundleNDP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
     elif args.lwana:
