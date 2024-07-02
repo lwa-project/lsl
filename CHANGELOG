@@ -5,6 +5,22 @@
  * Switched to a "download on demand and cache" method of distributing data for LSL
  * Added a lsl.common.stations.ARX.revision() method to find the revision name for an ARX board
  * Added a new lsl.sim.beam module to find the dipole antenna response
+ * Updated the telemetry client to also send the Python version (major.minor)
+ * Dropped support for Python 2.7 and <3.8
+ * Switched over to astropy for most internal astronomical calculations
+ * Added astropy compatibility hooks for many LSL classes
+ * Moved from multiprocessing to concurrent.futures for multi-processing support
+ * Switched to multi-phase initialization for C++ extensions
+ * Merged ARX response files into single file per board to reduce number of data files
+ * Moved lsl.common.mcs value lookup functions over to enum.Enum classes
+ * Updated the lsl.writer.fitsidi to write antenna coordinates in the ECEF frame
+ * Changed 'elevation' to 'azimuth' in cases where it reference the angle above the horizon
+ * Updated the ImgWPlus class to have a 'wcs' attribute to help with mapping image to world coordinates
+ * Moved lsl.imaging.utils and lsl.imaging.overlays to using ImgWPlus instances for image to world coordinate mapping
+ * Added the Fermi 3FGL, 4FGL, and 4FGL-DR4 catalogs
+ * Updated many functions to be flexible with angle inputs so that accept float, astropy Angle or ephem Angle instances
+ * Fixed how lsl.reader.vdif and lsl.writer.vdif deal with non-zero reference epochs
+ * 
 
 2.2.0
  * Add a keyword to lsl.imaging.selfcal functions that will return whether or not a call converged
