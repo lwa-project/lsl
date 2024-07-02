@@ -101,35 +101,21 @@ def main(args):
     libsFound = []
     for pkgName in ('fftw3f',):
         try:
-            pkgQuery = subprocess.Popen(['pkg-config', '--exists', pkgName])
-            o, _ = pkgQuery.communicate()
-            try:
-                o = o.decode()
-            except AttributeError:
-                pass
-            if pkgQuery.returncode == 0:
-                pkgQuery = subprocess.Popen(['pkg-config', '--modversion', pkgName], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                o, _ = pkgQuery.communicate()
-                try:
-                    o = o.decode()
-                except AttributeError:
-                    pass
-                o = o.replace('\n', '')
-                
-                print("%s:  version %s" % (pkgName, o))
-                libsFound.append( pkgName )
-                
-        except OSError:
+            subprocess.check_output(['pkg-config', '--exists', pkgName])
+            o = subprocess.check_output(['pkg-config', '--modversion', pkgName], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            o = o.decode()
+            o = o.replace('\n', '')
+            
+            print("%s:  version %s" % (pkgName, o))
+            libsFound.append( pkgName )
+            
+        except (OSError, subprocess.CalledProcessError):
             pass
             
     ## Via 'ldconfig'
     try:
-        p = subprocess.Popen(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, _ = p.communicate()
-        try:
-            o = o.decode()
-        except AttributeError:
-            pass
+        o = subprocess.check_output(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        o = o.decode()
         o = o.split('\n')
         
         for lib in ('libfftw3f', 'libgdbm', 'librt', 'libgsl'):
@@ -175,8 +161,8 @@ def main(args):
     curdir = os.getcwd()
     os.chdir(tmpdir)
     
-    fh = open('test.c', 'w')
-    fh.write(r"""#include <omp.h>
+    with open('test.c', 'w') as fh:
+        fh.write(r"""#include <omp.h>
 #include <stdio.h>
 int main(void) {
 #pragma omp parallel
@@ -184,8 +170,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 return 0;
 }
 """)
-    fh.close()
-    
+        
     ccmd = []
     ccmd.extend( cc )
     ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
@@ -197,11 +182,8 @@ return 0;
     try:
         p = subprocess.Popen(ccmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = p.communicate()
-        try:
-            o = o.decode()
-            e = e.decode()
-        except AttributeError:
-            pass
+        o = o.decode()
+        e = e.decode()
         openmp_support =" Yes" if p.returncode == 0 else "No"
     except subprocess.CalledProcessError:
         pass
@@ -228,10 +210,7 @@ return 0;
     
     p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, e = p.communicate()
-    try:
-        e = e.decode()
-    except AttributeError:
-        pass
+    e = e.decode()
     e = e.split('\n')[:-1]
     for i in range(len(e)):
         e[i] = '  %s' % e[i]
@@ -251,10 +230,7 @@ return 0;
 
         p = subprocess.Popen(['file', nfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, _ = p.communicate()
-        try:
-            o = o.decode()
-        except AttributeError:
-            pass
+        o = o.decode()
         junk, numpyLinkage = o.split(None, 1)
         numpyLinkage = numpyLinkage.replace('\n', '')
 
@@ -281,10 +257,7 @@ return 0;
 
         p = subprocess.Popen(['file', lfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, _ = p.communicate()
-        try:
-            o = o.decode()
-        except AttributeError:
-            pass
+        o = o.decode()
         junk, lslLinkage = o.split(None, 1)
         lslLinkage = lslLinkage.replace('\n', '')
 
