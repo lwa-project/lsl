@@ -954,7 +954,7 @@ class ARX(object):
         """
         
         # Find the filename to use
-        filename = 'arx/ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
+        filename = 'arx/ARX_board_%4s_filters.npz' % self.id
         
         # Read in the file and convert it to a numpy array
         with DataAccess.open(filename, 'rb') as fh:
@@ -963,8 +963,8 @@ class ARX(object):
             except IOError:
                 raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
                 
-            freq = dataDict['freq']
-            data = dataDict['data']
+            freq = dataDict['freq'][...]
+            data = dataDict['ch%i' % self.channel][...]
             try:
                 dataDict.close()
             except AttributeError:
