@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Script to gather information about the Python interpreter, modules, 
@@ -102,7 +102,7 @@ def main(args):
     for pkgName in ('fftw3f',):
         try:
             subprocess.check_output(['pkg-config', '--exists', pkgName])
-            o = subprocess.check_output(['pkg-config', '--modversion', pkgName], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            o = subprocess.check_output(['pkg-config', '--modversion', pkgName], stderr=subprocess.DEVNULL)
             o = o.decode()
             o = o.replace('\n', '')
             
@@ -114,7 +114,7 @@ def main(args):
             
     ## Via 'ldconfig'
     try:
-        o = subprocess.check_output(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        o = subprocess.check_output(['ldconfig', '-v'], stderr=subprocess.DEVNULL)
         o = o.decode()
         o = o.split('\n')
         
@@ -228,8 +228,7 @@ return 0;
         nfp = glob.glob(os.path.join(nfp, 'core', 'umath.*'))[0]
         nfp = os.path.realpath(nfp)
 
-        p = subprocess.Popen(['file', nfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, _ = p.communicate()
+        o = subprocess.check_output(['file', nfp], stderr=subprocess.DEVNULL)
         o = o.decode()
         junk, numpyLinkage = o.split(None, 1)
         numpyLinkage = numpyLinkage.replace('\n', '')
@@ -255,8 +254,7 @@ return 0;
         lfp = glob.glob(os.path.join(lfp, 'correlator', '_core.*'))[0]
         lfp = os.path.realpath(lfp)
 
-        p = subprocess.Popen(['file', lfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, _ = p.communicate()
+        o = subprocess.check_output(['file', lfp], stderr=subprocess.DEVNULL)
         o = o.decode()
         junk, lslLinkage = o.split(None, 1)
         lslLinkage = lslLinkage.replace('\n', '')
