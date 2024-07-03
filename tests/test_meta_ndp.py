@@ -5,7 +5,7 @@ Unit test for the NDP portion of the lsl.common.metabundle module.
 import os
 import unittest
 
-from lsl.common.mcsNDP import CommandID
+from lsl.common.mcsNDP import CommandID, ObservingMode
 from lsl.common import metabundle, metabundleNDP
 from lsl.common.paths import DATA_BUILD
 
@@ -59,7 +59,7 @@ class metabundle_tests_ndp(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['mode'], 1)
+        self.assertEqual(obs2['mode'], ObservingMode.TRK_RADEC)
         
         # Check the time
         self.assertEqual(obs2['mjd'], 60180)

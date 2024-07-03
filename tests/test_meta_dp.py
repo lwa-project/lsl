@@ -5,7 +5,7 @@ Unit test for the DP portion of the lsl.common.metabundle module.
 import os
 import unittest
 
-from lsl.common.mcs import CommandID
+from lsl.common.mcs import CommandID, ObservingMode
 from lsl.common import metabundle, metabundleDP
 
 run_gdbm_tests = False
@@ -57,7 +57,7 @@ class metabundle_dp_tests(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['mode'], 1)
+        self.assertEqual(obs2['mode'], ObservingMode.TRK_RADEC)
         
         # Check the time
         self.assertEqual(obs2['mjd'], 56742)
@@ -183,7 +183,7 @@ class metabundle_dp_tests_old_0(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['mode'], 1)
+        self.assertEqual(obs2['mode'], ObservingMode.TRK_RADEC)
         
         # Check the time
         self.assertEqual(obs2['mjd'], 56013)
@@ -263,7 +263,7 @@ class metabundle_dp_tests_old_1(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['mode'], 1)
+        self.assertEqual(obs2['mode'], ObservingMode.TRK_RADEC)
         
         # Check the time
         self.assertEqual(obs2['mjd'], 56492)

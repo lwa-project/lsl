@@ -127,7 +127,7 @@ def read_obs_file(filename):
               'drx_beam': bheader.SESSION_DRX_BEAM, 'spcSetup': bheader.SESSION_SPC,
               'obs_id': bheader.OBS_ID,
               'mjd': bheader.OBS_START_MJD, 'mpm': bheader.OBS_START_MPM, 'dur': bheader.OBS_DUR,
-              'mode': bheader.OBS_MODE, 'beamdipole_mode': bheader.OBS_BDM, 
+              'mode': ObservingMode(bheader.OBS_MODE), 'beamdipole_mode': bheader.OBS_BDM, 
               'ra': bheader.OBS_RA, 'dec': bheader.OBS_DEC,
               'beam': bheader.OBS_B, 
               'freq1': word_to_freq(bheader.OBS_FREQ1), 'freq2': word_to_freq(bheader.OBS_FREQ2),

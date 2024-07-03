@@ -5,7 +5,7 @@ Unit test for the ADP portion of the lsl.common.metabundle module.
 import os
 import unittest
 
-from lsl.common.mcsADP import CommandID
+from lsl.common.mcsADP import CommandID, ObservingMode
 from lsl.common import metabundle, metabundleADP
 
 run_gdbm_tests = False
@@ -58,7 +58,7 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(obs1[0], obs2)
         
         # Check the mode
-        self.assertEqual(obs2['mode'], 1)
+        self.assertEqual(obs2['mode'], ObservingMode.TRK_RADEC)
         
         # Check the time
         self.assertEqual(obs2['mjd'], 57774)
