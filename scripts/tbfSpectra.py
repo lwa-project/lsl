@@ -10,10 +10,8 @@ import math
 import numpy as np
 import argparse
 
-from lsl.reader import tbf, errors
 from lsl.common import stations, metabundle
-from lsl.common import adp as adp_common
-from lsl.common import ndp as ndp_common
+from lsl.reader.ldp import LWADataFile, TBFFile
 from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
@@ -61,16 +59,16 @@ def main(args):
         station = stations.lwasv
     antennas = station.antennas
     
-    fh = open(args.filename, 'rb')
-    tbf.FRAME_SIZE = tbf.get_frame_size(fh)
-    nFrames = os.path.getsize(args.filename)
+    idf = LWADataFile(args.filename)
+    if not isinstance(idf, TBFFile):
+        raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
+        
+    nFrames = idf.get_info('nframe')
     antpols = len(antennas)
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    junkFrame = tbf.read_frame(fh)
-    fh.seek(0)
-    beginDate = junkFrame.time.datetime
+    beginDate = idf.get_info('start_time').datetime
     
     # Make sure the TBF stand count is consistent with how many antennas we have
     if antpols//2 != junkFrame.nstand:
@@ -78,76 +76,35 @@ def main(args):
         
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
-    nFramesPerObs = tbf.get_frames_per_obs(fh)
-    nchannels = tbf.get_channel_count(fh)
-    nSamples = 7840
+    nchannels = idf.get_info('nchan')
     
     # Figure out how many chunks we need to work with
-    nChunks = nFrames // nFramesPerObs
-    
-    # Pre-load the channel mapper
-    mapper = []
-    for i in range(2*nFramesPerObs):
-        cFrame = tbf.read_frame(fh)
-        if cFrame.header.first_chan not in mapper:
-            mapper.append( cFrame.header.first_chan )
-    fh.seek(-2*nFramesPerObs*tbf.FRAME_SIZE, 1)
-    mapper.sort()
+    nChunks = 1
     
     # Calculate the frequencies
-    freq = np.zeros(nchannels)
-    for i,c in enumerate(mapper):
-        freq[i*12:i*12+12] = c + np.arange(12)
-    srate = fC = adp_common.fC
-    if cFrame.header.adp_id & 0x04:
-        srate = fC = ndp_common.fC
-    freq *= fC
+    freq = idf.get_into('freq1')
     
     # File summary
     print("Filename: %s" % args.filename)
     print("Date of First Frame: %s" % str(beginDate))
-    print("Frames per Observation: %i" % nFramesPerObs)
     print("Channel Count: %i" % nchannels)
     print("Frames: %i" % nFrames)
     print("===")
     print("Chunks: %i" % nChunks)
     
-    spec = np.zeros((nchannels,antpols//2,2))
-    norm = np.zeros_like(spec)
     for i in range(nChunks):
-        # Inner loop that actually reads the frames into the data array
-        for j in range(nFramesPerObs):
-            # Read in the next frame and anticipate any problems that could occur
-            try:
-                cFrame = tbf.read_frame(fh)
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                print("WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FRAME_SIZE-1))
-                continue
-            if not cFrame.header.is_tbf:
-                continue
-                
-            first_chan = cFrame.header.first_chan
+        print("Working on chunk #%i of %i" % (i+1, nChunks))
+        
+        try:
+            readT, t, data = idf.read()
+        except Exception as e:
+            print("Error: %s" % str(e))
+            continue
             
-            # Figure out where to map the channel sequence to
-            try:
-                aStand = mapper.index(first_chan)
-            except ValueError:
-                mapper.append(first_chan)
-                aStand = mapper.index(first_chan)
-            
-            # Actually load the data.
-            spec[aStand*12:aStand*12+12,:,:] += np.abs(cFrame.payload.data)**2
-            norm[aStand*12:aStand*12+12,:,:] += 1
-            
-    spec /= norm
-    fh.close()
-    
-    # Reshape and transpose to get it in to a "normal" order
-    spec.shape = (spec.shape[0], spec.shape[1]*spec.shape[2])
-    spec = spec.T
-    
+        # Detect power and integrate
+        data = np.abs(data)**2
+        spec = data.mean(axis=2)
+        
     # Apply the cable loss corrections, if requested
     if args.gain_correct:
         for s in range(spec.shape[0]):
