@@ -174,7 +174,7 @@ def main(args):
             
         plt.draw()
         
-    print(f"RBW: {freq[1]-freq[0]:.3f} {units}")
+    print(f"RBW: {freq[1]-freq[0]:.4f} {units}")
     plt.show()
 
 
