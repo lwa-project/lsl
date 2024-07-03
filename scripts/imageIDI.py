@@ -44,15 +44,15 @@ def main(args):
     nchan = len(idi.freq)
     freq = idi.freq
     
-    print("Raw Stand Count: %i" % nStand)
-    print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
-    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3))
+    print(f"Raw Stand Count: {nStand}")
+    print(f"Final Baseline Count: {nStand*(nStand-1)//2}")
+    print(f"Spectra Coverage: {freq[0]/1e6:.3f} to {freq[-1]/1e6:.3f} MHz in {nchan} channels ({(freq[1] - freq[0])/1e3:.2f} kHz/channel)")
     try:
         print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
     except KeyError:
         # Catch for CASA MS that use a different numbering scheme
         NUMERIC_STOKESMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
-                        9:'XX', 10:'XY', 11:'YX', 12:'YY'}
+                            9:'XX', 10:'XY', 11:'YX', 12:'YY'}
         print("Polarization Products: %s" % ' '.join([NUMERIC_STOKESMS[p] for p in idi.pols]))
         
     print("Reading in FITS IDI data")
@@ -61,7 +61,7 @@ def main(args):
         if args.dataset != -1 and args.dataset != set:
             continue
             
-        print("Set #%i of %i" % (set, nSets))
+        print(f"Set #{set} of {nSets}")
         dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Build a list of unique JDs for the data
@@ -76,12 +76,12 @@ def main(args):
         # Pull out the right channels
         toWork = np.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
-            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
+            raise RuntimeError(f"Cannot find data between {args.freq_start/1e6:.3f} and {args.freq_stop/1e6:.3f} MHz")
             
         # Integration report
-        print("    Date Observed: %s" % utc)
-        print("    LST: %s" % lst)
-        print("    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6))
+        print(f"    Date Observed: {str(utc)}")
+        print(f"    LST: {str(lst)}")
+        print(f"    Selected Frequencies: {freq[toWork[0]]/1e6:.3f} to {freq[toWork[-1]]/1e6:.3f} MHz")
         
         # Prune out what needs to go
         if args.include != 'any' or args.exclude != 'none':
@@ -92,7 +92,7 @@ def main(args):
             
             ## Report
             for pol in dataDict.pols:
-                print("        %s now has %i baselines" % (pol, len(dataDict.baselines)))
+                print(f"        {pol} now has {len(dataDict.baselines)} baselines")
                 
         # Build up the images for each polarization
         print("    Gridding")
@@ -148,9 +148,9 @@ def main(args):
                 ax.yaxis.set_major_formatter( NullFormatter() )
                 
                 if not args.utc:
-                    ax.set_title("%s @ %s LST" % (pol, lst))
+                    ax.set_title(f"{pol} @ {str(lst)} LST")
                 else:
-                    ax.set_title("%s @ %s UTC" % (pol, utc))
+                    ax.set_title(f"{pol} @ {str(utc)} UTC")
                 continue
                 
             # Display the image, save the limits, and label with the polarization/LST
@@ -159,12 +159,12 @@ def main(args):
             ylim = ax.get_ylim()
             fig.colorbar(cb, ax=ax)
             if not args.utc:
-                ax.set_title("%s @ %s LST" % (pol, lst))
+                ax.set_title(f"{pol} @ {str(lst)} LST")
             else:
-                ax.set_title("%s @ %s UTC" % (pol, utc))
+                ax.set_title(f"{pol} @ {str(utc)} UTC")
                 
             junk = img.image(center=(img.shape[0]//2,img.shape[1]//2))
-            print("%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean()))
+            print(f"{pol}: image is {junk.min():.4f} to {junk.max():.4f} with mean {junk.mean():.4f}")
             
             # Turn off tick marks
             ax.xaxis.set_major_formatter( NullFormatter() )
@@ -214,11 +214,11 @@ def main(args):
             fitsname = args.fits
             if args.dataset == -1 and nSets > 1:
                 fitsparts = os.path.splitext(args.fits)
-                fitsname = "%s-t%i%s" % (fitsparts[0], set, fitsparts[1])
+                fitsname = f"{fitsparts[0]}-t{set}{fitsparts[1]}"
                 
             overwrite = False
             if os.path.exists(fitsname):
-                yn = input("WARNING: '%s' exists, overwrite? [Y/n]" % fitsname)
+                yn = input(f"WARNING: '{fitsname}' exists, overwrite? [Y/n]")
                 if yn not in ('n', 'N'):
                     overwrite = True
             try:
