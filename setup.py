@@ -122,17 +122,20 @@ def get_gsl():
         subprocess.check_call(['pkg-config', 'gsl', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0].rstrip().split()
+        outVersion = p.communicate()[0].decode()
+        outVersion = outVersion.rstrip().split()
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0].rstrip().split()
+        outCFLAGS = p.communicate()[0].decode()
+        outCFLAGS = outCFLAGS.rstrip().split()
         try:
             outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
         except TypeError:
             pass
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0].rstrip().split()
+        outLIBS = p.communicate()[0].decode()
+        outLIBS = outLIBS.rstrip().split()
         try:
             outLIBS = [str(v, 'utf-8') for v in outLIBS]
         except TypeError:
@@ -158,19 +161,11 @@ def get_fftw():
         subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0]
-        try:
-            outVersion = outVersion.decode()
-        except AttributeError:
-            pass
+        outVersion = p.communicate()[0].decode()
         outVersion = outVersion.strip().split()
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0]
-        try:
-            outCFLAGS = outCFLAGS.decode()
-        except AttributeError:
-            pass
+        outCFLAGS = p.communicate()[0].decode()
         outCFLAGS = outCFLAGS.rstrip().split()
         try:
             outCFLAGS = [str(v) for v in outCFLAGS]
@@ -178,11 +173,7 @@ def get_fftw():
             pass
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0]
-        try:
-            outLIBS = outLIBS.decode()
-        except AttributeError:
-            pass
+        outLIBS = p.communicate()[0].decode()
         outLIBS = outLIBS.rstrip().split()
         try:
             outLIBS = [str(v) for v in outLIBS]
