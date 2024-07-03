@@ -61,7 +61,7 @@ def main(args):
     
     idf = LWADataFile(args.filename)
     if not isinstance(idf, TBFFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBF file")
         
     nFrames = idf.get_info('nframe')
     antpols = len(antennas)
@@ -71,34 +71,43 @@ def main(args):
     beginDate = idf.get_info('start_time').datetime
     
     # Make sure the TBF stand count is consistent with how many antennas we have
-    if antpols//2 != junkFrame.nstand:
-        raise RuntimeError("Number of stands in the station (%i) does not match what is in the data (%i)" % (antpols//2, junkFrame.nstand))
+    if antpols != idf.get_info('nantenna'):
+        raise RuntimeError(f"Number of stands in the station ({antpols//2}) does not match what is in the data ({idf.get_info('nantenna')//2})")
         
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
     nchannels = idf.get_info('nchan')
+    nFpO = nchannels // 12
     
     # Figure out how many chunks we need to work with
     nChunks = 1
     
     # Calculate the frequencies
-    freq = idf.get_into('freq1')
+    freq = idf.get_info('freq1')
+    sample_rate = idf.get_info('sample_rate')
+    central_freq = freq*1.0
+    chan = np.round(central_freq / sample_rate)
+    nif = len(np.where(np.diff(chan) > 1)[0]) + 1
+    central_freq = central_freq.reshape(nif, -1)
+    central_freq = central_freq[:,central_freq.shape[1]//2]
     
     # File summary
-    print("Filename: %s" % args.filename)
-    print("Date of First Frame: %s" % str(beginDate))
-    print("Channel Count: %i" % nchannels)
-    print("Frames: %i" % nFrames)
+    print(f"Filename: {args.filename}")
+    print(f"Date of First Frame: {str(beginDate)}")
+    print(f"Channel Count: {nchannels}")
+    print(f"Sampling rate: {sample_rate} Hz")
+    print("Tuning frequency: %s Hz" % (', '.join("%.3f" % v for v in central_freq)))
+    print(f"Frames: {nFrames} ({nFrames/nFpO/sample_rate:.3f} s)")
     print("===")
-    print("Chunks: %i" % nChunks)
+    print(f"Chunks: {nChunks}")
     
     for i in range(nChunks):
-        print("Working on chunk #%i of %i" % (i+1, nChunks))
+        print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
             readT, t, data = idf.read()
         except Exception as e:
-            print("Error: %s" % str(e))
+            print(f"Error: {str(e)}")
             continue
             
         # Detect power and integrate
@@ -150,22 +159,22 @@ def main(args):
             except IndexError:
                 break
             ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)
-            ax.plot(freq, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
+            ax.plot(freq, currSpectra, label=f"Stand: {antennas[j].stand.id}, Pol: {antennas[j].pol} (Dig: {antennas[j].digitizer})")
             
-            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].combined_status))
-            ax.set_xlabel('Frequency [%s]' % units)
+            ax.set_title(f"Stand: {antennas[j].stand.id} ({antennas[j].pol}); Dig: {antennas[j].digitizer} [{antennas[j].combined_status}]")
+            ax.set_xlabel(f"Frequency [{units}]")
             ax.set_ylabel('P.S.D. [dB/RBW]')
             ax.set_ylim([-10, 30])
             
         # Save spectra image if requested
         if args.output is not None:
             base, ext = os.path.splitext(args.output)
-            outFigure = "%s-%02i%s" % (base, i+1, ext)
+            outFigure = f"{base}-{i+1:02d}{ext}"
             fig.savefig(outFigure)
             
         plt.draw()
         
-    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
+    print(f"RBW: {freq[1]-freq[0]:.3f} {units}")
     plt.show()
 
 
