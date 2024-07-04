@@ -33,11 +33,11 @@ def main(args):
     nchan = len(idi.freq)
     freq = idi.freq
     
-    print("Raw Stand Count: %i" % nStand)
-    print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
-    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3))
-    print("Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0]))
-    print("JD: %.3f" % jd)
+    print(f"Raw Stand Count: {nStand}")
+    print(f"Final Baseline Count: {nStand*(nStand-1)//2}")
+    print(f"Spectra Coverage: {freq[0]/1e6:.3f} to {freq[-1]/1e6} MHz in {nchan} channels ({(freq[1] - freq[0])/1e3:.2f} kHz/channel)")
+    print(f"Polarization Products: {len(idi.pols)} starting with {idi.pols[0]}")
+    print(f"JD: {jd:.3f}")
 
     print("Reading in FITS IDI data")
     nSets = idi.integration_count
@@ -45,7 +45,7 @@ def main(args):
         if args.dataset != -1 and args.dataset != set:
             continue
             
-        print("Set #%i of %i" % (set, nSets))
+        print(f"Set #{set} of {nSets}")
         dataDict = idi.get_data_set(set, include_auto=args.include_auto, min_uv=args.uv_min)
         
         # Prune out what needs to go
@@ -57,12 +57,12 @@ def main(args):
             
             ## Report
             for pol in dataDict.pols:
-                print("        %s now has %i baselines" % (pol, len(dataDict.baselines)))
+                print(f"        {pol} now has {len(dataDict.baselines)} baselines")
                 
         # Pull out the right channels
         toWork = np.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
-            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
+            raise RuntimeError(f"Cannot find data between {args.freq_start/1e6:.3f} and {args.freq_stop/1e6:.3f} MHz")
         if args.frequency:
             xValues = freq[toWork]/1e6
             xLabel = 'Frequency [MHz]'
@@ -79,7 +79,7 @@ def main(args):
         while nplot % nrow != 0:
             nrow -= 1
         ncol = nplot // nrow
-        print("    Plotting the first %i baselines" % args.nbaseline)
+        print(f"    Plotting the first {args.nbaseline} baselines")
         pb = ProgressBar(max=args.nbaseline)
         i = 0
         for k in range((args.nbaseline-1)//25+1):
@@ -109,16 +109,16 @@ def main(args):
                 else:
                     ax.plot(xValues, phs[toWork], linestyle=' ', marker='x')
                     ax.set_ylim([-180, 180])
-                ax.set_title('%i - %i' % (stnd1, stnd2))
+                ax.set_title(f"{stnd1} - {stnd2}")
                 if j % nrow == 0:
                     ax.set_ylabel('Phs')
                     
                 ax = fig.add_subplot(gs[j//ncol*2+1, j%ncol])
                 ax.plot(xValues, amp[toWork], linestyle=' ', marker='x', color='green')
-                ax.set_title('%i - %i' % (stnd1, stnd2))
+                ax.set_title(f"{stnd1} - {stnd2}")
                 if j % nrow == 0:
                     ax.set_xlabel(xLabel)
-                    ax.set_ylabel('%sAmp' % '' 'Log ' if args.log else '')
+                    ax.set_ylabel('%sAmp' % ('Log ' if args.log else '',))
                     
                 pb.inc(amount=1)
                 if pb.amount != 0 and pb.amount % 10 == 0:

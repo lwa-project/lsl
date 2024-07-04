@@ -46,7 +46,7 @@ def main(args):
     
     idf = LWADataFile(args.filename)
     if not isinstance(idf, TBWFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBW file" % os.path.basename(filename))
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBW file")
         
     nFrames = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
@@ -65,12 +65,12 @@ def main(args):
     beginDate = idf.get_info('start_time').datetime
     
     # File summary
-    print("Filename: %s" % args.filename)
-    print("Date of First Frame: %s" % str(beginDate))
-    print("Ant/Pols: %i" % antpols)
-    print("Sample Length: %i-bit" % dataBits)
-    print("Frames: %i" % nFrames)
-    print("Chunks: %i" % nChunks)
+    print(f"Filename: {args.filename}")
+    print(f"Date of First Frame: {str(beginDate)}")
+    print(f"Ant/Pols: {antpols}")
+    print(f"Sample Length: {dataBits}-bit")
+    print(f"Frames: {nFrames}")
+    print(f"Chunks: {nChunks}")
     print("===")
     
     # Setup the window function to use
@@ -117,16 +117,16 @@ def main(args):
     if args.gain_correct & args.stack:
         # Stacked spectra - only if cable loss corrections are to be applied
         colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'black', 
-            'purple', 'salmon', 'olive', 'maroon', 'saddlebrown', 'yellowgreen', 
-            'teal', 'steelblue', 'seagreen', 'slategray', 'mediumorchid', 'lime', 
-            'dodgerblue', 'darkorange']
-            
+                  'purple', 'salmon', 'olive', 'maroon', 'saddlebrown', 'yellowgreen', 
+                  'teal', 'steelblue', 'seagreen', 'slategray', 'mediumorchid', 'lime', 
+                  'dodgerblue', 'darkorange']
+        
         for f in range(int(np.ceil(antpols/20.))):
             fig = plt.figure()
             ax1 = fig.add_subplot(1, 1, 1)
             for i in range(f*20, f*20+20):
                 currSpectra = np.squeeze( np.log10(spec[i,:])*10.0 )
-                ax1.plot(freq/1e6, currSpectra, label='%i,%i' % (antennas[i].stand.id, antennas[i].pol), color=colors[i % 20])
+                ax1.plot(freq/1e6, currSpectra, label=f"{antennas[i].stand.id},{antennas[i].pol}", color=colors[i % 20])
                 
             ax1.set_xlabel('Frequency [MHz]')
             ax1.set_ylabel('P.S.D. [dB/RBW]')
@@ -148,7 +148,7 @@ def main(args):
                     currSpectra = np.squeeze( np.log10(spec[i,:])*10.0 )
                 except IndexError:
                     break
-                ax.plot(freq/1e6, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer))
+                ax.plot(freq/1e6, currSpectra, label=f"Stand: {antennas[i].stand.id}, Pol: {antennas[i].pol} (Dig: {antennas[i].digitizer}")
                 
                 # If there is more than one chunk, plot the difference between the global 
                 # average and each chunk
@@ -164,7 +164,7 @@ def main(args):
                         diff = subspectra - currSpectra
                         ax.plot(freq/1e6, diff)
                         
-                ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer, antennas[i].combined_status))
+                ax.set_title(f"Stand: {antennas[i].stand.id} ({antennas[i].pol}); Dig: {antennas[i].digitizer} [{antennas[i].combined_status}]"
                 ax.set_xlabel('Frequency [MHz]')
                 ax.set_ylabel('P.S.D. [dB/RBW]')
                 ax.set_xlim([10,90])
@@ -173,12 +173,12 @@ def main(args):
             # Save spectra image if requested
             if args.output is not None:
                 base, ext = os.path.splitext(args.output)
-                outFigure = "%s-%02i%s" % (base, f+1, ext)
+                outFigure = f"{base}-{f+1:02d}{ext}"
                 fig.savefig(outFigure)
                 
         plt.draw()
         
-    print("RBW: %.1f Hz" % (freq[1]-freq[0]))
+    print(f"RBW: {freq[1]-freq[0]:.1f} Hz")
     plt.show()
 
 

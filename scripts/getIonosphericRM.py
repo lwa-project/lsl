@@ -30,8 +30,8 @@ def main(args):
         mjdList = np.sort(mjdList)
         
     else:
-        tStart = "%s %s" % (args.StartDate, args.StartTime)
-        tStop = "%s %s" % (args.StopDate, args.StopTime)
+        tStart = f"{args.StartDate} {args.StartTime}"
+        tStop = f"{args.StopDate} {args.StopTime}"
         
         # YYYY/MM/DD HH:MM:SS -> datetime instance
         tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S.%f")
@@ -175,4 +175,3 @@ if __name__ == "__main__":
                         help='use the high time resolution UQRG data products')
     args = parser.parse_args()
     main(args)
-    

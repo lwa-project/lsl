@@ -44,7 +44,7 @@ def main(args):
         
         if i == 0:
             p = ax1.imshow(pattern, origin='lower', vmin=0, vmax=1)
-            ax1.set_title('X pol. @ %.2f MHz' % (args.frequency/1e6))
+            ax1.set_title(f"X pol. @ {args.frequency/1e6:.2f} MHz")
             ax1.set_xlabel('Azimuth [deg.]')
             ax1.set_ylabel('Altitude [deg.]')
             
@@ -53,7 +53,7 @@ def main(args):
             
         else:
             p = ax2.imshow(pattern, origin='lower', vmin=0, vmax=1)
-            ax2.set_title('Y pol. @ %.2f MHz' % (args.frequency/1e6))
+            ax2.set_title(f"Y pol. @ {args.frequency/1e6:.2f} MHz")
             ax2.set_xlabel('Azimuth [deg.]')
             ax2.set_ylabel('Altitude [deg.]')
     
@@ -77,4 +77,3 @@ if __name__ == "__main__":
                         help='run %(prog)s in verbose mode')
     args = parser.parse_args()
     main(args)
-    
