@@ -83,7 +83,7 @@ class measurementset_tests(unittest.TestCase):
         tbl.set_frequency(data['freq'])
         tbl.set_geometry(data['site'], data['antennas'])
         tbl.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
-        fits.add_data_set(unix_to_taimjd(testTime+6.0), 6.0, data['bl'], data['vis'],
+        tbl.add_data_set(unix_to_taimjd(testTime+6.0), 6.0, data['bl'], data['vis'],
                           source=source)
         tbl.write()
         
@@ -125,13 +125,13 @@ class measurementset_tests(unittest.TestCase):
         # Get some data
         data = self._init_data()
         
-        # Start the file
-        fits = measurementset.Ms(testFile, ref_time=testTime)
-        fits.set_stokes(['xx'])
-        fits.set_frequency(data['freq'])
-        fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
-        fits.write()
+        # Start the table
+        tbl = measurementset.Ms(testFile, ref_time=testTime)
+        tbl.set_stokes(['xx'])
+        tbl.set_frequency(data['freq'])
+        tbl.set_geometry(data['site'], data['antennas'])
+        tbl.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], data['vis'])
+        tbl.write()
         
         # Open the table and examine
         ms = casacore.tables.table(testFile, ack=False)
@@ -186,15 +186,15 @@ class measurementset_tests(unittest.TestCase):
         # Get some data
         data = self._init_data()
         
-        # Start the file
-        fits = measurementset.Ms(testFile, ref_time=testTime)
-        fits.set_stokes(['xx'])
-        fits.set_frequency(data['freq'])
-        fits.set_frequency(data['freq']+10e6)
-        fits.set_geometry(data['site'], data['antennas'])
-        fits.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], 
+        # Start the table
+        tbl = measurementset.Ms(testFile, ref_time=testTime)
+        tbl.set_stokes(['xx'])
+        tbl.set_frequency(data['freq'])
+        tbl.set_frequency(data['freq']+10e6)
+        tbl.set_geometry(data['site'], data['antennas'])
+        tbl.add_data_set(unix_to_taimjd(testTime), 6.0, data['bl'], 
                           np.concatenate([data['vis'], 10*data['vis']], axis=1))
-        fits.write()
+        tbl.write()
         
         # Open the table and examine
         ms = casacore.tables.table(testFile, ack=False)
