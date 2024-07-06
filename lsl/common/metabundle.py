@@ -12,10 +12,33 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 __version__ = '1.2'
-__all__ = ['get_sdm', 'get_beamformer_min_delay', 'get_station',
+__all__ = ['get_style', 'get_sdm', 'get_beamformer_min_delay', 'get_station',
            'get_session_metadata', 'get_session_spec', 'get_observation_spec',
            'get_sdf', 'get_command_script', 'get_asp_configuration',
-           'get_asp_configuration_summary', 'is_valid', 'get_style']
+           'get_asp_configuration_summary', 'is_valid']
+
+
+def get_style(tarname, return_module=False, verbose=False):
+    """
+    Given a filename, determine which metadata style (DP, ADP, or NDP) it
+    corresponds to.  Returns a string of the module name that can read it, None
+    if one cannot be found.
+    
+    .. versionadded:: 3.0.0
+    """
+    
+    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
+        raise OSError("%s does not exists or is not readable" % tarname)
+        
+    provider = None
+    for backend in (metabundleDP, metabundleADP, metabundleNDP):
+        if backend.is_valid(tarname, verbose=False):
+            if return_module:
+                provider = backend
+            else:
+                provider = backend.__name__
+            break
+    return provider
 
 
 def get_sdm(tarname):
@@ -30,12 +53,10 @@ def get_sdm(tarname):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_sdm(tarname)
-        except:
-            pass
-    raise RuntimeError("Failed to read SDM")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_sdm(tarname)
 
 
 def get_beamformer_min_delay(tarname):
@@ -48,12 +69,10 @@ def get_beamformer_min_delay(tarname):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_beamformer_min_delay(tarname)
-        except:
-            pass
-    raise RuntimeError("Failed to read beamformer minimum delay")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_beamformer_min_delay(tarname)
 
 
 def get_station(tarname, apply_sdm=True):
@@ -69,12 +88,10 @@ def get_station(tarname, apply_sdm=True):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_station(tarname, apply_sdm=apply_sdm)
-        except:
-            pass
-    raise RuntimeError("Failed to get station object")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_station(tarname, apply_sdm=apply_sdm)
 
 
 def get_session_metadata(tarname):
@@ -91,12 +108,10 @@ def get_session_metadata(tarname):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_session_metadata(tarname)
-        except:
-            pass
-    raise RuntimeError("Failed to get session metadata")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_session_metadata(tarname)
 
 
 def get_session_spec(tarname):
@@ -108,12 +123,10 @@ def get_session_spec(tarname):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_session_spec(tarname)
-        except:
-            pass
-    raise RuntimeError("Failed to get session specifications")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_session_spec(tarname)
 
 
 def get_observation_spec(tarname, obs_id=None):
@@ -127,12 +140,10 @@ def get_observation_spec(tarname, obs_id=None):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_observation_spec(tarname, obs_id=obs_id)
-        except:
-            pass
-    raise RuntimeError("Failed to get observation specifications")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_observation_spec(tarname, obs_id=obs_id)
 
 
 def get_sdf(tarname):
@@ -150,12 +161,10 @@ def get_sdf(tarname):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_sdf(tarname)
-        except:
-            pass
-    raise RuntimeError("Failed to get SDF")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_sdf(tarname)
 
 
 def get_command_script(tarname):
@@ -167,12 +176,10 @@ def get_command_script(tarname):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_command_script(tarname)
-        except:
-            pass
-    raise RuntimeError("Failed to get command script")
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_command_script(tarname)
 
 
 def get_asp_configuration(tarname, which='beginning'):
@@ -192,12 +199,10 @@ def get_asp_configuration(tarname, which='beginning'):
     if which not in ('beginning', 'begin', 'end'):
         raise ValueError(f"Unknown configuration time '{which}'")
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        try:
-            return backend.get_asp_configuration(tarname, which=which)
-        except:
-            pass
-    raise RuntimeError("Failed to get ASP configurations for '%s'" % which)
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_asp_configuration(tarname, which=which)
 
 
 def get_asp_configuration_summary(tarname, which='beginning'):
@@ -212,12 +217,10 @@ def get_asp_configuration_summary(tarname, which='beginning'):
     if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
         raise OSError("%s does not exists or is not readable" % tarname)
         
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-            try:
-                return backend.get_asp_configuration_summary(tarname, which=which)
-            except:
-                pass
-    raise RuntimeError("Failed to get ASP configuration summary for '%s'" % which)
+    backend = get_style(tarname, return_module=True)
+    if backend is None:
+        raise RuntimeError("Failed to determine metadata style")
+    return backend.get_asp_configuration_summary(tarname, which=which)
 
 
 def is_valid(tarname, verbose=False):
@@ -236,22 +239,3 @@ def is_valid(tarname, verbose=False):
         if valid:
             break
     return valid
-
-
-def get_style(tarname, verbose=False):
-    """
-    Given a filename, determine which metadata style (DP, ADP, or NDP) it
-    corresponds to.  Returns a string of the module name that can read it, None
-    if one cannot be found.
-    
-    .. versionadded:: 3.0.0
-    """
-    
-    if not os.path.isfile(tarname) or not os.access(tarname, os.R_OK):
-        raise OSError("%s does not exists or is not readable" % tarname)
-        
-    provider = None
-    for backend in (metabundleDP, metabundleADP, metabundleNDP):
-        if backend.is_valid(tarname, verbose=False):
-            provider = backend.__name__
-    return provider
