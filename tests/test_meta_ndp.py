@@ -98,9 +98,15 @@ class metabundle_tests_ndp(unittest.TestCase):
         
         sdf = metabundle.get_sdf(mdbFileNDP)
         
+    def test_beamformer_min_delay(self):
+        """Test reading the beamformer minimum delay info."""
+        
+        md = metabundle.get_beamformer_min_delay(mdbFileNDP)
+        
     def test_station(self):
         """Test building a station from a tarball."""
         
+        station = metabundle.get_station(mdbFileNDP, apply_sdm=False)
         station = metabundle.get_station(mdbFileNDP)
         
     def test_sdm(self):

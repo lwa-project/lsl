@@ -96,9 +96,15 @@ class metabundle_dp_tests(unittest.TestCase):
         
         sdf = metabundle.get_sdf(mdbFile)
         
+    def test_beamformer_min_delay(self):
+        """Test reading the beamformer minimum delay info."""
+        
+        md = metabundle.get_beamformer_min_delay(mdbFile)
+        
     def test_station(self):
         """Test building a station from a tarball."""
         
+        station = metabundle.get_station(mdbFile, apply_sdm=False)
         station = metabundle.get_station(mdbFile)
         
     def test_sdm(self):
@@ -142,10 +148,23 @@ class metabundle_dp_tests(unittest.TestCase):
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
+        for filename in (mdbFile, mdbFileADP, mdbFileNDP):
+            self.assertTrue(metabundle.is_valid(mdbFile))
+            
+    def test_get_style(self):
+        """Test whether or not get_style works."""
+        
+        self.assertEqual(metabundle.get_style(mdbFile),    'lsl.common.metabundleDP')
+        self.assertEqual(metabundle.get_style(mdbFileADP), 'lsl.common.metabundleADP')
+        self.assertEqual(metabundle.get_style(mdbFileNDP), 'lsl.common.metabundleNDP')
+        
+    def test_is_valid_dp(self):
+        """Test whether or not the DP-specific is_valid works."""
+        
         self.assertTrue(metabundleDP.is_valid(mdbFile))
         
-    def test_is_not_valid(self):
-        """Test whether or not is_valid works on LWA-SV and LWA-NA files."""
+    def test_is_not_valid_dp(self):
+        """Test whether or not the DP-specific is_valid works on LWA-SV and LWA-NA files."""
         
         self.assertFalse(metabundleDP.is_valid(mdbFileADP))
         self.assertFalse(metabundleDP.is_valid(mdbFileNDP))
