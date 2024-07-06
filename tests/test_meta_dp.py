@@ -143,7 +143,7 @@ class metabundle_dp_tests(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
-        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
+        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""

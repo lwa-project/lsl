@@ -144,7 +144,7 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(aspConfig['asp_atten_split'],15)
         
         # Unknown code
-        self.assertRaises(RuntimeError, metabundle.get_asp_configuration_summary, mdbFileADP, 'middle')
+        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileADP, 'middle')
         
     @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig_gdbm(self):
