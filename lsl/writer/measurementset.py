@@ -528,7 +528,7 @@ try:
                                                        })
             col2  = tableutil.makearrcoldesc('PROPER_MOTION', 0.0, 2, 
                                              comment='Proper motion', 
-                                             keywords={'QuantumUnits':['rad/s',]})
+                                             keywords={'QuantumUnits':['rad/s','rad/s']})
             col3  = tableutil.makescacoldesc('CALIBRATION_GROUP', 0, 
                                              comment='Number of grouping for calibration purpose.')
             col4  = tableutil.makescacoldesc('CODE', "none", 
