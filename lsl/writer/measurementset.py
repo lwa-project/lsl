@@ -628,7 +628,7 @@ try:
                 tb.putcell('REFERENCE_DIR', i, np.array(posList[i]))
                 tb.putcell('CODE', i, 'None')
                 tb.putcell('FLAG_ROW', i, False)
-                tb.putcell('NAME', i, str(nameList[i]))
+                tb.putcell('NAME', i, nameList[i])
                 tb.putcell('NUM_POLY', i, 0)
                 tb.putcell('SOURCE_ID', i, i)
                 tb.putcell('TIME', i, (tStart+tStop)/2*86400)
