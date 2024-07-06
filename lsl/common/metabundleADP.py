@@ -80,22 +80,7 @@ def read_obs_file(filename):
         #if bheader.FORMAT_VERSION not in (6,):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
-            
-        if bheader.OBS_B > 2:
-            ## Pre OBS_BDM
-            fh.seek(0)
-            
-            newStruct = []
-            for line in OSF_STRUCT.split('\n'):
-                if line.find('OBS_BDM') != -1:
-                    continue
-                newStruct.append(line)
-            newStruct = '\n'.join(newStruct)
-            
-            bheader = parse_c_struct(newStruct, endianness='little')
-            fh.readinto(bheader)
-            bheader.OBS_BDM = ''
-            
+        
         steps = []
         for n in range(bheader.OBS_STP_N):
             fh.readinto(bstep)
