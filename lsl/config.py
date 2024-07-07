@@ -322,7 +322,7 @@ class LSLConfigContainer(object):
             try:
                 yield
             finally:
-                self._paremeters[name].value = old_value
+                self._parameters[name].value = old_value
                 
         except KeyError:
             raise ValueError(f"Unknown parameter '{name}'")
@@ -366,9 +366,9 @@ class LSLConfigSubContainer(object):
         """
         
         try:
-            self.container.set_temp(self.section+'.'+name, value)
+            return self.container.set_temp(self.section+'.'+name, value)
         except KeyError:
-            self.container.set_temp(name, value)
+            return self.container.set_temp(name, value)
 
 
 #: The LSLConfigContainer that users should use
