@@ -280,40 +280,20 @@ def parse_sdm(filename):
         dynamic.shl.binary_read(fh)
         dynamic.asp.binary_read(fh)
         dynamic.dp.binary_read(fh)
-        mark = fh.tell()
-        try:
-            for n in range(ME_MAX_NDR):
-                dynamic.dr[n].binary_read(fh)
-                
-            # Sub-sub-system status section
-            dynamic.status.binary_read(fh)
+        for n in range(ME_MAX_NDR):
+            dynamic.dr[n].binary_read(fh)
             
-            # Antenna status and data path status
-            ndpsStruct = parse_c_struct("""
-            int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
-            int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
-            """, endianness='little')
-            
-            fh.readinto(ndpsStruct)
-            
-        except IOError:
-            fh.seek(mark)
-            overrides = {'ME_MAX_NDR': 3}
-            
-            for n in range(3):
-                dynamic.dr[n].binary_read(fh)
-                
-            # Sub-sub-system status section
-            dynamic.status.binary_read(fh, overrides=overrides)
-            
-            # Antenna status and data path status
-            ndpsStruct = parse_c_struct("""
-            int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
-            int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
-            """, endianness='little', overrides=overrides)
-            
-            fh.readinto(ndpsStruct)
-            
+        # Sub-sub-system status section
+        dynamic.status.binary_read(fh)
+        
+        # Antenna status and data path status
+        ndpsStruct = parse_c_struct("""
+        int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
+        int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
+        """, endianness='little')
+        
+        fh.readinto(ndpsStruct)
+        
         dynamic.ant_status = flat_to_multi(ndpsStruct.ant_stat, *ndpsStruct.dims['ant_stat'])
         dynamic.dpo_status = flat_to_multi(ndpsStruct.dpo_stat, *ndpsStruct.dims['dpo_stat'])
         
