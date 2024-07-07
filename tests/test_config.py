@@ -23,7 +23,18 @@ class config_tests(unittest.TestCase):
         """Test building a text representation of the LSL configuration."""
         repr(LSL_CONFIG)
         
-    def test_temp(self):
+    def test_set(self):
+        """Test the set function of the LSL configuration."""
+        
+        ref_value = LSL_CONFIG.get('download.timeout')*1
+        
+        LSL_CONFIG.set('download.timeout', 300)
+        self.assertTrue(LSL_CONFIG.get('download.timeout') != ref_value)
+        
+        LSL_CONFIG.set('download.timeout', ref_value)
+        self.assertEqual(LSL_CONFIG.get('download.timeout'), ref_value)
+        
+    def test_set_temp(self):
         """Test the set_temp function of the LSL configuration."""
         
         ref_value = LSL_CONFIG.get('download.timeout')*1
@@ -45,7 +56,19 @@ class config_tests(unittest.TestCase):
         dconfig = LSL_CONFIG.view('download')
         repr(dconfig)
         
-    def test_sub_temp(self):
+    def test_sub_set(self):
+        """Test the set function of the LSL configuration."""
+        
+        dconfig = LSL_CONFIG.view('download')
+        ref_value = dconfig.get('timeout')*1
+        
+        dconfig.set('timeout', 300)
+        self.assertTrue(dconfig.get('timeout') != ref_value)
+        
+        dconfig.set('timeout', ref_value)
+        self.assertEqual(dconfig.get('timeout'), ref_value)
+        
+    def test_sub_set_temp(self):
         """Test the set_temp function for a section of the LSL configuration."""
         
         dconfig = LSL_CONFIG.view('download')
