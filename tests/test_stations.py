@@ -42,7 +42,18 @@ class stations_tests(unittest.TestCase):
         self.assertAlmostEqual(jov.ra,  ephem.hours('6:14:41.01'), 6)
         self.assertAlmostEqual(jov.dec, ephem.degrees('23:11:49.1'), 6)
         
-        #Az/Alt
+        # Az/Alt
+        self.assertAlmostEqual(jov.az,  ephem.degrees('274:40:27.7'), 6)
+        self.assertAlmostEqual(jov.alt, ephem.degrees( '37:24:10.5'), 6)
+        
+        obs = lwa1.get_observer(date=2456484.4216087963, JD=True)
+        jov.compute(obs)
+        
+        # RA/Dec
+        self.assertAlmostEqual(jov.ra,  ephem.hours('6:14:41.01'), 6)
+        self.assertAlmostEqual(jov.dec, ephem.degrees('23:11:49.1'), 6)
+        
+        # Az/Alt
         self.assertAlmostEqual(jov.az,  ephem.degrees('274:40:27.7'), 6)
         self.assertAlmostEqual(jov.alt, ephem.degrees( '37:24:10.5'), 6)
         
@@ -238,7 +249,7 @@ class stations_tests(unittest.TestCase):
     def test_arx_revisions(self):
         """Test the various ARX revision lookups."""
         
-        for station in (stations.lwa1, stations.lwasv):
+        for station in (stations.lwa1, stations.lwasv, stations.lwana):
             with self.subTest(station=station.name):
                 station[0].arx.revision()
 

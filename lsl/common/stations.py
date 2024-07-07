@@ -272,7 +272,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             if JD:
                 # If the date is Julian, convert to Dublin Julian Date 
                 # which is used by ephem
-                date -= DJD_OFFSET
+                date = date - DJD_OFFSET
             oo.date = date
             
         return oo
