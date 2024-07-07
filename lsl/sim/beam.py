@@ -60,7 +60,7 @@ def _load_response_fitted(frequency, corrected=False):
             deltaH = np.polyval(beamCoeff[1,3,:], frequency)
             
         if corrected:
-            with DataAccess.open('antennas/lwa1-dipole-cor.npz', 'rb') as fh:
+            with DataAccess.open('antenna/lwa1-dipole-cor.npz', 'rb') as fh:
                 corrDict = np.load(fh)
                 cFreqs = corrDict['freqs'][...]
                 cAlts  = corrDict['alts'][...]
@@ -272,7 +272,7 @@ def _compute_from_feeds(pol, XE, XH, YE, YH):
         return _compute_from_feeds('XY', XE, XH, YE, YH) \
                - _compute_from_feeds('YX', XE, XH, YE, YH)
     else:
-        raise ValueErro(f"Unknown polarization produce '{pol}'")
+        raise ValueError(f"Unknown polarization produce '{pol}'")
 
 
 def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
@@ -316,4 +316,4 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
 
 
 def get_avaliable_models():
-    return list(_MODELS.keys())
+    return list(_MODELS.keys()) + ['llfss']
