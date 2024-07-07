@@ -4,7 +4,10 @@ Unit test for the lsl.correlator.uvutils module.
 
 import warnings
 import unittest
+import ephem
 import numpy as np
+
+from astropy.coordinates import Angle
 
 from lsl.correlator import uvutils
 from lsl.common import stations
@@ -84,8 +87,8 @@ class uvutils_tests(unittest.TestCase):
         ind = uvutils.antennas_to_baseline(0, 3, standList, include_auto=False, indicies=True)
         self.assertEqual(ind, 2)
         
-    def run_compute_uvw_test(self, antennas, freq):
-        out = uvutils.compute_uvw(antennas, freq=freq)
+    def run_compute_uvw_test(self, antennas, freq, HA=0.0, dec=34.0):
+        out = uvutils.compute_uvw(antennas, HA=HA, dec=dec, freq=freq)
         
         nbl = len(antennas)*(len(antennas)-1)//2
         try:
@@ -146,6 +149,22 @@ class uvutils_tests(unittest.TestCase):
         bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=True)
         self.assertRaises(TypeError, uvutils.compute_uvw, bl, {'freq': freq})
         
+        # Angle support
+        freq = [45e6, 60e6]
+        HA = 1.0
+        dec = 34.0
+        out0 = self.run_compute_uvw_test(antennas[0:60:2], freq, HA=HA, dec=dec)
+        
+        HA = Angle('1h0m0s')
+        dec = Angle('34deg')
+        out1 = self.run_compute_uvw_test(antennas[0:60:2], freq, HA=HA, dec=dec)
+        np.testing.assert_allclose(out0, out1)
+        
+        HA = ephem.hours('1:00:00')
+        dec = ephem.degrees('34:00:00')
+        out1 = self.run_compute_uvw_test(antennas[0:60:2], freq, HA=HA, dec=dec)
+        np.testing.assert_allclose(out0, out1)
+        
     def test_compute_uv_track(self):
         """Test that the compute_uv_track function runs."""
         
@@ -165,6 +184,18 @@ class uvutils_tests(unittest.TestCase):
         # Pass in a list of baseline indicies
         bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=True)
         self.assertRaises(TypeError, uvutils.compute_uv_track, bl)
+        
+        # Angle support
+        dec = 34.0
+        out0 = uvutils.compute_uv_track(antennas[0:60:2], dec=dec)
+        
+        dec = Angle('34deg')
+        out1 = uvutils.compute_uv_track(antennas[0:60:2], dec=dec)
+        np.testing.assert_allclose(out0, out1)
+        
+        dec = ephem.degrees('34:00:00')
+        out1 = uvutils.compute_uv_track(antennas[0:60:2], dec=dec)
+        np.testing.assert_allclose(out0, out1)
 
         
 class uvutils_test_suite(unittest.TestSuite):
