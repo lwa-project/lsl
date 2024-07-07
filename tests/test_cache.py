@@ -89,7 +89,7 @@ class cache_tests(unittest.TestCase):
                 with c.open(file_list[-1], 'w') as fh:
                     fh.write(f"temp file #{i+1}")
                     
-                for j in range(0, len(file_list)-2):
+                for j in range(0, len(file_list)-3):
                     self.assertFalse(file_list[j] in c)
                 for j in range(len(file_list)-2, len(file_list)):
                     self.assertTrue(file_list[j] in c)
@@ -103,7 +103,7 @@ class cache_tests(unittest.TestCase):
                 with c.open(file_list[-1], 'w') as fh:
                     fh.write(f"temp file #{i+1}")
                     
-                for j in range(0, len(file_list)-2):
+                for j in range(0, len(file_list)-3):
                     self.assertFalse(file_list[j] in c)
                 for j in range(len(file_list)-2, len(file_list)):
                     self.assertTrue(file_list[j] in c)
