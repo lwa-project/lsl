@@ -47,7 +47,7 @@ get_frames_per_obs
 
 from lsl.common import dp as dp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_drx8
+from lsl.reader._gofast import read_drx8, read_drx8_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -58,7 +58,7 @@ telemetry.track_module()
 
 
 __version__ = '0.1'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
            'get_sample_rate', 'get_beam_count', 'get_frames_per_obs', 'FRAME_SIZE', 'FILTER_CODES']
 
 #: DRX8 packet size (header + payload)
@@ -209,6 +209,29 @@ def read_frame(filehandle, gain=None, verbose=False):
     # New Go Fast! (TM) method
     try:
         newFrame = read_drx8(filehandle, Frame())
+    except gSyncError:
+        mark = filehandle.tell() - FRAME_SIZE
+        raise SyncError(location=mark)
+    except gEOFError:
+        raise EOFError
+    
+    if gain is not None:
+        newFrame.gain = gain
+        
+    return newFrame
+
+
+def read_frame_ci8(filehandle, gain=None, verbose=False):
+    """
+    Function to read in a single DRX8 frame (header+data) and store the 
+    contents as a Frame object.  This function wraps readerHeader and 
+    readData.
+    """
+    
+    # New Go Fast! (TM) method
+    try:
+        newFrame = read_drx8_ci8(filehandle, Frame())
+        newFrame.payload._data = newFrame.payload.data.view(CI8)
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
