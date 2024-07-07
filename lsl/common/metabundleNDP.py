@@ -500,10 +500,10 @@ def get_asp_configuration(tarname, which='beginning'):
         raise ValueError("Unknown configuration time '%s'" % which)
         
     # Stub ASP configuration
-    aspConfig = {'asp_filter':      [-1 for i in range(264)],
-                 'asp_atten_1':     [-1 for i in range(264)],
-                 'asp_atten_2':     [-1 for i in range(264)],
-                 'asp_atten_split': [-1 for i in range(264)]}
+    aspConfig = {'asp_filter':      [-1 for i in range(256)],
+                 'asp_atten_1':     [-1 for i in range(256)],
+                 'asp_atten_2':     [-1 for i in range(256)],
+                 'asp_atten_split': [-1 for i in range(256)]}
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         # Find the .pag file and extract it
