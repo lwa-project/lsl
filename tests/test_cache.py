@@ -9,6 +9,8 @@ import tempfile
 import shutil
 
 from lsl.misc import file_cache
+from lsl.common.data_access import DataAccess
+from lsl.config import LSL_CONFIG
 
 
 __version__  = "0.1"
@@ -126,7 +128,26 @@ class cache_tests(unittest.TestCase):
         """Cleanup the temporary cache directory."""
         
         shutil.rmtree(self.cache_dir, ignore_errors=True)
+
+
+class access_tests(unittest.TestCase):
+    """A unittest.TestCase collection of unit tests for the lsl.common.data_access
+    module."""
+    
+    def test_refresh(self):
+        """Test refreshing an entry in the DataAccess cache."""
+        
+        dconfig = LSL_CONFIG.view('download')
+        
+        filename = 'arx/ARX_board_0201_filters.npz'
+        with DataAccess.open(filename, 'rb') as fh:
+            contents = fh.read()
             
+        time.sleep(1)
+        
+        with dconfig.set_temp('refresh_age', -1):
+            with DataAccess.open(filename, 'rb') as fh:
+                contents = fh.read()
 
 
 class cache_test_suite(unittest.TestSuite):
@@ -138,6 +159,7 @@ class cache_test_suite(unittest.TestSuite):
         
         loader = unittest.TestLoader()
         self.addTests(loader.loadTestsFromTestCase(cache_tests)) 
+        self.addTests(loader.loadTestsFromTestCase(access_tests))
 
 
 if __name__ == '__main__':
