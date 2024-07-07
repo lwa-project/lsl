@@ -134,6 +134,12 @@ class access_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.data_access
     module."""
     
+    def test_errors(self):
+        """Test accessing files that do not exist."""
+        
+        self.assertRaises(OSError, DataAccess.getmtime, 'nevergoingtobethere.nope')
+        self.assertRaises(RuntimeError, DataAccess.fetch_data_file, 'nevergoingtobethere2.nope')
+        
     def test_refresh(self):
         """Test refreshing an entry in the DataAccess cache."""
         
