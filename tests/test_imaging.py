@@ -588,7 +588,15 @@ class imaging_tests(unittest.TestCase):
                 # Build the image
                 ds = idi.get_data_set(1)
                 junk = utils.build_gridded_image(ds, verbose=False)
-
+                
+                # Different weightings
+                for weighting in ('natural', 'uniform', 'briggs'):
+                    junk2 = junk.image(weighting=weighting)
+                    
+                # Different tapers
+                for taper in ((0.0, 10.0), (0.1, 10.0)):
+                    junk2 = junk.image(taper=taper)
+                    
                 # Error checking
                 self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='XY')
                 
