@@ -4,6 +4,7 @@ Unit test for the lsl.common.mcs module.
 
 import os
 import unittest
+import numpy as np
 from datetime import datetime
 
 from lsl.common import mcs
@@ -89,49 +90,59 @@ class mcs_tests(unittest.TestCase):
         """Test the pointing correction function"""
         
         az = 63.4
-        el = 34.2
+        alt = 34.2
         
         # No rotation
         theta = 0.0
         phi = 0.0
         psi = 0.0
-        azP, elP = mcs.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
+        azP, altP = mcs.apply_pointing_correction(az, alt, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, az, 2)
-        self.assertAlmostEqual(elP, el, 2)
+        self.assertAlmostEqual(altP, alt, 2)
         
         # Azimuth only
         theta = 0.0
         phi = 0.0
         psi = 1.0
-        azP, elP = mcs.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
+        azP, altP = mcs.apply_pointing_correction(az, alt, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, az-1.0, 2)
-        self.assertAlmostEqual(elP, el, 2)
+        self.assertAlmostEqual(altP, alt, 2)
         
         # Something random
         theta = 23.0
         phi = 10.0
         psi = 1.5
-        azP, elP = mcs.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
+        azP, altP = mcs.apply_pointing_correction(az, alt, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, 62.40, 2)
-        self.assertAlmostEqual(elP, 34.37, 2)
+        self.assertAlmostEqual(altP, 34.37, 2)
         
         # Something else random (from an older version of LSL)
         az = 45.0
-        el = 30.0
+        alt = 30.0
         theta = 3.0
         phi = 4.0
         psi = 5.0
-        azP, elP = mcs.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
+        azP, altP = mcs.apply_pointing_correction(az, alt, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, 40.117, 3)
-        self.assertAlmostEqual(elP, 30.180, 3)
+        self.assertAlmostEqual(altP, 30.180, 3)
         
         # Something else random (from an older version of LSL)
         theta = 93.0
         phi = -4.0
         psi = 5.0
-        azP, elP = mcs.apply_pointing_correction(az, el, theta, phi, psi, degrees=True)
+        azP, altP = mcs.apply_pointing_correction(az, alt, theta, phi, psi, degrees=True)
         self.assertAlmostEqual(azP, 47.346, 3)
-        self.assertAlmostEqual(elP, 33.702, 3)
+        self.assertAlmostEqual(altP, 33.702, 3)
+        
+        # Something else random but in radians (from an older version of LSL)
+        az = az * np.pi/180
+        alt = alt * np.pi/180
+        theta = theta * np.pi/180
+        phi = phi * np.pi/180
+        psi = psi * np.pi/180
+        azP, altP = mcs.apply_pointing_correction(az, alt, theta, phi, psi, degrees=False)
+        self.assertAlmostEqual(azP, 47.346 * np.pi/180, 5)
+        self.assertAlmostEqual(altP, 33.702 * np.pi/180, 5)
 
     
 class mcs_test_suite(unittest.TestSuite):
