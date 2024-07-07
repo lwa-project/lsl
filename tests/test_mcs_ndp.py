@@ -55,6 +55,13 @@ class mcs_ndp_tests(unittest.TestCase):
             mcsNDP.SummaryCode(i)
         self.assertRaises(ValueError, mcsNDP.SummaryCode, 7)
         
+    def test_summary_descriptions(self):
+        """Test valid summary descriptions"""
+        
+        for i in range(0, 6+1):
+            s = mcs.SummaryCode(i)
+            s.description
+            
     def test_sid_limits(self):
         """Test valid subsystem ID values"""
         
