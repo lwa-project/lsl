@@ -6,6 +6,8 @@ import os
 import unittest
 import tempfile
 import shutil
+import importlib
+import inspect
 
 from lsl.config import LSL_CONFIG
 
@@ -15,6 +17,15 @@ __author__    = "Jayce Dowell"
 
 
 class config_tests(unittest.TestCase):
+    def test_save_load(self):
+        """Test the LSL configuration save and load functions."""
+        
+        LSL_CONFIG._save_config()
+        
+        # Force a reload
+        mod = inspect.getmodule(LSL_CONFIG)
+        importlib.reload(mod)
+        
     def test_str(self):
         """Test converting the LSL configuration to a string."""
         str(LSL_CONFIG)
