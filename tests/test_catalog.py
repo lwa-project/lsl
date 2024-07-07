@@ -20,7 +20,7 @@ class catalog_tests(unittest.TestCase):
     def test_constructor(self):
         """Test catalog constructors."""
         
-        for name in ('LWA', 'PSR', 'PKS', 'PKS90', '3C', '4C', '2FGL'):
+        for name in ('LWA', 'PSR', 'PKS', 'PKS90', '3C', '4C', '2FGL', '3FGL', '4FGL', '4FGL-DR4'):
             with self.subTest(name=name):
                 catalog.CatalogFactory.get_catalog(name)
                 
