@@ -59,7 +59,7 @@ class mcs_adp_tests(unittest.TestCase):
         """Test valid summary descriptions"""
         
         for i in range(0, 6+1):
-            s = mcs.SummaryCode(i)
+            s = mcsADP.SummaryCode(i)
             s.description
             
     def test_sid_limits(self):
