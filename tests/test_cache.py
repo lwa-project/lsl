@@ -3,6 +3,7 @@ Unit test for the lsl.misc.file_cache module.
 """
 
 import os
+import time
 import unittest
 import tempfile
 import shutil
@@ -19,9 +20,13 @@ class cache_tests(unittest.TestCase):
     module."""
     
     def setUp(self):
+        """Create a temporary directory for FileCache."""
+        
         self.cache_dir = tempfile.mkdtemp(prefix='test-cache-', suffix='.tmp')
     
     def test_file_cache(self):
+        """Test that FileCache works."""
+        
         c = file_cache.FileCache(self.cache_dir)
         self.assertFalse('test.txt' in c)
         
@@ -51,6 +56,8 @@ class cache_tests(unittest.TestCase):
         self.assertFalse('test.txt' in c)
         
     def test_memory_cache(self):
+        """Test that MemoryCache works."""
+        
         c = file_cache.MemoryCache()
         self.assertFalse('test.txt' in c)
         
@@ -80,6 +87,8 @@ class cache_tests(unittest.TestCase):
         self.assertFalse('test.txt' in c)
         
     def test_max_size(self):
+        """Test that FileCache and MemoryCache enforce their quotas."""
+        
         with self.subTest(type='file'):
             c = file_cache.FileCache(self.cache_dir, max_size=16/1024**2)
             
@@ -89,7 +98,9 @@ class cache_tests(unittest.TestCase):
                 with c.open(file_list[-1], 'w') as fh:
                     fh.write(f"temp file #{i+1}")
                     
-                for j in range(0, len(file_list)-3):
+                time.sleep(0.1)
+                
+                for j in range(0, len(file_list)-2):
                     self.assertFalse(file_list[j] in c)
                 for j in range(len(file_list)-2, len(file_list)):
                     self.assertTrue(file_list[j] in c)
@@ -103,18 +114,22 @@ class cache_tests(unittest.TestCase):
                 with c.open(file_list[-1], 'w') as fh:
                     fh.write(f"temp file #{i+1}")
                     
-                for j in range(0, len(file_list)-3):
+                time.sleep(0.1)
+                
+                for j in range(0, len(file_list)-2):
                     self.assertFalse(file_list[j] in c)
                 for j in range(len(file_list)-2, len(file_list)):
                     self.assertTrue(file_list[j] in c)
                     
             
     def tearDown(self):
+        """Cleanup the temporary cache directory."""
+        
         shutil.rmtree(self.cache_dir, ignore_errors=True)
             
 
 
-class  cache_test_suite(unittest.TestSuite):
+class cache_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.misc.file_cache units 
     tests."""
     
