@@ -121,7 +121,7 @@ class Time(object):
             self.utc_mjd = value
             
         elif format == self.FORMAT_DP:
-            self.utc_timet = value / fS
+            self.utc_dp = value
             
         elif format == self.FORMAT_MCS:
             self.utc_mjd = value[0] + value[1]/86400/1000
@@ -208,10 +208,10 @@ class Time(object):
         
     @utc_dp.setter
     def utc_dp(self, value):
-        if not isinstance(value, (int, float)):
-            raise TypeError("value must be type int or float")
+        if not isinstance(value, int):
+            raise TypeError("value must be type int")
             
-        self._time = AstroTime(float(value) / fS, format='unix', scale='utc')
+        self._time = AstroTime(value // fS, value % fS, format='unix', scale='utc')
         
     @property
     def utc_mcs(self):
