@@ -1159,7 +1159,7 @@ def convert_to_stokes(data_set):
     # Catch VisibilityData objects before we go any further so we can iterate 
     # over them
     if isinstance(data_set, VisibilityData):
-        new_data = data_set.copy(include_pols=False)
+        new_data = VisibilityData()
         for ds in data_set:
             new_data_set = convert_to_stokes(ds)
             new_data.append(new_data_set)
@@ -1227,7 +1227,7 @@ def convert_to_linear(data_set):
     # Catch VisibilityData objects before we go any further so we can iterate 
     # over them
     if isinstance(data_set, VisibilityData):
-        new_data = data_set.copy(include_pols=False)
+        new_data = VisibilityData()
         for ds in data_set:
             new_data_set = convert_to_linear(ds)
             new_data.append(new_data_set)
