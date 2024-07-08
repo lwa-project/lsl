@@ -46,6 +46,12 @@ class robust_tests(unittest.TestCase):
         self.x2 = np.arange(12000)*0.01
         self.y2 = self.x2**2 - 0.5*self.x2 + 1
         
+        self.x3 = self.x2*0.1
+        self.y3 = 0.25*self.x3**3 + self.x3**2 - 0.5*self.x3 + 1
+        
+        self.x4 = self.x3*0.5
+        self.y4 = -0.125*self.x4**4 + 0.25*self.x4**3 + self.x4**2 - 0.5*self.x4 + 1
+        
     def test_biweight(self):
         """Test the biweight mean function."""
         
@@ -282,6 +288,13 @@ class robust_tests(unittest.TestCase):
         
         b = np.random.randn(512)**2 + 5
         self.assertAlmostEqual(robust.mode(b), 5.0, 2)
+
+        m = []
+        for i in range(256):
+            b = np.random.randn(3)**2 + 5
+            m.append(robust.mode(b))
+        m = sum(m)/len(m)
+        self.assertAlmostEqual(m, 5.5, 0)
         
     def test_std(self):
         """Test the outlier-resistant standard deviation function."""
@@ -367,6 +380,20 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[0],  1.0000001, 5)
         self.assertAlmostEqual(cc[1], -0.50001344, 4)
         self.assertAlmostEqual(cc[2],  1.0005343, 2)
+        
+        # Extend to higher orders
+        cc = robust.polyfit(self.x3, self.y3, 3)
+        self.assertAlmostEqual(cc[0],  0.2500000, 5)
+        self.assertAlmostEqual(cc[1],  1.0000001, 5)
+        self.assertAlmostEqual(cc[2], -0.50001344, 4)
+        self.assertAlmostEqual(cc[3],  1.0005343, 2)
+        
+        cc = robust.polyfit(self.x4, self.y4, 4)
+        self.assertAlmostEqual(cc[0], -0.1250000, 5)
+        self.assertAlmostEqual(cc[1],  0.2500000, 5)
+        self.assertAlmostEqual(cc[2],  1.0000001, 5)
+        self.assertAlmostEqual(cc[3], -0.50001344, 4)
+        self.assertAlmostEqual(cc[4],  1.0005343, 2)
 
 
 class robust_test_suite(unittest.TestSuite):
