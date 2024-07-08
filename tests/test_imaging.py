@@ -541,6 +541,17 @@ class imaging_tests(unittest.TestCase):
         np.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
         np.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
         
+        #
+        # VisibilityData test
+        #
+        
+        ds2 = VisibilityData()
+        ds2.append( ds )
+        ds = ds2
+        
+        # Convert
+        ds2 = utils.convert_to_stokes(ds)
+        
         idi.close()
         
     def test_convert_to_linear(self):
@@ -574,6 +585,20 @@ class imaging_tests(unittest.TestCase):
         np.testing.assert_allclose(ds3.YY.data, ds.XX.data)
         np.testing.assert_allclose(ds3.XY.data, ds.XX.data)
         np.testing.assert_allclose(ds3.YX.data, ds.XX.data)
+        
+        #
+        # VisibilityData test
+        #
+        
+        ds2 = VisibilityData()
+        ds2.append( ds )
+        ds = ds2
+        
+        # Convert
+        ds2 = utils.convert_to_stokes(ds)
+        
+        # Convert back
+        ds3 = utils.convert_to_linear(ds2)
         
         idi.close()
         
