@@ -72,6 +72,10 @@ class transform_tests(unittest.TestCase):
         
         self.assertAlmostEqual(t0.utc_jd, 2456300.558, 3)
         
+        t1 = transform.Time(2456300.558576389, format='JD', timesys='TAI')
+        self.assertEqual(t1.tai_mjd, 56300.058576389216)
+        self.assertEqual(t1.utc_str, '2013-01-08 01:23:46.000')
+        
     def test_time_current(self):
         """Test the transform.Time.from_system constructor."""
         
