@@ -109,25 +109,46 @@ class Time(object):
         # parse init value base on format type
         # time value is held internally as UTC JD float
         if format == self.FORMAT_PY_DATE:
-            self.utc_py_date = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_py_date = value
+            else:
+                raise ValueError(f"{self.FORMAT_PY_DATE} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_STR:
-            self.utc_str = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_str = value
+            else:
+                raise ValueError(f"{self.FORMAT_STR} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_JD:
-            self.utc_jd = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_jd = value
+            else:
+                self.tai_jd = value
+                
         elif format == self.FORMAT_MJD:
-            self.utc_mjd = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_mjd = value
+            else:
+                self.tai_mjd = value
+                
         elif format == self.FORMAT_DP:
-            self.utc_dp = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_dp = value
+            else:
+                raise ValueError(f"{self.FORMAT_DP} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_MCS:
-            self.utc_mjd = value[0] + value[1]/86400/1000
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_mcs = value
+            else:
+                raise ValueError(f"{self.FORMAT_MCS} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_TIMET:
-            self.utc_timet = value
+            if timesys == self.TIMESYS_UTC:
+                self.utc_timet = value
+            else:
+                self.tai_timet = value
             
         elif format == self.FORMAT_ASTROPY:
             self.astropy = value
