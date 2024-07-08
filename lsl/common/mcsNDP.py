@@ -40,11 +40,13 @@ The other functions:
 
 import re
 import ctypes
+import numpy as np
 from datetime import datetime
 
 from lsl.common import ndp as ndpCommon
-from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, StatusCode, \
-                           SummaryCode, SubsystemID, CommandID, ObservingMode, \
+from lsl.common.mcs import parse_c_struct as _parse_c_struct
+from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, StatusCode, SummaryCode, \
+                           SubsystemID, CommandID, ObservingMode, \
                            flat_to_multi, apply_pointing_correction, MIB_REC_TYPE_BRANCH, \
                            MIB_REC_TYPE_VALUE, MIB_INDEX_FIELD_LENGTH, MIB_LABEL_FIELD_LENGTH, \
                            MIB_VAL_FIELD_LENGTH, MIB, MIBEntry
