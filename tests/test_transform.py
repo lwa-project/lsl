@@ -6,12 +6,13 @@ import os
 import math
 import ephem
 import unittest
+from datetime import datetime
 
 from astropy.time import Time as AstroTime
 from astropy.coordinates import SkyCoord, PrecessedGeocentric, GeocentricTrueEcliptic, Galactic, FK4
 
 from lsl import transform
-from lsl.astro import DJD_OFFSET, equ_posn, gal_posn, ecl_posn
+from lsl.astro import MJD_OFFSET, DJD_OFFSET, equ_posn, gal_posn, ecl_posn
 from lsl.common.stations import lwa1
 
 
@@ -33,6 +34,8 @@ class transform_tests(unittest.TestCase):
         self.assertEqual(t0.utc_str, '2013-01-08 01:23:45.000')
         self.assertEqual(t0.utc_mcs, (56300, 5025000))
         self.assertAlmostEqual(t0.utc_dp/196e6, 1357608225.0, 3)
+        self.assertAlmostEqual(t0.utc_timet, 1357608225.0, 3)
+        self.assertEqual(t0.utc_py_date, datetime(2013, 1, 8, 1, 23, 45, 0))
         
         t1 = transform.Time((56300, 5026000), format='MCS')
         self.assertEqual(t1.utc_str, '2013-01-08 01:23:46.000')
@@ -50,6 +53,24 @@ class transform_tests(unittest.TestCase):
                             format='ASTROPY')
         t4.utc_mcs = (56300, 5024000)
         self.assertEqual(t4.utc_str, '2013-01-08 01:23:44.000')
+        
+        t5 = transform.Time(56300+5026000/1000/86400, format='MJD')
+        self.assertEqual(t5.utc_str, '2013-01-08 01:23:46.000')
+        
+        t6 = transform.Time(56300+5026000/1000/86400+MJD_OFFSET, format='JD')
+        self.assertEqual(t6.utc_str, '2013-01-08 01:23:46.000')
+        
+        t7 = transform.Time(1357608226*196000000, format='DP')
+        self.assertEqual(t7.utc_str, '2013-01-08 01:23:46.000')
+        
+        t8 = transform.Time(datetime.utcfromtimestamp(1357608226.0), format='PY_DATE')
+        self.assertEqual(t8.utc_str, '2013-01-08 01:23:46.000')
+        
+        t0 = transform.Time(56300.05840509292, format='MJD', timesys='TAI')
+        str(t0)
+        repr(t0)
+        
+        self.assertAlmostEqual(t0.utc_jd, 2456300.558, 3)
         
     def test_time_comparisons(self):
         """Test ordering transform.Time instances."""
