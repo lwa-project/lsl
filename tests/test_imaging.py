@@ -621,6 +621,10 @@ class imaging_tests(unittest.TestCase):
                 ds = uv.get_data_set(1)
                 junk = utils.build_gridded_image(ds, verbose=False)
                 
+                # Get image properties
+                junk.field_of_view
+                junk.pixel_size
+                
                 radec = utils.get_image_radec(junk, uv.get_antennaarray())
                 azalt = utils.get_image_azalt(junk, uv.get_antennaarray())
                 
