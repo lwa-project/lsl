@@ -508,7 +508,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
             
             return ctypes.sizeof(self)
             
-        def returnDict(self):
+        def as_dict(self):
             """
             Return the structure as a simple Python dictionary keyed off the
             structure elements.
@@ -868,7 +868,10 @@ class MIB(object):
         
         nEntry = len(self.entries.keys())
         times = [self.entries[k].updateTime for k in self.entries.keys()]
-        return f"MIB containing {nEntry} entries from {min(times)} to {max(times)}"
+        out = f"MIB containing {nEntry} entries"
+        if times:
+            out += f" from {min(times)} to {max(times)}"
+        return out
         
     def __getitem__(self, key):
         """
