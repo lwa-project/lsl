@@ -13,6 +13,8 @@ from lsl.common import mcs
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
+mibInitName = os.path.join(os.path.dirname(__file__), 'data', 'ASP_MIB_init.dat')
+
 
 class mcs_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.mcs
@@ -143,6 +145,14 @@ class mcs_tests(unittest.TestCase):
         azP, altP = mcs.apply_pointing_correction(az, alt, theta, phi, psi, degrees=False)
         self.assertAlmostEqual(azP, 47.346 * np.pi/180, 5)
         self.assertAlmostEqual(altP, 33.702 * np.pi/180, 5)
+        
+    def test_mib_init(self):
+        """Test the parse_init_file() method from mcs.MIB."""
+        
+        mib = mcs.MIB()
+        mib.parse_init_file(mibInitName)
+        str(mib)
+        mib.keys()
 
     
 class mcs_test_suite(unittest.TestSuite):
