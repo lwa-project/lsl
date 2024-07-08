@@ -102,6 +102,10 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc1.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc1.lat.to('deg').value, 4)
         
+        sc1 = sc.transform_to(PrecessedGeocentric(equinox=t0.astropy, obstime=t0.astropy))
+        self.assertAlmostEqual(p0.apparent_equ(t0)[0], sc1.ra.to('deg').value, 4)
+        self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc1.dec.to('deg').value, 4)
+        
     def test_planetaryposition_init(self):
         """Test the transform.PlanetaryPosition constructor."""
         

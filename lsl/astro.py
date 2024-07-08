@@ -2331,12 +2331,14 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
             proper_motion = _DEFAULT_PROPER_MOTION  
             
     t = AstroTime(jD, format='jd', scale='utc')
-    sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
-                  pm_ra_cosdec=proper_motion[0]*math.cos(proper_motion[1]/1000/3600*math.pi/180)*astrounits.mas/astrounits.yr,
-                  pm_dec= proper_motion[1]*astrounits.mas/astrounits.yr,
-                  frame='fk5', equinox='J2000')
+    sc = mean_position.astropy
+    if sc is None:
+        sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
+                      pm_ra_cosdec=proper_motion[0]*math.cos(proper_motion[1]/1000/3600*math.pi/180)*astrounits.mas/astrounits.yr,
+                      pm_dec= proper_motion[1]*astrounits.mas/astrounits.yr,
+                      frame='fk5', equinox='J2000')
     sc = sc.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
-        
+    
     return equ_posn.from_astropy(sc)
 
 

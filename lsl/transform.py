@@ -360,8 +360,9 @@ class SkyPosition(object):
         Return value is object of type astro.equ_posn.
         """
         
-        return None
+        raise NotImplementedError()
         
+    @abc.abstractmethod
     def apparent_ecl(self, time_):
         """
         Return position formatted as apparent ecliptic coordinates.
@@ -370,11 +371,7 @@ class SkyPosition(object):
         Return alue is object of type astro.ecl_posn.
         """
         
-        if not isinstance(time_, Time):
-            raise TypeError("time_ must be of type transform.Time")
-            
-        equ = astro.get_apparent_posn(self._posn, time_.utc_jd)
-        return astro.get_ecl_from_equ(equ, time_.utc_jd)
+        raise NotImplementedError()
 
 
 class CelestialPosition(SkyPosition):
