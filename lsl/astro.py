@@ -2265,11 +2265,15 @@ def get_angular_separation(posn1, posn2):
     Returns angular separation in degrees (float).
     """
     
-    sc1 = SkyCoord(posn1.ra*astrounits.deg, posn1.dec*astrounits.deg,
-                   format='fk5', equinox='J2000')
-    sc2 = SkyCoord(posn2.ra*astrounits.deg, posn2.dec*astrounits.deg,
-                   format='fk5', equinox='J2000')
-    
+    sc1 = posn1.astropy
+    if sc1 is None:
+        sc1 = SkyCoord(posn1.ra*astrounits.deg, posn1.dec*astrounits.deg,
+                       format='fk5', equinox='J2000')
+    sc2 = posn2.astropy
+    if sc2 is None:
+        sc2 = SkyCoord(posn2.ra*astrounits.deg, posn2.dec*astrounits.deg,
+                       format='fk5', equinox='J2000')
+        
     sep = sc1.separation(sc2)
     
     return sep.deg
@@ -2285,11 +2289,15 @@ def get_rel_posn_angle(posn1, posn2):
     Returns position angle in degrees (float).
     """
     
-    sc1 = SkyCoord(posn1.ra*astrounits.deg, posn1.dec*astrounits.deg,
-                   format='fk5', equinox='J2000')
-    sc2 = SkyCoord(posn2.ra*astrounits.deg, posn2.dec*astrounits.deg,
-                   format='fk5', equinox='J2000')
-                   
+    sc1 = posn1.astropy
+    if sc1 is None:
+        sc1 = SkyCoord(posn1.ra*astrounits.deg, posn1.dec*astrounits.deg,
+                       format='fk5', equinox='J2000')
+    sc2 = posn2.astropy
+    if sc2 is None:
+        sc2 = SkyCoord(posn2.ra*astrounits.deg, posn2.dec*astrounits.deg,
+                       format='fk5', equinox='J2000')
+        
     pa = sc1.position_angle(sc2)
     
     return pa.deg
