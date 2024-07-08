@@ -72,6 +72,11 @@ class transform_tests(unittest.TestCase):
         
         self.assertAlmostEqual(t0.utc_jd, 2456300.558, 3)
         
+    def test_time_current(self):
+        """Test the transform.Time.from_system constructor."""
+        
+        t0 = transform.Time.from_system()
+        
     def test_time_comparisons(self):
         """Test ordering transform.Time instances."""
         
