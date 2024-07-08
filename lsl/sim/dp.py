@@ -58,7 +58,7 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
             pol_id = (stand.digitizer - 1) % 2
             
             cFrame = tbn.SimFrame(stand=stand_id, pol=pol_id, central_freq=40e6, gain=20, frame_count=i+1, obs_time=t)
-            cFrame.data = np.zeros(samplesPerFrame, dtype=np.singlecomplex)
+            cFrame.data = np.zeros(samplesPerFrame, dtype=np.complex64)
             cFrame.data += np.random.randn(samplesPerFrame) + 1j*np.random.randn(samplesPerFrame)
             cFrame.data *= maxValue*noise_strength
             cFrame.data += maxValue*np.exp(2j*np.pi*upperSpike*tFrame)
@@ -110,7 +110,7 @@ def _basic_drx(fh, stands, nframes, **kwargs):
                             spike = upperSpike2
                             
                     cFrame = drx.SimFrame(beam=beam, tune=tune, pol=pol, frame_count=i+1, decimation=decimation, time_offset=0, obs_time=t, flags=0)
-                    cFrame.data = np.zeros(samplesPerFrame, dtype=np.singlecomplex)
+                    cFrame.data = np.zeros(samplesPerFrame, dtype=np.complex64)
                     cFrame.data += np.random.randn(samplesPerFrame) + 1j*np.random.randn(samplesPerFrame)
                     cFrame.data *= maxValue*noise_strength
                     cFrame.data += maxValue*np.exp(2j*np.pi*spike*tFrame)
@@ -308,10 +308,10 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
             pol_id = (stand.digitizer - 1) % 2
             
             cFrame = tbn.SimFrame(stand=stand_id, pol=pol_id, central_freq=central_freq, gain=19, frame_count=i+1, obs_time=t)
-            cFrame.data = np.zeros(samplesPerFrame, dtype=np.singlecomplex)
+            cFrame.data = np.zeros(samplesPerFrame, dtype=np.complex64)
             cFrame.data += np.random.randn(samplesPerFrame) + 1j*np.random.randn(samplesPerFrame)
             cFrame.data *= maxValue*noise_strength
-            cFrame.data += maxValue*tdSignals[j,:].astype(np.singlecomplex)
+            cFrame.data += maxValue*tdSignals[j,:].astype(np.complex64)
             
             cFrame.write_raw_frame(fh)
 
