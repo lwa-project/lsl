@@ -10,6 +10,8 @@ import tempfile
 
 from functools import lru_cache
 
+from lsl.common.mcs import MIB
+
 
 __version__ = '0.1'
 __all__ = ['FILENAME_RE', '_open_tarball', '_get_members', 'managed_mkdtemp',
