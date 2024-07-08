@@ -11,7 +11,7 @@ from astropy.time import Time as AstroTime
 from astropy.coordinates import SkyCoord, PrecessedGeocentric, GeocentricTrueEcliptic, Galactic, FK4
 
 from lsl import transform
-from lsl.astro import DJD_OFFSET, equ_posn
+from lsl.astro import DJD_OFFSET, equ_posn, gal_posn, ecl_posn
 from lsl.common.stations import lwa1
 
 
@@ -67,8 +67,19 @@ class transform_tests(unittest.TestCase):
         
         sc = SkyCoord('12h34m56.7s', '+1d23m45.6s', frame='fk5', equinox='J2000')
         equ = equ_posn.from_astropy(sc)
-        
         p0 = transform.CelestialPosition(equ, format='EQU', epoch='J2000', name='test')
+        
+        sc = SkyCoord('12h34m56.7s', '+1d23m45.6s', frame='fk4', equinox='B1950')
+        equ = equ_posn.from_astropy(sc)
+        p1 = transform.CelestialPosition(equ, format='EQU', epoch='B1950', name='test2')
+        
+        sc = sc.transform_to(Galactic())
+        equ = gal_posn.from_astropy(sc)
+        p2 = transform.CelestialPosition(equ, format='GAL', epoch='J2000', name='test3')
+        
+        sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000'))
+        equ = ecl_posn.from_astropy(sc)
+        p3 = transform.CelestialPosition(equ, format='ECL', epoch='J2000', name='test4')
         
     def test_celestialposition_convert(self):
         """Test conversions within transform.CelestialPosition."""
@@ -80,17 +91,14 @@ class transform_tests(unittest.TestCase):
         p0 = transform.CelestialPosition(equ, format='EQU', epoch='J2000', name='test')
         
         sc1 = sc.transform_to(FK4(equinox='B1950'))
-        
         self.assertAlmostEqual(p0.b1950_equ[0], sc1.ra.to('deg').value, 4)
         self.assertAlmostEqual(p0.b1950_equ[1], sc1.dec.to('deg').value, 4)
         
         sc1 = sc.transform_to(Galactic())
-        
         self.assertAlmostEqual(p0.j2000_gal[0], sc1.l.to('deg').value, 4)
         self.assertAlmostEqual(p0.j2000_gal[1], sc1.b.to('deg').value, 4)
         
         sc1 = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t0.astropy))
-        
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc1.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc1.lat.to('deg').value, 4)
         
@@ -122,7 +130,6 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
         sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t0.astropy))
-        
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc.lat.to('deg').value, 4)
         
@@ -146,7 +153,6 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
         sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t0.astropy))
-        
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc.lat.to('deg').value, 4)
         
@@ -170,7 +176,6 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
         sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t0.astropy))
-        
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc.lat.to('deg').value, 4)
         
@@ -194,7 +199,6 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
         sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t0.astropy))
-        
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc.lat.to('deg').value, 4)
         
@@ -218,7 +222,6 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
         sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t0.astropy))
-        
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc.lat.to('deg').value, 4)
         
@@ -242,7 +245,6 @@ class transform_tests(unittest.TestCase):
         self.assertAlmostEqual(p0.apparent_equ(t0)[1], sc.dec.to('deg').value, 4)
         
         sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t0.astropy))
-        
         self.assertAlmostEqual(p0.apparent_ecl(t0)[0], sc.lon.to('deg').value, 4)
         self.assertAlmostEqual(p0.apparent_ecl(t0)[1], sc.lat.to('deg').value, 4)
         

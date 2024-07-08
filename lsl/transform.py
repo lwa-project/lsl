@@ -533,7 +533,7 @@ class CelestialPosition(SkyPosition):
         
     @j2000_ecl.setter
     def j2000_ecl(self, value):
-        if not isinstance(value, (astro.equ_posn, SequenceABC)):
+        if not isinstance(value, (astro.ecl_posn, SequenceABC)):
             raise TypeError("value must be type astro.ecl_posn or sequence of length 2")
         if isinstance(value, SequenceABC):
             if len(value) != 2:

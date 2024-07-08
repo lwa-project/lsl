@@ -2348,8 +2348,10 @@ def get_equ_prec(mean_position, jD):
              (equinox=jD) of object as type equ_posn.
     """    
     
-    sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
-                  frame='fk5', equinox='J2000')
+    sc = mean_position.astropy
+    if sc is None:
+        sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
+                      frame='fk5', equinox='J2000')
     t = AstroTime(jD, format='jd', scale='utc')
     sc = sc.transform_to(FK5(equinox=t))
     
@@ -2369,8 +2371,10 @@ def get_equ_prec2(mean_position, fromJD, toJD):
     """  
     
     t1 = AstroTime(fromJD, format='jd', scale='utc')
-    sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
-                  frame='fk5', equinox=t1)
+    sc = mean_position.astropy
+    if sc is None:
+        sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
+                      frame='fk5', equinox=t1)
     t2 = AstroTime(toJD, format='jd', scale='utc')
     sc = sc.transform_to(FK5(equinox=t2))
     
