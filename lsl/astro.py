@@ -1345,7 +1345,7 @@ class gal_posn(object):
         equatorial position.
         """
         
-        equ = get_equ2000_from_gal(self)
+        equ = get_equ_from_gal(self)
         return get_equ_prec(equ, jD)
         
     def format(self):
@@ -2072,8 +2072,10 @@ def get_hrz_from_equ(target, observer, jD):
     el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
                                      height=elv*astrounits.m,
                                      ellipsoid='WGS84')
-    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
-                  frame='fk5', equinox='J2000')
+    sc = target.astropy
+    if sc is None:
+        sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                      frame='fk5', equinox='J2000')
     aa = AltAz(location=el, obstime=t)
     sc = sc.transform_to(aa)
     
@@ -2136,8 +2138,10 @@ def get_equ_from_ecl(target, jD):
     """
     
     t = AstroTime(jD, format='jd', scale='utc')
-    sc = GeocentricTrueEcliptic(target.lng*astrounits.deg, target.lat*astrounits.deg,
-                                equinox='J2000', obstime=t)
+    sc = target.astropy
+    if sc is None:
+        sc = GeocentricTrueEcliptic(target.lng*astrounits.deg, target.lat*astrounits.deg,
+                                    equinox='J2000', obstime=t)
     sc = sc.transform_to(FK5(equinox='J2000'))
     
     return equ_posn.from_astropy(sc)
@@ -2158,8 +2162,10 @@ def get_ecl_from_equ(target, jD):
     """
     
     t = AstroTime(jD, format='jd', scale='utc')
-    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
-                  frame='fk5', equinox='J2000')
+    sc = target.astropy
+    if sc is None:
+        sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                      frame='fk5', equinox='J2000')
     sc = sc.transform_to(GeocentricTrueEcliptic(equinox='J2000', obstime=t))
     
     return ecl_posn.from_astropy(sc)
@@ -2178,8 +2184,10 @@ def get_equ_from_gal(target):
       This function now expects J2000 coordinates
     """
     
-    sc = SkyCoord(target.l*astrounits.deg, target.b*astrounits.deg,
-                  frame='galactic')
+    sc = target.astropy
+    if sc is None:
+        sc = SkyCoord(target.l*astrounits.deg, target.b*astrounits.deg,
+                      frame='galactic')
     sc = sc.transform_to(FK5(equinox='J2000'))
     
     return equ_posn.from_astropy(sc)
@@ -2199,8 +2207,10 @@ def get_gal_from_equ(target):
       This function now expects J2000 coordinates
     """
     
-    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
-                  frame='fk5', equinox='J2000')
+    sc = target.astropy
+    if sc is None:
+        sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                      frame='fk5', equinox='J2000')
     sc = sc.transform_to(Galactic())
     
     return gal_posn.from_astropy(sc)
@@ -2392,9 +2402,11 @@ def get_object_rst(jD, observer, target):
     el = EarthLocation.from_geodetic(observer.lng*astrounits.deg, observer.lat*astrounits.deg,
                                      height=elv*astrounits.m,
                                      ellipsoid='WGS84')
-    sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
-                  frame='fk5', equinox='J2000')
-    
+    sc = target.astropy
+    if sc is None:
+        sc = SkyCoord(target.ra*astrounits.deg, target.dec*astrounits.deg,
+                      frame='fk5', equinox='J2000')
+        
     # Part 1 - Course +/1 day search for the anti-transits
     t = AstroTime(jD+np.linspace(-1, 1, 192), format='jd', scale='utc')
     aa = AltAz(location=el, obstime=t)
@@ -3471,8 +3483,10 @@ def B1950_to_J2000(pos):
         The accuracy of this function is about 0.01 degrees.
     """
     
-    sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
-                  frame='fk4', equinox='B1950')
+    sc = pos.astropy
+    if sc is None:
+        sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
+                      frame='fk4', equinox='B1950')
     sc = sc.transform_to(FK5(equinox='J2000'))
     
     return equ_posn.from_astropy(sc)
@@ -3491,8 +3505,10 @@ def J2000_to_B1950(pos):
         The accuracy of this function is about 0.01 degrees.
     """   
     
-    sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
-                  frame='fk5', equinox='J2000')
+    sc = pos.astropy
+    if sc is None:
+        sc = SkyCoord(pos.ra*astrounits.deg, pos.dec*astrounits.deg,
+                      frame='fk5', equinox='J2000')
     sc = sc.transform_to(FK4(equinox='B1950'))
     
     return equ_posn.from_astropy(sc)

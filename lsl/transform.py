@@ -509,9 +509,8 @@ class CelestialPosition(SkyPosition):
         Value is object of type astro.equ_posn.
         """
         
-        return astro.get_equ_prec2(self._posn, astro.J2000_UTC_JD, astro.B1950_UTC_JD)
-    
-    
+        return astro.J2000_to_B1950(self._posn)
+        
     @b1950_equ.setter
     def b1950_equ(self, value):
         if not isinstance(value, (astro.equ_posn, SequenceABC)):
@@ -521,7 +520,7 @@ class CelestialPosition(SkyPosition):
                 raise TypeError("value sequence must be length 2")
             value = astro.equ_posn(*value)
         
-        self._posn = astro.get_equ_prec2(value, astro.B1950_UTC_JD, astro.J2000_UTC_JD)
+        self._posn = astro.B1950_to_J2000(value)
         
     @property
     def j2000_ecl(self):
@@ -564,7 +563,7 @@ class CelestialPosition(SkyPosition):
         Value is object of type astro.gal_posn.
         """
         
-        return astro.get_gal_from_equ2000(self._posn)
+        return astro.get_gal_from_equ(self._posn)
         
     @j2000_gal.setter
     def j2000_gal(self, value):
@@ -575,7 +574,7 @@ class CelestialPosition(SkyPosition):
                 raise TypeError("value sequence must be length 2")
             value = astro.gal_posn(*value)
             
-        self._posn = astro.get_equ2000_from_gal(value)
+        self._posn = astro.get_equ_from_gal(value)
 
 
 class PlanetaryPosition(SkyPosition):
