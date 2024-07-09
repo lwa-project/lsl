@@ -64,7 +64,7 @@ class uvutils_tests(unittest.TestCase):
         ind = uvutils.antennas_to_baseline(100, 102, standList, baseline_list=bl)
         self.assertEqual(ind, 1)
         
-        ind = uvutils.antennas_to_baseline(0, 3, standList, include_auto=False)
+        ind = uvutils.antennas_to_baseline(100, 103, standList, include_auto=False)
         self.assertEqual(ind, 2)
         
     def run_compute_uvw_test(self, antennas, freq, HA=0.0, dec=34.0):
