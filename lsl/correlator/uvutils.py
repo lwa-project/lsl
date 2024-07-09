@@ -197,23 +197,23 @@ def compute_uvw(antennas_or_baselines, HA=0.0, dec=34.070, freq=49.0e6, site=lwa
         lat2 = site.lat*1.0
         
     # Coordinate transformation matrices
-    trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
-                        [1,  0,            0],
-                        [0,  np.cos(lat2), np.sin(lat2)]])
-    trans2 = np.matrix([[ np.sin(HA2),               np.cos(HA2),              0],
-                        [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
-                        [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
+    trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
+                       [1,  0,            0],
+                       [0,  np.cos(lat2), np.sin(lat2)]])
+    trans2 = np.array([[ np.sin(HA2),               np.cos(HA2),              0],
+                       [-np.sin(dec2)*np.cos(HA2),  np.sin(dec2)*np.sin(HA2), np.cos(dec2)],
+                       [ np.cos(dec2)*np.cos(HA2), -np.cos(dec2)*np.sin(HA2), np.sin(dec2)]])
+    trans = trans2 @ trans1
     
     # Compute the baselines and convert to wavelengths
     for k,(a1,a2) in enumerate(baselines):
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
         xyzPrime = a1.stand - a2.stand
-        xyz = trans1*np.matrix([[xyzPrime[0]], [xyzPrime[1]], [xyzPrime[2]]])
+        xyz = np.dot(trans, xyzPrime)
+        xyz.shape += (1,)
         
-        # Go from CE, east, NCP to u, v, w
-        temp = trans2*xyz
-        uvw[k,:,:] = temp[:,0] * freq.ravel() / speedOfLight
+        uvw[k,:,:] = xyz * freq.ravel() / speedOfLight
         
     uvw.shape = (Nbase,3)+freq.shape
     
@@ -273,16 +273,16 @@ def compute_uv_track(antennas_or_baselines, dec=34.070, freq=49.0e6, site=lwa1):
         lat2 = site.lat*1.0
         
     # Coordinate transformation matrices
-    trans1 = np.matrix([[0, -np.sin(lat2), np.cos(lat2)],
-                        [1,  0,            0],
-                        [0,  np.cos(lat2), np.sin(lat2)]])
+    trans1 = np.array([[0, -np.sin(lat2), np.cos(lat2)],
+                       [1,  0,            0],
+                       [0,  np.cos(lat2), np.sin(lat2)]])
     
     count = 0
     for a1,a2 in baselines:
         # Go from a east, north, up coordinate system to a celestial equation, 
         # east, north celestial pole system
         xyzPrime = a1.stand - a2.stand
-        xyz = trans1*np.matrix([[xyzPrime[0]],[xyzPrime[1]],[xyzPrime[2]]])
+        xyz = np.dot(trans1, xyzPrime)
         xyz = np.ravel(xyz)
         
         uRange = np.linspace(-np.sqrt(xyz[0]**2 + xyz[1]**2), np.sqrt(xyz[0]**2 + xyz[1]**2), num=256)
