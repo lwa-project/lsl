@@ -31,45 +31,30 @@ _LINT_RE = re.compile(r'(?P<module>.*?):(?P<line>\d+): \[(?P<type>.*?)\] (?P<inf
 class scripts_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the LSL scripts."""
     
-    pass     
-
-
-def _test_generator(script):
-    """
-    Function to build a test method for each script that is provided.  
-    Returns a function that is suitable as a method inside a unittest.TestCase
-    class
-    """
-    
-    def test(self):
-        pylint_output = StringIO()
-        reporter = TextReporter(pylint_output)
-        pylint_args = [script, "-E", "--extension-pkg-whitelist=numpy", "--init-hook='import sys; sys.path=[%s]; sys.path.insert(0, \"%s\")'" % (",".join(['"%s"' % p for p in sys.path]), os.path.dirname(MODULE_BUILD))]
-        Run(pylint_args, reporter=reporter, exit=False)
-        out = pylint_output.getvalue()
-        out_lines = out.split('\n')
+    def test_scripts(self):
+        """Static analysis of the LSL scripts."""
         
-        for line in out_lines:
-            mtch = _LINT_RE.match(line)
-            if mtch is not None:
-                line_no, type, info = mtch.group('line'), mtch.group('type'), mtch.group('info')
-                self.assertEqual(type.find('syntax'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
-                self.assertEqual(type.find('undefined'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
-                # HACK to deal with some strangeness in lwa_cat_view.py
-                if script.find('lwa_cat_view.py') == -1 or (script.find('lwa_cat_view.py') != -1 and info.find('j2000_') == -1):
-                    self.assertEqual(type.find('no-member'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
-    return test
-
-
-if run_scripts_tests:
-    _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
-    _SCRIPTS.sort()
-    for script in _SCRIPTS:
-        test = _test_generator(script)
-        name = 'test_%s' % os.path.splitext(os.path.basename(script))[0]
-        doc = """Static analysis of the '%s' script.""" % os.path.basename(script)
-        setattr(test, '__doc__', doc)
-        setattr(scripts_tests, name, test)
+        _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
+        _SCRIPTS.sort()
+        for script in _SCRIPTS:
+            name = script.rsplit('scripts')[-1]
+            with self.subTest(script=name):
+                pylint_output = StringIO()
+                reporter = TextReporter(pylint_output)
+                pylint_args = [script, "-E", "--extension-pkg-whitelist=numpy", "--init-hook='import sys; sys.path=[%s]; sys.path.insert(0, \"%s\")'" % (",".join(['"%s"' % p for p in sys.path]), os.path.dirname(MODULE_BUILD))]
+                Run(pylint_args, reporter=reporter, exit=False)
+                out = pylint_output.getvalue()
+                out_lines = out.split('\n')
+                
+                for line in out_lines:
+                    mtch = _LINT_RE.match(line)
+                    if mtch is not None:
+                        line_no, type, info = mtch.group('line'), mtch.group('type'), mtch.group('info')
+                        self.assertEqual(type.find('syntax'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
+                        self.assertEqual(type.find('undefined'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
+                        # HACK to deal with some strangeness in lwa_cat_view.py
+                        if script.find('lwa_cat_view.py') == -1 or (script.find('lwa_cat_view.py') != -1 and info.find('j2000_') == -1):
+                            self.assertEqual(type.find('no-member'), -1, "%s:%s - %s" % (os.path.basename(script), line_no, info))
 
 
 class scripts_test_suite(unittest.TestSuite):
