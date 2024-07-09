@@ -157,10 +157,10 @@ def compute_uvw(antennas_or_baselines, HA=0.0, dec=34.070, freq=49.0e6, site=lwa
     """
     
     # Try this so that freq can be either a scalar, a list, or an array
-    try: 
-        freq.size
-        assert(freq.shape != ())
-    except (AttributeError, AssertionError):
+    if isinstance(freq, np.ndarray):
+        if freq.shape == ():
+            raise RuntimeError("No frequencies provided")
+    else:
         freq = np.array(freq, ndmin=1)
         
     if isinstance(antennas_or_baselines[0], Antenna):

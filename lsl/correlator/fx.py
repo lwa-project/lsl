@@ -253,22 +253,24 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phase_center == 'z':
-        azPC = 0.0
-        altPC = np.pi/2.0
-    else:
-        if isinstance(phase_center, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            altPC = phase_center.alt * 1.0
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
         else:
-            azPC = phase_center[0]*np.pi/180.0
-            altPC = phase_center[1]*np.pi/180.0
+            raise ValueError(f"Unknown phase_center '{phase_center}'")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
             
     source = np.array([np.cos(altPC)*np.sin(azPC), 
                        np.cos(altPC)*np.cos(azPC), 
@@ -407,22 +409,24 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phase_center == 'z':
-        azPC = 0.0
-        altPC = np.pi/2.0
-    else:
-        if isinstance(phase_center, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            altPC = phase_center.alt * 1.0
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
         else:
-            azPC = phase_center[0]*np.pi/180.0
-            altPC = phase_center[1]*np.pi/180.0
+            raise ValueError(f"Unknown phase_center '{phase_center}'")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
     source = np.array([np.cos(altPC)*np.sin(azPC), 
                        np.cos(altPC)*np.cos(azPC), 
                        np.sin(altPC)])
