@@ -12,7 +12,7 @@ import argparse
 from datetime import datetime, timedelta
 
 from lsl.common.mcs import mjdmpm_to_datetime
-from lsl.common import metabundle, metabundleADP
+from lsl.common import metabundle
 from lsl.reader import tbw, tbn, drx, errors
 
 from lsl.misc import telemetry
@@ -40,17 +40,9 @@ def main(args):
     data = args.filename
 
     # Get all observations and their start times
-    try:
-        ## LWA-1
-        sdf = metabundle.get_sdf(meta)
-        ses = metabundle.get_session_spec(meta)
-        obs = metabundle.get_observation_spec(meta)
-    except:
-        ## LWA-SV
-        ### Try again
-        sdf = metabundleADP.get_sdf(meta)
-        ses = metabundleADP.get_session_spec(meta)
-        obs = metabundleADP.get_observation_spec(meta)
+    sdf = metabundle.get_sdf(meta)
+    ses = metabundle.get_session_spec(meta)
+    obs = metabundle.get_observation_spec(meta)
     obs.sort(_obs_comp)
     tStart = []
     oDetails = []
@@ -60,11 +52,11 @@ def main(args):
                           'p': o['project_id'], 's': o['session_id'], 'o': o['obs_id'], 
                           't': sdf.sessions[0].observations[o['obs_id']-1].target} )
 
-        print("Observation #%i" % (o['obs_id']))
-        print(" Start: %i, %i -> %s" % (o['mjd'], o['mpm'], tStart[-1]))
-        print(" Mode: %s" % str(o['mode']))
-        print(" BW: %i" % o['bw'])
-        print(" Target: %s" % sdf.sessions[0].observations[o['obs_id']-1].target)
+        print(f"Observation #{o['obs_id']}")
+        print(f" Start: {o['mjd']}, {o['mpm']} -> {tStart[-1]}")
+        print(f" Mode: {o['mode'].name})
+        print(f" BW: {o['bw']}")
+        print(f" Target: {sdf.sessions[0].observations[o['obs_id']-1].target}")
     print(" ")
 
     # Figure out where in the file the various bits are.
@@ -72,11 +64,11 @@ def main(args):
     lf = drx.read_frame(fh)
     beam, j, k = lf.id
     if beam != obs[0]['drx_beam']:
-        print('ERROR: Beam mis-match, metadata is for #%i, file is for #%i' % (obs[0]['drx_beam'], beam))
+        print(f"ERROR: Beam mis-match, metadata is for #{obs[0]['drx_beam']}, file is for #{beam}")
         sys.exit()
     firstFrame = lf.time.datetime
     if abs(firstFrame - min(tStart)) > timedelta(seconds=30):
-        print('ERROR: Time mis-match, metadata is for %s, file is for %s' % (min(tStart), firstFrame))
+        print(f"ERROR: Time mis-match, metadata is for {min(tStart)}, file is for {firstFrame}")
         sys.exit()
     fh.seek(0)
 
@@ -85,10 +77,10 @@ def main(args):
 
         ## Get observation properties
         oStart = tStart[i]
-        oMode = str(oDetails[i]['m'])
+        oMode = oDetails[i]['m'].name
         oDur  = oDetails[i]['d']
         oBW   = oDetails[i]['f']
-        print("Seeking %s observation of %.3f seconds at %s" % (oMode, oDur, oStart))
+        print(f"Seeking {oMode} observation of {oDur:.3f} seconds at {oStart}")
 
         ## Get the correct reader to use
         if oMode == 'TBW':
@@ -133,7 +125,7 @@ def main(args):
         ## Go in search of the start of the observation
         if frame.time.datetime < oStart:
             ### We aren't at the beginning yet, seek fowards
-            print("-> At byte %i, time is %s < %s" % (fh.tell(), frame.time.datetime, oStart))
+            print(f"-> At byte {fh.tell()}, time is {frame.time.datetime} < {oStart}")
 
             while frame.time.datetime < oStart:
                 try:
@@ -146,7 +138,7 @@ def main(args):
 
         elif frame.time.datetime > oStart:
             ### We've gone too far, seek backwards
-            print("-> At byte %i, time is %s > %s" % (fh.tell(), frame.time.datetime, oStart))
+            print(f"-> At byte {fh.tell()}, time is {frame.time.datetime} > {oStart}")
 
             while frame.time.datetime > oStart:
                 if fh.tell() == 0:
@@ -162,13 +154,13 @@ def main(args):
                 
         else:
             ### We're there already
-            print("-> At byte %i, time is %s = %s" % (fh.tell(), frame.time.datetime, oStart))
+            print(f"-> At byte {fh.tell()}, time is {frame.time.datetime} = {oStart}")
             
         ## Jump back exactly one frame so that the filehandle is in a position 
         ## to read the first frame that is part of the observation
         try:
             frame = reader.read_frame(fh)
-            print("-> At byte %i, time is %s = %s" % (fh.tell(), frame.time.datetime, oStart))
+            print(f"-> At byte {fh.tell()}, time is {frame.time.datetime} = {oStart}")
             fh.seek(-reader.FRAME_SIZE, 1)
         except errors.EOFError:
             pass
@@ -186,18 +178,18 @@ def main(args):
 
         ## Progress report
         if oDetails[i]['b'] >= 0:
-            print('-> Obs.', oDetails[i]['o'], 'starts at byte', oDetails[i]['b'])
+            print(f"-> Obs. {oDetails[i]['o']} starts at byte {oDetails[i]['b']}")
         else:
-            print('-> Obs.', oDetails[i]['o'], 'starts after the end of the file')
+            print(f"-> Obs. {oDetails[i]['o']} starts after the end of the file")
     print(" ")
 
     # Report
     for i in range(len(tStart)):
         if oDetails[i]['b'] < 0:
-            print("%s, Session %i, Observation %i: not found" % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o']))
+            print(f"{oDetails[i]['p']}, Session {oDetails[i]['s']}, Observation {oDetails[i]['o']}: not found")
 
         else:
-            print("%s, Session %i, Observation %i: %i to %i (%i bytes)" % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'], oDetails[i]['b'], oDetails[i]['e'], (oDetails[i]['e'] - oDetails[i]['b'])))
+            print(f"{oDetails[i]['p']}, Session {oDetails[i]['s']}, Observation {oDetails[i]['o']}: {oDetails[i]['b']} to {oDetails[i]['e']} ({oDetails[i]['e']-oDetails[i]['b']} bytes)")
     print(" ")
 
     # Split
@@ -207,15 +199,15 @@ def main(args):
                 continue
                 
             ## Report
-            print("Working on Observation %i" % (i+1,))
+            print(f"Working on Observation #{i+1}")
             
             ## Create the output name
             if args.source:
                 outname = '%s_%i_%s.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['t'].replace(' ', '').replace('/','').replace('&','and'))
             else:
-                outname = '%s_%i_%i.dat' % (oDetails[i]['p'], oDetails[i]['s'], oDetails[i]['o'])
+                outname = f"{oDetails[i]['p']}_{oDetails[i]['s']}_{oDetails[i]['o']}.dat"
                 
-            oMode = str(oDetails[i]['m'])
+            oMode = oDetails[i]['m'].name
 
             ## Get the correct reader to use
             if oMode == 'TBW':
@@ -235,28 +227,27 @@ def main(args):
             ## Split
             if os.path.exists(outname):
                 if not args.force:
-                    yn = input("WARNING: '%s' exists, overwrite? [Y/n] " % outname)
+                    yn = input(f"WARNING: '{outname}' exists, overwrite? [Y/n] ")
                 else:
                     yn = 'y'
                     
                 if yn not in ('n', 'N'):
                     os.unlink(outname)
                 else:
-                    print("WARNING: output file '%s' already exists, skipping" % outname)
+                    print(f"WARNING: output file '{outname}' already exists, skipping")
                     continue
                     
             fh.seek(oDetails[i]['b'])
             
             t0 = time.time()
-            oh = open(outname, 'wb')
-            for sl in [2**i for i in range(17)[::-1]]:
-                while nFramesRead >= sl:
-                    temp = fh.read(sl*reader.FRAME_SIZE)
-                    oh.write(temp)
-                    nFramesRead -= sl
-            oh.close()
+            with open(outname, 'wb') as oh:
+                for sl in [2**i for i in range(17)[::-1]]:
+                    while nFramesRead >= sl:
+                        temp = fh.read(sl*reader.FRAME_SIZE)
+                        oh.write(temp)
+                        nFramesRead -= sl
             t1 = time.time()
-            print("  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(outname), t1-t0, os.path.getsize(outname)/1024.0**2/(t1-t0)))
+            print(f"  Copied {os.path.getsize(outname)} bytes in {t1-t0:.3f} s ({os.path.getsize(outname)/1024.0**2/(t1-t0):.3f} MB/s)")
     print(" ")
 
 
@@ -278,4 +269,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main(args)
-    

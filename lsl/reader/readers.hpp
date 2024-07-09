@@ -37,6 +37,7 @@ extern PyObject *EOFError;
 // gofast.cpp
 extern int16_t tbw4LUT[256][2];
 extern int8_t  tbnLUT[256];
+extern int8_t  drx8LUT[256];
 extern int8_t  drxLUT[256][2];
 extern int8_t  tbfLUT[256][2];
 
@@ -73,6 +74,11 @@ extern PyObject *read_drx_cf32(PyObject*, PyObject*);
 extern char read_drx_cf32_doc[];
 extern PyObject *read_drx_ci8(PyObject*, PyObject*);
 extern char read_drx_ci8_doc[];
+// drx8.cpp
+extern PyObject *read_drx8_cf32(PyObject*, PyObject*);
+extern char read_drx8_cf32_doc[];
+extern PyObject *read_drx8_ci8(PyObject*, PyObject*);
+extern char read_drx8_ci8_doc[];
 // drspec.cpp
 extern PyObject *read_drspec(PyObject*, PyObject*);
 extern char read_drspec_doc[];

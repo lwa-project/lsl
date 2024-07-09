@@ -122,17 +122,20 @@ def get_gsl():
         subprocess.check_call(['pkg-config', 'gsl', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0].rstrip().split()
+        outVersion = p.communicate()[0].decode()
+        outVersion = outVersion.rstrip().split()
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0].rstrip().split()
+        outCFLAGS = p.communicate()[0].decode()
+        outCFLAGS = outCFLAGS.rstrip().split()
         try:
             outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
         except TypeError:
             pass
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0].rstrip().split()
+        outLIBS = p.communicate()[0].decode()
+        outLIBS = outLIBS.rstrip().split()
         try:
             outLIBS = [str(v, 'utf-8') for v in outLIBS]
         except TypeError:
@@ -158,19 +161,11 @@ def get_fftw():
         subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0]
-        try:
-            outVersion = outVersion.decode()
-        except AttributeError:
-            pass
+        outVersion = p.communicate()[0].decode()
         outVersion = outVersion.strip().split()
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0]
-        try:
-            outCFLAGS = outCFLAGS.decode()
-        except AttributeError:
-            pass
+        outCFLAGS = p.communicate()[0].decode()
         outCFLAGS = outCFLAGS.rstrip().split()
         try:
             outCFLAGS = [str(v) for v in outCFLAGS]
@@ -178,11 +173,7 @@ def get_fftw():
             pass
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0]
-        try:
-            outLIBS = outLIBS.decode()
-        except AttributeError:
-            pass
+        outLIBS = p.communicate()[0].decode()
         outLIBS = outLIBS.rstrip().split()
         try:
             outLIBS = [str(v) for v in outLIBS]
@@ -349,7 +340,7 @@ coreExtraLibs = []
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
-ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/reader/tbw.cpp', 'lsl/reader/tbn.cpp', 'lsl/reader/drx.cpp', 'lsl/reader/drspec.cpp', 'lsl/reader/vdif.cpp', 'lsl/reader/tbf.cpp', 'lsl/reader/cor.cpp'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
+ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/reader/tbw.cpp', 'lsl/reader/tbn.cpp', 'lsl/reader/drx.cpp', 'lsl/reader/drx8.cpp', 'lsl/reader/drspec.cpp', 'lsl/reader/vdif.cpp', 'lsl/reader/tbf.cpp', 'lsl/reader/cor.cpp'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
             Extension('common._fir', ['lsl/common/fir.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._spec', ['lsl/correlator/spec.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
@@ -388,7 +379,7 @@ setup(
     scripts = glob.glob('scripts/*.py'), 
     python_requires='>=3.8', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = ['astropy>=5.1', 'jplephem', 'healpy', 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
+    install_requires = ['astropy>=5.2', 'jplephem', 'healpy', 'h5py', 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,

@@ -30,8 +30,8 @@ def main(args):
         mjdList = np.sort(mjdList)
         
     else:
-        tStart = "%s %s" % (args.StartDate, args.StartTime)
-        tStop = "%s %s" % (args.StopDate, args.StopTime)
+        tStart = f"{args.StartDate} {args.StartTime}"
+        tStop = f"{args.StopDate} {args.StopTime}"
         
         # YYYY/MM/DD HH:MM:SS -> datetime instance
         tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S.%f")
@@ -47,6 +47,8 @@ def main(args):
     
     # Setup everything for computing the position of the source
     if args.lwasv:
+        site = stations.lwasv
+    elif args.lwana:
         site = stations.lwasv
     elif args.ovrolwa:
         site = stations.lwa1
@@ -150,6 +152,8 @@ if __name__ == "__main__":
     sgroup = parser.add_mutually_exclusive_group(required=False)
     sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='calculate for LWA-SV instead of LWA1')
+    sgroup.add_argument('-a', '--lwana', action='store_true', 
+                        help='calculate for LWA-NA instead of LWA1')
     sgroup.add_argument('-o', '--ovrolwa', action='store_true',
                         help='calculate for OVRO-LWA instead of LWA1')
     parser.add_argument('-n', '--n-samples', type=aph.positive_int, default=11, 
@@ -171,4 +175,3 @@ if __name__ == "__main__":
                         help='use the high time resolution UQRG data products')
     args = parser.parse_args()
     main(args)
-    

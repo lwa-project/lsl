@@ -174,7 +174,20 @@ class reader_tests(unittest.TestCase):
         
         t0 = FrameTimestamp(1587495778, 0.0)
         self.assertEqual(t0, 1587495778)
-            
+        
+    def test_timestamp_conversion(self):
+        """Test FrameTimestamp string and numeric conversions"""
+        
+        t0 = FrameTimestamp(1587495778, 0.5)
+        v = f"{t0:s}"
+        self.assertEqual(v, str(t0))
+        
+        v = f"{t0:f}"
+        self.assertEqual(float(v), t0.unix)
+        
+        v = f"{t0:d}"
+        self.assertEqual(int(v), int(t0.unix))
+        
     ### TBW ###
     
     def test_tbw_read(self):
@@ -579,6 +592,14 @@ class reader_tests(unittest.TestCase):
         frameT = frames[0] * frames[1]
         np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
         
+        # Division
+        frameT = frames[0] / 2.0
+        np.testing.assert_allclose(frameT.payload.data, 0.5*frames[0].payload.data, atol=1e-6)
+        frameT /= 2.0
+        np.testing.assert_allclose(frameT.payload.data, 0.25*frames[0].payload.data, atol=1e-6)
+        frameT = frames[0] / frames[1]
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data/frames[1].payload.data, atol=1e-6)
+        
         # Addition
         frameA = frames[0] + 2.0
         np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
@@ -586,6 +607,14 @@ class reader_tests(unittest.TestCase):
         np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
         np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
+        
+        # Subtraction
+        frameA = frames[0] - 2.0
+        np.testing.assert_allclose(frameA.payload.data, -2+frames[0].payload.data, atol=1e-6)
+        frameA -= 2.0
+        np.testing.assert_allclose(frameA.payload.data, -4+frames[0].payload.data, atol=1e-6)
+        frameA = frames[0] - frames[1]
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data-frames[1].payload.data, atol=1e-6)
             
     ### DR Spectrometer ###
     
@@ -718,7 +747,15 @@ class reader_tests(unittest.TestCase):
         np.testing.assert_allclose(frameT.payload.XX1, 4*frames[0].payload.XX1, atol=1e-6)
         frameT = frames[0] * frames[1]
         np.testing.assert_allclose(frameT.payload.YY0, frames[0].payload.YY0*frames[1].payload.YY0, atol=1e-6)
-            
+        
+        # Division
+        frameT = frames[0] / 2.0
+        np.testing.assert_allclose(frameT.payload.XX0, 0.5*frames[0].payload.XX0, atol=1e-6)
+        frameT /= 2.0
+        np.testing.assert_allclose(frameT.payload.XX1, 0.25*frames[0].payload.XX1, atol=1e-6)
+        frameT = frames[0] / frames[1]
+        np.testing.assert_allclose(frameT.payload.YY0, frames[0].payload.YY0/frames[1].payload.YY0, atol=1e-6)
+        
         # Addition
         frameA = frames[0] + 2.0
         np.testing.assert_allclose(frameA.payload.XX0, 2+frames[0].payload.XX0, atol=1e-6)
@@ -726,7 +763,15 @@ class reader_tests(unittest.TestCase):
         np.testing.assert_allclose(frameA.payload.XX0, 4+frames[0].payload.XX0, atol=1e-6)
         frameA = frames[0] + frames[1]
         np.testing.assert_allclose(frameA.payload.YY0, frames[0].payload.YY0+frames[1].payload.YY0, atol=1e-6)
-            
+        
+        # Subtraction
+        frameA = frames[0] - 2.0
+        np.testing.assert_allclose(frameA.payload.XX0, -2+frames[0].payload.XX0, atol=1e-6)
+        frameA -= 2.0
+        np.testing.assert_allclose(frameA.payload.XX0, -4+frames[0].payload.XX0, atol=1e-6)
+        frameA = frames[0] - frames[1]
+        np.testing.assert_allclose(frameA.payload.YY0, frames[0].payload.YY0-frames[1].payload.YY0, atol=1e-6)
+        
     ### VDIF ###
     
     def test_vdif_read(self):

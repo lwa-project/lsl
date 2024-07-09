@@ -54,8 +54,8 @@ def _parse_index(index):
     index = soup.prettify()
     index = index.replace('<html>', '<?xml version="1.0" encoding="utf-8"?>')
     for tag in ('body', 'html'):
-        index = index.replace("<%s>" % tag, '')
-        index = index.replace("</%s>" % tag, '')
+        index = index.replace(f"<{tag}>", '')
+        index = index.replace(f"</{tag}>", '')
         
     # Parse it
     table = ET.XML(index)
@@ -103,6 +103,10 @@ def main(args):
         _name = 'LWA-SV'
         _ssmif = 'lwasv-ssmif.txt'
         _url = "https://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
+    elif args.lwana:
+        _name = 'LWA-NA'
+        _ssmif = os.path.join(dataPath, 'lwana-ssmif.txt')
+        _url = "https://lda10g.alliance.unm.edu/metadata/lwana/ssmif/"
     else:
         _name = 'LWA1'
         _ssmif = 'lwa1-ssmif.txt'
@@ -122,14 +126,14 @@ def main(args):
                     except AttributeError:
                         pass
             except Exception as e:
-                print("Error:  Cannot download SSMIF listing, %s" % str(e))
+                print(f"Error:  Cannot download SSMIF listing, {str(e)}")
                 
             ## Parse
             versions = _parse_index(index)
             
             ## Prompt the user for the version to revert to
             for i,(filename,date) in enumerate(versions):
-                print("%i: %s" % (i, filename))
+                print(f"{i}: {filename}")
             i = -1
             while i not in range(0, len(versions)):
                 i = input("Enter SSMIF to revert to: ")
@@ -141,14 +145,14 @@ def main(args):
             print(" ")
             
             ## Build the URL
-            urlToDownload = "%s/%s" % (_url, versions[i][0])
+            urlToDownload = f"{_url}/{versions[i][0]}"
         except Exception as e:
-            print("Error:  Cannot process reversion, %s" % str(e))
+            print(f"Error:  Cannot process reversion, {str(e)}")
             
     elif args.update:
         # Update to the latest version
         
-        urlToDownload = "%s/SSMIF_CURRENT.txt" % _url
+        urlToDownload = f"{_url}/SSMIF_CURRENT.txt"
         
     elif args.file is not None:
         # Use the specified file
@@ -159,7 +163,7 @@ def main(args):
     if urlToDownload is not None:
         ## Retrieve
         try:
-            print("Downloading %s" % urlToDownload)
+            print(f"Downloading {urlToDownload}")
             mtime = 0.0
             remote_size = 1
             with urlopen(urlToDownload, timeout=LSL_CONFIG.get('download.timeout')) as ah:
@@ -235,8 +239,11 @@ if __name__ == "__main__":
             epilog='The -s/--lwasv option changes the behavior of all other options, e.g., -u/--update updates the LWA-SV SSMIF.',
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
             )
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='update LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='update LWA-NA instead of LWA1')
     parser.add_argument('-u', '--update', action='store_true', 
                         help='update the default LWA1 SSMIF')
     parser.add_argument('-r', '--revert', action='store_true', 

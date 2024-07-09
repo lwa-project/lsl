@@ -508,7 +508,7 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
             
             return ctypes.sizeof(self)
             
-        def returnDict(self):
+        def as_dict(self):
             """
             Return the structure as a simple Python dictionary keyed off the
             structure elements.
@@ -703,6 +703,7 @@ class SubsystemID(enum.Enum):
     DR4 = 17
     DR5 = 18
     ADP = 19
+    NDP = 20
 
 
 class CommandID(enum.Enum):
@@ -867,7 +868,10 @@ class MIB(object):
         
         nEntry = len(self.entries.keys())
         times = [self.entries[k].updateTime for k in self.entries.keys()]
-        return f"MIB containing {nEntry} entries from {min(times)} to {max(times)}"
+        out = f"MIB containing {nEntry} entries"
+        if times:
+            out += f" from {min(times)} to {max(times)}"
+        return out
         
     def __getitem__(self, key):
         """
@@ -1016,7 +1020,7 @@ class MIBEntry(object):
          * f8r:   float, 8 bytes, big-ending (=float64)
         """
         
-        if dataType == 'NUL':
+        if dataType == 'NUL' or dataType == '':
             try:
                 value = str(value, 'utf-8')
             except TypeError:

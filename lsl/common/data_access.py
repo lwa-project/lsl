@@ -159,6 +159,8 @@ class _DataAccess(object):
             received = 0
         except socket.timeout:
             received = 0
+        except HTTPError:
+            received = 0
             
         with self._data_cache.open(metaname, 'w') as fh:
             fh.write(f"created: {time.time():.0f}\n")

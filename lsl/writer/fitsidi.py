@@ -19,6 +19,7 @@ import os
 import re
 import math
 import numpy as np
+import warnings
 from functools import total_ordering
 from datetime import datetime
 from collections import OrderedDict
@@ -130,6 +131,17 @@ class WriterBase(object):
             self.pol = pol
             self.source = source
             
+            try:
+                if self.source.name is None:
+                    raHms = astro.deg_to_hms(self.source._ra*180/np.pi)
+                    (tsecs, secs) = math.modf(raHms.seconds)
+                    name = "RA%02d%02d%02d%01d" % (raHms.hours, raHms.minutes, int(secs), int(tsecs * 10.0))
+                    
+                    warnings.warn(f"No source name provided for {str(self.source)}, assigning '{name}'", RuntimeWarning)
+                    self.source.name = name
+            except AttributeError:
+                pass
+                
         def __eq__(self, other):
             if isinstance(other, WriterBase._UVData):
                 sID = (self.obsTime,  abs(self.pol))

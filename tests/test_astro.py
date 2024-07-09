@@ -273,7 +273,7 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 69, 0)
         self.assertRaises(ValueError, astro.date, 2000, 1, 1, 0, 0, 73)
         
-    def tet_date_string(self):
+    def test_date_string(self):
         """Test astro.date string representation."""
         
         d = astro.date(2000, 4, 28, 21, 49, 13.0238)
@@ -354,6 +354,17 @@ class astro_tests(unittest.TestCase):
         self.assertEqual(d.minutes, 49)
         self.assertAlmostEqual(d.seconds, 13.0238)
         self.assertEqual(d.gmtoff, -3600 * 5)
+        
+    def test_zonedate_cmp(self):
+        """Test astro.zonedate.__cmp__() method."""
+        
+        d1 = astro.zonedate(2004, 5, 9, 12, 34, 22, -3600 * 5)
+        d2 = astro.zonedate(2009, 2, 6,  9,  2,  6, -3600 * 5)
+        d3 = astro.zonedate(2009, 2, 6,  8,  2,  6, -3600 * 6)
+        self.assertTrue(operator.lt(d1, d2))
+        self.assertTrue(operator.gt(d2, d1))
+        self.assertTrue(operator.eq(d2, d3))
+        self.assertTrue(operator.ne(d1, d3))
         
     def test_date_to_zonedate(self):
         """Test astro.date_to_zonedate() function."""
@@ -620,6 +631,7 @@ class astro_tests(unittest.TestCase):
         h = astro.hrz_posn(39.221, 46.301)
         self.assertAlmostEqual(h.az, 39.221)
         self.assertAlmostEqual(h.alt, 46.301)
+        self.assertAlmostEqual(h.zen(), 90-46.301)
         
         self.assertRaises(ValueError, astro.hrz_posn, 400, 0)
         self.assertRaises(ValueError, astro.hrz_posn, -1, 0)
@@ -982,6 +994,7 @@ class astro_tests(unittest.TestCase):
         rst = astro.rst_time(rise, set, transit)
         str(rst)
         repr(rst)
+        rst.format()
         
     def test_get_object_rst(self):
         """Test astro.get_object_rst() function."""
@@ -1336,6 +1349,9 @@ class astro_tests(unittest.TestCase):
                                    (lng,lat),
                                    degrees=True, decimal=ACCURACY_DIST)
             
+            str(equ)
+            repr(equ)
+            
     def test_get_equ_from_ecl(self):
         """Test astro.get_equ_from_ecl() function."""
         
@@ -1376,6 +1392,9 @@ class astro_tests(unittest.TestCase):
             assert_spatially_close((equ.ra,equ.dec),
                                    (ra,dec),
                                    degrees=True, decimal=ACCURACY_DIST)
+            
+            str(ecl)
+            repr(ecl)
             
     def test_get_gal_from_equ(self):
         """Test astro.get_gal_from_equ() function."""
@@ -1448,6 +1467,9 @@ class astro_tests(unittest.TestCase):
             assert_spatially_close((equ.ra,equ.dec),
                                    (ra,dec),
                                    degrees=True, decimal=ACCURACY_DIST)
+            
+            str(gal)
+            repr(gal)
             
     def test_get_apparent_posn(self):
         """Test astro.get_apparent_posn() function."""

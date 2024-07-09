@@ -4,14 +4,17 @@ Unit test for the lsl.misc.beamformer module.
 
 import os
 import unittest
+import ephem
 import numpy as np
+
+from astropy.coordinates import Angle
 
 from lsl.misc import beamformer
 from lsl.common import stations
 import lsl.testing
 
 
-__version__  = "0.2s"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -33,6 +36,21 @@ class beamformer_tests(unittest.TestCase):
         
         out = beamformer.calc_delay(antennas[:3], freq=49.0e6, azimuth=45, altitude=30)
         self.assertEqual(len(out), 3)
+        
+        # Angle support
+        az = 45
+        alt = 60
+        out0 = beamformer.calc_delay(antennas[:3], freq=49.0e6, azimuth=az, altitude=alt)
+        
+        az = Angle('45deg')
+        alt = Angle('60d00m00s')
+        out1 = beamformer.calc_delay(antennas[:3], freq=49.0e6, azimuth=az, altitude=alt)
+        np.testing.assert_allclose(out0, out1)
+        
+        az = ephem.degrees('45')
+        alt = ephem.degrees('60')
+        out1 = beamformer.calc_delay(antennas[:3], freq=49.0e6, azimuth=az, altitude=alt)
+        np.testing.assert_allclose(out0, out1)
         
     def test_pointing_limits(self):
         """Test that beamformer.calc_delay respects the pointing limits"""

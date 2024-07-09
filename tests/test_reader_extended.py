@@ -38,6 +38,7 @@ class extended_reader_tests(unittest.TestCase):
         
         if not os.path.exists('eLWA_test_raw.tar.gz'):
             subprocess.check_call(['curl', _VDIF_URL,
+                                   '--silent',
                                    '-o', 'eLWA_test_raw.tar.gz'])
             subprocess.check_call(['tar', 'xzf', 'eLWA_test_raw.tar.gz'])
             

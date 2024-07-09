@@ -9,7 +9,7 @@ import sys
 import numpy as np
 import argparse
 
-from lsl.common import stations, metabundle, metabundleADP
+from lsl.common import stations, metabundle
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -27,12 +27,11 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            try:
-                station = metabundle.get_station(args.metadata, apply_sdm=True)
-            except:
-                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwa1
     stands = station.stands
@@ -59,7 +58,7 @@ def main(args):
     ax1.set_xlim([-80, 80])
     ax1.set_ylabel('$\Delta$Y [N-S; m]')
     ax1.set_ylim([-80, 80])
-    ax1.set_title('%s Site:  %.3f$^\circ$N, %.3f$^\circ$W' % (station.name, station.lat*180.0/np.pi, -station.long*180.0/np.pi))
+    ax1.set_title(f"{station.name} Site: {station.lat*180/np.pi:.3f}$^\circ$N, {-station.long*180/np.pi:.3f}$^\circ$W")
     
     ax2.scatter(data[:,0], data[:,2], c=color, s=40.0)
     ax2.xaxis.set_major_formatter( NullFormatter() )
@@ -100,8 +99,11 @@ if __name__ == "__main__":
         )
     parser.add_argument('stand', type=int, nargs='*', 
                         help='stand number to mark')
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA1')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-l', '--label', action='store_true', 
@@ -112,4 +114,3 @@ if __name__ == "__main__":
                         help='filename to save the plot to')
     args = parser.parse_args()
     main(args)
-    

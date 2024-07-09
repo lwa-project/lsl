@@ -44,7 +44,7 @@ def main(args):
 
     # Open the file and get some basic info about the data contained
     fh = open(filename, 'rb')
-    nFramesFile = sizeB / drx.FRAME_SIZE
+    nFramesFile = sizeB // drx.FRAME_SIZE
 
     while True:
         try:
@@ -104,10 +104,10 @@ def main(args):
     
     nCaptures = nFramesFile/beampols
 
-    print("Filename:     %s" % filename)
-    print("Size:         %.1f MB" % (float(sizeB)/1024/1024))
-    print("Captures:     %i (%.2f seconds)" % (nCaptures, nCaptures*4096/srate))
-    print("Tuning/Pols.: %i " % tunepol)
+    print(f"Filename:     {filename}")
+    print(f"Size:         {sizeB/1024**2:.1f} MB")
+    print(f"Captures:     {nCaptures} ({nCaptures*4096/srate:.3f} seconds)")
+    print(f"Tuning/Pols.: {tunepol}")
     print("Sample Rate: %.2f MHz" % (srate/1e6))
     print("===")
 
@@ -118,8 +118,8 @@ def main(args):
         
         args.count = nCaptures * 4096 // srate
 
-    print("Seconds to Skip:  %.2f (%i captures)" % (args.offset, offset/beampols))
-    print("Seconds to Split: %.2f (%i captures)" % (args.count, nCaptures))
+    print(f"Seconds to Skip:  {args.offset:.3f} ({offset//beampols} captures)")
+    print(f"Seconds to Split: {args.count:.3f} ({nCaptures} captures)")
 
     # Make sure that the first frame in the file is the first frame of a capture 
     # (tuning 1, pol 0).  If not, read in as many frames as necessary to get to 
@@ -147,12 +147,12 @@ def main(args):
             fh.seek(filePos)
 
             dt = junkFrame.time.datetime
-            captFilename = "%s_%s.dat" % (os.path.splitext(os.path.basename(filename))[0], dt.isoformat())
+            captFilename = f"{os.path.splitext(os.path.basename(filename))[0]}_{dt.isoformat()}.dat"
         else:
             captFilename = "%s_s%04i_p%%0%ii.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count, scale)
             captFilename = captFilename % r
             if not args.recursive:
-                captFilename = "%s_s%04i.dat" % (os.path.splitext(os.path.basename(filename))[0], args.count)
+                captFilename = f"{os.path.splitext(os.path.basename(filename))[0]}_s{args.count:04d}.dat"
             
         print(ifString % (r+1, captFilename))
         
@@ -161,7 +161,7 @@ def main(args):
         split_file(fh, fhOut, nCaptures, beampols)
         fhOut.close()
         t1 = time.time()
-        print("  Copied %i bytes in %.3f s (%.3f MB/s)" % (os.path.getsize(captFilename), t1-t0, os.path.getsize(captFilename)/1024.0**2/(t1-t0)))
+        print(f"  Copied {os.path.getsize(captFilename)} bytes in {t1-t0:.3f} s ({os.path.getsize(captFilename)/1024.0**2/(t1-t0):.3f} MB/s)")
         
     fh.close()
 
@@ -183,4 +183,3 @@ if __name__ == "__main__":
                         help='recursively split the file')
     args = parser.parse_args()
     main(args)
-    

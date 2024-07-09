@@ -109,25 +109,46 @@ class Time(object):
         # parse init value base on format type
         # time value is held internally as UTC JD float
         if format == self.FORMAT_PY_DATE:
-            self.utc_py_date = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_py_date = value
+            else:
+                raise ValueError(f"{self.FORMAT_PY_DATE} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_STR:
-            self.utc_str = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_str = value
+            else:
+                raise ValueError(f"{self.FORMAT_STR} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_JD:
-            self.utc_jd = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_jd = value
+            else:
+                self.tai_jd = value
+                
         elif format == self.FORMAT_MJD:
-            self.utc_mjd = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_mjd = value
+            else:
+                self.tai_mjd = value
+                
         elif format == self.FORMAT_DP:
-            self.utc_timet = value / fS
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_dp = value
+            else:
+                raise ValueError(f"{self.FORMAT_DP} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_MCS:
-            self.utc_mjd = value[0] + value[1]/86400/1000
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_mcs = value
+            else:
+                raise ValueError(f"{self.FORMAT_MCS} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_TIMET:
-            self.utc_timet = value
+            if timesys == self.TIMESYS_UTC:
+                self.utc_timet = value
+            else:
+                self.tai_timet = value
             
         elif format == self.FORMAT_ASTROPY:
             self.astropy = value
@@ -208,10 +229,10 @@ class Time(object):
         
     @utc_dp.setter
     def utc_dp(self, value):
-        if not isinstance(value, (int, float)):
-            raise TypeError("value must be type int or float")
+        if not isinstance(value, int):
+            raise TypeError("value must be type int")
             
-        self._time = AstroTime(float(value) / fS, format='unix', scale='utc')
+        self._time = AstroTime(value // fS, value % fS, format='unix', scale='utc')
         
     @property
     def utc_mcs(self):
@@ -360,8 +381,9 @@ class SkyPosition(object):
         Return value is object of type astro.equ_posn.
         """
         
-        return None
+        raise NotImplementedError()
         
+    @abc.abstractmethod
     def apparent_ecl(self, time_):
         """
         Return position formatted as apparent ecliptic coordinates.
@@ -370,11 +392,7 @@ class SkyPosition(object):
         Return alue is object of type astro.ecl_posn.
         """
         
-        if not isinstance(time_, Time):
-            raise TypeError("time_ must be of type transform.Time")
-            
-        equ = astro.get_apparent_posn(self._posn, time_.utc_jd)
-        return astro.get_ecl_from_equ(equ, time_.utc_jd)
+        raise NotImplementedError()
 
 
 class CelestialPosition(SkyPosition):
@@ -509,9 +527,8 @@ class CelestialPosition(SkyPosition):
         Value is object of type astro.equ_posn.
         """
         
-        return astro.get_equ_prec2(self._posn, astro.J2000_UTC_JD, astro.B1950_UTC_JD)
-    
-    
+        return astro.J2000_to_B1950(self._posn)
+        
     @b1950_equ.setter
     def b1950_equ(self, value):
         if not isinstance(value, (astro.equ_posn, SequenceABC)):
@@ -521,7 +538,7 @@ class CelestialPosition(SkyPosition):
                 raise TypeError("value sequence must be length 2")
             value = astro.equ_posn(*value)
         
-        self._posn = astro.get_equ_prec2(value, astro.B1950_UTC_JD, astro.J2000_UTC_JD)
+        self._posn = astro.B1950_to_J2000(value)
         
     @property
     def j2000_ecl(self):
@@ -534,7 +551,7 @@ class CelestialPosition(SkyPosition):
         
     @j2000_ecl.setter
     def j2000_ecl(self, value):
-        if not isinstance(value, (astro.equ_posn, SequenceABC)):
+        if not isinstance(value, (astro.ecl_posn, SequenceABC)):
             raise TypeError("value must be type astro.ecl_posn or sequence of length 2")
         if isinstance(value, SequenceABC):
             if len(value) != 2:
@@ -564,7 +581,7 @@ class CelestialPosition(SkyPosition):
         Value is object of type astro.gal_posn.
         """
         
-        return astro.get_gal_from_equ2000(self._posn)
+        return astro.get_gal_from_equ(self._posn)
         
     @j2000_gal.setter
     def j2000_gal(self, value):
@@ -575,7 +592,7 @@ class CelestialPosition(SkyPosition):
                 raise TypeError("value sequence must be length 2")
             value = astro.gal_posn(*value)
             
-        self._posn = astro.get_equ2000_from_gal(value)
+        self._posn = astro.get_equ_from_gal(value)
 
 
 class PlanetaryPosition(SkyPosition):

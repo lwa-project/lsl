@@ -541,6 +541,17 @@ class imaging_tests(unittest.TestCase):
         np.testing.assert_allclose(ds2.U.data, 2*ds.XX.data)
         np.testing.assert_allclose(ds2.V.data, 0*ds.XX.data)
         
+        #
+        # VisibilityData test
+        #
+        
+        ds2 = VisibilityData()
+        ds2.append( ds )
+        ds = ds2
+        
+        # Convert
+        ds2 = utils.convert_to_stokes(ds)
+        
         idi.close()
         
     def test_convert_to_linear(self):
@@ -575,6 +586,20 @@ class imaging_tests(unittest.TestCase):
         np.testing.assert_allclose(ds3.XY.data, ds.XX.data)
         np.testing.assert_allclose(ds3.YX.data, ds.XX.data)
         
+        #
+        # VisibilityData test
+        #
+        
+        ds2 = VisibilityData()
+        ds2.append( ds )
+        ds = ds2
+        
+        # Convert
+        ds2 = utils.convert_to_stokes(ds)
+        
+        # Convert back
+        ds3 = utils.convert_to_linear(ds2)
+        
         idi.close()
         
     def test_gridding(self):
@@ -588,7 +613,15 @@ class imaging_tests(unittest.TestCase):
                 # Build the image
                 ds = idi.get_data_set(1)
                 junk = utils.build_gridded_image(ds, verbose=False)
-
+                
+                # Different weightings
+                for weighting in ('natural', 'uniform', 'briggs'):
+                    junk2 = junk.image(weighting=weighting)
+                    
+                # Different tapers
+                for taper in ((0.0, 10.0), (0.1, 10.0)):
+                    junk2 = junk.image(taper=taper)
+                    
                 # Error checking
                 self.assertRaises(RuntimeError, utils.build_gridded_image, ds, pol='XY')
                 
@@ -612,6 +645,10 @@ class imaging_tests(unittest.TestCase):
                 # Build the image
                 ds = uv.get_data_set(1)
                 junk = utils.build_gridded_image(ds, verbose=False)
+                
+                # Get image properties
+                junk.field_of_view
+                junk.pixel_size
                 
                 radec = utils.get_image_radec(junk, uv.get_antennaarray())
                 azalt = utils.get_image_azalt(junk, uv.get_antennaarray())

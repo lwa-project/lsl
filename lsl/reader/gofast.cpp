@@ -38,6 +38,7 @@ int validSync5C(uint32_t syncWord) {
 */
 int16_t tbw4LUT[256][2];
 int8_t  tbnLUT[256];
+int8_t  drx8LUT[256];
 int8_t  drxLUT[256][2];
 int8_t  tbfLUT[256][2];
 
@@ -58,10 +59,13 @@ static void initLWALUTs(void) {
         }
     }
     
-    // TBN
+    // TBN & DRX8
     for(i=0; i<256; i++) {
         tbnLUT[i] = i;
         tbnLUT[i] -= ((i&128)<<1);
+        
+        drx8LUT[i] = i;
+        drx8LUT[i] -= ((i&128)<<1);
     }
     
     // DRX & TBF
@@ -83,18 +87,20 @@ static void initLWALUTs(void) {
 */
 
 static PyMethodDef gofast_methods[] = {
-    {"read_tbw",     (PyCFunction) read_tbw,      METH_VARARGS,               read_tbw_doc     }, 
-    {"read_tbn",     (PyCFunction) read_tbn_cf32, METH_VARARGS,               read_tbn_cf32_doc}, 
-    {"read_tbn_ci8", (PyCFunction) read_tbn_ci8,  METH_VARARGS,               read_tbn_ci8_doc }, 
-    {"read_drx",     (PyCFunction) read_drx_cf32, METH_VARARGS,               read_drx_cf32_doc}, 
-    {"read_drx_ci8", (PyCFunction) read_drx_ci8,  METH_VARARGS,               read_drx_ci8_doc }, 
-    {"read_drspec",  (PyCFunction) read_drspec,   METH_VARARGS,               read_drspec_doc  },
-    {"read_vdif",    (PyCFunction) read_vdif_f32, METH_VARARGS|METH_KEYWORDS, read_vdif_f32_doc}, 
-    {"read_vdif_i8", (PyCFunction) read_vdif_i8,  METH_VARARGS|METH_KEYWORDS, read_vdif_i8_doc }, 
-    {"read_tbf",     (PyCFunction) read_tbf_cf32, METH_VARARGS,               read_tbf_cf32_doc}, 
-    {"read_tbf_ci8", (PyCFunction) read_tbf_ci8,  METH_VARARGS,               read_tbf_ci8_doc }, 
-    {"read_cor",     (PyCFunction) read_cor,      METH_VARARGS,               read_cor_doc     }, 
-    {NULL,           NULL,                        0,                          NULL             }
+    {"read_tbw",      (PyCFunction) read_tbw,       METH_VARARGS,               read_tbw_doc      }, 
+    {"read_tbn",      (PyCFunction) read_tbn_cf32,  METH_VARARGS,               read_tbn_cf32_doc }, 
+    {"read_tbn_ci8",  (PyCFunction) read_tbn_ci8,   METH_VARARGS,               read_tbn_ci8_doc  }, 
+    {"read_drx",      (PyCFunction) read_drx_cf32,  METH_VARARGS,               read_drx_cf32_doc }, 
+    {"read_drx_ci8",  (PyCFunction) read_drx_ci8,   METH_VARARGS,               read_drx_ci8_doc  }, 
+    {"read_drx8",     (PyCFunction) read_drx8_cf32, METH_VARARGS,               read_drx8_cf32_doc}, 
+    {"read_drx8_ci8", (PyCFunction) read_drx8_ci8,  METH_VARARGS,               read_drx8_ci8_doc }, 
+    {"read_drspec",   (PyCFunction) read_drspec,    METH_VARARGS,               read_drspec_doc   },
+    {"read_vdif",     (PyCFunction) read_vdif_f32,  METH_VARARGS|METH_KEYWORDS, read_vdif_f32_doc }, 
+    {"read_vdif_i8",  (PyCFunction) read_vdif_i8,   METH_VARARGS|METH_KEYWORDS, read_vdif_i8_doc  }, 
+    {"read_tbf",      (PyCFunction) read_tbf_cf32,  METH_VARARGS,               read_tbf_cf32_doc }, 
+    {"read_tbf_ci8",  (PyCFunction) read_tbf_ci8,   METH_VARARGS,               read_tbf_ci8_doc  }, 
+    {"read_cor",      (PyCFunction) read_cor,       METH_VARARGS,               read_cor_doc      }, 
+    {NULL,            NULL,                         0,                          NULL              }
 };
 
 PyDoc_STRVAR(gofast_doc, \
@@ -161,6 +167,8 @@ static int gofast_exec(PyObject *module) {
     PyList_Append(all, PyUnicode_FromString("read_tbn_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_drx"));
     PyList_Append(all, PyUnicode_FromString("read_drx_ci8"));
+    PyList_Append(all, PyUnicode_FromString("read_drx8"));
+    PyList_Append(all, PyUnicode_FromString("read_drx8_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_drspec"));
     PyList_Append(all, PyUnicode_FromString("read_vdif"));
     PyList_Append(all, PyUnicode_FromString("read_tbf"));

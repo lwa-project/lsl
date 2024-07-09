@@ -10,8 +10,8 @@ import math
 import numpy as np
 import argparse
 
-from lsl.reader import tbf, errors
-from lsl.common import stations, metabundleADP
+from lsl.common import stations, metabundle
+from lsl.reader.ldp import LWADataFile, TBFFile
 from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
@@ -52,90 +52,68 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwasv
     antennas = station.antennas
     
-    fh = open(args.filename, 'rb')
-    nFrames = os.path.getsize(args.filename) // tbf.FRAME_SIZE
+    idf = LWADataFile(args.filename)
+    if not isinstance(idf, TBFFile):
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBF file")
+        
+    nFrames = idf.get_info('nframe')
     antpols = len(antennas)
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
-    junkFrame = tbf.read_frame(fh)
-    fh.seek(0)
-    beginDate = junkFrame.time.datetime
+    beginDate = idf.get_info('start_time').datetime
     
+    # Make sure the TBF stand count is consistent with how many antennas we have
+    if antpols != idf.get_info('nantenna'):
+        raise RuntimeError(f"Number of stands in the station ({antpols//2}) does not match what is in the data ({idf.get_info('nantenna')//2})")
+        
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
-    nFramesPerObs = tbf.get_frames_per_obs(fh)
-    nchannels = tbf.get_channel_count(fh)
-    nSamples = 7840
+    nchannels = idf.get_info('nchan')
+    nFpO = nchannels // 12
     
     # Figure out how many chunks we need to work with
-    nChunks = nFrames // nFramesPerObs
-    
-    # Pre-load the channel mapper
-    mapper = []
-    for i in range(2*nFramesPerObs):
-        cFrame = tbf.read_frame(fh)
-        if cFrame.header.first_chan not in mapper:
-            mapper.append( cFrame.header.first_chan )
-    fh.seek(-2*nFramesPerObs*tbf.FRAME_SIZE, 1)
-    mapper.sort()
+    nChunks = 1
     
     # Calculate the frequencies
-    freq = np.zeros(nchannels)
-    for i,c in enumerate(mapper):
-        freq[i*12:i*12+12] = c + np.arange(12)
-    freq *= 25e3
+    freq = idf.get_info('freq1')
+    sample_rate = idf.get_info('sample_rate')
+    central_freq = freq*1.0
+    chan = np.round(central_freq / sample_rate)
+    nif = len(np.where(np.diff(chan) > 1)[0]) + 1
+    central_freq = central_freq.reshape(nif, -1)
+    central_freq = central_freq[:,central_freq.shape[1]//2]
     
     # File summary
-    print("Filename: %s" % args.filename)
-    print("Date of First Frame: %s" % str(beginDate))
-    print("Frames per Observation: %i" % nFramesPerObs)
-    print("Channel Count: %i" % nchannels)
-    print("Frames: %i" % nFrames)
+    print(f"Filename: {args.filename}")
+    print(f"Date of First Frame: {str(beginDate)}")
+    print(f"Channel Count: {nchannels}")
+    print(f"Sampling rate: {sample_rate} Hz")
+    print("Tuning frequency: %s Hz" % (', '.join("%.3f" % v for v in central_freq)))
+    print(f"Frames: {nFrames} ({nFrames/nFpO/sample_rate:.3f} s)")
     print("===")
-    print("Chunks: %i" % nChunks)
+    print(f"Chunks: {nChunks}")
     
-    spec = np.zeros((nchannels,256,2))
-    norm = np.zeros_like(spec)
     for i in range(nChunks):
-        # Inner loop that actually reads the frames into the data array
-        for j in range(nFramesPerObs):
-            # Read in the next frame and anticipate any problems that could occur
-            try:
-                cFrame = tbf.read_frame(fh)
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                print("WARNING: Mark 5C sync error on frame #%i" % (int(fh.tell())/tbf.FRAME_SIZE-1))
-                continue
-            if not cFrame.header.is_tbf:
-                continue
-                
-            first_chan = cFrame.header.first_chan
+        print(f"Working on chunk #{i+1} of {nChunks}")
+        
+        try:
+            readT, t, data = idf.read()
+        except Exception as e:
+            print(f"Error: {str(e)}")
+            continue
             
-            # Figure out where to map the channel sequence to
-            try:
-                aStand = mapper.index(first_chan)
-            except ValueError:
-                mapper.append(first_chan)
-                aStand = mapper.index(first_chan)
-            
-            # Actually load the data.
-            spec[aStand*12:aStand*12+12,:,:] += np.abs(cFrame.payload.data)**2
-            norm[aStand*12:aStand*12+12,:,:] += 1
-            
-    spec /= norm
-    fh.close()
-    
-    # Reshape and transpose to get it in to a "normal" order
-    spec.shape = (spec.shape[0], spec.shape[1]*spec.shape[2])
-    spec = spec.T
-    
+        # Detect power and integrate
+        data = np.abs(data)**2
+        spec = data.mean(axis=2)
+        
     # Apply the cable loss corrections, if requested
     if args.gain_correct:
         for s in range(spec.shape[0]):
@@ -181,22 +159,22 @@ def main(args):
             except IndexError:
                 break
             ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)
-            ax.plot(freq, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
+            ax.plot(freq, currSpectra, label=f"Stand: {antennas[j].stand.id}, Pol: {antennas[j].pol} (Dig: {antennas[j].digitizer})")
             
-            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].combined_status))
-            ax.set_xlabel('Frequency [%s]' % units)
+            ax.set_title(f"Stand: {antennas[j].stand.id} ({antennas[j].pol}); Dig: {antennas[j].digitizer} [{antennas[j].combined_status}]")
+            ax.set_xlabel(f"Frequency [{units}]")
             ax.set_ylabel('P.S.D. [dB/RBW]')
             ax.set_ylim([-10, 30])
             
         # Save spectra image if requested
         if args.output is not None:
             base, ext = os.path.splitext(args.output)
-            outFigure = "%s-%02i%s" % (base, i+1, ext)
+            outFigure = f"{base}-{i+1:02d}{ext}"
             fig.savefig(outFigure)
             
         plt.draw()
         
-    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
+    print(f"RBW: {freq[1]-freq[0]:.4f} {units}")
     plt.show()
 
 
@@ -209,6 +187,8 @@ if __name__ == "__main__":
                         help='filename to process')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA-SV')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
                         help='run %(prog)s in silent mode')
     parser.add_argument('-g', '--gain-correct', action='store_true',

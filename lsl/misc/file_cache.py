@@ -28,7 +28,7 @@ class FileCache(object):
     def __init__(self, cache_dir, max_size=0):
         """
         Create a new FileCache instance using the specified cache directory and
-        maximum cache size.  If the maximum size is 0, no size limites are
+        maximum cache size in MB.  If the maximum size is 0, no size limites are
         enforced.
         """
         
@@ -75,7 +75,7 @@ class FileCache(object):
                 oldest = min(mtimes)
                 idx = mtimes.index(oldest)
                 try:
-                    os.path.unlink(filenames[idx])
+                    os.unlink(filenames[idx])
                     del filenames[idx]
                     del sizes[idx]
                     del mtimes[idx]
@@ -230,7 +230,10 @@ class MemoryFile(object):
         Current size of the buffer in bytes.
         """
         
-        return len(self._buffer)
+        mark = self._buffer.tell()
+        last = self._buffer.seek(0, 2)
+        self._buffer.seek(mark, 0)
+        return last
         
     @property
     def stat(self):
@@ -333,7 +336,7 @@ class MemoryFile(object):
         if self._closed:
             raise IOError(f"MemoryFile:{self.name} is closed")
             
-        if self._is_binary:
+        if not self._is_binary:
             try:
                 s = s.encode()
             except AttributeError:
@@ -378,7 +381,7 @@ class MemoryCache(object):
     def __init__(self, max_size=0):
         """
         Create a new MemoryCache instance using the specified maximum cache
-        size.  If the maximum size is 0, no size limites are enforced.
+        size.  If the maximum size is 0 in MB, no size limites are enforced.
         """
         
         self.max_size = max_size
@@ -396,7 +399,7 @@ class MemoryCache(object):
             
         if max_size > 0:
             filenames = list(self._cache.keys())
-            sizes = [self._cache[filename].size for filename in filenames]
+            sizes = [self._cache[filename].size/1024.**2 for filename in filenames]
             mtimes = [self._cache[filename]._mtime for filename in filenames]
             
             # Delete until we mee the cache size limit or until there is only one
@@ -466,7 +469,7 @@ class MemoryCache(object):
         try:
             size = self._cache[filename].size
         except KeyError:
-            size = 0
+            raise OSError()
         finally:
             self._lock.release()
             
@@ -483,7 +486,7 @@ class MemoryCache(object):
         try:
             mtime = self._cache[filename].stat['st_mtime']
         except KeyError:
-            mtime = 0
+            raise OSError()
         finally:
             self._lock.release()
             
@@ -500,9 +503,7 @@ class MemoryCache(object):
         try:
             fstat = self._cache[filename].stat
         except KeyError:
-            fstat = mf_stat_result(st_mode=0, st_ino=0, st_dev=0, st_nlink=0,
-                                   st_uid=0, st_gid=0, st_size=0,
-                                   st_atime=0, st_mtime=0, st_ctime=0)
+            raise OSError()
         finally:
             self._lock.release()
             

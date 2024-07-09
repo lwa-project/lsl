@@ -11,7 +11,7 @@ import time
 import numpy as np
 import argparse
 
-from lsl.reader.ldp import LWA1DataFile, TBWFile
+from lsl.reader.ldp import LWADataFile, TBWFile
 from lsl.common import stations, metabundle
 from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi, measurementset
@@ -60,7 +60,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
     
     # Setup the set time as a python datetime instance so that it can be easily printed
     setDT = setTime.datetime
-    print("Working on set #1 (%.3f seconds after set #1 = %s)" % ((setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
+    print(f"Working on set #{s+1} ({setTime-ref_time:.3f} seconds after set #1 = {setDT.strftime('%Y/%m/%d %H:%M:%S.%f')}")
     
     # In order for the TBW stuff to actaully run, we need to run in with sub-
     # integrations.  8 sub-integrations (61.2 ms / 8 = 7.7 ms per section) 
@@ -70,7 +70,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
     
     # Loop over polarizations (there should be only 1)
     for pol in pols:
-        print("-> %s" % pol)
+        print(f"->  {pol}")
         try:
             tempVis *= 0    # pylint:disable=undefined-variable
         except NameError:
@@ -115,7 +115,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
         sys.stdout.write(pb.show()+'\r')
         sys.stdout.write('\n')
         sys.stdout.flush()
-    print("->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)))
+    print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
     
     fits.write()
     fits.close()
@@ -126,9 +126,6 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
 
 
 def main(args):
-    # Parse command line options
-    filename = args.filename
-
     # Setup the LWA station information
     if args.metadata is not None:
         try:
@@ -139,9 +136,9 @@ def main(args):
         station = stations.lwa1
     antennas = station.antennas
     
-    idf = LWA1DataFile(filename)
+    idf = LWA1DataFile(args.filename)
     if not isinstance(idf, TBWFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBW file" % os.path.basename(filename))
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBW file")
         
     jd = idf.get_info('start_time').jd
     date = idf.get_info('start_time').datetime
@@ -172,33 +169,34 @@ def main(args):
                 
     # Report on the valid stands found.  This is a little verbose,
     # but nice to see.
-    print("Found %i good stands to use" % (len(good)//2,))
+    print(f"Found {len(good)//2} good stands to use")
     for i in good:
-        print("%3i, %i" % (antennas[i].stand.id, antennas[i].pol))
+        print(f"{antennas[i].stand.id:3d}, {antennas[i].pol}")
         
     # Number of frames to read in at once and average
     nFrames = 30000
     nSets = idf.get_info('nframe') // (30000*len(antennas)//2)
     
-    print("Data type:  %s" % type(idf))
-    print("Captures in file: %i (%.3f s)" % (nInts, nInts*30000*400/sample_rate))
+    print(f"Data type: {str(type(idf))}")
+    print(f"Captures in file: {nInts} ({nInts*30000*400/sample_rate:.3f} s)")
     print("==")
-    print("Station: %s" % station.name)
-    print("Date observed: %s" % date)
-    print("Julian day: %.5f" % jd)
-    print("Integration Time: %.3f s" % (400*nFrames/sample_rate))
-    print("Number of integrations in file: %i" % nSets)
+    print(f"Station: {station.name}")
+    print(f"Date observed: {date}")
+    print(f"Julian day: {jd:.5f}")
+    print(f"Integration Time: {400*nFrames/sample_rate:.3f} s")
+    print(f"Number of integrations in file: {nSets}")
     print("==")
     
-    basename = os.path.split(filename)[1]
+    basename = os.path.split(args.filename)[1]
     basename, ext = os.path.splitext(basename)
     
     if args.casa:
-        fitsFilename = "%s.ms_1" % (basename,)
+        fitsFilename = f"{basename}.ms_1"
     else:
-        fitsFilename = "%s.FITS_1" % (basename,)
+        fitsFilename = f"{basename}.FITS_1"
         
-    process_chunk(idf, station, good, fitsFilename, LFFT=args.fft_length, overlap=1, pfb=args.pfb, pols=args.products)
+    process_chunk(idf, station, good, fitsFilename, LFFT=args.fft_length,
+                  overlap=1, pfb=args.pfb, pols=args.products)
     
     idf.close()
 
@@ -233,4 +231,3 @@ if __name__ == "__main__":
                         help='write out measurement sets instead of FITS-IDI files')
     args = parser.parse_args()
     main(args)
-    

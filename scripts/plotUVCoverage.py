@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Plot the uv-plane coverage of LWA1 for a zenith snapshot and the expected 
+Plot the (u,v)-plane coverage of LWA1 for a zenith snapshot and the expected 
 beam.
 """
 
@@ -10,7 +10,7 @@ import math
 import numpy as np
 import argparse
 
-from lsl.common import stations, metabundle, metabundleADP
+from lsl.common import stations, metabundle
 from lsl.correlator import uvutils
 from lsl.misc import parser as aph
 
@@ -27,12 +27,11 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            try:
-                station = metabundle.get_station(args.metadata, apply_sdm=True)
-            except:
-                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwa1
         
@@ -40,7 +39,7 @@ def main(args):
     for ant in station.antennas[0::2]:
         if ant.combined_status == 33:
             antennas.append(ant)
-    print("Displaying uv coverage for %i good stands" % len(antennas))
+    print(f"Displaying (u,v) coverage for {len(antennas)} good stands")
     
     HA = 0.0
     dec = station.lat*180.0/math.pi
@@ -81,7 +80,7 @@ def main(args):
     ax1.scatter(-uvw[:,0], -uvw[:,1], c=-uvw[:,2], s=10.0, alpha=0.75)
     ax1.set_xlabel('u [$\\lambda$]')
     ax1.set_ylabel('v [$\\lambda$]')
-    ax1.set_title('UV Coverage for HA=%+.3f$^h$, $\delta$=%+.3f$^\circ$ at %s' % (HA, dec, station.name))
+    ax1.set_title(f"(u,v) Coverage for HA={HA:+.3f}$^h$, $\delta$={dec:+.3f}$^\circ$ at {station.name}")
     
     # Part 4 - uw plane plot
     ax2.scatter(uvw[:,0], uvw[:,2], c=uvw[:,2], s=10.0)
@@ -137,14 +136,16 @@ if __name__ == "__main__":
         description='plot the UV-plane converage of an LWA station', 
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA1')
     parser.add_argument('-f', '--frequency', type=aph.frequency, default='50.0', 
-                        help='frequency in MHz to compute the uv coverage')
+                        help='frequency in MHz to compute the (u,v) coverage')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-o', '--output', type=str, 
                         help='filename to save the plot to')
     args = parser.parse_args()
     main(args)
-    

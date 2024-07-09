@@ -49,7 +49,7 @@ def main(args):
     # Print the stand mapping out
     print("Stand Mapping:")
     for sta,act,name in zip(nosta, noact, anname):
-        print("  %3i -> %s (stand %3i)" % (sta, name, act))
+        print(f"  {sta:3d} -> {name} (stand {act:3d})")
     
     # Load in the positions of all of the stands
     xyz = np.zeros((len(antennas), 3))
@@ -78,7 +78,7 @@ def main(args):
     for mSta,sAct in zip(nosta, noact):
         i = stands.index(sAct)
         ax2.plot(xyz[i,0], xyz[i,1], marker='x', linestyle=' ', alpha=1.0, color='k')
-        ax2.text(xyz[i,0], xyz[i,1], ' %i' % mSta)
+        ax2.text(xyz[i,0], xyz[i,1], f" {mSta}")
     ax2.set_title('RTA (Outlier)')
     ax2.set_xlim([335, 345])
     ax2.set_ylim([10, 20])
@@ -92,7 +92,7 @@ def main(args):
     #dx = xyz[i,0] - x0
     #dy = xyz[i,1] - y0
     #ax1.arrow(x0, y0, dx*8/dx, dy*8/dx, linewidth=2.0)
-    #ax1.text(x0+5, y0, '(%i m)' % np.sqrt(dx**2 + dy**2))
+    #ax1.text(x0+5, y0, f"({np.sqrt(dx**2 + dy**2):.1f} m)")
 
     plt.show()
 

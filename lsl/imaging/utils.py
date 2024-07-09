@@ -1159,7 +1159,7 @@ def convert_to_stokes(data_set):
     # Catch VisibilityData objects before we go any further so we can iterate 
     # over them
     if isinstance(data_set, VisibilityData):
-        new_data = data_set.copy(include_pols=False)
+        new_data = VisibilityData()
         for ds in data_set:
             new_data_set = convert_to_stokes(ds)
             new_data.append(new_data_set)
@@ -1227,7 +1227,7 @@ def convert_to_linear(data_set):
     # Catch VisibilityData objects before we go any further so we can iterate 
     # over them
     if isinstance(data_set, VisibilityData):
-        new_data = data_set.copy(include_pols=False)
+        new_data = VisibilityData()
         for ds in data_set:
             new_data_set = convert_to_linear(ds)
             new_data.append(new_data_set)
@@ -1322,57 +1322,6 @@ class ImgWPlus(aipy.img.ImgW):
                 
         else:
             raise TypeError("Expected an ImgWPlus or np.ndarray instance")
-            
-    def put(self, uvw, data, wgts=None, invker2=None, verbose=True):
-        """
-        Same as Img.put, only now the w component is projected to the w=0
-        plane before applying the data to the UV matrix.
-        """
-        
-        u, v, w = uvw
-        if len(u) == 0: return
-        if wgts is None:
-            wgts = []
-            for i in range(len(self.bm)):
-                if i == 0:
-                    wgts.append(np.ones_like(data))
-                else:
-                    wgts.append(np.zeros_like(data))
-        if len(self.bm) == 1 and len(wgts) != 1:
-            wgts = [wgts]
-        assert(len(wgts) == len(self.bm))
-        # Sort uvw in order of w
-        order = np.argsort(w)
-        u = u.take(order)
-        v = v.take(order)
-        w = w.take(order)
-        data = data.take(order)
-        wgts = [wgt.take(order) for wgt in wgts]
-        sqrt_w = np.sqrt(np.abs(w)) * np.sign(w)
-        i = 0
-        while True:
-            # Grab a chunk of uvw's that grid w to same point.
-            j = sqrt_w.searchsorted(sqrt_w[i]+self.wres)
-            if verbose:
-                print('%d/%d datums' % (j, len(w)))
-            avg_w = np.average(w[i:j])
-            # Put all uv's down on plane for this gridded w point
-            wgtsij = [wgt[i:j] for wgt in wgts]
-            uv,bm = aipy.img.Img.put(self, (u[i:j],v[i:j],w[i:j]),
-                data[i:j], wgtsij, apply=False)
-            # Convolve with the W projection kernel
-            invker = np.fromfunction(lambda u,v: self.conv_invker(u,v,avg_w),
-                uv.shape)
-            if not invker2 is None:
-                invker *= invker2
-            self.uv += ifft2Function(fft2Function(uv) * invker)
-            #self.uv += uv
-            for b in range(len(self.bm)):
-                self.bm[b] += ifft2Function(fft2Function(bm[b]) * invker)
-                #self.bm[b] += np.array(bm)[0,:,:]
-            if j >= len(w):
-                break
-            i = j
             
     @property
     def field_of_view(self):

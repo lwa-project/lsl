@@ -419,7 +419,8 @@ class FrameTimestamp(object):
         elif format_spec[-1] in ('e', 'E', 'f', 'F', 'g', 'G', 'n'):
             return format(float(self), format_spec)
         elif format_spec[-1] in ('d', 'n'):
-            return format(self._int, format_spec)
+            t = self._time.unix
+            return format(int(t), format_spec)
         else:
             raise TypeError("unsupported format string passed to %s.__format__" % type(self).__name__)
             

@@ -112,8 +112,8 @@ class SplitFileWrapper(object):
             
         elif whence == 1:
             offset = self._pos + pos
-            self.seek(offset, 0)
+            self.seek(offset, whence=0)
             
         else:
             offset = self._total_size - pos
-            self.seek(offset, 0)
+            self.seek(offset, whence=0)

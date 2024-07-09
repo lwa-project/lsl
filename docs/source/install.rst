@@ -6,10 +6,11 @@ Requirements
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
- * astropy >= 5.1
+ * astropy >= 5.2
  * ephem >= 3.7.5.3
  * aipy >= 3.0.1
  * pytz >= 2012c
+ * h5py
  * matplotlib >= 1.1 [1]_
  * BeautifulSoup [1]_
  * casacore [2]_

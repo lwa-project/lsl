@@ -11,9 +11,12 @@ Data format objects included are:
   * TBFFile
   * CORFILE
 
-Also included are the LWA1DataFile, LWASVDataFile, and LWADataFile functions 
-that take a filename and try to determine the correct data format object to
-use.
+Also included are the LWA1DataFile, LWASVDataFile, LWANADataFile, and LWADataFile
+functions that take a filename and try to determine the correct data format
+object to use.
+
+.. versionchanged:: 2.1.6
+    Added support for LWA-NA NDP data
 
 .. versionchanged:: 1.2.0
     Added support for LWA-SV ADP data
@@ -30,6 +33,7 @@ from collections import deque, defaultdict
 
 from lsl.common.dp import fS
 from lsl.common.adp import fC
+from lsl.common.ndp import fC as ndp_fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
@@ -45,7 +49,7 @@ telemetry.track_module()
 
 __version__ = '0.5'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
-           'LWASVDataFile', 'LWADataFile']
+           'LWASVDataFile', 'LWANADataFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):
@@ -198,6 +202,15 @@ class LDPFileBase(object):
             except KeyError:
                 raise ValueError(f"Unknown key '{key}'")
                 
+    @property
+    def info(self):
+        """
+        Return a dictionary containing metadata about the file.  Equivalent to
+        calling get_info(None).
+        """
+        
+        return self.description
+        
     def get_remaining_frame_count(self):
         """
         Return the number of frames left in the file.
@@ -1722,20 +1735,22 @@ class TBFFile(LDPFileBase):
                 tbf.read_frame(self.fh)
                 break
             except errors.SyncError:
-                self.fh.seek(-tbf.FRAME_SIZE+1, 1)
+                self.fh.seek(1, 1)
                 
         # Skip over any DRX frames the start of the file
         i = 0
         while True:
             try:
+                mark = self.fh.tell()
                 tbf.read_frame(self.fh)
+                frame_size = self.fh.tell() - mark
                 break
             except errors.SyncError:
                 i += 1
-                self.fh.seek(-tbf.FRAME_SIZE+drx.FRAME_SIZE, 1)
+                self.fh.seek(drx.FRAME_SIZE, 1)
         if i == 0:
-            self.fh.seek(-tbf.FRAME_SIZE, 1)
-        self.fh.seek(-tbf.FRAME_SIZE, 1)
+            self.fh.seek(-frame_size, 1)
+        self.fh.seek(-frame_size, 1)
         
         return True
         
@@ -1746,16 +1761,22 @@ class TBFFile(LDPFileBase):
         
         with FilePositionSaver(self.fh):
             # Read in frame
+            mark = self.fh.tell()
             junkFrame = tbf.read_frame(self.fh)
-            self.fh.seek(-tbf.FRAME_SIZE, 1)
+            frame_size = self.fh.tell() - mark
+            self.fh.seek(-frame_size, 1)
             
             # Basic file information
             try:
                 filesize = os.fstat(self.fh.fileno()).st_size
             except AttributeError:
                 filesize = self.fh.size
-            nFramesFile = (filesize - self.fh.tell()) // tbf.FRAME_SIZE
+            nFramesFile = (filesize - self.fh.tell()) // frame_size
+            adp_id = junkFrame.adp_id
+            nstand = junkFrame.nstand
             srate = fC
+            if adp_id & 0x04:
+                srate = ndp_fC
             bits = 4
             nFramesPerObs = tbf.get_frames_per_obs(self.fh)
             nchan = tbf.get_channel_count(self.fh)
@@ -1780,11 +1801,11 @@ class TBFFile(LDPFileBase):
         freq = np.zeros(nchan)
         for i,c in enumerate(self.mapper):
             freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + np.arange(tbf.FRAME_CHANNEL_COUNT)
-        freq *= fC
+        freq *= srate
         
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbf.FRAME_SIZE,
-                            'sample_rate': srate, 'data_bits': bits, 
-                            'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
+                            'sample_rate': srate, 'data_bits': bits,
+                            'nantenna': nstand*2, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
                             'start_time_samples': startRaw}
                         
         # Initialize the buffer as part of the description process
@@ -1804,13 +1825,15 @@ class TBFFile(LDPFileBase):
             than to the start of the file
         """
         
+        frame_size = self.description['frame_size']
+        
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
             if curr is None:
                 frame = tbf.read_frame(self.fh)
-                self.fh.seek(-tbf.FRAME_SIZE, 1)
+                self.fh.seek(-frame_size, 1)
                 curr = frame.payload.time_tag
             buffer_offset = curr - self._timetag
             buffer_offset = buffer_offset / fS
@@ -1819,7 +1842,7 @@ class TBFFile(LDPFileBase):
         framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frameOffset = int(offset * self.description['sample_rate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
-        self.fh.seek(frameOffset*tbf.FRAME_SIZE, 1)
+        self.fh.seek(frameOffset*frame_size, 1)
         
         # Update the file metadata
         self._describe_file()
@@ -1953,7 +1976,7 @@ class TBFFile(LDPFileBase):
                         setTime = cFrame.time
                         
                 subData = cFrame.payload.data
-                subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
+                subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
                 subData = subData.T
                 
                 aStand = self.mapper.index(first_chan)
@@ -1986,7 +2009,7 @@ class TBFFile(LDPFileBase):
                             setTime = cFrame.time
                         
                     subData = cFrame.payload.data
-                    subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
+                    subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
                     subData = subData.T
                     
                     aStand = self.mapper.index(first_chan)
@@ -2072,7 +2095,10 @@ class CORFile(LDPFileBase):
             except AttributeError:
                 filesize = self.fh.size
             nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
+            adp_id = junkFrame.adp_id
             srate = fC
+            if adp_id & 0x04:
+                srate = ndp_fC
             bits = 32
             nFramesPerObs = cor.get_frames_per_obs(self.fh)
             nchan = cor.get_channel_count(self.fh)
@@ -2111,7 +2137,7 @@ class CORFile(LDPFileBase):
         freq = np.zeros(nchan)
         for i,c in enumerate(self.cmapper):
             freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + np.arange(cor.FRAME_CHANNEL_COUNT)
-        freq *= fC
+        freq *= srate
         
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': cor.FRAME_SIZE,
                             'sample_rate': srate, 'data_bits': bits, 
@@ -2357,7 +2383,189 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         
         ## Sort out the frame size.  This is tricky because DR spectrometer files
         ## have frames of different sizes depending on the mode
-        if mode == drspec:
+        if mode == tbf:
+            try:
+                mfs = tbf.get_frame_size(fh)
+            except:
+                mfs = 0
+        elif mode == drspec:
+            try:
+                mfs = drspec.get_frame_size(fh)
+            except:
+                mfs = 0
+        else:
+            mfs = mode.FRAME_SIZE
+            
+        ## Loop over the frame size to try and find what looks like valid data.  If
+        ## is is found, set 'foundMatch' to True.
+        for i in range(mfs):
+            try:
+                junkFrame = mode.read_frame(fh)
+                foundMatch = True
+                break
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                fh.seek(-mfs+1, 1)
+                
+        ## Did we strike upon a valid frame?
+        if foundMatch:
+            ### Is so, we now need to try and read more frames to make sure we have 
+            ### the correct type of file
+            fh.seek(-mfs, 1)
+            
+            try:
+                for i in range(2):
+                    junkFrame = mode.read_frame(fh)
+                if mode == tbf and junkFrame.nstand != 256:
+                    raise errors.SyncError
+                foundMode = True
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                ### Reset for the next mode...
+                fh.seek(0)
+        else:
+            ### Reset for the next mode...
+            fh.seek(0)
+            
+        ## Did we read more than one valid frame?
+        if foundMode:
+            break
+            
+    # There is an ambiguity that can arise for TBF data such that it *looks* 
+    # like DRX.  If the identified mode is DRX, skip halfway into the file and 
+    # verify that it is still DRX.   We also need to catch the LWA1 TBN vs.
+    # TBW ambiguity since we could have been given an LWA1 file by accident.
+    if mode in (drx, tbn):
+        ## Sort out the frame size
+        omfs = mode.FRAME_SIZE
+        
+        ## Seek half-way in
+        if is_splitfile:
+            nFrames = fh.size//omfs
+        else:
+            nFrames = os.path.getsize(filename)//omfs
+        fh.seek(nFrames//2*omfs)
+        
+        ## Read a bit of data to try to find the right type
+        for mode in (tbn, drx, tbf):
+            ### Set if we find a valid frame marker
+            foundMatch = False
+            ### Set if we can read more than one valid successfully
+            foundMode = False
+            
+            ### Sort out the frame size.
+            try:
+                mfs = mode.FRAME_SIZE
+            except AttributeError:
+                mfs = 0
+                
+            ### Loop over the frame size to try and find what looks like valid data.  If
+            ### is is found, set 'foundMatch' to True.
+            for i in range(mfs):
+                try:
+                    junkFrame = mode.read_frame(fh)
+                    foundMatch = True
+                    break
+                except errors.EOFError:
+                    break
+                except errors.SyncError:
+                    fh.seek(-mfs+1, 1)
+                    
+            ### Did we strike upon a valid frame?
+            if foundMatch:
+                #### Is so, we now need to try and read more frames to make sure we have 
+                #### the correct type of file
+                fh.seek(-mfs, 1)
+                
+                try:
+                    for i in range(4):
+                        junkFrame = mode.read_frame(fh)
+                    if mode == tbf and junkFrame.nstand != 256:
+                        raise errors.SyncError
+                    foundMode = True
+                except errors.SyncError:
+                    #### Reset for the next mode...
+                    fh.seek(nFrames//2*omfs)
+            else:
+                #### Reset for the next mode...
+                fh.seek(nFrames//2*omfs)
+                
+            ### Did we read more than one valid frame?
+            if foundMode:
+                break
+                
+    fh.seek(0)
+    if not is_splitfile:
+        fh.close()
+        fh = None
+    
+    # Raise an error if nothing is found
+    if not foundMode:
+        raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
+        
+    # Otherwise, build and return the correct LDPFileBase sub-class
+    if mode == drx:
+        ldpInstance = DRXFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == tbn:
+        ldpInstance = TBNFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == tbf:
+        ldpInstance = TBFFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == cor:
+        ldpInstance = CORFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    else:
+        ldpInstance = DRSpecFile(filename=filename, fh=fh,
+                                 ignore_timetag_errors=ignore_timetag_errors,
+                                 buffering=buffering)
+        
+    # Done
+    return ldpInstance
+
+
+def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
+    """
+    Wrapper around the various LWA-NA-related classes defined here that takes
+    a file, determines the data type, and initializes and returns the 
+    appropriate LDP class.
+    """
+    
+    # Open the file as appropriate
+    is_splitfile = False
+    if fh is None:
+        fh = open(filename, 'rb')
+    else:
+        filename = fh.name
+        if not isinstance(fh, SplitFileWrapper):
+            if fh.mode.find('b') == -1:
+                fh.close()
+                fh = open(filename, 'rb')
+        else:
+            is_splitfile = True
+            
+    # Read a bit of data to try to find the right type
+    for mode in (drx, tbf, cor, drspec):
+        ## Set if we find a valid frame marker
+        foundMatch = False
+        ## Set if we can read more than one valid successfully
+        foundMode = False
+        
+        ## Sort out the frame size.  This is tricky because DR spectrometer files
+        ## have frames of different sizes depending on the mode
+        if mode == tbf:
+            try:
+                mfs = tbf.get_frame_size(fh)
+            except:
+                mfs = 0
+        elif mode == drspec:
             try:
                 mfs = drspec.get_frame_size(fh)
             except:
@@ -2402,8 +2610,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             
     # There is an ambiguity that can arise for TBF data such that it *looks* 
     # like DRX.  If the identified mode is DRX, skip halfway into the file and 
-    # verify that it is still DRX.   We also need to catch the LWA1 TBN vs.
-    # TBW ambiguity since we could have been given an LWA1 file by accident.
+    # verify that it is still DRX.
     if mode in (drx, tbn):
         ## Sort out the frame size
         omfs = mode.FRAME_SIZE
@@ -2416,15 +2623,18 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
-        for mode in (tbn, drx, tbf):
+        for mode in (drx, tbf):
             ### Set if we find a valid frame marker
             foundMatch = False
             ### Set if we can read more than one valid successfully
             foundMode = False
             
             ### Sort out the frame size.
-            mfs = mode.FRAME_SIZE
-            
+            try:
+                mfs = mode.FRAME_SIZE
+            except AttributeError:
+                mfs = 0
+                
             ### Loop over the frame size to try and find what looks like valid data.  If
             ### is is found, set 'foundMatch' to True.
             for i in range(mfs):
@@ -2465,15 +2675,11 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
     
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA-SV data file")
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA-NA data file")
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
         ldpInstance = DRXFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == tbn:
-        ldpInstance = TBNFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
     elif mode == tbf:
@@ -2516,6 +2722,16 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
     if not found:
         try:
             ldpInstance = LWASVDataFile(filename=filename, fh=fh,
+                                       ignore_timetag_errors=ignore_timetag_errors,
+                                       buffering=buffering)
+            found = True
+        except RuntimeError:
+            pass
+            
+    # LWA-NA?
+    if not found:
+        try:
+            ldpInstance = LWANADataFile(filename=filename, fh=fh,
                                        ignore_timetag_errors=ignore_timetag_errors,
                                        buffering=buffering)
             found = True

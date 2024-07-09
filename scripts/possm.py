@@ -33,11 +33,11 @@ def main(args):
     nchan = len(idi.freq)
     freq = idi.freq
     
-    print("Raw Stand Count: %i" % nStand)
-    print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
-    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq[0]/1e6, freq[-1]/1e6, nchan, (freq[1] - freq[0])/1e3))
-    print("Polarization Products: %i starting with %i" % (len(idi.pols), idi.pols[0]))
-    print("JD: %.3f" % jd)
+    print(f"Raw Stand Count: {nStand}")
+    print(f"Final Baseline Count: {nStand*(nStand-1)//2}")
+    print(f"Spectra Coverage: {freq[0]/1e6:.3f} to {freq[-1]/1e6} MHz in {nchan} channels ({(freq[1] - freq[0])/1e3:.2f} kHz/channel)")
+    print(f"Polarization Products: {len(idi.pols)} starting with {idi.pols[0]}")
+    print(f"JD: {jd:.3f}")
 
     print("Reading in FITS IDI data")
     nSets = idi.integration_count
@@ -45,8 +45,8 @@ def main(args):
         if args.dataset != -1 and args.dataset != set:
             continue
             
-        print("Set #%i of %i" % (set, nSets))
-        dataDict = idi.get_data_set(set, min_uv=args.uv_min)
+        print(f"Set #{set} of {nSets}")
+        dataDict = idi.get_data_set(set, include_auto=args.include_auto, min_uv=args.uv_min)
         
         # Prune out what needs to go
         if args.include != 'all' or args.exclude != 'none':
@@ -57,12 +57,12 @@ def main(args):
             
             ## Report
             for pol in dataDict.pols:
-                print("        %s now has %i baselines" % (pol, len(dataDict.baselines)))
+                print(f"        {pol} now has {len(dataDict.baselines)} baselines")
                 
         # Pull out the right channels
         toWork = np.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
-            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
+            raise RuntimeError(f"Cannot find data between {args.freq_start/1e6:.3f} and {args.freq_stop/1e6:.3f} MHz")
         if args.frequency:
             xValues = freq[toWork]/1e6
             xLabel = 'Frequency [MHz]'
@@ -71,15 +71,22 @@ def main(args):
             xLabel = 'Channel'
             
         # Plot
-        print("    Plotting the first 50 baselines")
         pols = dataDict.pols
         nBL = len(dataDict.baselines)
-        pb = ProgressBar(max=nBL)
+        args.nbaseline = min([args.nbaseline, nBL])
+        nplot = min([25, args.nbaseline])
+        nrow = int(round(numpy.sqrt(nplot)))
+        while nplot % nrow != 0:
+            nrow -= 1
+        ncol = nplot // nrow
+        print(f"    Plotting the first {args.nbaseline} baselines")
+        pb = ProgressBar(max=args.nbaseline)
         i = 0
-        for k in range(2):
+        for k in range((args.nbaseline-1)//25+1):
             fig = plt.figure()
+            gs = fig.add_gridspec(2*nrow, ncol)
 
-            for j in range(25):
+            for j in range(min([nplot, 25])):
                 try:
                     stnd1, stnd2 = dataDict.baselines[i]
                     stnd1 = idi.stands[stnd1]
@@ -95,23 +102,23 @@ def main(args):
                     amp = np.log10(amp)
                 phs = np.angle(vis)*180/np.pi
 
-                ax = fig.add_subplot(10, 5, 2*(j//5)*5+j%5+1)
+                ax = fig.add_subplot(gs[j//ncol*2+0, j%ncol])
                 if ((phs+360)%360).std() < phs.std():
                     ax.plot(xValues, (phs[toWork]+360)%360, linestyle=' ', marker='x')
                     ax.set_ylim([0, 360])
                 else:
                     ax.plot(xValues, phs[toWork], linestyle=' ', marker='x')
                     ax.set_ylim([-180, 180])
-                ax.set_title('%i - %i' % (stnd1, stnd2))
-                if j % 5 == 0:
+                ax.set_title(f"{stnd1} - {stnd2}")
+                if j % nrow == 0:
                     ax.set_ylabel('Phs')
                     
-                ax = fig.add_subplot(10, 5, 2*(j//5)*5+j%5+1+5)
+                ax = fig.add_subplot(gs[j//ncol*2+1, j%ncol])
                 ax.plot(xValues, amp[toWork], linestyle=' ', marker='x', color='green')
-                ax.set_title('%i - %i' % (stnd1, stnd2))
-                if j % 5 == 0:
+                ax.set_title(f"{stnd1} - {stnd2}")
+                if j % nrow == 0:
                     ax.set_xlabel(xLabel)
-                    ax.set_ylabel('%sAmp' % '' 'Log ' if args.log else '')
+                    ax.set_ylabel('%sAmp' % ('Log ' if args.log else '',))
                     
                 pb.inc(amount=1)
                 if pb.amount != 0 and pb.amount % 10 == 0:
@@ -141,6 +148,8 @@ if __name__ == "__main__":
                         help='data set to image')
     parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
                         help='minimun baseline uvw length to include in lambda at the midpoint frequency')
+    parser.add_argument('-a', '--include-auto', action='store_true',
+                        help='also plot auto-correlations')
     parser.add_argument('-i', '--include', type=aph.csv_int_list, default='all', 
                         help='comma seperated list of dipoles to include')
     parser.add_argument('-e', '--exclude', type=aph.csv_int_list, default='none', 
@@ -149,5 +158,7 @@ if __name__ == "__main__":
                         help='label the channels in frequency rather than channel')
     parser.add_argument('-l', '--log', action='store_true', 
                         help='use a log scale for the visbility amplitudes')
+    parser.add_argument('-n', '--nbaseline', type=int, default=50,
+                        help='maximum number of baselines to plot')
     args = parser.parse_args()
     main(args)

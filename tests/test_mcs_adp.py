@@ -55,13 +55,20 @@ class mcs_adp_tests(unittest.TestCase):
             mcsADP.SummaryCode(i)
         self.assertRaises(ValueError, mcsADP.SummaryCode, 7)
         
+    def test_summary_descriptions(self):
+        """Test valid summary descriptions"""
+        
+        for i in range(0, 6+1):
+            s = mcsADP.SummaryCode(i)
+            s.description
+            
     def test_sid_limits(self):
         """Test valid subsystem ID values"""
         
-        for i in range(1, 19+1):
+        for i in range(1, 20+1):
             mcsADP.SubsystemID(i)
         self.assertRaises(ValueError, mcsADP.SubsystemID, 0)
-        self.assertRaises(ValueError, mcsADP.SubsystemID, 20)
+        self.assertRaises(ValueError, mcsADP.SubsystemID, 21)
         
     def test_cid_limits(self):
         """Test valid command ID values"""

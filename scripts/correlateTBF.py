@@ -14,8 +14,8 @@ import argparse
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
-from lsl.reader.ldp import LWASVDataFile, TBFFile
-from lsl.common import stations, metabundleADP
+from lsl.reader.ldp import LWADataFile, TBFFile
+from lsl.common import stations, metabundle
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
 from lsl.correlator._core import XEngine2
@@ -75,7 +75,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         try:
             readT, t, data = idf.read(int_time)
         except Exception as e:
-            print("Error: %s" % str(e))
+            print(f"Error: {str(e)}")
             continue
             
         ## Prune out what we don't want
@@ -83,7 +83,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply frequency decimation
         if freq_decim > 1:
-            data = data.reshape(-1, freq.size, freq_decim)
+            data = data.reshape(data.shape[0], -1, freq_decim, data.shape[2])
             data = data.mean(axis=2)
             
         ## Split the polarizations
@@ -112,11 +112,11 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             
         # Setup the set time as a python datetime instance so that it can be easily printed
         setDT = setTime.datetime
-        print("Working on set #%i (%.3f seconds after set #1 = %s)" % ((s+1), (setTime-ref_time), setDT.strftime("%Y/%m/%d %H:%M:%S.%f")))
+        print(f"Working on set #{s+1} ({setTime-ref_time:.3f} seconds after set #1 = {setDT.strftime('%Y/%m/%d %H:%M:%S.%f')}")
         
         # Loop over polarization products
         for pol in pols:
-            print("->  %s" % pol)
+            print(f"->  {pol}")
             if pol[0] == 'x':
                 a1, d1, v1 = antennasX, dataX, validX
             else:
@@ -151,7 +151,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
             fits.add_data_set(setTime, readT, blList, vis[:,toUse], pol=pol)
-        print("->  Cummulative Wall Time: %.3f s (%.3f s per integration)" % ((time.time()-wallTime), (time.time()-wallTime)/(s+1)))
+        print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
         
     # Cleanup after everything is done
     fits.write()
@@ -163,29 +163,31 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
 
 
 def main(args):
-    # Parse command line options
-    filename = args.filename
-    
     # Setup the LWA station information
     if args.metadata is not None:
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwasv
     antennas = station.antennas
     
-    idf = LWASVDataFile(filename)
+    idf = LWADataFile(args.filename)
     if not isinstance(idf, TBFFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBF file" % os.path.basename(filename))
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBF file")
         
     jd = idf.get_info('start_time').jd
     date = idf.get_info('start_time').datetime
+    nant = idf.get_info('nantenna')
     nFpO = idf.get_info('nchan') // 12
     sample_rate = idf.get_info('sample_rate')
     nInts = idf.get_info('nframe') // nFpO
-    
+    if nant != len(antennas):
+        raise RuntimeError(f"Found {nant} antennas in the data but expected {len(antennas)}")
+        
     # Get valid stands for both polarizations
     goodX = []
     goodY = []
@@ -211,9 +213,9 @@ def main(args):
                 
     # Report on the valid stands found.  This is a little verbose,
     # but nice to see.
-    print("Found %i good stands to use" % (len(good)//2,))
+    print(f"Found {len(good)//2} good stands to use")
     for i in good:
-        print("%3i, %i" % (antennas[i].stand.id, antennas[i].pol))
+        print(f"{antennas[i].stand.id:3d}, {antennas[i].pol}")
         
     # Number of frames to read in at once and average
     nFrames = min([int(args.avg_time*sample_rate), nInts])
@@ -224,18 +226,18 @@ def main(args):
     central_freq = idf.get_info('freq1')
     central_freq = central_freq[len(central_freq)//2]
     
-    print("Data type:  %s" % type(idf))
-    print("Samples per observations: %i" % nFpO)
-    print("Sampling rate: %i Hz" % sample_rate)
-    print("Tuning frequency: %.3f Hz" % central_freq)
-    print("Captures in file: %i (%.3f s)" % (nInts, nInts / sample_rate))
+    print(f"Data type: {str(type(idf))}")
+    print(f"Samples per observations: {nFpO}")
+    print(f"Sampling rate: {sample_rate} Hz")
+    print(f"Tuning frequency: {central_freq:.3f} Hz")
+    print(f"Captures in file: {nInts} ({nInts/sample_rate:.3f} s)")
     print("==")
-    print("Station: %s" % station.name)
-    print("Date observed: %s" % date)
-    print("Julian day: %.5f" % jd)
-    print("Offset: %.3f s (%i frames)" % (args.offset, args.offset*sample_rate))
-    print("Integration Time: %.3f s" % (nFrames/sample_rate))
-    print("Number of integrations in file: %i" % nSets)
+    print(f"Station: {station.name}")
+    print(f"Date observed: {date}")
+    print(f"Julian day: {jd:.5f}")
+    print(f"Offset: {args.offset:.3f} s ({args.offset*sample_rate} frames)")
+    print(f"Integration Time: {nFrames/sample_rate:.3f} s")
+    print(f"Number of integrations in file: {nSets}")
     
     # Make sure we don't try to do too many sets
     if args.samples > nSets:
@@ -245,13 +247,13 @@ def main(args):
     # the FITS IDI memory buffer
     s = 0
     leftToDo = args.samples
-    basename = os.path.split(filename)[1]
+    basename = os.path.split(args.filename)[1]
     basename, ext = os.path.splitext(basename)
     while leftToDo > 0:
         if args.casa:
-            fitsFilename = "%s.ms_%i" % (basename, (s+1),)
+            fitsFilename = f"{basename}.ms_{s+1}")
         else:
-            fitsFilename = "%s.FITS_%i" % (basename, (s+1),)
+            fitsFilename = f"{basename}.FITS_{s+1}")
             
         if leftToDo > 100:
             chunk = 100
@@ -276,6 +278,8 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
+    parser.add_argument('-n', '--lwana', action='store_true',
+                        help='use LWA-NA instead of LWA-SV')
     parser.add_argument('-t', '--avg-time', type=aph.positive_or_zero_float, default=0.0, 
                         help='time window to average visibilities in seconds; 0 = integrate the entire file')
     parser.add_argument('-s', '--samples', type=aph.positive_int, default=1, 
