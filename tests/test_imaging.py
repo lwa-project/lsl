@@ -131,7 +131,7 @@ class imaging_tests(unittest.TestCase):
         antennas = site.antennas[0:40:2]
         
         # Set baselines and data
-        blList = uvutils.get_baselines(antennas, include_auto=True, indicies=False)
+        blList = uvutils.get_baselines(antennas, include_auto=True)
         visData = np.random.rand(len(blList), len(freq))
         visData = visData.astype(np.complex64)
         
