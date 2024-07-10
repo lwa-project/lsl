@@ -4,9 +4,12 @@ Unit test for the lsl.sim.vis module.
 
 import os
 import unittest
+import ephem
 import numpy as np
 
 import aipy
+
+from astropy.coordinates import SkyCoord
 
 from lsl.sim import vis
 from lsl.imaging.data import VisibilityData
@@ -206,6 +209,38 @@ class simvis_tests(unittest.TestCase):
         self.assertTrue('YX' in out.pols)
         self.assertTrue('YY' in out.pols)
         
+    def test_build_data_phase_center(self):
+        """Test building simulated visibility data with different phase center types."""
+        
+        # Setup
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = np.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary - a few times
+        with self.subTest(type='str'):
+            out = vis.build_sim_data(aa, vis.SOURCES, phase_center='z')
+            self.assertRaises(ValueError, vis.build_sim_data, aa, vis.SOURCES, phase_center='notgoingtowork')
+            
+        with self.subTest(type='ephem.Body'):
+            bdy = ephem.FixedBody()
+            bdy._ra = '1:02:03'
+            bdy._dec = '+89:00:00'
+            bdy._epoch = ephem.J2000
+            
+            out = vis.build_sim_data(aa, vis.SOURCES, phase_center=bdy)
+            self.assertAlmostEqual(out.phase_center._ra, bdy._ra, 6)
+            self.assertAlmostEqual(out.phase_center._dec, bdy._dec, 6)
+            self.assertAlmostEqual(out.phase_center._epoch, bdy._epoch, 6)
+            
+        with self.subTest(type='astropy.coordinates.SkyCoord'):
+            sc = SkyCoord('1h02m03s', '+89d00m00s', frame='fk5', equinox='J2000')
+            
+            out = vis.build_sim_data(aa, vis.SOURCES, phase_center=sc)
+            self.assertAlmostEqual(out.phase_center._ra, sc.ra.rad, 6)
+            self.assertAlmostEqual(out.phase_center._dec, sc.dec.rad, 6)
+            
     def test_scale_data(self):
         """Test that we can scale a data dictionary without error"""
         

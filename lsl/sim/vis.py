@@ -682,7 +682,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         projection toward that source - fast."""
         bl = self[j] - self[i]
         
-        if type(src) == str:
+        if isinstance(src, str):
             if src == 'e':
                 return np.dot(self._eq2now, bl)
             elif src == 'z':
@@ -1047,7 +1047,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     # Build the simulated data.  If no baseline list is provided, build all 
     # baselines available
     if baselines is None:
-        baselines = uvutils.get_baselines(np.zeros(len(aa.ants)), indicies=True)
+        baselines = uvutils.get_baselines(np.arange(len(aa.ants)))
         
     # Define output data structure
     freq = aa.get_afreqs()*1e9
@@ -1056,20 +1056,32 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     UVData = VisibilityDataSet(jd, freq, baselines, [], antennaarray=aa, phase_center=phase_center)
     
     # Go!
-    if phase_center != 'z':
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            pcAz = 0.0
+            pcAlt = 90.0
+            
+            ot = AstroTime(jd, format='jd', scale='utc')
+            tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
+            pc = tc.transform_to(FK5(equinox=ot))
+            
+            UVData.phase_center = RadioFixedBody.from_astropy(pc)
+            UVData.phase_center.compute(aa)
+        else:
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    elif isinstance(phase_center, SkyCoord):
+        ot = AstroTime(jd, format='jd', scale='utc')
+        tc = AltAz(location=aa.earth_location, obstime=ot)
+        tc = phase_center.transform_to(tc)
+        pcAz = tc.az.deg
+        pcAlt = tc.alt.deg
+        
+        UVData.phase_center = RadioFixedBody.from_astropy(phase_center)
+        UVData.phase_center.compute(aa)
+    else:
         phase_center.compute(aa)
         pcAz = phase_center.az*180/np.pi
-        pcEl = phase_center.alt*180/np.pi
-    else:
-        pcAz = 0.0
-        pcEl = 90.0
-        
-        ot = AstroTime(jd, format='jd', scale='utc')
-        tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
-        pc = tc.transform_to(FK5(equinox=ot))
-        
-        UVData.phase_center = RadioFixedBody.from_astropy(pc)
-        UVData.phase_center.compute(aa)
+        pcAlt = phase_center.alt*180/np.pi
         
     for p,pol in enumerate(pols):
         ## Apply the antenna gain pattern for each source
@@ -1084,11 +1096,11 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
                     
         ## Simulate
         if not flat_response:
-            uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl, resolve_src=resolve_src)
+            uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcAlt, resolve_src=resolve_src)
         else:
             currentVars = locals().keys()
             if 'uvw1' not in currentVars or 'vis1' not in currentVars:
-                uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcEl, resolve_src=resolve_src)
+                uvw1, vis1 = FastVis(aa, baselines, chanMin, chanMax, pcAz, pcAlt, resolve_src=resolve_src)
                 
         ## Unpack the data and add it to the data set
         if p == 0:

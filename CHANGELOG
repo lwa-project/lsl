@@ -24,6 +24,7 @@
  * Changed lsl.common.metabundle into a general module that can work with metadata from any station
  * Added a DRX8 reader for future data format support
  * Updated gatherDebugging.py to make it more useful
+ * Dropped the 'indicies' keyword from lsl.correlator.uvutils
 
 2.2.0
  * Add a keyword to lsl.imaging.selfcal functions that will return whether or not a call converged

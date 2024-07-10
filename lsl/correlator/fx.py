@@ -227,7 +227,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -253,22 +253,24 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phase_center == 'z':
-        azPC = 0.0
-        altPC = np.pi/2.0
-    else:
-        if isinstance(phase_center, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            altPC = phase_center.alt * 1.0
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
         else:
-            azPC = phase_center[0]*np.pi/180.0
-            altPC = phase_center[1]*np.pi/180.0
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
             
     source = np.array([np.cos(altPC)*np.sin(azPC), 
                        np.cos(altPC)*np.cos(azPC), 
@@ -323,25 +325,22 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
-        fom = np.array([a1-a2 for (a1,a2) in baselinesFull])
-        nonAuto = np.where( fom != 0 )[0]
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True)
+        fom = np.array([a1.stand != a2.stand for (a1,a2) in baselinesFull])
+        nonAuto = np.where(fom)[0]
         output = output[nonAuto,:]
         
     # Apply cable gain corrections (if needed)
     if gain_correct:
         for bl in range(output.shape[0]):
-            cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
-            cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
+            cableGain1 = baselines[bl][0].cable.gain(freq)
+            cableGain2 = baselines[bl][1].cable.gain(freq)
             
             output[bl,:] /= np.sqrt(cableGain1*cableGain2)
             
     # Create antenna baseline list (if needed)
     if return_baselines:
-        antennaBaselines = []
-        for bl in range(output.shape[0]):
-            antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
-        returnValues = (antennaBaselines, freq, output)
+        returnValues = (baselines, freq, output)
     else:
         returnValues = (freq, output)
 
@@ -384,7 +383,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -410,22 +409,24 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phase_center == 'z':
-        azPC = 0.0
-        altPC = np.pi/2.0
-    else:
-        if isinstance(phase_center, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
-            azPC = phase_center.az.rad
-            altPC = phase_center.alt.rad
-        elif isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            altPC = phase_center.alt * 1.0
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
         else:
-            azPC = phase_center[0]*np.pi/180.0
-            altPC = phase_center[1]*np.pi/180.0
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
     source = np.array([np.cos(altPC)*np.sin(azPC), 
                        np.cos(altPC)*np.cos(azPC), 
                        np.sin(altPC)])
@@ -472,25 +473,22 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
-        fom = np.array([a1-a2 for (a1,a2) in baselinesFull])
-        nonAuto = np.where( fom != 0 )[0]
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True)
+        fom = np.array([a1.stand != a2.stand for (a1,a2) in baselinesFull])
+        nonAuto = np.where(fom)[0]
         output = output[:,nonAuto,:]
         
     # Apply cable gain corrections (if needed)
     if gain_correct:
         for bl in range(output.shape[0]):
-            cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
-            cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
+            cableGain1 = baselines[bl][0].cable.gain(freq)
+            cableGain2 = baselines[bl][1].cable.gain(freq)
             
             output[:,bl,:] /= np.sqrt(cableGain1*cableGain2)
             
     # Create antenna baseline list (if needed)
     if return_baselines:
-        antennaBaselines = []
-        for bl in range(output.shape[1]):
-            antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
-        returnValues = (antennaBaselines, freq, output)
+        returnValues = (baselines, freq, output)
     else:
         returnValues = (freq, output)
 

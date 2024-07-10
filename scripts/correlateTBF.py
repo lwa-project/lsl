@@ -127,11 +127,8 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
                 a2, d2, v2 = antennasY, dataY, validY
                 
             ## Get the baselines
-            baselines = uvutils.get_baselines(a1, antennas2=a2, include_auto=True, indicies=True)
-            blList = []
-            for bl in range(len(baselines)):
-                blList.append( (a1[baselines[bl][0]], a2[baselines[bl][1]]) )
-                
+            baselines = uvutils.get_baselines(a1, antennas2=a2, include_auto=True)
+            
             ## Run the cross multiply and accumulate
             vis = XEngine2(d1, d2, v1, v2)
             
@@ -150,7 +147,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
                 fits.set_geometry(site, [a for a in mapper if a.pol == pol1])
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
-            fits.add_data_set(setTime, readT, blList, vis[:,toUse], pol=pol)
+            fits.add_data_set(setTime, readT, baselines, vis[:,toUse], pol=pol)
         print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
         
     # Cleanup after everything is done

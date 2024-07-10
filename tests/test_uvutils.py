@@ -33,37 +33,17 @@ class uvutils_tests(unittest.TestCase):
 
         standList = np.array([100, 101, 102, 103])
 
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutils.get_baselines(standList, include_auto=False)
         self.assertEqual(len(bl), 6)
-        bl = uvutils.get_baselines(standList, include_auto=True, indicies=False)
+        bl = uvutils.get_baselines(standList, include_auto=True)
         self.assertEqual(len(bl), 10)
-
-    def test_baseline_ind(self):
-        """Test that the baselines generated with indicies do return indicies and vice
-        versa."""
-
-        standList = np.array([100, 101, 102, 103])
-
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
-        bl = np.array(bl)
-        self.assertTrue(bl.min() == 100)
-        bl = uvutils.get_baselines(standList, include_auto=True, indicies=False)
-        bl = np.array(bl)
-        self.assertTrue(bl.min() == 100)
-
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=True)
-        bl = np.array(bl)
-        self.assertTrue(bl.max() < 100)
-        bl = uvutils.get_baselines(standList, include_auto=True, indicies=True)
-        bl = np.array(bl)
-        self.assertTrue(bl.max() < 100)
         
     def test_antenna_lookup(self):
         """Test baseline number to antenna lookup function."""
         
         standList = np.array([100, 101, 102, 103])
 
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutils.get_baselines(standList, include_auto=False)
         ind = uvutils.baseline_to_antennas(0, standList)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 101)
@@ -76,16 +56,16 @@ class uvutils_tests(unittest.TestCase):
         """Test antennas to baseline lookup function."""
         
         standList = np.array([100, 101, 102, 103])
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutils.get_baselines(standList, include_auto=False)
         
-        ind = uvutils.antennas_to_baseline(100, 101, standList, include_auto=False, indicies=False)
+        ind = uvutils.antennas_to_baseline(100, 101, standList, include_auto=False)
         self.assertEqual(ind, 0)
         
         ind = uvutils.antennas_to_baseline(100, 102, standList, baseline_list=bl)
         self.assertEqual(ind, 1)
         
-        ind = uvutils.antennas_to_baseline(0, 3, standList, include_auto=False, indicies=True)
-        self.assertEqual(ind, 2)
+        ind = uvutils.antennas_to_baseline(100, 103, standList, include_auto=True)
+        self.assertEqual(ind, 3)
         
     def run_compute_uvw_test(self, antennas, freq, HA=0.0, dec=34.0):
         out = uvutils.compute_uvw(antennas, HA=HA, dec=dec, freq=freq)
@@ -141,13 +121,9 @@ class uvutils_tests(unittest.TestCase):
         np.testing.assert_allclose(out0, out2)
         
         # Pass in a list of baselines
-        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=False)
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False)
         out3 = uvutils.compute_uvw(bl, freq=freq)
         self.assertEqual(len(out3), len(bl))
-        
-        # Pass in a list of baseline indicies
-        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=True)
-        self.assertRaises(TypeError, uvutils.compute_uvw, bl, {'freq': freq})
         
         # Angle support
         freq = [45e6, 60e6]
@@ -177,13 +153,9 @@ class uvutils_tests(unittest.TestCase):
         self.assertEqual(out.shape, (435,2,512))
         
         # Pass in a list of baselines
-        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=False)
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False)
         out0 = uvutils.compute_uv_track(bl)
         self.assertEqual(len(out0), len(bl))
-        
-        # Pass in a list of baseline indicies
-        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False, indicies=True)
-        self.assertRaises(TypeError, uvutils.compute_uv_track, bl)
         
         # Angle support
         dec = 34.0
