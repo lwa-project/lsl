@@ -6,8 +6,11 @@ import os
 import time
 import warnings
 import unittest
+import ephem
 import numpy as np
 from scipy.signal import get_window as scipy_get_window
+
+from astropy.coordinates import SkyCoord, AltAz
 
 from lsl.common.data_access import DataAccess
 from lsl.common import stations
@@ -427,7 +430,7 @@ class FXMaster_tests(unittest.TestCase):
         warnings.simplefilter('ignore')
         np.random.seed(1234)
         
-    def run_correlator_test_real(self, dtype, nchan=256, window=fx.null_window):
+    def run_correlator_test_real(self, dtype, nchan=256, window=fx.null_window, phase_center='z'):
         fakeData = 10.0*np.random.rand(self.nAnt,nchan*8) + 3.0
         fakeData = fakeData.astype(dtype)
         
@@ -435,7 +438,7 @@ class FXMaster_tests(unittest.TestCase):
             station = stations.parse_ssmif(fh)
         antennas = station.antennas
         
-        freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], LFFT=nchan, window=window)
+        freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], LFFT=nchan, window=window, phase_center=phase_center)
         
         # Numpy comparison
         for i in range(self.nAnt):
@@ -467,7 +470,7 @@ class FXMaster_tests(unittest.TestCase):
         cps2 /= (2*LFFT * nFFT)
         lsl.testing.assert_allclose(cps, cps2)
         
-    def run_correlator_test_complex(self, dtype, nchan=256, window=fx.null_window):
+    def run_correlator_test_complex(self, dtype, nchan=256, window=fx.null_window, phase_center='z'):
         fakeData, fakeData_np = _make_complex_data((self.nAnt,1024), scale=16, offset=3+3j, dtype=dtype)
         
         with DataAccess.open(_SSMIF, 'r') as fh:
@@ -476,7 +479,7 @@ class FXMaster_tests(unittest.TestCase):
         
         freq, cps = fx.FXMaster(fakeData, antennas[:self.nAnt], LFFT=nchan,
                                 sample_rate=1e5, central_freq=38e6,
-                                window=window)
+                                window=window, phase_center=phase_center)
         
         # Numpy comparison
         for i in range(self.nAnt):
@@ -510,6 +513,36 @@ class FXMaster_tests(unittest.TestCase):
         cps2 /= (LFFT * nFFT)
         lsl.testing.assert_allclose(cps, cps2)
         
+    def test_phase_centers(self):
+        """Test the C-base correlator with multiple phase center types."""
+        
+        with DataAccess.open(_SSMIF, 'r') as fh:
+            station = stations.parse_ssmif(fh)
+            
+        with self.subTest(type='str'):
+            self.run_correlator_test_real(np.int8, phase_center='z')
+            
+            self.assertRaises(ValueError, self.run_correlator_test_real, np.int8, phase_center='notgoingtowork')
+            
+        with self.subTest(type='ephem.Body'):
+            bdy = ephem.FixedBody()
+            bdy._ra = '1:02:03'
+            bdy._dec = '+89:00:00'
+            bdy._epoch = ephem.J2000
+            bdy.compute(station)
+            
+            self.run_correlator_test_real(np.int8, phase_center=bdy)
+            
+        with self.subTest(type='astropy.coordinates.SkyCoord'):
+            sc = SkyCoord('1h02m03s', '+89d00m00s', frame='fk5', equinox='J2000')
+            aa = AltAz(location=station.earth_location, obstime='J2000')
+            sc = sc.transform_to(aa)
+            
+            self.run_correlator_test_real(np.int8, phase_center=sc)
+            
+        with self.subTest(type='tuple'):
+            self.run_correlator_test_real(np.int8, phase_center=(0,90))
+            
     def test_correlator_real(self):
         """Test the C-based correlator on real-valued data."""
         
@@ -712,7 +745,7 @@ class FXStokes_tests(unittest.TestCase):
         warnings.simplefilter('ignore')
         np.random.seed(1234)
         
-    def run_correlator_test_real(self, dtype, nchan=256, window=fx.null_window):
+    def run_correlator_test_real(self, dtype, nchan=256, window=fx.null_window, phase_center='z'):
         fakeData = 10.0*np.random.rand(self.nAnt,nchan*8) + 3.0
         fakeData = fakeData.astype(dtype)
         
@@ -720,7 +753,7 @@ class FXStokes_tests(unittest.TestCase):
             station = stations.parse_ssmif(fh)
         antennas = station.antennas
         
-        freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], LFFT=nchan, window=window)
+        freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], LFFT=nchan, window=window, phase_center=phase_center)
                             
         # Numpy comparison
         for i in range(self.nAnt):
@@ -752,7 +785,7 @@ class FXStokes_tests(unittest.TestCase):
         cps2 /= (2*LFFT * nFFT)
         lsl.testing.assert_allclose(cps, cps2)
         
-    def run_correlator_test_complex(self, dtype, nchan=256, window=fx.null_window):
+    def run_correlator_test_complex(self, dtype, nchan=256, window=fx.null_window, phase_center='z'):
         fakeData, fakeData_np = _make_complex_data((self.nAnt,1024), scale=16, offset=3+3j, dtype=dtype)
         
         with DataAccess.open(_SSMIF, 'r') as fh:
@@ -761,7 +794,7 @@ class FXStokes_tests(unittest.TestCase):
         
         freq, cps = fx.FXStokes(fakeData, antennas[:self.nAnt], LFFT=nchan,
                                 sample_rate=1e5, central_freq=38e6, 
-                                window=window)
+                                window=window, phase_center=phase_center)
                             
         # Numpy comparison
         for i in range(self.nAnt):
@@ -795,6 +828,36 @@ class FXStokes_tests(unittest.TestCase):
         cps2 /= (LFFT * nFFT)
         lsl.testing.assert_allclose(cps, cps2)
         
+    def test_phase_centers(self):
+        """Test the C-base correlator with multiple phase center types."""
+        
+        with DataAccess.open(_SSMIF, 'r') as fh:
+            station = stations.parse_ssmif(fh)
+            
+        with self.subTest(type='str'):
+            self.run_correlator_test_real(np.int8, phase_center='z')
+            
+            self.assertRaises(ValueError, self.run_correlator_test_real, np.int8, phase_center='notgoingtowork')
+            
+        with self.subTest(type='ephem.Body'):
+            bdy = ephem.FixedBody()
+            bdy._ra = '1:02:03'
+            bdy._dec = '+89:00:00'
+            bdy._epoch = ephem.J2000
+            bdy.compute(station)
+            
+            self.run_correlator_test_real(np.int8, phase_center=bdy)
+            
+        with self.subTest(type='astropy.coordinates.SkyCoord'):
+            sc = SkyCoord('1h02m03s', '+89d00m00s', frame='fk5', equinox='J2000')
+            aa = AltAz(location=station.earth_location, obstime='J2000')
+            sc = sc.transform_to(aa)
+            
+            self.run_correlator_test_real(np.int8, phase_center=sc)
+            
+        with self.subTest(type='tuple'):
+            self.run_correlator_test_real(np.int8, phase_center=(0,90))
+            
     def test_correlator_real(self):
         """Test the C-based correlator on real-valued data."""
         
