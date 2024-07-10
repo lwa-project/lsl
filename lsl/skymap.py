@@ -26,6 +26,8 @@ from lsl.common.data_access import DataAccess
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Optional, Tuple
+
 
 __version__   = '0.5'
 __all__ = ['SkyMapBase', 'SkyMapBase', 'SkyMapGSM', 'SkyMapLFSM', 'ProjectedSkyMap']
@@ -51,16 +53,15 @@ class SkyMapBase(object):
     # Class data 
     degToRad = (np.pi/180.)             # Usual conversion factor
     
-    def __init__(self, filename=None, freq_MHz=73.9):
+    def __init__(self, filename: Optional[str]=None, freq_MHz: float=73.9):
         self.filename = filename
         self.freq_MHz = freq_MHz
-        self._power = None
         
         # Load in the coordinates and data
-        self._load()
+        self.ra, self.dec, self._power = self._load()
         
     @abc.abstractmethod
-    def _load(self):
+    def _load(self) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         """
         Load in the specified filename and populate the ra, dec, and _power
         attributes.  This will be over-ridden in the skymap-specific subclasses.
@@ -68,7 +69,7 @@ class SkyMapBase(object):
         
         raise NotImplementedError
         
-    def normalize_power(self):
+    def normalize_power(self) -> np.ndarray:
         """
         Compute the skymap power (total power radiated into 4 pi steradians) into 
         a power at antenna, based on pixel count.
@@ -76,7 +77,7 @@ class SkyMapBase(object):
         
         return self._power
         
-    def compute_total_power(self):
+    def compute_total_power(self) -> float:
         """
         Compute and return the the total power from the sky.
         """
@@ -103,7 +104,7 @@ class SkyMapGSM(SkyMapBase):
     
     _input = os.path.join('skymap', 'gsm-408locked.npz')
     
-    def __init__(self, filename=None, freq_MHz=73.9):
+    def __init__(self, filename: Optional[str]=None, freq_MHz: float=73.9):
         """
         Initialize the SkyMapGSM object with an optional full file path to 
         the skymap file.
@@ -113,15 +114,15 @@ class SkyMapGSM(SkyMapBase):
             filename = self._input
         SkyMapBase.__init__(self, filename=filename, freq_MHz=freq_MHz)
         
-    def _load(self):
+    def _load(self) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
         with DataAccess.open(self.filename, 'rb') as fh:
             dataDict = np.load(fh)
             
             # RA and dec. are stored in the dictionary as radians
-            self.ra = dataDict['ra'].ravel() / self.degToRad
-            self.dec = dataDict['dec'].ravel() / self.degToRad
+            ra = dataDict['ra'].ravel() / self.degToRad
+            dec = dataDict['dec'].ravel() / self.degToRad
             
             # Compute the temperature for the current frequency
             ## Load in the data
@@ -143,7 +144,8 @@ class SkyMapGSM(SkyMapBase):
                 output += compFunc(np.log(self.freq_MHz))*maps[:,i]
             output *= np.exp(scaleFunc(np.log(self.freq_MHz)))
             ## Save
-            self._power = output
+            power = output
+        return ra, dec, power
 
 
 class SkyMapLFSM(SkyMapGSM):
@@ -158,7 +160,7 @@ class SkyMapLFSM(SkyMapGSM):
     
     _input = os.path.join('skymap', 'lfsm-5.1deg.npz')
     
-    def __init__(self, filename=None, freq_MHz=73.9):
+    def __init__(self, filename: Optional[str]=None, freq_MHz: float=73.9):
         """
         Initialize the SkyMapLFSM object with an optional full file path to 
         the skymap file.
@@ -168,15 +170,15 @@ class SkyMapLFSM(SkyMapGSM):
             filename = self._input
         SkyMapBase.__init__(self, filename=filename, freq_MHz=freq_MHz)
         
-    def _load(self):
+    def _load(self) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         # Since we are using a pre-computed GSM which is a NPZ file, read it
         # in with numpy.load.
         with DataAccess.open(self.filename, 'rb') as fh:
             dataDict = np.load(fh)
             
             # RA and dec. are stored in the dictionary as radians
-            self.ra = dataDict['ra'].ravel() / self.degToRad
-            self.dec = dataDict['dec'].ravel() / self.degToRad
+            ra = dataDict['ra'].ravel() / self.degToRad
+            dec = dataDict['dec'].ravel() / self.degToRad
             
             # Compute the temperature for the current frequency
             ## Load in the data
@@ -199,7 +201,8 @@ class SkyMapLFSM(SkyMapGSM):
                 output += compFunc(np.log(self.freq_MHz))*maps[:,i]
             output *= np.exp(scaleFunc(np.log(self.freq_MHz)))
             ## Save
-            self._power = output
+            power = output
+        return ra, dec, power
 
 
 class ProjectedSkyMap(object):
@@ -214,7 +217,7 @@ class ProjectedSkyMap(object):
         the sky.
     """
     
-    def __init__(self, skymap_object, lat, lon, utc_jd):
+    def __init__(self, skymap_object: SkyMapBase, lat: float, lon: float, utc_jd: float):
         """
         Initialize the skymap at input lat,lon (decimal degrees) and time (in 
         UTC julian day).
@@ -245,7 +248,7 @@ class ProjectedSkyMap(object):
         self.visibleAz = np.compress(visibleMask, self.az)
         self.visiblePower = np.compress(visibleMask, self.skymap_object._power)
         try:
-            pixelSolidAngle = (2.0 * np.pi)**2/(self.skymap_object.numPixelsX*self.skymap_object.numPixelsY)
+            pixelSolidAngle = (2.0 * np.pi)**2/(self.skymap_object.numPixelsX*self.skymap_object.numPixelsY)    # type: ignore
         except AttributeError:
             pixelSolidAngle = 2.5566346e-4
         fractionSolidAngle = (1.0/4.0*np.pi) * pixelSolidAngle
@@ -258,7 +261,7 @@ class ProjectedSkyMap(object):
         self.visibleRa = np.compress(visibleMask, self.skymap_object.ra)
         self.visibleDec = np.compress(visibleMask, self.skymap_object.dec)
         
-    def get_direction_cosines(self):
+    def get_direction_cosines(self) -> Tuple[np.ndarray,np.ndarray,np.ndarray]:
         """
         Compute the direction cosines and return the tuple of arrays (l,m,n).
         """
@@ -270,7 +273,7 @@ class ProjectedSkyMap(object):
         n = np.sin(altRad)
         return (l, m, n)
         
-    def compute_visible_power(self):
+    def compute_visible_power(self) -> float:
         """
         Compute and return the the total power from visible portion of the sky.
         """
