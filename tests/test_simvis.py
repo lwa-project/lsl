@@ -9,6 +9,8 @@ import numpy as np
 
 import aipy
 
+from astropy.coordinates import SkyCoord
+
 from lsl.sim import vis
 from lsl.imaging.data import VisibilityData
 from lsl.common import stations as lwa_common
@@ -231,6 +233,13 @@ class simvis_tests(unittest.TestCase):
             self.assertAlmostEqual(out.phase_center._ra, bdy._ra, 6)
             self.assertAlmostEqual(out.phase_center._dec, bdy._dec, 6)
             self.assertAlmostEqual(out.phase_center._epoch, bdy._epoch, 6)
+            
+        with self.subTest(type='astropy.coordinates.SkyCoord'):
+            sc = SkyCoord('1h02m03s', '+89d00m00s', frame='fk5', equinox='J2000')
+            
+            out = vis.build_sim_data(aa, vis.SOURCES, phase_center=sc)
+            self.assertAlmostEqual(out.phase_center._ra, sc.ra.rad, 6)
+            self.assertAlmostEqual(out.phase_center._dec, sc.dec.rad, 6)
             
     def test_scale_data(self):
         """Test that we can scale a data dictionary without error"""
