@@ -258,7 +258,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
             azPC = 0.0
             altPC = np.pi/2.0
         else:
-            raise ValueError(f"Unknown phase_center '{phase_center}'")
+            raise ValueError(f"Unrecognized source: {phase_center}")
     elif isinstance(phase_center, AltAz):
         azPC = phase_center.az.rad
         altPC = phase_center.alt.rad
@@ -414,7 +414,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
             azPC = 0.0
             altPC = np.pi/2.0
         else:
-            raise ValueError(f"Unknown phase_center '{phase_center}'")
+            raise ValueError(f"Unrecognized source: {phase_center}")
     elif isinstance(phase_center, AltAz):
         azPC = phase_center.az.rad
         altPC = phase_center.alt.rad

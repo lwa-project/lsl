@@ -682,7 +682,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         projection toward that source - fast."""
         bl = self[j] - self[i]
         
-        if type(src) == str:
+        if isinstance(src, str):
             if src == 'e':
                 return np.dot(self._eq2now, bl)
             elif src == 'z':
@@ -1056,20 +1056,23 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     UVData = VisibilityDataSet(jd, freq, baselines, [], antennaarray=aa, phase_center=phase_center)
     
     # Go!
-    if phase_center != 'z':
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            pcAz = 0.0
+            pcEl = 90.0
+            
+            ot = AstroTime(jd, format='jd', scale='utc')
+            tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
+            pc = tc.transform_to(FK5(equinox=ot))
+            
+            UVData.phase_center = RadioFixedBody.from_astropy(pc)
+            UVData.phase_center.compute(aa)
+        else:
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    else:
         phase_center.compute(aa)
         pcAz = phase_center.az*180/np.pi
         pcEl = phase_center.alt*180/np.pi
-    else:
-        pcAz = 0.0
-        pcEl = 90.0
-        
-        ot = AstroTime(jd, format='jd', scale='utc')
-        tc = AltAz('0deg', '90deg', location=aa.earth_location, obstime=ot)
-        pc = tc.transform_to(FK5(equinox=ot))
-        
-        UVData.phase_center = RadioFixedBody.from_astropy(pc)
-        UVData.phase_center.compute(aa)
         
     for p,pol in enumerate(pols):
         ## Apply the antenna gain pattern for each source
