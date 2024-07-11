@@ -22,6 +22,8 @@ from scipy.interpolate import interp1d
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Callable
+
 
 __version__ = '0.4'
 __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX', 'TBN_TUNING_WORD_MIN', 'TBN_TUNING_WORD_MAX',
@@ -73,7 +75,7 @@ _DRX_FIR = [ 0.0111580, -0.0074330,  0.0085684, -0.0085984,  0.0070656, -0.00359
 _N_PTS = 1000 # Number of points to use in calculating the bandpasses
 
 
-def freq_to_word(freq):
+def freq_to_word(freq: float) -> int:
     """
     Given a frequency in Hz, convert it to the closest DP tuning word.
     """
@@ -81,7 +83,7 @@ def freq_to_word(freq):
     return int(round(freq*2**32 / fS))
 
 
-def word_to_freq(word):
+def word_to_freq(word: int) -> float:
     """
     Given a DP tuning word, convert it to a frequncy in Hz.
     """
@@ -89,7 +91,7 @@ def word_to_freq(word):
     return word*fS / 2**32
 
 
-def delay_to_dpd(delay):
+def delay_to_dpd(delay: float) -> int:
     """
     Given a delay in ns, convert it to a course and fine portion and into the 
     final format expected by ADP (big endian 16.12 unsigned integer)
@@ -110,7 +112,7 @@ def delay_to_dpd(delay):
     return combined
 
 
-def dpd_to_delay(combined):
+def dpd_to_delay(combined: int) -> float:
     """
     Given a delay value in the final format expect by ADP, return the delay in ns.
     """
@@ -128,7 +130,7 @@ def dpd_to_delay(combined):
     return delay
 
 
-def gain_to_dpg(gain):
+def gain_to_dpg(gain: float) -> int:
     """
     Given a gain (between 0 and 1), convert it to a gain in the final form 
     expected by ADP (big endian 16.1 signed integer).
@@ -143,7 +145,7 @@ def gain_to_dpg(gain):
     return combined
 
 
-def dpg_to_gain(combined):
+def dpg_to_gain(combined: int) -> float:
     """
     Given a gain value in the final format expected by ADP, return the gain
     as a decimal value (0 to 1).
@@ -158,7 +160,7 @@ def dpg_to_gain(combined):
     return gain
 
 
-def tbn_filter(sample_rate=1e5, npts=_N_PTS):
+def tbn_filter(sample_rate: float=1e5, npts: int=_N_PTS) -> Callable:
     """
     Return a function that will generate the shape of a TBN filter for a given sample
     rate.
@@ -180,7 +182,7 @@ def tbn_filter(sample_rate=1e5, npts=_N_PTS):
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
 
 
-def drx_filter(sample_rate=19.6e6, npts=_N_PTS):
+def drx_filter(sample_rate: float=19.6e6, npts: int=_N_PTS) -> Callable:
     """
     Return a function that will generate the shape of a DRX filter for a given sample
     rate.

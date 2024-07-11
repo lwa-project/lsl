@@ -55,6 +55,8 @@ from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm, StatusCode, S
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Optional, Dict
+
 
 __version__ = '0.1'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
@@ -321,7 +323,7 @@ OSF2_STRUCT = """
 """
 
 
-def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None):
+def parse_c_struct(cStruct: str, char_mode: str='str', endianness: str='native', overrides: Optional[Dict]=None) -> ctypes.Structure:
     ndp_macros = {a: globals()[a] for a in __all__}
     if overrides is not None:
         ndp_macros.update(overrides)
@@ -340,7 +342,7 @@ def _two_bytes_swap(value):
     return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF)
 
 
-def delay_to_mcsd(delay):
+def delay_to_mcsd(delay: float) -> int:
     """
     Given a delay in ns, convert it to a course and fine portion and into 
     the form expected by MCS in a custom beamforming SDF (little endian 
@@ -352,7 +354,7 @@ def delay_to_mcsd(delay):
     return _two_bytes_swap( ndpCommon.delay_to_dpd(delay) )
 
 
-def mcsd_to_delay(delay):
+def mcsd_to_delay(delay: int) -> float:
     """
     Given delay value from an OBS_BEAM_DELAY field in a custom beamforming 
     SDF, return the delay in ns.
@@ -363,7 +365,7 @@ def mcsd_to_delay(delay):
     return ndpCommon.dpd_to_delay( _two_bytes_swap(delay) )
 
 
-def gain_to_mcsg(gain):
+def gain_to_mcsg(gain: float) -> int:
     """
     Given a gain (between 0 and 1), convert it to a gain in the form 
     expected by MCS in a custom beamforming SDF (little endian 16.1 
@@ -375,7 +377,7 @@ def gain_to_mcsg(gain):
     return _two_bytes_swap( ndpCommon.gain_to_dpg(gain) )
 
 
-def mcsg_to_gain(gain):
+def mcsg_to_gain(gain: int) -> float:
     """
     Given a gain value from an OBS_BEAM_GAIN field in a custom beamforming
     SDF, return the decimal equivalent.

@@ -21,6 +21,8 @@ from lsl.common import _fir
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Callable, List, Optional, Tuple
+
 
 __version__ = '0.7'
 __all__ = ['fS', 'T', 'T2', 'N_MAX', 'TBN_TUNING_WORD_MIN', 'TBN_TUNING_WORD_MAX',
@@ -298,7 +300,7 @@ _DRX_FIR = [-6.2000000000000000e+001,  6.6000000000000000e+001,  1.4500000000000
 _N_PTS = 1000 # Number of points to use in calculating the bandpasses
 
 
-def freq_to_word(freq):
+def freq_to_word(freq: float) -> int:
     """
     Given a frequency in Hz, convert it to the closest DP tuning word.
     """
@@ -306,7 +308,7 @@ def freq_to_word(freq):
     return int(round(freq*2**32 / fS))
 
 
-def word_to_freq(word):
+def word_to_freq(word: int) -> float:
     """
     Given a DP tuning word, convert it to a frequncy in Hz.
     """
@@ -314,7 +316,7 @@ def word_to_freq(word):
     return word*fS / 2**32
 
 
-def delay_to_dpd(delay):
+def delay_to_dpd(delay: float) -> int:
     """
     Given a delay in ns, convert it to a course and fine portion and into the 
     final format expected by DP (big endian 16.12 unsigned integer).
@@ -335,7 +337,7 @@ def delay_to_dpd(delay):
     return combined
 
 
-def dpd_to_delay(combined):
+def dpd_to_delay(combined: int) -> float:
     """
     Given a delay value in the final format expect by DP, return the delay in ns.
     """
@@ -353,7 +355,7 @@ def dpd_to_delay(combined):
     return delay
 
 
-def gain_to_dpg(gain):
+def gain_to_dpg(gain: float) -> int:
     """
     Given a gain (between 0 and 1), convert it to a gain in the final form 
     expected by DP (big endian 16.1 signed integer).
@@ -368,7 +370,7 @@ def gain_to_dpg(gain):
     return combined
 
 
-def dpg_to_gain(combined):
+def dpg_to_gain(combined: int) -> float:
     """
     Given a gain value in the final format expected by DP, return the gain
     as a decimal value (0 to 1).
@@ -383,7 +385,7 @@ def dpg_to_gain(combined):
     return gain
 
 
-def tbn_filter(sample_rate=1e5, npts=_N_PTS):
+def tbn_filter(sample_rate: float=1e5, npts: int=_N_PTS) -> Callable:
     """
     Return a function that will generate the shape of a TBN filter for a given sample
     rate.
@@ -419,7 +421,7 @@ def tbn_filter(sample_rate=1e5, npts=_N_PTS):
     return interp1d(h, w/w.max(), kind='cubic', bounds_error=False, fill_value=0.0)
 
 
-def drx_filter(sample_rate=19.6e6, npts=_N_PTS):
+def drx_filter(sample_rate: float=19.6e6, npts: int=_N_PTS) -> Callable:
     """
     Return a function that will generate the shape of a DRX filter for a given sample
     rate.
@@ -506,12 +508,12 @@ class SoftwareDP(object):
                              3: {'totalD':  196, 'CIC': _DRX_CIC_3, 'cicD':  98, 'FIR': _DRX_FIR, 'firD':  2},
                             },}
                         
-    delayFIRs = []
+    delayFIRs: List[List] = []
     for i in range(520):
         delayFIRs.append([])
         delayFIRs[-1].extend(_DELAY_FIRS)
     
-    def __init__(self, mode='DRX', filter=7, central_freq=74e6):
+    def __init__(self, mode: str='DRX', filter: int=7, central_freq: float=74e6):
         """
         Setup DP for processing an input TBW signal.  Keywords accepted are:
         * mode -> mode of operation (DRX or TBN)
@@ -542,7 +544,7 @@ class SoftwareDP(object):
     def __str__(self):
         return f"Sofware DP: {self.mode} with filter {self.filter} at {self.central_freq/1e6:.3f} MHz"
         
-    def set_mode(self, mode):
+    def set_mode(self, mode: str):
         """
         Set the mode of operation for the software DP instance.
         """
@@ -551,7 +553,7 @@ class SoftwareDP(object):
             raise ValueError(f"Unknown mode '{mode}'")
         self.mode = mode
         
-    def set_filter(self, filter):
+    def set_filter(self, filter: int):
         """
         Set the filter code for the current mode.
         """
@@ -562,7 +564,7 @@ class SoftwareDP(object):
             raise ValueError(f"Unknown or unsupported filter for {self.mode}, '{filter}'")
         self.filter = filter
         
-    def set_tuning_freq(self, central_freq):
+    def set_tuning_freq(self, central_freq: float):
         """
         Set the tuning frequency for the current setup.
         """
@@ -575,7 +577,7 @@ class SoftwareDP(object):
             raise ValueError(f"Central frequency of {central_freq/1e6:.2f} MHz outside the DP tuning range.")
         self.central_freq = central_freq
         
-    def set_delay_firs(self, channel, coeffs):
+    def set_delay_firs(self, channel: int, coeffs: List[List]):
         """
         Set the delay FIR coefficients for a particular channel to the list of lists 
         provided (filter set by filter coefficients).  If channel is 0, the delay FIR 
@@ -600,11 +602,11 @@ class SoftwareDP(object):
             for i in range(520):
                 self.delayFIRs.append([])
                 self.delayFIRs[-1].extend(coeffs)
-            
+                
         else:
             self.delayFIRs[channel-1] = coeffs
             
-    def form_beam(self, antennas, time, data, course_delays=None, fine_delays=None, gains=None):
+    def form_beam(self, antennas: List, time: np.ndarray, data: np.ndarray, course_delays: Optional[np.ndarray]=None, fine_delays: Optional[np.ndarray]=None, gains: Optional[np.ndarray]=None) -> Tuple[np.ndarray,np.ndarray]:
         """
         Process a given batch of TBW data using the provided delay and gain information to
         form a beam.  Returns a two-element tuple, one for each beam polarization.
@@ -615,9 +617,8 @@ class SoftwareDP(object):
         fine    = np.array(fine_delays, dtype=np.int16)
         gain    = (np.array(gains)*32767).astype(np.int16)		
         return _fir.integerBeamformer(data, filters, course, fine, gain)
-
         
-    def apply_filter(self, time, data, disable_pool=False):
+    def apply_filter(self, time: np.ndarray, data: np.ndarray) -> np.ndarray:
         """
         Process a given batch of TBW data using the current mode of operation.  This 
         function requires both an array of times (int64 in fS since the UNIX epoch) 
