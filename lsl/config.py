@@ -267,7 +267,7 @@ class LSLConfigContainer(object):
                         fh.write(str(self))
                     self._changed = False
                     
-    def view(self, section: str) -> LSLConfigSubContainer:
+    def view(self, section: str) -> "LSLConfigSubContainer":
         """
         Return a configuration sub-container that defaults to looking up 
         values in the specified section.
