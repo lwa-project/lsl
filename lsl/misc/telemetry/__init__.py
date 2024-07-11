@@ -22,6 +22,8 @@ from lsl.version import version as lsl_version
 from lsl.config import LSL_CONFIG
 TELE_CONFIG = LSL_CONFIG.view('telemetry')
 
+from typing import Callable, Dict, List
+
 
 __version__ = '0.3'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
@@ -49,7 +51,7 @@ try:
         
     _IS_READONLY = False
 except OSError as e:
-    _INSTALL_KEY = None
+    _INSTALL_KEY = ''
     _IS_READONLY = True
     
     warnings.warn("Could not create telemetry cache, telemetry will be disabled for this session: %s" % str(e),
@@ -62,7 +64,7 @@ class _TelemetryClient(object):
     """
     _lock = RLock()
     
-    def __init__(self, key, version=lsl_version):
+    def __init__(self, key: str, version: str=lsl_version):
         # Setup
         self.key = key
         self.version = version
@@ -74,7 +76,7 @@ class _TelemetryClient(object):
         self._session_start = time.time()
         
         # Telemetry cache
-        self._cache = {}
+        self._cache: Dict[str,List] = {}
         self._cache_count = 0
         
         if not _IS_READONLY:
@@ -88,7 +90,7 @@ class _TelemetryClient(object):
         else:
             self.active = False
             
-    def track(self, name, timing=0.0):
+    def track(self, name: str, timing: float=0.0) -> bool:
         """
         Add an entry to the telemetry cache with optional timing information.
         """
@@ -111,7 +113,7 @@ class _TelemetryClient(object):
                 
         return True
                 
-    def send(self, final=False):
+    def send(self, final: bool=False) -> bool:
         """
         Send the current cache of telemetry data back to the maintainers for 
         analysis.
@@ -132,16 +134,13 @@ class _TelemetryClient(object):
                                          'py_version'  : self.py_version,
                                          'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
                                          'payload'     : payload})
-                    try:
-                        payload = payload.encode()
-                    except AttributeError:
-                        pass
-                    uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload, 
+                    uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload.encode(), 
                                  timeout=self.timeout)
                     status = uh.read()
                     if status == '':
                         self.clear()
                         success = True
+                    uh.close()
                 except Exception as e:
                     warnings.warn("Failed to send telemetry data: %s" % str(e))
             else:
@@ -159,7 +158,7 @@ class _TelemetryClient(object):
             self._cache_count = 0
             
     @property
-    def is_active(self):
+    def is_active(self) -> bool:
         """
         Whether or not the cache is active and sending data back.
         """
@@ -197,7 +196,7 @@ _telemetry_client = _TelemetryClient(_INSTALL_KEY)
 
 
 # Telemetry control
-def is_active():
+def is_active() -> bool:
     """
     Return a boolean of whether or not the LSL telemetry client is active.
     """
@@ -264,15 +263,15 @@ def track_module():
     _telemetry_client.track(caller.f_globals['__name__'])
 
 
-def track_function(user_function):
+def track_function(user_function: Callable) -> Callable:
     """
     Record the use of a function in LSL without execution time information.
     """
     
     global _telemetry_client
     
-    caller = inspect.currentframe().f_back
-    mod = caller.f_globals['__name__']
+    caller = inspect.currentframe().f_back  # type: ignore
+    mod = caller.f_globals['__name__']  # type: ignore
     fnc = user_function.__name__
     name = mod+'.'+fnc+'()'
     
