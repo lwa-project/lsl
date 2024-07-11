@@ -19,6 +19,8 @@ import numpy as np
 from scipy.signal import freqz
 from scipy.interpolate import interp1d
 
+from lsl.common.data_access import DataAccess
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -56,22 +58,21 @@ DRX_TUNING_WORD_MAX = 1928352663       # Tuning word
 #: Maximum number of beams
 DRX_BEAMS_MAX = 3
 
-# FIR Filters
-## TBN
-_TBN_FIR = [-3.22350e-05, -0.00021433,  0.0017756, -0.0044913,  0.0040327, 
-             0.00735870,  -0.03218100,  0.0553980, -0.0398360, -0.0748920, 
-             0.58308000,   0.58308000, -0.0748920, -0.0398360,  0.0553980,
-            -0.03218100,   0.00735870,  0.0040327, -0.0044913,  0.0017756,
-            -0.00021433,  -3.2235e-05]
-## DRX
-_DRX_FIR = [ 0.0111580, -0.0074330,  0.0085684, -0.0085984,  0.0070656, -0.0035905, 
-            -0.0020837,  0.0099858, -0.0199800,  0.0316360, -0.0443470,  0.0573270, 
-            -0.0696630,  0.0804420, -0.0888320,  0.0941650,  0.9040000,  0.0941650, 
-            -0.0888320,  0.0804420, -0.0696630,  0.0573270, -0.0443470,  0.0316360, 
-            -0.0199800,  0.0099858, -0.0020837, -0.0035905,  0.0070656, -0.0085984,  
-             0.0085684, -0.0074330,  0.0111580]
-
-
+with DataAccess.open('digital/adp_coeffs.npz', 'rb') as fh:
+    dataDict = np.load(fh)
+    
+    # FIR Filters
+    ## TBN
+    _TBN_FIR = dataDict['TBN_FIR'][...]
+    
+    ## DRX
+    _DRX_FIR = dataDict['DRX_FIR'][...]
+    
+    try:
+        dataDict.close()
+    except AttributeError:
+        pass
+        
 _N_PTS = 1000 # Number of points to use in calculating the bandpasses
 
 
