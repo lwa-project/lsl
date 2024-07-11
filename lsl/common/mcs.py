@@ -948,24 +948,21 @@ class MIB(object):
             filename = filename.replace('.dir', '.pag')
             
         # Open the database
-        db = dbm.open(filename, 'ru')
-        
-        # Go!
-        entry = db.firstkey()   # type: ignore
-        while entry is not None:
-            value = db[entry]
-            
-            try:
-                record = MIBEntry()
-                record.from_entry(value)
-                mib.entries[record.index] = record
+        with dbm.open(filename, 'ru') as db:
+            # Go!
+            entry = db.firstkey()   # type: ignore
+            while entry is not None:
+                value = db[entry]
                 
-            except ValueError:
-                pass
+                try:
+                    record = MIBEntry.from_entry(value)
+                    mib.entries[record.index] = record
+                    
+                except ValueError:
+                    pass
+                    
+                entry = db.nextkey(entry)   # type: ignore
                 
-            entry = db.nextkey(entry)   # type: ignore
-        db.close()
-        
         # Done
         return mib
 
@@ -1143,7 +1140,7 @@ class MIBEntry(object):
         mibe = klass()
         mibe.eType = int(record.eType)
         mibe.index = index
-        mibe.value = klass._parse_value(record.val, dbmType)
+        mibe.value = mibe._parse_value(record.val, dbmType)
         mibe.dbmType = dbmType
         mibe.icdType = icdType
         mibe._tv = (int(record.tv[0]), int(record.tv[1]))

@@ -207,8 +207,7 @@ def get_asp_configuration(tarname, which='beginning'):
                 if which == 'end' and mib.name.find('_ASP_end') == -1:
                     continue
                     
-                aspMIB = MIB()
-                aspMIB.from_file(os.path.join(tempDir, mib.name))
+                aspMIB = MIB.from_file(os.path.join(tempDir, mib.name))
                 break
                 
             # Extract the configuration
