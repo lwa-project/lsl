@@ -930,7 +930,8 @@ class MIB(object):
         # Done
         return True
         
-    def from_file(self, filename, init_filename=None):
+    @classmethod
+    def from_file(klass, filename, init_filename=None):
         """
         Given the name of a GDBM database file, initialize the MIB.  
         Optionally, use the name of the MCS MIB initialization file to
@@ -938,34 +939,32 @@ class MIB(object):
         """
         
         # Parse the init. file (if we have one)
+        mib = klass()
         if init_filename is not None:
-            self.parse_init_file(init_filename)
+            mib.parse_init_file(init_filename)
             
         # Make sure we have the .pag file
         if filename[-4:] == '.dir':
             filename = filename.replace('.dir', '.pag')
             
         # Open the database
-        db = dbm.open(filename, 'ru')
-        
-        # Go!
-        entry = db.firstkey()
-        while entry is not None:
-            value = db[entry]
-            
-            try:
-                record = MIBEntry()
-                record.from_entry(value)
-                self.entries[record.index] = record
+        with dbm.open(filename, 'ru') as db:
+            # Go!
+            entry = db.firstkey()
+            while entry is not None:
+                value = db[entry]
                 
-            except ValueError:
-                pass
+                try:
+                    record = MIBEntry.from_entry(value)
+                    mib.entries[record.index] = record
+                    
+                except ValueError:
+                    pass
+                    
+                entry = db.nextkey(entry)
                 
-            entry = db.nextkey(entry)
-        db.close()
-        
         # Done
-        return True
+        return mib
 
 
 class MIBEntry(object):
@@ -999,6 +998,7 @@ class MIBEntry(object):
         
         return f"Index: {self.index}; Value: {self.value}; Updated at {self.updateTime}"
         
+    @staticmethod
     def _parse_value(self, value, dataType):
         """
         Convert an encoded value to something Pythonic (if possible).
@@ -1087,7 +1087,8 @@ class MIBEntry(object):
         else:
             raise ValueError(f"Unknown data type '{dataType}'")
             
-    def from_entry(self, value):
+    @classmethod
+    def from_entry(klass, value):
         """
         Given an MIB entry straight out of a GDBM database, populate the 
         MIBEntry instance.
@@ -1136,14 +1137,15 @@ class MIBEntry(object):
             raise ValueError(f"Entry index '{record.index}' does not appear to be numeric")
             
         # Basic information
-        self.eType = int(record.eType)
-        self.index = index
-        self.value = self._parse_value(record.val, dbmType)
-        self.dbmType = dbmType
-        self.icdType = icdType
-        self._tv = (int(record.tv[0]), int(record.tv[1]))
+        mibe = klass()
+        mibe.eType = int(record.eType)
+        mibe.index = index
+        mibe.value = mibe._parse_value(record.val, dbmType)
+        mibe.dbmType = dbmType
+        mibe.icdType = icdType
+        mibe._tv = (int(record.tv[0]), int(record.tv[1]))
         
         # Time
-        self.updateTime = datetime.utcfromtimestamp(record.tv[0] + record.tv[1]/1e9)
+        mibe.updateTime = datetime.utcfromtimestamp(record.tv[0] + record.tv[1]/1e9)
         
-        return True
+        return mibe
