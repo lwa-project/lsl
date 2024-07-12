@@ -999,7 +999,7 @@ class MIBEntry(object):
         return f"Index: {self.index}; Value: {self.value}; Updated at {self.updateTime}"
         
     @staticmethod
-    def _parse_value(self, value, dataType):
+    def _parse_value(value, dataType):
         """
         Convert an encoded value to something Pythonic (if possible).
         
