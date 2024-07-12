@@ -1073,7 +1073,7 @@ class equ_posn(object):
         Get local horizontal coordinates from equatorial/celestial coordinates.
         
         Param: observer - Object of type geo_posn representing the observers's
-                          location on the Earth.
+                          location on Earth.
         Param: jD       - UTC Julian day (float).
         
         Returns object of type hrz_posn representing local position.

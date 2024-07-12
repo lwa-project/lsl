@@ -1,4 +1,4 @@
-""
+"""
 Unit test for the lsl.common.ndp module.
 """
 
