@@ -1075,8 +1075,8 @@ class equ_posn(object):
         """
         Get local horizontal coordinates from equatorial/celestial coordinates.
         
-        Param: observer - Object of type geo_posn representing the observer's
-                          location on Earth
+        Param: observer - Object of type geo_posn representing the observers's
+                          location on the Earth.
         Param: jD       - UTC Julian day (float).
         
         Returns object of type hrz_posn representing local position.
@@ -2519,7 +2519,7 @@ def get_apparent_posn(mean_position: equ_posn, jD: float, proper_motion: Optiona
         proper_motion = (_DEFAULT_PROPER_MOTION[0], proper_motion[1])
     if proper_motion[1] is None:
         proper_motion = (proper_motion[0], _DEFAULT_PROPER_MOTION[1])
-            
+        
     t = AstroTime(jD, format='jd', scale='utc')
     sc = mean_position.astropy
     if sc is None:
@@ -3403,7 +3403,7 @@ def get_rect_from_equ(posn: equ_posn) -> rect_posn:
     
     Param: posn - Object of type equ_posn giving position.
     
-    Returns: Object of type rect_posn giving rectangular coordinates (normallized to 1).
+    Returns: Object of type rect_posn giving rectangular coordinates (normalized to 1).
     """
     
     sc = SkyCoord(posn.ra*astrounits.deg, posn.dec*astrounits.deg,

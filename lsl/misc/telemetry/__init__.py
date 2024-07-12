@@ -134,9 +134,8 @@ class _TelemetryClient(object):
                                          'py_version'  : self.py_version,
                                          'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
                                          'payload'     : payload})
-                    uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload.encode(), 
-                                 timeout=self.timeout)
-                    status = uh.read()
+                    with urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload.encode(), timeout=self.timeout) as uh:
+                        status = uh.read()
                     if status == '':
                         self.clear()
                         success = True
