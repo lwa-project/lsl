@@ -17,12 +17,14 @@ from lsl.statistics import robust
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Callable, Tuple
+
 
 __version__ = "0.1"
 __all__ = ['thin', 'thick', 'uniform', 'unscatter']
 
 
-def thin(t, tau):
+def thin(t: np.ndarray, tau: float) -> np.ndarray:
     """
     Pulsar broadening function for multi-path scattering through a
     thin screen.
@@ -35,7 +37,7 @@ def thin(t, tau):
     return g
 
 
-def thick(t, tau):
+def thick(t: np.ndarray, tau: float) -> np.ndarray:
     """
     Pulse broadening function for multi-path scattering through a
     thick screen.
@@ -54,7 +56,7 @@ def thick(t, tau):
     return g
 
 
-def uniform(t, tau):
+def uniform(t: np.ndarray, tau: float) -> np.ndarray:
     """
     Pulsr broadening function for multi-path scattering through a 
     uniform screen.
@@ -73,7 +75,7 @@ def uniform(t, tau):
     return g
 
 
-def _positivity(t, raw, resids, cc):
+def _positivity(t: np.ndarray, raw: np.ndarray, resids: np.ndarray, cc: np.ndarray) -> float:
     """
     Compute the positivity of the residual profile following Equation 10 of
     Bhat, N., Cordes, J., & Chatterjee, S.  2003, ApJ, 
@@ -95,7 +97,7 @@ def _positivity(t, raw, resids, cc):
 
     return f
 
-def _skewness(t, raw, resids, cc):
+def _skewness(t: np.ndarray, raw: np.ndarray, resids: np.ndarray, cc: np.ndarray) -> float:
     """
     Compute the skewness for a collection of clean components following 
     Equation 12 of Bhat, N., Cordes, J., & Chatterjee, S.  2003, ApJ, 
@@ -109,7 +111,7 @@ def _skewness(t, raw, resids, cc):
     return t3 / (t2 + 1e-15)**(3./2.)
 
 
-def _figure_of_merit(t, raw, resids, cc):
+def _figure_of_merit(t: np.ndarray, raw: np.ndarray, resids: np.ndarray, cc: np.ndarray) -> float:
     """
     Figure of merit for deconvolution that combines the positivity of the 
     residuals, the skewness of the clean components, the RMS of the 
@@ -124,8 +126,7 @@ def _figure_of_merit(t, raw, resids, cc):
     s = robust.std(raw)
     
     # Find the fraction of noise-like points in the residuals
-    n = len( np.where( np.abs(resids - m) <= 3*s )[0] )
-    n = float(n) / raw.size
+    n = len( np.where( np.abs(resids - m) <= 3*s )[0] ) / raw.size
 
     # Compute the positivity and skewness
     f = _positivity(t, raw, resids, cc)
@@ -140,7 +141,7 @@ def _figure_of_merit(t, raw, resids, cc):
     return (f + g)/2.0 + r - n
 
 
-def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, screen=thin, verbose=True):
+def unscatter(t: np.ndarray, raw: np.ndarray, tScatMin: float, tScatMax: float, tScatStep: float, gain: float=0.05, max_iter: int=10000, screen: Callable[[np.ndarray,float],np.ndarray]=thin, verbose: bool=True) -> Tuple[float,float,np.ndarray]:
     """
     Multi-path scattering deconvolution method based on the method 
     presented in Bhat, N., Cordes, J., & Chatterjee, S.  2003, ApJ, 
