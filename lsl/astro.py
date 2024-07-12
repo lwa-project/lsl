@@ -1072,8 +1072,8 @@ class equ_posn(object):
         """
         Get local horizontal coordinates from equatorial/celestial coordinates.
         
-        Param: observer - Object of type hrz_posn representing the object's
-                          position in the sky.
+        Param: observer - Object of type geo_posn representing the observers's
+                          location on the Earth.
         Param: jD       - UTC Julian day (float).
         
         Returns object of type hrz_posn representing local position.
@@ -2114,15 +2114,19 @@ def get_ecl_from_rect(rect):
     """
     Get ecliptical coordinates from rectangular coordinates.
     
-    Param: rect - Object of type rect_posn representing position.
+    Param: rect - Object of type rect_posn representing position in AU.
     
     Returns object of type ecl_posn representing ecliptical position.
     """
     
-    _posn = ecl_posn()
-    _posn.lng = 1*rect.lng
-    _posn.lat = 1*rect.lat
-    return _posn
+    x = rect.X
+    y = rect.Y
+    z = rect.Z
+    
+    sc = GeocentricTrueEcliptic(CartesianRepresentation(x*astrounits.au, y*astrounits.au, z*astrounits.au),
+                                equinox='J2000')
+
+    return ecl_posn.from_astropy(sc)
 
 
 def get_equ_from_ecl(target, jD):
@@ -2327,9 +2331,11 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
     
     if proper_motion is None:
         proper_motion = [mean_position.pm_ra, mean_position.pm_dec]
-        if proper_motion[0] is None or proper_motion[1] is None:
-            proper_motion = _DEFAULT_PROPER_MOTION  
-            
+    if proper_motion[0] is None:
+        proper_motion = (_DEFAULT_PROPER_MOTION[0], proper_motion[1])
+    if proper_motion[1] is None:
+        proper_motion = (proper_motion[0], _DEFAULT_PROPER_MOTION[1])
+        
     t = AstroTime(jD, format='jd', scale='utc')
     sc = mean_position.astropy
     if sc is None:
@@ -3085,7 +3091,7 @@ def tt_to_tai(ttJD):
     Returns: The TAI JD value (float).
     """   
     
-    t = AstroTime(taiJD, format='jd', scale='tt')
+    t = AstroTime(ttJD, format='jd', scale='tt')
     return t.tai.jd
 
 
@@ -3394,7 +3400,7 @@ def get_rect_from_equ(posn):
     
     Param: posn - Object of type equ_posn giving position.
     
-    Returns: Object of type rect_posn giving rectangular coordinates (normallized to 1).
+    Returns: Object of type rect_posn giving rectangular coordinates (normalized to 1).
     """
     
     sc = SkyCoord(posn.ra*astrounits.deg, posn.dec*astrounits.deg,
@@ -3432,7 +3438,7 @@ def get_geo_from_rect(posn):
     Adapoted from "Satellite Orbits", Montenbruck and Gill 2005, 5.85 - 5.88.
     Also see gpstk ECEF::asGeodetic() method.
     
-    Param: posn - object of type rect_posn giving position.
+    Param: posn - object of type rect_posn giving position in m.
     
     Returns: object of type geo_posn giving geographical coordinates.
     """
@@ -3450,7 +3456,7 @@ def get_rect_from_geo(posn):
     
     Param: posn - object of type geo_posn giving geographical coordinates.
     
-    Returns: object of type rect_posn giving ECEF position. 
+    Returns: object of type rect_posn giving ECEF position in m. 
     """
     
     el = EarthLocation.from_geodetic(posn.lng*astrounits.deg, posn.lat*astrounits.deg,
@@ -3541,50 +3547,50 @@ def resolve_name(name):
     """
     
     try:
-        result = urlopen('https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxp/SNV?%s' % quote_plus(name))
-        tree = ElementTree.fromstring(result.read())
-        target = tree.find('Target')
-        service = target.find('Resolver')
-        ra = service.find('jradeg')
-        dec = service.find('jdedeg')
-        try:
-            pm = service.find('pm')
-        except Exception as e:
-            pm = None
-        try:
-            plx = service.find('plx')
-        except Exception as e:
-            plx = None
+        with urlopen('https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxp/SNV?%s' % quote_plus(name)) as result:
+            tree = ElementTree.fromstring(result.read())
+            target = tree.find('Target')
+            service = target.find('Resolver')
+            ra = service.find('jradeg')
+            dec = service.find('jdedeg')
+            try:
+                pm = service.find('pm')
+            except Exception as e:
+                pm = None
+            try:
+                plx = service.find('plx')
+            except Exception as e:
+                plx = None
+                
+            service = service.attrib['name'].split('=', 1)[1]
+            ra = float(ra.text)
+            dec = float(dec.text)
+            coordsys = 'J2000'
+            if pm is not None:
+                pmRA = float(pm.find('pmRA').text)
+                pmDec = float(pm.find('pmDE').text)
+            else:
+                pmRA = None
+                pmDec = None
+            if plx is not None:
+                dist = float(plx.find('v').text)
+            else:
+                dist = None
+                
+            if pmRA is not None:
+                pmRA = pmRA*math.cos(dec*math.pi/180)*astrounits.mas/astrounits.yr
+            if pmDec is not None:
+                pmDec = pmDec*astrounits.mas/astrounits.yr
+            if dist is not None:
+                dist = dist*astrounits.pc
+                
+            sc = SkyCoord(ra*astrounits.deg, dec*astrounits.deg,
+                          pm_ra_cosdec=pmRA, pm_dec=pmDec,
+                          distance=dist,
+                          frame='icrs')
+            _posn = equ_posn.from_astropy(sc)
+            _posn.resolved_by = service
             
-        service = service.attrib['name'].split('=', 1)[1]
-        ra = float(ra.text)
-        dec = float(dec.text)
-        coordsys = 'J2000'
-        if pm is not None:
-            pmRA = float(pm.find('pmRA').text)
-            pmDec = float(pm.find('pmDE').text)
-        else:
-            pmRA = None
-            pmDec = None
-        if plx is not None:
-            dist = float(plx.find('v').text)
-        else:
-            dist = None
-            
-        if pmRA is not None:
-            pmRA = pmRA*math.cos(dec*math.pi/180)*astrounits.mas/astrounits.yr
-        if pmDec is not None:
-            pmDec = pmDec*astrounits.mas/astrounits.yr
-        if dist is not None:
-            dist = dist*astrounits.pc
-            
-        sc = SkyCoord(ra*astrounits.deg, dec*astrounits.deg,
-                      pm_ra_cosdec=pmRA, pm_dec=pmDec,
-                      distance=dist,
-                      frame='icrs')
-        _posn = equ_posn.from_astropy(sc)
-        _posn.resolved_by = service
-        
     except (IOError, AttributeError, ValueError, RuntimeError) as e:
         raise RuntimeError(f"Failed to resolve source '{name}'")
         
