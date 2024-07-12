@@ -2298,7 +2298,7 @@ def get_ecl_from_rect(rect: rect_posn) -> ecl_posn:
     """
     Get ecliptical coordinates from rectangular coordinates.
     
-    Param: rect - Object of type rect_posn representing position.
+    Param: rect - Object of type rect_posn representing position in AU.
     
     Returns object of type ecl_posn representing ecliptical position.
     """
