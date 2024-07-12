@@ -49,7 +49,7 @@ try:
         
     _IS_READONLY = False
 except OSError as e:
-    _INSTALL_KEY = None
+    _INSTALL_KEY = ''
     _IS_READONLY = True
     
     warnings.warn("Could not create telemetry cache, telemetry will be disabled for this session: %s" % str(e),
@@ -132,13 +132,8 @@ class _TelemetryClient(object):
                                          'py_version'  : self.py_version,
                                          'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
                                          'payload'     : payload})
-                    try:
-                        payload = payload.encode()
-                    except AttributeError:
-                        pass
-                    uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload, 
-                                 timeout=self.timeout)
-                    status = uh.read()
+                    with urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload.encode(), timeout=self.timeout) as uh:
+                        status = uh.read()
                     if status == '':
                         self.clear()
                         success = True
