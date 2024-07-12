@@ -11,11 +11,13 @@ from lsl.correlator.fx import null_window
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Callable
+
 
 __version__ = '0.3'
 __all__ = ['fft', 'fft2', 'fft4', 'fft8', 'fft16', 'fft32']
 
-def __filterCoeff(N, P):
+def __filterCoeff(N: int, P: int) -> np.ndarray:
     """
     Private function to generate the filter bank coefficients for N 
     channels using P taps.
@@ -25,7 +27,7 @@ def __filterCoeff(N, P):
     return np.sinc((t - N*P/2.0 + 0.5)/N)
 
 
-def fft(signal, N, P=1, window=null_window):
+def fft(signal: np.ndarray, N: int, P: int=1, window: Callable[[int],np.ndarray]=null_window) -> np.ndarray:
     """
     FFT-based poly-phase filter bank for creating N channels with P
     taps.  Optionally, a window function can be specified using the 
@@ -38,41 +40,41 @@ def fft(signal, N, P=1, window=null_window):
     for i in range(0, P):
         fbTemp = np.fft.fft(filteredSignal[i*N:(i+1)*N])
         try:
-            fbOutput += fbTemp
+            fbOutput += fbTemp  # type: ignore
         except NameError:
             fbOutput = fbTemp*1.0
             
     return fbOutput
 
-def fft2(signal, N, window=null_window):
+def fft2(signal: np.ndarray, N: int, window: Callable[[int],np.ndarray]=null_window) -> np.ndarray:
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses two taps.
     """
 
     return fft(signal, N, P=2, window=window)
 
-def fft4(signal, N, window=null_window):
+def fft4(signal: np.ndarray, N: int, window: Callable[[int],np.ndarray]=null_window) -> np.ndarray:
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses four taps.
     """
 
     return fft(signal, N, P=4, window=window)
 
-def fft8(signal, N, window=null_window):
+def fft8(signal: np.ndarray, N: int, window: Callable[[int],np.ndarray]=null_window) -> np.ndarray:
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses eight taps.
     """
 
     return fft(signal, N, P=8, window=window)
 
-def fft16(signal, N, window=null_window):
+def fft16(signal: np.ndarray, N: int, window: Callable[[int],np.ndarray]=null_window) -> np.ndarray:
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses 16 taps.
     """
 
     return fft(signal, N, P=16, window=window)
 
-def fft32(signal, N, window=null_window):
+def fft32(signal: np.ndarray, N: int, window: Callable[[int],np.ndarray]=null_window) -> np.ndarray:
     """
     Sub-type of :mod:`lsl.correlator.filterbank.fft` that uses 32 taps.
     """
