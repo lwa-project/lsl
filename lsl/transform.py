@@ -841,7 +841,7 @@ class PointingDirection(object):
         """
         return astro.dir_cos(self.hrz(time_))
         
-    def rst(self, time_: Time) -> astro.rst_time:
+    def rst(self, time_: Time) -> Union[astro.rst_time,None]:
         """
         Return the rise, set, and transit ephemeris times.
         The 'time_' parameter should be set to a Time instance providing
