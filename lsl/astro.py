@@ -3550,50 +3550,50 @@ def resolve_name(name: str) -> equ_posn:
     """
     
     try:
-        result = urlopen('https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxp/SNV?%s' % quote_plus(name))
-        tree = ElementTree.fromstring(result.read())
-        target = tree.find('Target')
-        service = target.find('Resolver')   # type: ignore
-        ra = service.find('jradeg') # type: ignore
-        dec = service.find('jdedeg')    # type: ignore
-        try:
-            pm = service.find('pm') # type: ignore
-        except Exception as e:
-            pm = None
-        try:
-            plx = service.find('plx')   # type: ignore
-        except Exception as e:
-            plx = None
+        with urlopen('https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxp/SNV?%s' % quote_plus(name)) as result:
+            tree = ElementTree.fromstring(result.read())
+            target = tree.find('Target')
+            service = target.find('Resolver')   # type: ignore
+            ra = service.find('jradeg') # type: ignore
+            dec = service.find('jdedeg')    # type: ignore
+            try:
+                pm = service.find('pm') # type: ignore
+            except Exception as e:
+                pm = None
+            try:
+                plx = service.find('plx')   # type: ignore
+            except Exception as e:
+                plx = None
+                
+            service = service.attrib['name'].split('=', 1)[1]   # type: ignore
+            ra = float(ra.text) # type: ignore
+            dec = float(dec.text)   # type: ignore
+            coordsys = 'J2000'
+            if pm is not None:
+                pmRA = float(pm.find('pmRA').text)  # type: ignore
+                pmDec = float(pm.find('pmDE').text) # type: ignore
+            else:
+                pmRA = None
+                pmDec = None
+            if plx is not None:
+                dist = float(plx.find('v').text)    # type: ignore
+            else:
+                dist = None
+                
+            if pmRA is not None:
+                pmRA = pmRA*math.cos(dec*math.pi/180)*astrounits.mas/astrounits.yr
+            if pmDec is not None:
+                pmDec = pmDec*astrounits.mas/astrounits.yr
+            if dist is not None:
+                dist = dist*astrounits.pc
+                
+            sc = SkyCoord(ra*astrounits.deg, dec*astrounits.deg,
+                          pm_ra_cosdec=pmRA, pm_dec=pmDec,
+                          distance=dist,
+                          frame='icrs')
+            _posn = equ_posn.from_astropy(sc)
+            _posn.resolved_by = service
             
-        service = service.attrib['name'].split('=', 1)[1]   # type: ignore
-        ra = float(ra.text) # type: ignore
-        dec = float(dec.text)   # type: ignore
-        coordsys = 'J2000'
-        if pm is not None:
-            pmRA = float(pm.find('pmRA').text)  # type: ignore
-            pmDec = float(pm.find('pmDE').text) # type: ignore
-        else:
-            pmRA = None
-            pmDec = None
-        if plx is not None:
-            dist = float(plx.find('v').text)    # type: ignore
-        else:
-            dist = None
-            
-        if pmRA is not None:
-            pmRA = pmRA*math.cos(dec*math.pi/180)*astrounits.mas/astrounits.yr
-        if pmDec is not None:
-            pmDec = pmDec*astrounits.mas/astrounits.yr
-        if dist is not None:
-            dist = dist*astrounits.pc
-            
-        sc = SkyCoord(ra*astrounits.deg, dec*astrounits.deg,
-                      pm_ra_cosdec=pmRA, pm_dec=pmDec,
-                      distance=dist,
-                      frame='icrs')
-        _posn = equ_posn.from_astropy(sc)
-        _posn.resolved_by = service
-        
     except (IOError, AttributeError, ValueError, RuntimeError) as e:
         raise RuntimeError(f"Failed to resolve source '{name}'")
         
