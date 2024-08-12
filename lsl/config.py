@@ -97,7 +97,7 @@ DEFAULTS_TELEMETRY['enabled'] = {'value': True,
                                  'help': 'whether or not LSL telemetry reporting is enabled'}
 DEFAULTS_TELEMETRY['max_entries'] = {'value': 100,
                                      'help':  'maximum number of entries to accumlate before reporting'}
-DEFAULTS_TELEMETRY['timeout'] = {'value': 120,
+DEFAULTS_TELEMETRY['timeout'] = {'value': 30,
                                  'help':  'upload timeout in seconds'}
 
 ## Download parameters
