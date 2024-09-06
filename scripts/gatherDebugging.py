@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Script to gather information about the Python interpreter, modules, 
@@ -6,20 +6,14 @@ C libraries, numpy installation, and LSL installation to help with
 debugging and install issues.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
-import imp
 import sys
 import glob
 import argparse
 import platform
 import subprocess
+import importlib.util
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -34,10 +28,10 @@ def main(args):
     #
     # Python interpreter
     #
-    print("Executable path: %s" % sys.executable)
-    print("Platform: %s" % sys.platform)
-    print("Version: %s" % sys.version)
-    print("API: %s" % sys.api_version)
+    print(f"Executable path: {sys.executable}")
+    print(f"Platform: {sys.platform}")
+    print(f"Version: {sys.version}")
+    print(f"API: {sys.api_version}")
     print("Bits: %s\nLinkage: %s" % platform.architecture())
     print(" ")
     
@@ -47,55 +41,53 @@ def main(args):
     
     ## Required
     for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
-        try:
-            info = imp.find_module(mod)
-            imod = imp.load_module(mod, *info)
-        except ImportError as e:
-            if (str(e)).find('not found') != -1:
-                print( "%s: not found" % mod)
-            else:
-                print("%s: WARNING import error '%s'" % (mod, str(e)))
-        else:
+        modSpec = importlib.util.find_spec(mod, [os.path.dirname(__file__)])
+        if modSpec != None:
+            modInfo = importlib.util.module_from_spec(modSpec)
+            modSpec.loader.exec_module(modInfo)
+            if hasattr(modSpec.loader, 'file'):
+                modSpec.loader.file.close()
+                
             try:
-                version = imod.version.version
+                version = modInfo.version.version
             except AttributeError:
                 try:
-                    version = imod.__version__
+                    version = modInfo.__version__
                 except AttributeError:
                     try:	
                         versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
-                        mtch = versionRE.search(imod.__file__)
+                        mtch = versionRE.search(modInfo.__file__)
                         version = mtch.group('version')
                     except (AttributeError, IndexError):
                         version = "unknown"
-            print("%s:  version %s" % (mod, version))
+            print(f"{mod}:  version {version}")
+        else:
+            print(f"{mod}: not found")
             
     ## Optional
-    for mod in ('matplotlib', 'h5py', 'psrfits_utils'):
-        try:
-            info = imp.find_module(mod)
-            imod = imp.load_module(mod, *info)
-        except ImportError as e:
-            if (str(e)).find('not found') != -1:
-                print( "%s: not found" % mod)
-            #else:
-                #print("%s: WARNING import error '%s'" % (mod, str(e)))
-        else:
+    for mod in ('casacore', 'matplotlib', 'h5py', 'psrfits_utils'):
+        if modSpec != None:
+            modInfo = importlib.util.module_from_spec(modSpec)
+            modSpec.loader.exec_module(modInfo)
+            if hasattr(modSpec.loader, 'file'):
+                modSpec.loader.file.close()
+                
             try:
-                version = imod.version.version
+                version = modInfo.version.version
             except AttributeError:
                 try:
-                    version = imod.__version__
+                    version = modInfo.__version__
                 except AttributeError:
                     try:	
                         versionRE = re.compile(r'%s-(?P<version>[\d\.]+)-py.*' % mod)
-                        mtch = versionRE.search(imod.__file__)
+                        mtch = versionRE.search(modInfo.__file__)
                         version = mtch.group('version')
                     except (AttributeError, IndexError):
                         version = "unknown"
-            print("%s:  version %s" % (mod.capitalize(), version))
+            print(f"{mod}:  version {version}")
+        else:
+            print(f"{mod}: not found")
             
-    
     print(" ")
     
     
@@ -107,38 +99,22 @@ def main(args):
     libsFound = []
     for pkgName in ('fftw3f',):
         try:
-            pkgQuery = subprocess.Popen(['pkg-config', '--exists', pkgName])
-            o, _ = pkgQuery.communicate()
-            try:
-                o = o.decode()
-            except AttributeError:
-                pass
-            if pkgQuery.returncode == 0:
-                pkgQuery = subprocess.Popen(['pkg-config', '--modversion', pkgName], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                o, _ = pkgQuery.communicate()
-                try:
-                    o = o.decode()
-                except AttributeError:
-                    pass
-                o = o.replace('\n', '')
-                
-                print("%s:  version %s" % (pkgName, o))
-                libsFound.append( pkgName )
-                
-        except OSError:
+            subprocess.check_output(['pkg-config', '--exists', pkgName])
+            o = subprocess.check_output(['pkg-config', '--modversion', pkgName], stderr=subprocess.DEVNULL)
+            o = o.decode(encoding='ascii', errors='ignore').replace('\n', '')
+            
+            print(f"{pkgName}:  version {o}")
+            libsFound.append( pkgName )
+            
+        except (OSError, subprocess.CalledProcessError):
             pass
             
     ## Via 'ldconfig'
     try:
-        p = subprocess.Popen(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, _ = p.communicate()
-        try:
-            o = o.decode()
-        except AttributeError:
-            pass
-        o = o.split('\n')
+        o = subprocess.check_output(['ldconfig', '-v'], stderr=subprocess.DEVNULL)
+        o = o.decode().split('\n')
         
-        for lib in ('libfftw3f', 'libgdbm', 'librt'):
+        for lib in ('libfftw3f', 'libgdbm', 'librt', 'libgsl'):
             libBaseName = lib.replace('lib', '')
             if libBaseName in libsFound:
                 continue
@@ -155,9 +131,9 @@ def main(args):
                 elif line.find(lib) != -1:
                     found = True
                     libFilename = line.split(None, 1)[0]
-                    print("%s: found %s" % (lib, os.path.join(currPath, libFilename)))
+                    print(f"{lib}: found {os.path.join(currPath, libFilename)}")
             if not found:
-                print("%s: WARNING - not found" % lib)
+                print(f"{lib}: WARNING - not found")
             
     except OSError:
         pass
@@ -175,14 +151,14 @@ def main(args):
     sysconfig.customize_compiler(compiler)
     cc = compiler.compiler
     
-    print("Compiler: %s" % cc[0])
+    print(f"Compiler: {cc[0]}")
     
     tmpdir = tempfile.mkdtemp()
     curdir = os.getcwd()
     os.chdir(tmpdir)
     
-    fh = open('test.c', 'w')
-    fh.write(r"""#include <omp.h>
+    with open('test.c', 'w') as fh:
+        fh.write(r"""#include <omp.h>
 #include <stdio.h>
 int main(void) {
 #pragma omp parallel
@@ -190,8 +166,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 return 0;
 }
 """)
-    fh.close()
-    
+        
     ccmd = []
     ccmd.extend( cc )
     ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
@@ -203,21 +178,16 @@ return 0;
     try:
         p = subprocess.Popen(ccmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         o, e = p.communicate()
-        try:
-            o = o.decode()
-            e = e.decode()
-        except AttributeError:
-            pass
         openmp_support =" Yes" if p.returncode == 0 else "No"
     except subprocess.CalledProcessError:
         pass
-    print("Compiler OpenMP Support: %s" % openmp_support)
+    print(f"Compiler OpenMP Support: {openmp_support}")
     if openmp_support == 'Yes':
-        o = o.split('\n')[:-1]
+        o = o.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
         for i in range(len(o)):
             o[i] = '  %s' % o[i]
         o = '\n'.join(o)
-        e = e.split('\n')[:-1]
+        e = e.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
         for i in range(len(e)):
             e[i] = '  %s' % e[i]
         e = '\n'.join(e)
@@ -234,11 +204,7 @@ return 0;
     
     p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     _, e = p.communicate()
-    try:
-        e = e.decode()
-    except AttributeError:
-        pass
-    e = e.split('\n')[:-1]
+    e = e.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
     for i in range(len(e)):
         e[i] = '  %s' % e[i]
     e = '\n'.join(e)
@@ -255,25 +221,21 @@ return 0;
         nfp = glob.glob(os.path.join(nfp, 'core', 'umath.*'))[0]
         nfp = os.path.realpath(nfp)
 
-        p = subprocess.Popen(['file', nfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, _ = p.communicate()
-        try:
-            o = o.decode()
-        except AttributeError:
-            pass
+        o = subprocess.check_output(['file', nfp], stderr=subprocess.DEVNULL)
+        o = o.decode(encoding='ascii', errors='ignore')
         junk, numpyLinkage = o.split(None, 1)
         numpyLinkage = numpyLinkage.replace('\n', '')
 
         nfp, junk = os.path.split(numpy.__file__)
-        print("Numpy Path: %s" % nfp)
-        print("Numpy Version: %s" % numpy.version.version)
-        print("Numpy Linkage: %s" % numpyLinkage)
+        print(f"Numpy Path: {nfp}")
+        print(f"Numpy Version: {numpy.version.version}")
+        print(f"Numpy Linkage: {numpyLinkage}")
     except (OSError, subprocess.CalledProcessError):
-        print("Numpy Path: %s" % nfp)
-        print("Numpy Version: %s" % numpy.version.version)
-        print("Numpy Linkage: %s" % "Unknown")
+        print(f"Numpy Path: {nfp}")
+        print(f"Numpy Version: {numpy.version.version}")
+        print("Numpy Linkage: Unknown")
     except ImportError as e:
-        print("Numpy Import Error: %s" % str(e))
+        print(f"Numpy Import Error: {str(e)}")
     print(" ")
     
     #
@@ -285,23 +247,19 @@ return 0;
         lfp = glob.glob(os.path.join(lfp, 'correlator', '_core.*'))[0]
         lfp = os.path.realpath(lfp)
 
-        p = subprocess.Popen(['file', lfp], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, _ = p.communicate()
-        try:
-            o = o.decode()
-        except AttributeError:
-            pass
+        o = subprocess.check_output(['file', lfp], stderr=subprocess.DEVNULL)
+        o = o.decode(encoding='ascii', errors='ignore')
         junk, lslLinkage = o.split(None, 1)
         lslLinkage = lslLinkage.replace('\n', '')
 
         lfp, junk = os.path.split(lsl.__file__)
-        print("LSL Path: %s" % lfp)
-        print("LSL Version: %s" % lsl.version.version)
-        print("LSL Linkage: %s" % lslLinkage)
+        print(f"LSL Path: {lfp}")
+        print(f"LSL Version: {lsl.version.version}")
+        print(f"LSL Linkage: {lslLinkage}")
     except (OSError, subprocess.CalledProcessError):
-        print("LSL Path: %s" % lfp)
-        print("LSL Version: %s" % lsl.version.version)
-        print("LSL Linkage: %s" % "Unknown")
+        print(f"LSL Path: {lfp}")
+        print(f"LSL Version: {lsl.version.version}")
+        print(f"LSL Linkage: Unknown")
     except ImportError as e:
         print("LSL Import Error: %s" % str(e))
     print(" ")

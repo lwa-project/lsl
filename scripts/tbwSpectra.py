@@ -1,23 +1,17 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Given a TBW file, plot the time averaged spectra for each digitizer input.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import math
-import numpy
+import numpy as np
 import argparse
 
 from lsl.common import stations, metabundle
-from lsl.reader.ldp import LWA1DataFile, TBWFile
+from lsl.reader.ldp import LWADataFile, TBWFile
 from lsl.correlator import fx as fxc
 from lsl.misc import parser as aph
 
@@ -50,9 +44,9 @@ def main(args):
     # should stick with
     maxFrames = (30000*260)
     
-    idf = LWA1DataFile(args.filename)
+    idf = LWADataFile(args.filename)
     if not isinstance(idf, TBWFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBW file" % os.path.basename(filename))
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBW file")
         
     nFrames = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
@@ -71,28 +65,28 @@ def main(args):
     beginDate = idf.get_info('start_time').datetime
     
     # File summary
-    print("Filename: %s" % args.filename)
-    print("Date of First Frame: %s" % str(beginDate))
-    print("Ant/Pols: %i" % antpols)
-    print("Sample Length: %i-bit" % dataBits)
-    print("Frames: %i" % nFrames)
-    print("Chunks: %i" % nChunks)
+    print(f"Filename: {args.filename}")
+    print(f"Date of First Frame: {str(beginDate)}")
+    print(f"Ant/Pols: {antpols}")
+    print(f"Sample Length: {dataBits}-bit")
+    print(f"Frames: {nFrames}")
+    print(f"Chunks: {nChunks}")
     print("===")
     
     # Setup the window function to use
     if args.bartlett:
-        window = numpy.bartlett
+        window = np.bartlett
     elif args.blackman:
-        window = numpy.blackman
+        window = np.blackman
     elif args.hanning:
-        window = numpy.hanning
+        window = np.hanning
     else:
         window = fxc.null_window
         
     # Master loop over all of the file chunks
     nChunks = 1
-    masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
-    masterWeight = numpy.zeros((nChunks, antpols, LFFT))
+    masterSpectra = np.zeros((nChunks, antpols, LFFT))
+    masterWeight = np.zeros((nChunks, antpols, LFFT))
     
     readT, t, data = idf.read(0.061)
     
@@ -123,16 +117,16 @@ def main(args):
     if args.gain_correct & args.stack:
         # Stacked spectra - only if cable loss corrections are to be applied
         colors = ['blue', 'green', 'red', 'cyan', 'magenta', 'black', 
-            'purple', 'salmon', 'olive', 'maroon', 'saddlebrown', 'yellowgreen', 
-            'teal', 'steelblue', 'seagreen', 'slategray', 'mediumorchid', 'lime', 
-            'dodgerblue', 'darkorange']
-            
-        for f in range(int(numpy.ceil(antpols/20.))):
+                  'purple', 'salmon', 'olive', 'maroon', 'saddlebrown', 'yellowgreen', 
+                  'teal', 'steelblue', 'seagreen', 'slategray', 'mediumorchid', 'lime', 
+                  'dodgerblue', 'darkorange']
+        
+        for f in range(int(np.ceil(antpols/20.))):
             fig = plt.figure()
             ax1 = fig.add_subplot(1, 1, 1)
             for i in range(f*20, f*20+20):
-                currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-                ax1.plot(freq/1e6, currSpectra, label='%i,%i' % (antennas[i].stand.id, antennas[i].pol), color=colors[i % 20])
+                currSpectra = np.squeeze( np.log10(spec[i,:])*10.0 )
+                ax1.plot(freq/1e6, currSpectra, label=f"{antennas[i].stand.id},{antennas[i].pol}", color=colors[i % 20])
                 
             ax1.set_xlabel('Frequency [MHz]')
             ax1.set_ylabel('P.S.D. [dB/RBW]')
@@ -142,7 +136,7 @@ def main(args):
             for l in leg.get_lines():
                 l.set_linewidth(1.7)  # the legend line width
     else:
-        for f in range(int(numpy.ceil(antpols/20))):
+        for f in range(int(np.ceil(antpols/20))):
             # Normal plotting
             fig = plt.figure()
             figsY = 4
@@ -151,10 +145,10 @@ def main(args):
             for i in range(f*20, f*20+20):
                 ax = fig.add_subplot(figsX, figsY, (i%20)+1)
                 try:
-                    currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
+                    currSpectra = np.squeeze( np.log10(spec[i,:])*10.0 )
                 except IndexError:
                     break
-                ax.plot(freq/1e6, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer))
+                ax.plot(freq/1e6, currSpectra, label=f"Stand: {antennas[i].stand.id}, Pol: {antennas[i].pol} (Dig: {antennas[i].digitizer}")
                 
                 # If there is more than one chunk, plot the difference between the global 
                 # average and each chunk
@@ -166,11 +160,11 @@ def main(args):
                             continue
                             
                         # Calculate the difference between the spectra and plot
-                        subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
+                        subspectra = np.squeeze( np.log10(masterSpectra[j,i,:])*10.0 )
                         diff = subspectra - currSpectra
                         ax.plot(freq/1e6, diff)
                         
-                ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[i].stand.id, antennas[i].pol, antennas[i].digitizer, antennas[i].combined_status))
+                ax.set_title(f"Stand: {antennas[i].stand.id} ({antennas[i].pol}); Dig: {antennas[i].digitizer} [{antennas[i].combined_status}]"
                 ax.set_xlabel('Frequency [MHz]')
                 ax.set_ylabel('P.S.D. [dB/RBW]')
                 ax.set_xlim([10,90])
@@ -179,12 +173,12 @@ def main(args):
             # Save spectra image if requested
             if args.output is not None:
                 base, ext = os.path.splitext(args.output)
-                outFigure = "%s-%02i%s" % (base, f+1, ext)
+                outFigure = f"{base}-{f+1:02d}{ext}"
                 fig.savefig(outFigure)
                 
         plt.draw()
         
-    print("RBW: %.1f Hz" % (freq[1]-freq[0]))
+    print(f"RBW: {freq[1]-freq[0]:.1f} Hz")
     plt.show()
 
 

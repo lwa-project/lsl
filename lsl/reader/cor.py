@@ -31,15 +31,10 @@ handle as an input and returns a fully-filled Frame object.
 .. versionadded:: 1.2.0
 """
 
-# Python1 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 
 from lsl.common import adp as adp_common
+from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import NCHAN_COR
 from lsl.reader._gofast import read_cor
@@ -87,7 +82,7 @@ class FrameHeader(FrameHeaderBase):
         data is COR, false otherwise.
         """
         
-        if self.adp_id == 0x02:
+        if self.adp_id & 0x02:
             return True
         else:
             return False
@@ -99,7 +94,11 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        return (numpy.arange(NCHAN_COR, dtype=numpy.float32)+self.first_chan) * adp_common.fC
+        fC = adp_common.fC
+        if self.adp_id & 0x04:
+            fC = ndp_common.fC
+            
+        return (np.arange(NCHAN_COR, dtype=np.float32)+self.first_chan) * fC
 
 
 class FramePayload(FramePayloadBase):
@@ -153,6 +152,14 @@ class Frame(FrameBase):
     _header_class = FrameHeader
     _payload_class = FramePayload
     
+    @property
+    def adp_id(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.adp_id property.
+        """
+        
+        return self.header.adp_id
+        
     @property
     def is_cor(self):
         """

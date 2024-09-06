@@ -2,17 +2,14 @@
 Unit test for the lsl.sim.vis module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
-import numpy
+import ephem
+import numpy as np
 
 import aipy
+
+from astropy.coordinates import SkyCoord
 
 from lsl.sim import vis
 from lsl.imaging.data import VisibilityData
@@ -30,7 +27,7 @@ class simvis_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy warnings."""
         
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         
     def test_earth_satellite(self):
         tle = ["ISS (ZARYA)  ",
@@ -40,7 +37,7 @@ class simvis_tests(unittest.TestCase):
         
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
 
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         aa.set_unixtime(1588026422.0)
@@ -54,51 +51,51 @@ class simvis_tests(unittest.TestCase):
         
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 10e6)
+        freqs = np.arange(30e6, 50e6, 10e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_flat=True)
         aa[0].bm_response((0,0,1), pol='x')
         aa[0].bm_response((0,0,1), pol='y')
         bm1 = aa[0].get_beam_shape()
         
-        az = numpy.zeros((360,90))
+        az = np.zeros((360,90))
         for i in range(360):
-            az[i,:] = i*numpy.pi/180.0
-        alt = numpy.zeros((360,90))
+            az[i,:] = i*np.pi/180.0
+        alt = np.zeros((360,90))
         for i in range(90):
-            alt[:,i] = i*numpy.pi/180.0
-        xyz = aipy.coord.azalt2top(numpy.concatenate([[az],[alt]]))
+            alt[:,i] = i*np.pi/180.0
+        xyz = aipy.coord.azalt2top(np.concatenate([[az],[alt]]))
         bm2 = aa[0].bm_response(xyz, pol='x')
-        numpy.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
+        np.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
         
     def test_build_aa_gaussian(self):
         """Test building a antenna array object with Gaussian sky response."""
         
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 10e6)
+        freqs = np.arange(30e6, 50e6, 10e6)
 
         aa = vis.build_sim_array(lwa1, antennas, freqs, force_gaussian=True)
         aa[0].bm_response((0,0,1), pol='x')
         aa[0].bm_response((0,0,1), pol='y')
         bm1 = aa[0].get_beam_shape()
         
-        az = numpy.zeros((360,90))
+        az = np.zeros((360,90))
         for i in range(360):
-            az[i,:] = i*numpy.pi/180.0
-        alt = numpy.zeros((360,90))
+            az[i,:] = i*np.pi/180.0
+        alt = np.zeros((360,90))
         for i in range(90):
-            alt[:,i] = i*numpy.pi/180.0
-        xyz = aipy.coord.azalt2top(numpy.concatenate([[az],[alt]]))
+            alt[:,i] = i*np.pi/180.0
+        xyz = aipy.coord.azalt2top(np.concatenate([[az],[alt]]))
         bm2 = aa[0].bm_response(xyz, pol='x')
-        numpy.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
+        np.testing.assert_allclose(bm1.transpose(2,0,1), bm2)
         
     def test_build_aa(self):
         """Test building a antenna array object with realistic sky response."""
         
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         aa.set_asp_filter('split')
@@ -107,7 +104,7 @@ class simvis_tests(unittest.TestCase):
         self.assertEqual(len(aa.ants), len(antennas))
         
         # Check the frequencies comming out
-        numpy.testing.assert_allclose(aa.get_afreqs(), freqs/1e9)
+        np.testing.assert_allclose(aa.get_afreqs(), freqs/1e9)
         
         # Check that other methods even run
         aa.get_baseline_fast(0, 1)
@@ -124,14 +121,14 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Do a check of frequencies
-        numpy.testing.assert_allclose(out.freq, freqs)
+        np.testing.assert_allclose(out.freq, freqs)
         
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
@@ -150,14 +147,14 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.array([30e6,])
+        freqs = np.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Do a check of frequencies
-        numpy.testing.assert_allclose(out.freq, freqs)
+        np.testing.assert_allclose(out.freq, freqs)
         
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
@@ -172,7 +169,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -180,7 +177,7 @@ class simvis_tests(unittest.TestCase):
         
         # Do a check of keys
         # Do a check of frequencies
-        numpy.testing.assert_allclose(out.freq, freqs)
+        np.testing.assert_allclose(out.freq, freqs)
         
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
@@ -196,14 +193,14 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.array([30e6,])
+        freqs = np.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES, resolve_src=True)
         
         # Do a check of frequencies
-        numpy.testing.assert_allclose(out.freq, freqs)
+        np.testing.assert_allclose(out.freq, freqs)
         
         # Do a check to make sure that the polarizations
         self.assertEqual(out.npol, 4)
@@ -212,22 +209,54 @@ class simvis_tests(unittest.TestCase):
         self.assertTrue('YX' in out.pols)
         self.assertTrue('YY' in out.pols)
         
+    def test_build_data_phase_center(self):
+        """Test building simulated visibility data with different phase center types."""
+        
+        # Setup
+        lwa1 = lwa_common.lwa1
+        antennas = lwa1.antennas[0:20]
+        freqs = np.arange(30e6, 50e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        
+        # Build the data dictionary - a few times
+        with self.subTest(type='str'):
+            out = vis.build_sim_data(aa, vis.SOURCES, phase_center='z')
+            self.assertRaises(ValueError, vis.build_sim_data, aa, vis.SOURCES, phase_center='notgoingtowork')
+            
+        with self.subTest(type='ephem.Body'):
+            bdy = ephem.FixedBody()
+            bdy._ra = '1:02:03'
+            bdy._dec = '+89:00:00'
+            bdy._epoch = ephem.J2000
+            
+            out = vis.build_sim_data(aa, vis.SOURCES, phase_center=bdy)
+            self.assertAlmostEqual(out.phase_center._ra, bdy._ra, 6)
+            self.assertAlmostEqual(out.phase_center._dec, bdy._dec, 6)
+            self.assertAlmostEqual(out.phase_center._epoch, bdy._epoch, 6)
+            
+        with self.subTest(type='astropy.coordinates.SkyCoord'):
+            sc = SkyCoord('1h02m03s', '+89d00m00s', frame='fk5', equinox='J2000')
+            
+            out = vis.build_sim_data(aa, vis.SOURCES, phase_center=sc)
+            self.assertAlmostEqual(out.phase_center._ra, sc.ra.rad, 6)
+            self.assertAlmostEqual(out.phase_center._dec, sc.dec.rad, 6)
+            
     def test_scale_data(self):
         """Test that we can scale a data dictionary without error"""
         
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Scale
-        amp = vis.scale_data(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
+        amp = vis.scale_data(out, np.ones(len(antennas))*2, np.zeros(len(antennas)))
         # Delay
-        phs = vis.scale_data(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
+        phs = vis.scale_data(out, np.ones(len(antennas)), np.ones(len(antennas)))
         
         #
         # Single-channel test
@@ -236,16 +265,16 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.array([30e6,])
+        freqs = np.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
         out = vis.build_sim_data(aa, vis.SOURCES)
         
         # Scale
-        amp = vis.scale_data(out, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
+        amp = vis.scale_data(out, np.ones(len(antennas))*2, np.zeros(len(antennas)))
         # Delay
-        phs = vis.scale_data(out, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
+        phs = vis.scale_data(out, np.ones(len(antennas)), np.ones(len(antennas)))
         
         #
         # VisibilityData test
@@ -254,7 +283,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -262,9 +291,9 @@ class simvis_tests(unittest.TestCase):
         out2 = VisibilityData(out)
         
         # Scale
-        amp2 = vis.scale_data(out2, numpy.ones(len(antennas))*2, numpy.zeros(len(antennas)))
+        amp2 = vis.scale_data(out2, np.ones(len(antennas))*2, np.zeros(len(antennas)))
         # Delay
-        phs2 = vis.scale_data(out2, numpy.ones(len(antennas)), numpy.ones(len(antennas)))
+        phs2 = vis.scale_data(out2, np.ones(len(antennas)), np.ones(len(antennas)))
         
         
     def test_shift_data(self):
@@ -274,7 +303,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -290,7 +319,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.array([30e6,])
+        freqs = np.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -306,7 +335,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -324,7 +353,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -340,7 +369,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.array([30e6,])
+        freqs = np.array([30e6,])
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
@@ -356,7 +385,7 @@ class simvis_tests(unittest.TestCase):
         # Setup
         lwa1 = lwa_common.lwa1
         antennas = lwa1.antennas[0:20]
-        freqs = numpy.arange(30e6, 50e6, 1e6)
+        freqs = np.arange(30e6, 50e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary

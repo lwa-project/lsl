@@ -1,5 +1,6 @@
 #include "Python.h"
 #include <cmath>
+#include <cstdint>
 #include <complex>
 #include <fftw3.h>
 
@@ -15,7 +16,6 @@
 #include "numpy/arrayobject.h"
 #include "numpy/npy_math.h"
 
-#include "../common/py3_compat.h"
 #include "common.hpp"
 #include "blas.hpp"
 
@@ -1101,7 +1101,7 @@ Ouputs:\n\
 Module Setup - Function Definitions and Documentation
 */
 
-static PyMethodDef CorrelatorMethods[] = {
+static PyMethodDef correlator_methods[] = {
     {"FEngine",   (PyCFunction) FEngine,   METH_VARARGS|METH_KEYWORDS, FEngine_doc  },  
     {"PFBEngine", (PyCFunction) PFBEngine, METH_VARARGS|METH_KEYWORDS, PFBEngine_doc}, 
     {"XEngine2",  (PyCFunction) XEngine2,  METH_VARARGS,               XEngine2_doc }, 
@@ -1132,43 +1132,54 @@ See the inidividual functions for more details.");
 Module Setup - Initialization
 */
 
-MOD_INIT(_core) {
-    char filename[256];
-    PyObject *m, *all, *pModule, *pDataPath=NULL;
-    
-    Py_Initialize();
-    
-    // Module definitions and functions
-    MOD_DEF(m, "_core", CorrelatorMethods, correlator_doc);
-    if( m == NULL ) {
-        return MOD_ERROR_VAL;
-    }
+static int correlator_exec(PyObject *module) {
     import_array();
     
     // Version and revision information
-    PyModule_AddObject(m, "__version__", PyString_FromString("0.8"));
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.8"));
     
     // Function listings
-    all = PyList_New(0);
-    PyList_Append(all, PyString_FromString("FEngine"));
-    PyList_Append(all, PyString_FromString("PFBEngine"));
-    PyList_Append(all, PyString_FromString("XEngine2"));
-    PyList_Append(all, PyString_FromString("XEngine3"));
-    PyModule_AddObject(m, "__all__", all);
+    PyObject* all = PyList_New(0);
+    PyList_Append(all, PyUnicode_FromString("FEngine"));
+    PyList_Append(all, PyUnicode_FromString("PFBEngine"));
+    PyList_Append(all, PyUnicode_FromString("XEngine2"));
+    PyList_Append(all, PyUnicode_FromString("XEngine3"));
+    PyModule_AddObject(module, "__all__", all);
     
     // LSL FFTW Wisdom
-    pModule = PyImport_ImportModule("lsl.common.paths");
+    PyObject* pModule = PyImport_ImportModule("lsl.common.paths");
     if( pModule != NULL ) {
-        pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
+        PyObject* pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
+            char filename[256];
             sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
-            read_wisdom(filename, m);
+            read_wisdom(filename, module);
         }
+        Py_XDECREF(pDataPath);
     } else {
-        PyErr_Warn(PyExc_RuntimeWarning, "Cannot load the LSL FFTWF wisdom");
+      PyErr_Warn(PyExc_RuntimeWarning, "Cannot load the LSL FFTWF wisdom");
     }
-    Py_XDECREF(pDataPath);
     Py_XDECREF(pModule);
-    
-    return MOD_SUCCESS_VAL(m);
+    return 0;
+}
+
+static PyModuleDef_Slot correlator_slots[] = {
+    {Py_mod_exec, (void *)&correlator_exec},
+    {0,           NULL}
+};
+
+static PyModuleDef correlator_def = {
+    PyModuleDef_HEAD_INIT,    /* m_base */
+    "_core",                  /* m_name */
+    correlator_doc,           /* m_doc */
+    0,                        /* m_size */
+    correlator_methods,       /* m_methods */
+    correlator_slots,         /* m_slots */
+    NULL,                     /* m_traverse */
+    NULL,                     /* m_clear */
+    NULL,                     /* m_free */
+};
+
+PyMODINIT_FUNC PyInit__core(void) {
+    return PyModuleDef_Init(&correlator_def);
 }

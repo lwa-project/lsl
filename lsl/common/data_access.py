@@ -8,10 +8,8 @@ import calendar
 import warnings
 import contextlib
 from datetime import datetime
-try:
-    from urllib2 import urlopen
-except ImportError:
-    from urllib.request import urlopen
+from urllib.request import urlopen
+from urllib.error import HTTPError
 
 from lsl.common.paths import DATA as DATA_PATH
 from lsl.common.progress import DownloadBar
@@ -77,10 +75,10 @@ class _DataAccess(object):
                         fh.write(data)
                         
             with self._data_cache.open(metaname, 'w') as fh:
-                fh.write("created: %.0f\n" % time.time())
-                fh.write("source: %s\n" % local_path)
-                fh.write("source size: %i B\n" % os.path.getsize(local_path))
-                fh.write("source last modified: %.0f\n" % os.path.getmtime(local_path))
+                fh.write(f"created: {time.time():.0f}\n")
+                fh.write(f"source: {local_path}\n")
+                fh.write(f"source size: {os.path.getsize(local_path)} B\n")
+                fh.write(f"source last modified: {os.path.getmtime(local_path):.0f}\n")
                 
         # Did we get anything or, at least, enough of something like it looks like 
         # a real file?
@@ -100,19 +98,15 @@ class _DataAccess(object):
         mtime = 0
         try:
             with urlopen(url, timeout=DOWN_CONFIG.get('timeout')) as uh:
-                try:
-                    mtime = uh.headers['Last-Modified']
-                except AttributeError:
-                    pass
-                try:
-                    meta = uh.info()
-                    mtime = meta.getheaders("Last-Modified")[0]
-                except AttributeError:
-                    pass
-                    
+                mtime = uh.headers['Last-Modified']    
+                
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
                 mtime = calendar.timegm(mtime.timetuple())
+        except IOError as e:
+            warnings.warn(colorfy("{{%%yellow Error finding modification time of file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         except socket.timeout:
+            pass
+        except HTTPError:
             pass
             
         return mtime
@@ -130,55 +124,49 @@ class _DataAccess(object):
         url = self._BASE_URL+'/'+relative_url
         if use_backup:
             url = self._BACKUP_URL+'/'+relative_url
-        print("Downloading %s" % url)
+        print(f"Downloading {url}")
         try:
             mtime = 0.0
             remote_size = 1
-            uh = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
-            try:
+            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')) as uh:
                 remote_size = int(uh.headers["Content-Length"])
                 mtime = uh.headers['Last-Modified']
-            except AttributeError:
-                pass
-            try:
-                meta = uh.info()
-                remote_size = int(meta.getheaders("Content-Length")[0])
-                mtime = meta.getheaders("Last-Modified")[0]
-            except AttributeError:
-                pass
-            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
-            mtime = calendar.timegm(mtime.timetuple())
-            
-            pbar = DownloadBar(max=remote_size)
-            received = 0
-            with self._data_cache.open(filename, 'wb') as fh:
-                while True:
-                    data = uh.read(DOWN_CONFIG.get('block_size'))
-                    if len(data) == 0:
-                        break
-                    received += len(data)
-                    pbar.inc(len(data))
-                    
-                    fh.write(data)
-                    
+                
+                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+                mtime = calendar.timegm(mtime.timetuple())
+                
+                pbar = DownloadBar(max=remote_size)
+                received = 0
+                with self._data_cache.open(filename, 'wb') as fh:
+                    while True:
+                        data = uh.read(DOWN_CONFIG.get('block_size'))
+                        if len(data) == 0:
+                            break
+                        received += len(data)
+                        pbar.inc(len(data))
+                        
+                        fh.write(data)
+                        
+                    if is_interactive:
+                        sys.stdout.write(pbar.show()+'\r')
+                        sys.stdout.flush()
+                        
                 if is_interactive:
-                    sys.stdout.write(pbar.show()+'\r')
+                    sys.stdout.write(pbar.show()+'\n')
                     sys.stdout.flush()
-            uh.close()
-            if is_interactive:
-                sys.stdout.write(pbar.show()+'\n')
-                sys.stdout.flush()
         except IOError as e:
             warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
             received = 0
         except socket.timeout:
             received = 0
+        except HTTPError:
+            received = 0
             
         with self._data_cache.open(metaname, 'w') as fh:
-            fh.write("created: %.0f\n" % time.time())
-            fh.write("source: %s\n" % url)
-            fh.write("source size: %i B\n" % remote_size)
-            fh.write("source last modified: %.0f\n" % mtime)
+            fh.write(f"created: {time.time():.0f}\n")
+            fh.write(f"source: {url}\n")
+            fh.write(f"source size: {remote_size} B\n")
+            fh.write(f"source last modified: {mtime:.0f}\n")
             
         # Did we get anything or, at least, enough of something like it looks like 
         # a real file?
@@ -204,7 +192,7 @@ class _DataAccess(object):
             if not status:
                 status = self._download_worker(filename, filename, use_backup=True)
             if not status:
-                raise RuntimeError("Failed to download '%s'" % filename)
+                raise RuntimeError(f"Failed to download '{filename}'")
                 
         else:
             # There is a file.  Make sure that it is up to date.

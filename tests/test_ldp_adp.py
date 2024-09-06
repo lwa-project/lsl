@@ -2,12 +2,6 @@
 Unit test for the ADP portion of the lsl.reader.ldp module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
 
@@ -26,6 +20,7 @@ drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
 drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
 
 tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-test.dat')
+tbfMiniFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-mini-test.dat')
 corFile = os.path.join(os.path.dirname(__file__), 'data', 'cor-test.dat')
 
 
@@ -41,10 +36,12 @@ class ldp_adp_tests(unittest.TestCase):
         f = ldp.TBFFile(tbfFile)
         
         # File info
+        self.assertEqual(f.get_info("nantenna"), 512)
         self.assertEqual(f.get_info("sample_rate"), 25e3)
         self.assertEqual(f.get_info("data_bits"), 4)
         self.assertEqual(f.get_info('nframe'), 5)
-        
+
+        self.assertEqual(f.nantenna, 512)
         self.assertEqual(f.sample_rate, 25e3)
         self.assertEqual(f.data_bits, 4)
         self.assertEqual(f.nframe, 5)
@@ -71,10 +68,12 @@ class ldp_adp_tests(unittest.TestCase):
         f = ldp.TBFFile(tbfFile, ignore_timetag_errors=True)
         
         # File info
+        self.assertEqual(f.get_info("nantenna"), 512)
         self.assertEqual(f.get_info("sample_rate"), 25e3)
         self.assertEqual(f.get_info("data_bits"), 4)
         self.assertEqual(f.get_info('nframe'), 5)
         
+        self.assertEqual(f.nantenna, 512)
         self.assertEqual(f.sample_rate, 25e3)
         self.assertEqual(f.data_bits, 4)
         self.assertEqual(f.nframe, 5)
@@ -185,6 +184,11 @@ class ldp_adp_tests(unittest.TestCase):
         f = ldp.LWASVDataFile(tbfFile)
         self.assertEqual(type(f), ldp.TBFFile)
         
+    def test_ldp_discover_tbf_mini(self):
+        """Test the LDP LWASVDataFile function of TBF but on a mini-station file."""
+        # Mini-station TBF
+        self.assertRaises(RuntimeError, ldp.LWASVDataFile, tbfMiniFile)
+        
     def test_ldp_discover_cor(self):
         """Test the LDP LWASVDataFile function of COR."""
         # TBF
@@ -289,7 +293,7 @@ class ldp_adp_tests(unittest.TestCase):
                 continue
             except errors.EOFError:
                 break
-        self.assertEqual(len(frames), 5-1)  # We loose part of the first frame to DRX   
+        self.assertEqual(len(frames), 5)  # We no longer loose part of the first frame to DRX   
         
     def tearDown(self):
         """Cleanup"""

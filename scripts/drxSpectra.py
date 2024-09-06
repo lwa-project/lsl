@@ -1,18 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Given a DRX file, plot the time averaged spectra for each beam output.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import sys
 import math
-import numpy
+import numpy as np
 import argparse
 
 import lsl.correlator.fx as fxc
@@ -57,7 +51,7 @@ def main(args):
     
     idf = LWADataFile(args.filename)
     if not isinstance(idf, DRXFile):
-        raise RuntimeError("File '%s' does not appear to be a valid DRX file" % os.path.basename(filename))
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid DRX file")
         
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
@@ -87,17 +81,17 @@ def main(args):
     beam = idf.get_info('beam')
     
     # File summary
-    print("Filename: %s" % args.filename)
-    print("Date of First Frame: %s" % str(beginDate))
-    print("Beam: %i" % beam)
-    print("Tune/Pols: %i" % beampols)
-    print("Sample Rate: %i Hz" % srate)
-    print("Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (central_freq1, central_freq2))
-    print("Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / beampols * 4096 / srate))
+    print(f"Filename: {args.filename}")
+    print(f"Date of First Frame: {str(beginDate)}")
+    print(f"Beam: {beam}")
+    print(f"Tune/Pols: {beampols}")
+    print(f"Sample Rate: {srate} Hz")
+    print(f"Tuning Frequency: {central_freq1:.3f} Hz (1); {central_freq2:.3f} Hz (2)")
+    print(f"Frames: {nFramesFile} ({nFramesFile/beampols*4096/srate:.3f} s)")
     print("---")
-    print("Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*beampols/4096))
-    print("Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (args.average, nFrames, nFrames / beampols))
-    print("Chunks: %i" % nChunks)
+    print(f"Offset: {args.skip:.3f} s ({args.skip*srate*beampols/4096} frames)")
+    print(f"Integration: {args.average:.3f} s ({nFrames} frames; {nFrames//beampols} frames per beam/tune/pol)")
+    print(f"Chunks: {nChunks}")
     
     # Sanity check
     if args.skip*srate*beampols/4096 > nFramesFile:
@@ -107,25 +101,25 @@ def main(args):
         
     # Setup the window function to use
     if args.bartlett:
-        window = numpy.bartlett
+        window = np.bartlett
     elif args.blackman:
-        window = numpy.blackman
+        window = np.blackman
     elif args.hanning:
-        window = numpy.hanning
+        window = np.hanning
     else:
         window = fxc.null_window
         
     # Master loop over all of the file chunks
     standMapper = [4*(beam-1) + i for i in range(4)]
-    masterWeight = numpy.zeros((nChunks, 4, LFFT))
-    masterSpectra = numpy.zeros((nChunks, 4, LFFT))
+    masterWeight = np.zeros((nChunks, 4, LFFT))
+    masterSpectra = np.zeros((nChunks, 4, LFFT))
     for i in range(nChunks):
-        print("Working on chunk #%i of %i" % (i+1, nChunks))
+        print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
         except Exception as e:
-            print("Error: %s" % str(e))
+            print(f"Error: {str(e)}")
             continue
             
         # Calculate the spectra for this block of data and then weight the results by 
@@ -140,7 +134,7 @@ def main(args):
         
     # Now that we have read through all of the chunks, perform the final averaging by
     # dividing by all of the chunks
-    spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
+    spec = np.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Frequencies
     freq1 = freq + central_freq1
@@ -165,8 +159,8 @@ def main(args):
             units = units2
             
         ax = fig.add_subplot(figsX,figsY,k+1)
-        currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-        ax.plot(freq, currSpectra, label='%i (avg)' % (i+1))
+        currSpectra = np.squeeze( np.log10(spec[i,:])*10.0 )
+        ax.plot(freq, currSpectra, label=f"{i+1} (avg)")
         
         # If there is more than one chunk, plot the difference between the global 
         # average and each chunk
@@ -178,19 +172,19 @@ def main(args):
                     continue
                     
                 # Calculate the difference between the spectra and plot
-                subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
+                subspectra = np.squeeze( np.log10(masterSpectra[j,i,:])*10.0 )
                 diff = subspectra - currSpectra
                 ax.plot(freq, diff, label='%i' % j)
                 
-        ax.set_title('Beam %i, Tune. %i, Pol. %i' % (standMapper[i]//4+1, standMapper[i]%4//2+1, standMapper[i]%2))
-        ax.set_xlabel('Frequency [%s]' % units)
+        ax.set_title(f"Beam {standMapper[i]//4+1}, Tune. {standMapper[i]%4//2+1}, Pol. {standMapper[i]%2}")
+        ax.set_xlabel(f"Frequency [{units}]")
         ax.set_ylabel('P.S.D. [dB/RBW]')
         ax.set_xlim([freq.min(), freq.max()])
         ax.legend(loc=0)
         
-        print("For beam %i, tune. %i, pol. %i maximum in PSD at %.3f %s" % (standMapper[i]//4+1, standMapper[i]%4//2+1, standMapper[i]%2, freq[numpy.where( spec[i,:] == spec[i,:].max() )][0], units))
+        print(f"For beam {standMapper[i]//4+1}, tune. {standMapper[i]%4//2+1}, pol. {standMapper[i]%2} maximum in PSD at {freq[np.where(spec[i,:]==spec[i,:].max())][0]:.3f} {units}")
         
-    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
+    print(f"RBW: {freq[1]-freq[0]:.4f} {units}")
     plt.subplots_adjust(hspace=0.35, wspace=0.30)
     plt.show()
     

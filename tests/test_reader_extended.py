@@ -2,12 +2,6 @@
 Extended unit test for the lsl.reader modules
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import glob
 import unittest
@@ -44,6 +38,7 @@ class extended_reader_tests(unittest.TestCase):
         
         if not os.path.exists('eLWA_test_raw.tar.gz'):
             subprocess.check_call(['curl', _VDIF_URL,
+                                   '--silent',
                                    '-o', 'eLWA_test_raw.tar.gz'])
             subprocess.check_call(['tar', 'xzf', 'eLWA_test_raw.tar.gz'])
             

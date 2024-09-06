@@ -2,18 +2,14 @@
 Time and position transform objects.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-
-try:
-    from collections.abc import Sequence as SequenceABC
-except ImportError: 
-    from collections import Sequence as SequenceABC
+from collections.abc import Sequence as SequenceABC
 import copy
 import datetime
 import math
 import abc
 from functools import total_ordering
+
+from astropy.time import Time as AstroTime
 
 from lsl import astro
 from lsl.common.dp import fS
@@ -22,7 +18,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.4'
 __all__ = ['Time', 'SkyPosition', 'CelestialPosition', 'PlanetaryPosition', 
            'GeographicalPosition', 'PointingDirection']
 __author__ = "Unknown"
@@ -44,7 +40,6 @@ class Time(object):
     utc_mjd (S)       - UTC modified Julian day
     utc_timet (S)     - UTC UNIX timet seconds
     utc_py_date (S)   - UTC python datetime.datetime object
-    utc_ln_date (S)   - UTC libnova astro.date object
     utc_dp (S)        - UTC DP samples at 196 MHz
     utc_mcs           - UTC MCS MJD/MPM pair
     utc_str           - UTC ISO8601 calendar string format
@@ -56,7 +51,6 @@ class Time(object):
 
     # time format types
 
-    FORMAT_LN_DATE    = 'LN_DATE'
     FORMAT_PY_DATE    = 'PY_DATE'
     FORMAT_STR        = 'STR'
     FORMAT_JD         = 'JD'
@@ -64,9 +58,10 @@ class Time(object):
     FORMAT_DP         = 'DP'
     FORMAT_MCS        = 'MCS'
     FORMAT_TIMET      = 'TIMET'
+    FORMAT_ASTROPY    = 'ASTROPY'
     
-    known_formats = (FORMAT_LN_DATE, FORMAT_PY_DATE, FORMAT_STR, FORMAT_JD, 
-    FORMAT_MJD, FORMAT_DP, FORMAT_MCS, FORMAT_TIMET)
+    known_formats = (FORMAT_PY_DATE, FORMAT_STR, FORMAT_JD, 
+    FORMAT_MJD, FORMAT_DP, FORMAT_MCS, FORMAT_TIMET, FORMAT_ASTROPY)
     
     # time system types
     TIMESYS_UTC       = 'UTC'
@@ -87,7 +82,6 @@ class Time(object):
         Create a Time instance, using 'value' as the initial time.
         
         'format' describes the type of 'value'
-            Time.FORMAT_LN_DATE - libnova astro.date class calendar format
             Time.FORMAT_PY_DATE - python datetime.datetime class calendar format
             Time.FORMAT_STR     - ISO 8601 (YYYY-MM-DD hh:mm:ss.s) calendar format 
                                   string 
@@ -96,53 +90,69 @@ class Time(object):
             Time FORMAT_DP      - samples of the DP 196 MHz clock as integer
             Time FORMAT_MCS     - MCS MJD, MPM pair as integers
             Time.FORMAT_TIMET   - UNIX timet seconds as integer
+            Time.FORMAT_ASTROPY - astropy.time.Time instance
         
         'timesys' defines the time system
             Time.TIMESYS_UTC  - UTC time system
             Time.TIMESYS_TAI  - TAI time system
+            
+        For Time.FORMAT_ASTROPY the 'timesys' is ignored
         """
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format)
+            raise ValueError(f"unknown format {format}")
             
         if timesys not in self.known_timesys:
-            raise ValueError("unknown timesys %s" % timesys)
+            raise ValueError(f"unknown timesys {timesys}")
         
         # parse init value base on format type
         # time value is held internally as UTC JD float
-        if format == self.FORMAT_LN_DATE:
-            self.utc_ln_date = value
-            
-        elif format == self.FORMAT_PY_DATE:
-            self.utc_py_date = value
-            
+        if format == self.FORMAT_PY_DATE:
+            if timesys == self.TIMESYS_UTC:
+                self.utc_py_date = value
+            else:
+                raise ValueError(f"{self.FORMAT_PY_DATE} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_STR:
-            if not isinstance(value, str):
-                raise TypeError("value must be type str")
-            d = astro.date()
-            d.load(*value.split())
-            self._time = d.to_jd()
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_str = value
+            else:
+                raise ValueError(f"{self.FORMAT_STR} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_JD:
-            self.utc_jd = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_jd = value
+            else:
+                self.tai_jd = value
+                
         elif format == self.FORMAT_MJD:
-            self.utc_mjd = value
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_mjd = value
+            else:
+                self.tai_mjd = value
+                
         elif format == self.FORMAT_DP:
-            self.utc_timet = value / fS
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_dp = value
+            else:
+                raise ValueError(f"{self.FORMAT_DP} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_MCS:
-            self.utc_mjd = value[0] + value[1]/86400/1000
-            
+            if timesys == self.TIMESYS_UTC:
+                self.utc_mcs = value
+            else:
+                raise ValueError(f"{self.FORMAT_MCS} not supported for TIMESYS_TAI")
+                
         elif format == self.FORMAT_TIMET:
-            self.utc_timet = value
+            if timesys == self.TIMESYS_UTC:
+                self.utc_timet = value
+            else:
+                self.tai_timet = value
             
-        # convert internal time to UTC if an alternate timesys is specified
-        if timesys == self.TIMESYS_TAI:
-            self._time = astro.tai_to_utc(self._time)
-        
+        elif format == self.FORMAT_ASTROPY:
+            self.astropy = value
+            
     def __cmp__(self, other):
         """
         Determine ordering for two Time instances.
@@ -188,7 +198,7 @@ class Time(object):
         Time value formatted as UTC standard julian day (float).
         """
         
-        return self._time
+        return self._time.utc.jd
         
     @utc_jd.setter
     def utc_jd(self, value):
@@ -196,7 +206,7 @@ class Time(object):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
-        self._time = float(value)
+        self._time = AstroTime(value, format='jd', scale='utc')
         
     @property
     def utc_mjd(self):
@@ -204,25 +214,25 @@ class Time(object):
         Time value formatted as UTC modified julian day (float).
         """
         
-        return astro.jd_to_mjd(self._time) 
+        return self._time.utc.mjd
         
     @utc_mjd.setter
     def utc_mjd(self, value):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
-        self._time = astro.mjd_to_jd(float(value))
+        self._time = AstroTime(value, format='mjd', scale='utc')
         
     @property
     def utc_dp(self):
-        return int(astro.utcjd_to_unix(self.utc_jd) * fS)
+        return int(self._time.utc.unix * fS)
         
     @utc_dp.setter
     def utc_dp(self, value):
-        if not isinstance(value, (int, float)):
-            raise TypeError("value must be type int or float")
+        if not isinstance(value, int):
+            raise TypeError("value must be type int")
             
-        self._time = astro.unix_to_utcjd(float(value) / fS)
+        self._time = AstroTime(value // fS, value % fS, format='unix', scale='utc')
         
     @property
     def utc_mcs(self):
@@ -242,37 +252,27 @@ class Time(object):
             mjd, mpm = value
         else:
             raise TypeError("Expected a two-element tuple of int/float values")
-        self._time = astro.mjd_to_jd(float(mjd) + float(mpm)/86400/1000)
-        
-    @property
-    def utc_ln_date(self):
-        """
-        Time value formatted as UTC calendar astro.date object.
-        """
-        
-        return astro.get_date(self._time)
-        
-    @utc_ln_date.setter
-    def utc_ln_date(self, value):
-        if not isinstance(value, astro.date):
-            raise TypeError("value must be type astro.date")
-            
-        self._time = astro.get_julian_day(value)
+        self._time = AstroTime(float(mjd) + float(mpm)/86400/1000, format='mjd', scale='utc')
         
     @property
     def utc_py_date(self):
         """
-        Time value formattes as UTC calendar datetime.datetime object.
+        Time value formatted as UTC calendar datetime.datetime object.
         """
         
-        return self.date_ln_to_py(self.utc_ln_date)
+        return self._time.utc.datetime
+        lnDate = astro.get_date(self._time)
+        (usec, sec) = math.modf(lnDate.seconds)
+        pyDate = datetime.datetime(lnDate.years, lnDate.months, lnDate.days,
+            lnDate.hours, lnDate.minutes, int(sec), int(usec * 1e6))
+        return pyDate
         
     @utc_py_date.setter
     def utc_py_date(self, value):
         if not isinstance(value, datetime.datetime):
             raise ValueError("value must be type datetime.datetime")
             
-        self.utc_ln_date = self.date_py_to_ln(value)
+        self._time = AstroTime(value, format='datetime', scale='utc')
         
     @property
     def utc_str(self):
@@ -280,22 +280,29 @@ class Time(object):
         Time value formatted as UTC ISO 8601 calendar string.
         """
         
-        return str(self.utc_ln_date)
+        return self._time.utc.iso
         
+    @utc_str.setter
+    def utc_str(self, value):
+        if not isinstance(value, str):
+            raise TypeError("value must be type str")
+            
+        self._time = AstroTime(value, format='iso', scale='utc')
+    
     @property
     def tai_jd(self):
         """
         Time value formatted as TAI standard julian day (float).
         """
         
-        return astro.utc_to_tai(self._time)
+        return self._time.tai.jd
         
     @tai_jd.setter
     def tai_jd(self, value):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
-        self._time = astro.tai_to_utc(float(value))
+        self._time = AstroTime(value, format='jd', scale='tai')
         
     @property
     def tai_mjd(self):
@@ -303,14 +310,14 @@ class Time(object):
         Time value formatted as TAI modified julian day (float).
         """
         
-        return astro.utcjd_to_taimjd(self._time)
+        return self._time.tai.mjd
         
     @tai_mjd.setter
     def tai_mjd(self, value):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
-        self._time = astro.taimjd_to_utcjd(float(value))
+        self._time = AstroTime(value, format='mjd', scale='tai')
         
     @property
     def utc_timet(self):
@@ -318,14 +325,14 @@ class Time(object):
         Time value formatted as UTC UNIX timet seconds.
         """
         
-        return astro.get_timet_from_julian(self._time)
+        return self._time.utc.unix
         
     @utc_timet.setter
     def utc_timet(self, value):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
-        self._time = astro.get_julian_from_timet(int(value))
+        self._time = AstroTime(value, format='unix', scale='utc')
         
     @property
     def tai_timet(self):
@@ -333,37 +340,29 @@ class Time(object):
         Time value formatted as TAI UNIX timet seconds.
         """
         
-        return astro.get_timet_from_julian(astro.utc_to_tai(self._time))
+        return self._time.tai.unix_tai
         
     @tai_timet.setter
     def tai_timet(self, value):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
-        self._time = astro.tai_to_utc(astro.get_julian_from_timet(int(value)))
+        self._time = AstroTime(value, format='unix_tai', scale='tai')
         
-    @staticmethod
-    def date_py_to_ln(pyDate):
+    @property
+    def astropy(self):
         """
-        Convert python datatime.datetime object into a libnova astro.date
-        object.
-        """
-        
-        lnDate = astro.date(pyDate.year, pyDate.month, pyDate.day, pyDate.hour, pyDate.minute)
-        lnDate.seconds = float(pyDate.second) + (pyDate.microsecond * 1e-6)
-        return lnDate
-        
-    @staticmethod
-    def date_ln_to_py(lnDate):
-        """
-        Convert libnova astro.date object into a python datetime.datetime
-        object.
+        Time value as a astropy.time.Time instance.
         """
         
-        (usec, sec) = math.modf(lnDate.seconds)
-        pyDate = datetime.datetime(lnDate.years, lnDate.months, lnDate.days,
-            lnDate.hours, lnDate.minutes, int(sec), int(usec * 1e6))
-        return pyDate
+        return self._time
+        
+    @astropy.setter
+    def astropy(self, value):
+        if not isinstance(value, AstroTime):
+            raise TypeError("value must be type astropy.time.Time")
+            
+        self._time = value
 
 
 class SkyPosition(object):
@@ -382,8 +381,9 @@ class SkyPosition(object):
         Return value is object of type astro.equ_posn.
         """
         
-        return None
+        raise NotImplementedError()
         
+    @abc.abstractmethod
     def apparent_ecl(self, time_):
         """
         Return position formatted as apparent ecliptic coordinates.
@@ -392,11 +392,7 @@ class SkyPosition(object):
         Return alue is object of type astro.ecl_posn.
         """
         
-        if not isinstance(time_, Time):
-            raise TypeError("time_ must be of type transform.Time")
-            
-        equ = astro.get_apparent_posn(self._posn, time_.utc_jd)
-        return astro.get_ecl_from_equ(equ, time_.utc_jd)
+        raise NotImplementedError()
 
 
 class CelestialPosition(SkyPosition):
@@ -461,10 +457,10 @@ class CelestialPosition(SkyPosition):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format)
+            raise ValueError(f"unknown format {format}")
             
         if epoch not in self.known_epochs:
-            raise ValueError("unknown epoch %s" % epoch)
+            raise ValueError(f"unknown epoch {epoch}")
             
         self.name = name
         
@@ -481,12 +477,12 @@ class CelestialPosition(SkyPosition):
             if epoch == self.EPOCH_J2000:
                 self.j2000_gal = value
             else:
-                raise ValueError("epoch %s not supported for GAL format" % epoch)
+                raise ValueError(f"epoch {epoch} not supported for GAL format")
         elif format == self.FORMAT_ECL:
             if epoch == self.EPOCH_J2000:
                 self.j2000_ecl = value
             else:
-                raise ValueError("epoch %s not supported for ECL format" % epoch)
+                raise ValueError(f"epoch {epoch} not supported for ECL format")
                 
     def __repr__(self):
         return "%s.%s(%s, name=%s)" % (type(self).__module__, type(self).__name__, repr(self._posn), repr(self.name))
@@ -531,9 +527,8 @@ class CelestialPosition(SkyPosition):
         Value is object of type astro.equ_posn.
         """
         
-        return astro.get_equ_prec2(self._posn, astro.J2000_UTC_JD, astro.B1950_UTC_JD)
-    
-    
+        return astro.J2000_to_B1950(self._posn)
+        
     @b1950_equ.setter
     def b1950_equ(self, value):
         if not isinstance(value, (astro.equ_posn, SequenceABC)):
@@ -543,7 +538,7 @@ class CelestialPosition(SkyPosition):
                 raise TypeError("value sequence must be length 2")
             value = astro.equ_posn(*value)
         
-        self._posn = astro.get_equ_prec2(value, astro.B1950_UTC_JD, astro.J2000_UTC_JD)
+        self._posn = astro.B1950_to_J2000(value)
         
     @property
     def j2000_ecl(self):
@@ -556,7 +551,7 @@ class CelestialPosition(SkyPosition):
         
     @j2000_ecl.setter
     def j2000_ecl(self, value):
-        if not isinstance(value, (astro.equ_posn, SequenceABC)):
+        if not isinstance(value, (astro.ecl_posn, SequenceABC)):
             raise TypeError("value must be type astro.ecl_posn or sequence of length 2")
         if isinstance(value, SequenceABC):
             if len(value) != 2:
@@ -586,7 +581,7 @@ class CelestialPosition(SkyPosition):
         Value is object of type astro.gal_posn.
         """
         
-        return astro.get_gal_from_equ2000(self._posn)
+        return astro.get_gal_from_equ(self._posn)
         
     @j2000_gal.setter
     def j2000_gal(self, value):
@@ -597,7 +592,7 @@ class CelestialPosition(SkyPosition):
                 raise TypeError("value sequence must be length 2")
             value = astro.gal_posn(*value)
             
-        self._posn = astro.get_equ2000_from_gal(value)
+        self._posn = astro.get_equ_from_gal(value)
 
 
 class PlanetaryPosition(SkyPosition):
@@ -627,7 +622,7 @@ class PlanetaryPosition(SkyPosition):
         
         # check parameters
         if name not in self.known_names:
-            raise ValueError("unknown name %s" % name)
+            raise ValueError(f"unknown name {name}")
             
         self.name = name
         
@@ -708,7 +703,7 @@ class GeographicalPosition(object):
         
         # check parameters
         if format not in self.known_formats:
-            raise ValueError("unknown format %s" % format) 
+            raise ValueError(f"unknown format {format}") 
             
         self.name = name
         
@@ -814,10 +809,10 @@ class PointingDirection(object):
         # make surce 'source' and 'site' member are correct type
         
         if (name == 'source') and (not isinstance(value, SkyPosition)):
-            raise TypeError("\'source\' must be type SkyPosition")
+            raise TypeError("'source' must be type SkyPosition")
             
         elif (name == 'site') and (not isinstance(value, GeographicalPosition)):
-            raise TypeError("\'site\' must be type GeographicalPosition")
+            raise TypeError("'site' must be type GeographicalPosition")
             
         object.__setattr__(self, name, value)
         

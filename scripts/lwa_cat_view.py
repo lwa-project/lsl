@@ -1,15 +1,9 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 Simple LWA1 astronomical source catalogue display application.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 import argparse
 import Tkinter
@@ -43,9 +37,9 @@ class CatalogViewer(object):
             station = stations.lwasv
         elif site == 'ovrolwa':
             station = stations.lwa1
-            station.lat, station.lon, station.elev = ('37.23977727', '-118.2816667', 1182.89)
+            station.lat, station.lon, station.elev = ('37.23977727', '-118.2816667', 1183.48)
         else:
-            raise RuntimeError("Unknown site name: %s" % site)
+            raise RuntimeError(f"Unknown site name: {site}")
         self.site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)
         
         self.root.title('LWA Catalog Viewer')
@@ -102,7 +96,7 @@ class CatalogViewer(object):
         self.utc_time.config(text = currentTime.utc_str)
         
         last = astro.deg_to_dms(self.site.sidereal(currentTime))
-        self.last_time.config(text = "%s LAST: %s" % (self.site.name, last)) 
+        self.last_time.config(text = f"{self.site.name} LAST: {last}") 
         
         self.root.after(self.period, self.timer)
         
@@ -124,8 +118,8 @@ class CatalogViewer(object):
             name = source.name.strip().ljust(18)
             s = "%s | " % name
             equ = source.position.j2000_equ
-            sra = "%.03f" % equ.ra
-            sdec = "%.03f" % equ.dec
+            sra = f"{equ.ra:.03f}"
+            sdec = f"{equ.dec:.03f}"
             if equ.dec >= 0:
                 sdec = '+' + sdec
             equ = equ.format()
@@ -178,7 +172,7 @@ class SourceWindow(Tkinter.Toplevel):
             catName = 'PLANETS'
         else:
             catName = self.catalog.name
-        self.title("%s/%s" % (catName, name))
+        self.title(f"{catName}/{name}")
         
         sourceFrame = Tkinter.Frame(self)
         sourceFrame.pack(expand = True, fill = Tkinter.X)
@@ -268,8 +262,8 @@ class SourceWindow(Tkinter.Toplevel):
         self.values['cur_dec'].config(text = cur_dec)
         self.values['gal_lng'].config(text = gal_lng)
         self.values['gal_lat'].config(text = gal_lat)
-        self.values['az'].config(text = "%0.3f %s" % (hrz.az, astro.hrz_to_nswe(hrz)))
-        self.values['alt'].config(text = "%0.3f" % hrz.alt)
+        self.values['az'].config(text = f"{hrz.az:0.3f} {astro.hrz_to_nswe(hrz)}")
+        self.values['alt'].config(text = f"{hrz.alt:0.3f}")
         self.values['date'].config(text = currentTime.utc_str)
         self.values['rise'].config(text = rise)
         self.values['transit'].config(text = transit)
@@ -316,4 +310,3 @@ if __name__ == '__main__':
         tk.mainloop()
     except KeyboardInterrupt:
         pass
-        

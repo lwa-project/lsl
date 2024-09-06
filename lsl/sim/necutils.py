@@ -9,13 +9,7 @@ dipoles.  See the `README.NEC` file included in the LSL data directory for
 more information about what is included.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-from numpy import pi, abs, exp, log10, float32, complex64, zeros, array
+import numpy as np
 from lsl.misc.mathutils import regrid
 from lsl.common.color import colorfy
 import os
@@ -41,7 +35,7 @@ def close_to( x, y, epsilon=0.005 ):
     parameter with a default of 0.005.
     """
     
-    return ( 2.0*abs(x-y)/(x+y) < epsilon )
+    return ( 2.0*np.abs(x-y)/(x+y) < epsilon )
 
 
 def open_and_get_nec_freq(fname):
@@ -63,6 +57,7 @@ def open_and_get_nec_freq(fname):
         if line.find('STRUCTURE SPECIFICATION') >= 0:
             break
     else:
+        fh.close()
         raise RuntimeError("STRUCTURE SPECIFICATION not found!")
         
     #  Now look for FREQUENCY and get the value
@@ -78,6 +73,7 @@ def open_and_get_nec_freq(fname):
             freq = float(line[line.find(':')+1:].split()[0])
             break
     else:
+        fh.close()
         raise RuntimeError("Frequency value not found")
         
     #print("Found frequency %f MHz" % freq)
@@ -120,7 +116,7 @@ def calculate_ime(necname, myfreqs = None, zpre = 100):
 
     ant = NECImpedance(necname)
     gamma = (zpre - ant.z)/(zpre + ant.z)
-    ime = (1 - abs(gamma)**2)
+    ime = (1 - np.abs(gamma)**2)
     if myfreqs is None:
         return (ant.freqs, ime)
     else:
@@ -202,8 +198,8 @@ class NECImpedance:
                 freqs.append(freq)
                 impedances.append(complex(re_z, im_z))
                 
-            self.freqs = array(freqs)
-            self.z = array(impedances)
+            self.freqs = np.array(freqs)
+            self.z = np.array(impedances)
 
 
 class NECPattern:
@@ -233,8 +229,8 @@ class NECPattern:
         # 0 to 359, where 0 is North and alt (altitude) runs from 0 to 89 , 
         # where 0 is the horizon The default pattern is all zeros (isotropic 
         # response)
-        self.antenna_pat_dB = zeros(shape=(360,90),dtype=float32)
-        self.antenna_pat_complex = zeros(shape=(360,90),dtype=complex64)
+        self.antenna_pat_dB = np.zeros(shape=(360,91),dtype=np.float32)
+        self.antenna_pat_complex = np.zeros(shape=(360,91),dtype=np.complex64)
         
         outname = os.path.splitext(necname)[0] + '.out'
         try:
@@ -262,15 +258,14 @@ class NECPattern:
                 try:
                     subprocess.check_call(['nec4d', necname, outname])
                 except subprocess.CalledProcessError as e:
-                    raise RuntimeError("Bad return value from nec2++ call : %e" % str(e))       
+                    raise RuntimeError(f"Bad return value from nec2++ call : {str(e)}")       
                 fh, filefreq = open_and_get_nec_freq(outname)
                 if not close_to(filefreq, freq):
                     fh.close()
                     raise ValueError("NEC failed to generate a file with the correct frequency.")
                     
             else:
-                raise ValueError("NEC output file is at a different frequency (%f) than the requested frequency (%f)." % \
-                    (filefreq, freq))
+                raise ValueError(f"NEC output file is at a different frequency ({filefreq}) than the requested frequency ({freq}).")
                     
         #  Now look for RADIATION PATTERN or EXCITATION and read it
         radpat = None
@@ -313,14 +308,14 @@ class NECPattern:
             # Convert theta from zenith angle to altitude
             theta = 90-int(cols[0].split('.')[0])
             phi = int(cols[1].split('.')[0])
-            if theta < 0 or theta > 89 or phi > 359:
+            if theta < 0 or theta > 90 or phi > 359:
                 #print("Skipping ",phi,theta)
                 continue
             powgain = float(cols[4])
             phsgain = float(cols[6])
             #print phi, theta, powgain
             self.antenna_pat_dB[phi,theta] = powgain
-            self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*exp(1j*phsgain*180/pi)
+            self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*np.exp(1j*phsgain*180/np.pi)
             n += 1
             #print("theta %d phi %d gain %f @ %f deg" % (theta, phi, powgain, phsgain))
 
@@ -349,16 +344,16 @@ class NECPattern:
                 # Direction of the incident radiation
                 theta = 90 - int(float(fieldsAngle[3]))
                 phi = int(float(fieldsAngle[6]))
-                if theta < 0 or theta > 89 or phi > 359:
+                if theta < 0 or theta > 90 or phi > 359:
                     pass
                 else:
                     # Get the absolute value and put it on a dB scale
                     powcurr = float(fieldsCurrent[8])
-                    powcurr = 10.0*log10(powcurr)
+                    powcurr = 10.0*np.log10(powcurr)
                     phscurr = float(fieldsCurrent[9])
                     #print phi, theta, powcurr
                     self.antenna_pat_dB[phi,theta] = powcurr
-                    self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*exp(1j*phscurr*pi/180)
+                    self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*np.exp(1j*phscurr*np.pi/180)
                     n += 1
                     #print("theta %d phi %d current %f @ %f deg" % (theta, phi, powcurr, phscurr))
 

@@ -18,16 +18,17 @@ This package contains a collection of tools for reading, format shifting, and an
 
 REQUIREMENTS
 ------------
- * python >= 2.7
+ * python >= 3.8
  * fftw3 >= 3.2 (single precision version)
  * gsl >= 2.4
  * gdbm >= 1.8
  * numpy >= 1.7
  * scipy >= 0.19
- * astropy < 3.0 (2.7) or >= 3.0 (3.0+)
+ * astropy >= 5.2
  * pyephem >= 3.7.5.3
  * aipy >= 3.0.1
  * pytz >= 2012c
+ * h5py
  * matplotlib >= 1.1 (required for some of the scripts)
  * BeautifulSoup (required for some of the scripts)
  * casacore (required for measurement set support)
@@ -42,11 +43,11 @@ Install LSL by running:
 
 If the '--root' option is not provided, then the installation tree root directory is the same as for the Python interpreter used to run `setup.py`.  For instance, if the Python interpreter is in '/usr/local/bin/python', then '<prefix>' will be set to '/usr/local'.  Otherwise, the explicit \<prefix> value is taken from the command line option.  The package will install files in the following locations:
  * <prefix>/bin
- * <prefix>/lib/python3.6/site-packages
+ * <prefix>/lib/python3.8/site-packages
  * <prefix>/share/doc
  * <prefix>/share/install
 
-If an alternate '\<prefix>' value is provided, you should set the PATH environment to include directory '\<prefix>/bin' and the PYTHONPATH environment to include directory '\<prefix>/lib/python3.6/site-packages'.
+If an alternate '\<prefix>' value is provided, you should set the PATH environment to include directory '\<prefix>/bin' and the PYTHONPATH environment to include directory '\<prefix>/lib/python3.8/site-packages'.
 
 If the '--user' option is provided, then then installation tree root directory will be in the current user's home directory.
 
@@ -64,6 +65,7 @@ development.  The data collected as part of this consist seven things:
  * a timestamp for when the report is generated,
  * a unique installation identifier,
  * the LSL version being used, 
+ * the Python version being used,
  * the execution time of the Python process that imports LSL,
  * which LSL modules are imported,
  * which LSL functions are used and their average execution times, and

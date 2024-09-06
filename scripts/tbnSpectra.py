@@ -1,22 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Given a TBN file, plot the time averaged spectra for each digitizer input.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import math
-import numpy
+import numpy as np
 import argparse
 
-from lsl.common import stations, metabundle, metabundleADP
+from lsl.common import stations, metabundle
 from lsl.reader.ldp import LWADataFile, TBNFile
 from lsl.correlator import fx as fxc
 from lsl.misc import parser as aph
@@ -59,10 +53,7 @@ def main(args):
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            try:
-                station = metabundle.get_station(args.metadata, apply_sdm=True)
-            except:
-                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
     else:
@@ -74,7 +65,7 @@ def main(args):
     
     idf = LWADataFile(args.filename)
     if not isinstance(idf, TBNFile):
-        raise RuntimeError("File '%s' does not appear to be a valid TBN file" % os.path.basename(filename))
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBN file")
         
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
@@ -103,16 +94,16 @@ def main(args):
     central_freq = idf.get_info('freq1')
     
     # File summary
-    print("Filename: %s" % args.filename)
-    print("Date of First Frame: %s" % str(beginDate))
-    print("Ant/Pols: %i" % antpols)
-    print("Sample Rate: %i Hz" % srate)
-    print("Tuning Frequency: %.3f Hz" % central_freq)
-    print("Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile / antpols * 512 / srate))
+    print(f"Filename: {args.filename}")
+    print(f"Date of First Frame: {str(beginDate)}")
+    print(f"Ant/Pols: {antpols}")
+    print(f"Sample Rate: {srate} Hz")
+    print(f"Tuning Frequency: {central_freq:.3f} Hz")
+    print(f"Frames: {nFramesFile} ({nFramesFile/antpols*512/srate:.3f} s)")
     print("---")
-    print("Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*antpols/512))
-    print("Integration: %.3f s (%i frames; %i frames per stand/pol)" % (args.average, nFrames, nFrames / antpols))
-    print("Chunks: %i" % nChunks)
+    print(f"Offset: {args.skip:.3f} s ({args.skip*srate*antpols/512} frames)")
+    print(f"Integration: {args.average:.3f} s ({nFrames} frames; {nFrames//antpols} frames per stand/pol)")
+    print(f"Chunks: {nChunks}")
     
     # Sanity check
     if args.skip*srate*antpols/512 > nFramesFile:
@@ -122,25 +113,25 @@ def main(args):
         
     # Setup the window function to use
     if args.bartlett:
-        window = numpy.bartlett
+        window = np.bartlett
     elif args.blackman:
-        window = numpy.blackman
+        window = np.blackman
     elif args.hanning:
-        window = numpy.hanning
+        window = np.hanning
     else:
         window = fxc.null_window
         
     # Master loop over all of the file chunks
-    masterWeight = numpy.zeros((nChunks, antpols, LFFT))
-    masterSpectra = numpy.zeros((nChunks, antpols, LFFT))
+    masterWeight = np.zeros((nChunks, antpols, LFFT))
+    masterSpectra = np.zeros((nChunks, antpols, LFFT))
     
     for i in range(nChunks):
-        print("Working on chunk #%i of %i" % (i+1, nChunks))
+        print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
         except Exception as e:
-            print("Error: %s" % str(e))
+            print(f"Error: {str(e)}")
             continue
             
         # Calculate the spectra for this block of data and then weight the results by 
@@ -160,7 +151,7 @@ def main(args):
                 
     # Now that we have read through all of the chunks, perform the final averaging by
     # dividing by all of the chunks
-    spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
+    spec = np.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Put the frequencies in the best units possible
     freq += central_freq
@@ -168,10 +159,10 @@ def main(args):
     
     # Deal with the `keep` options
     if args.keep == 'all':
-        antpolsDisp = int(numpy.ceil(antpols/20))
+        antpolsDisp = int(np.ceil(antpols/20))
         js = [i for i in range(antpols)]
     else:
-        antpolsDisp = int(numpy.ceil(len(args.keep)*2/20))
+        antpolsDisp = int(np.ceil(len(args.keep)*2/20))
         if antpolsDisp < 1:
             antpolsDisp = 1
             
@@ -187,7 +178,7 @@ def main(args):
             figsY = 4
         else:
             figsY = 2
-        figsX = int(numpy.ceil(1.0*nPlot/figsY))
+        figsX = int(np.ceil(1.0*nPlot/figsY))
     else:
         figsY = 4
         figsX = 5
@@ -198,11 +189,11 @@ def main(args):
         for k in range(i*figsN, i*figsN+figsN):
             try:
                 j = js[k]
-                currSpectra = numpy.squeeze( numpy.log10(spec[j,:])*10.0 )
+                currSpectra = np.squeeze( np.log10(spec[j,:])*10.0 )
             except IndexError:
                 break
             ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)
-            ax.plot(freq, currSpectra, label='Stand: %i, Pol: %i (Dig: %i)' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer))
+            ax.plot(freq, currSpectra, label=f"Stand: {antennas[j].stand.id}, Pol: {antennas[j].pol} (Dig: {antennas[j].digitizer})")
             
             # If there is more than one chunk, plot the difference between the global 
             # average and each chunk
@@ -214,24 +205,24 @@ def main(args):
                         continue
                         
                     # Calculate the difference between the spectra and plot
-                    subspectra = numpy.squeeze( numpy.log10(masterSpectra[l,j,:])*10.0 )
+                    subspectra = np.squeeze( np.log10(masterSpectra[l,j,:])*10.0 )
                     diff = subspectra - currSpectra
                     ax.plot(freq, diff)
                     
-            ax.set_title('Stand: %i (%i); Dig: %i [%i]' % (antennas[j].stand.id, antennas[j].pol, antennas[j].digitizer, antennas[j].combined_status))
-            ax.set_xlabel('Frequency [%s]' % units)
+            ax.set_title(f"Stand: {antennas[j].stand.id} ({antennas[j].pol}); Dig: {antennas[j].digitizer} [{antennas[j].combined_status}]")
+            ax.set_xlabel(f"Frequency [{units}]")
             ax.set_ylabel('P.S.D. [dB/RBW]')
             ax.set_ylim([-10, 30])
             
         # Save spectra image if requested
         if args.output is not None:
             base, ext = os.path.splitext(args.output)
-            outFigure = "%s-%02i%s" % (base, i+1, ext)
+            outFigure = f"{base}-{i+1:02d}{ext}"
             fig.savefig(outFigure)
             
         plt.draw()
         
-    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
+    print(f"RBW: {freq[1]-freq[0]:.4f} {units}")
     plt.show()
 
 

@@ -31,15 +31,10 @@ handle as an input and returns a fully-filled Frame object.
 .. versionadded:: 1.2.0
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 
 from lsl.common import adp as adp_common
+from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbf, read_tbf_ci8
 from lsl.reader._gofast import SyncError as gSyncError
@@ -53,11 +48,8 @@ telemetry.track_module()
 
 __version__ = '0.2'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
-           'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 'get_frames_per_obs',
+           'FRAME_CHANNEL_COUNT', 'get_frame_size', 'get_frames_per_obs',
            'get_first_frame_count', 'get_channel_count', 'get_first_channel']
-
-#: TBF packet size (header + payload)
-FRAME_SIZE = 6168
 
 #: Number of frequency channels in a TBF packet
 FRAME_CHANNEL_COUNT = 12
@@ -70,13 +62,14 @@ class FrameHeader(FrameHeaderBase):
     well as the original binary header data.
     """
     
-    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'first_chan']
+    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'nstand', 'first_chan']
     
-    def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None):
+    def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None):
         self.adp_id = adp_id
         self.frame_count = frame_count
         self.second_count = second_count
         self.first_chan = first_chan
+        self.nstand = nstand
         FrameHeaderBase.__init__(self)
         
     @property
@@ -86,7 +79,7 @@ class FrameHeader(FrameHeaderBase):
         data is TBF, false otherwise.
         """
         
-        if self.adp_id == 0x01:
+        if self.adp_id & 0x01 or self.adp_id == 0x04:
             return True
         else:
             return False
@@ -98,7 +91,11 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        return (numpy.arange(FRAME_CHANNEL_COUNT, dtype=numpy.float32)+self.first_chan) * adp_common.fC
+        fC = adp_common.fC
+        if self.adp_id & 0x04:
+            fC = ndp_common.fC
+        
+        return (np.arange(FRAME_CHANNEL_COUNT, dtype=np.float32)+self.first_chan) * fC
 
 
 class FramePayload(FramePayloadBase):
@@ -134,6 +131,22 @@ class Frame(FrameBase):
     _payload_class = FramePayload
     
     @property
+    def adp_id(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.adp_id property.
+        """
+        
+        return self.header.adp_id
+        
+    @property
+    def nstand(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.nstand property.
+        """
+        
+        return self.header.nstand
+        
+    @property
     def is_tbf(self):
         """
         Convenience wrapper for the Frame.FrameHeader.is_tbf property.
@@ -168,7 +181,7 @@ def read_frame(filehandle, verbose=False):
     try:
         newFrame = read_tbf(filehandle, Frame())
     except gSyncError:
-        mark = filehandle.tell() - FRAME_SIZE
+        mark = filehandle.tell()
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
@@ -201,6 +214,27 @@ def read_frame_ci8(filehandle, verbose=False):
         raise EOFError
         
     return newFrame
+
+
+def get_frame_size(filehandle):
+    """
+    Find out what the frame size in a file is at the current file location.
+    Returns the frame size in bytes.
+    """
+    
+    with FilePositionSaver(filehandle):
+        for i in range(2500):
+            try:
+                cPos = filehandle.tell()
+                read_frame(filehandle)
+                nPos = filehandle.tell()
+                break
+            except EOFError:
+                break
+            except SyncError:
+                filehandle.seek(1, 1)
+                
+    return nPos - cPos
 
 
 def get_frames_per_obs(filehandle):

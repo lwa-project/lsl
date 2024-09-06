@@ -1,19 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Given a DR spectrometer file, plot the time averaged spectra for each 
 polarization product.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import sys
 import math
-import numpy
+import numpy as np
 import argparse
 
 from lsl.reader.ldp import LWADataFile, DRSpecFile
@@ -81,24 +75,24 @@ def main(args):
     beginDate = idf.get_info('start_time').datetime
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
-    freq = numpy.fft.fftfreq(LFFT, d=1.0/srate)
-    freq = numpy.fft.fftshift(freq)
+    freq = np.fft.fftfreq(LFFT, d=1.0/srate)
+    freq = np.fft.fftshift(freq)
     
     # File summary
-    print("Filename: %s" % args.filename)
-    print("Date of First Frame: %s" % str(beginDate))
-    print("Beam: %i" % beam)
-    print("Tune/Pols: %i" % beampols)
-    print("Sample Rate: %i Hz" % srate)
-    print("Tuning Frequency: %.3f Hz (1); %.3f Hz (2)" % (central_freq1, central_freq2))
-    print("Frames: %i (%.3f s)" % (nFramesFile, 1.0 * nFramesFile*tInt))
+    print(f"Filename: {args.filename}")
+    print(f"Date of First Frame: {str(beginDate)}")
+    print(f"Beam: {beam}")
+    print(f"Tune/Pols: {beampols}")
+    print(f"Sample Rate: {srate} Hz")
+    print(f"Tuning Frequency: {central_freq1:.3f} Hz (1); {central_freq2:.3f} Hz (2)")
+    print(f"Frames: {nFramesFile} ({nFramesFile*tInt:.3f} s)")
     print("---")
-    print("Transform Length: %i channels" % LFFT)
-    print("Integration Time: %.3f s" % tInt)
+    print(f"Transform Length: {LFFT} channels")
+    print(f"Integration Time: {tInt:.3f} s")
     print("---")
-    print("Offset: %.3f s (%i frames)" % (args.skip, args.skip*srate*beampols/4096))
-    print("Integration: %.3f s (%i frames; %i frames per beam/tune/pol)" % (args.average, nFrames, nFrames))
-    print("Chunks: %i" % nChunks)
+    print(f"Offset: {args.skip:.3f} s ({args.skip*srate*beampols/4096} frames)")
+    print(f"Integration: {args.average:.3f} s ({nFrames} frames; {nFrames} frames per beam/tune/pol)")
+    print(f"Chunks: {nChunks}")
     
     # Sanity check
     if args.skip/tInt > nFramesFile:
@@ -107,15 +101,15 @@ def main(args):
         raise RuntimeError("Requested integration time+offset is greater than file length")
         
     # Master loop over all of the file chunks
-    masterWeight = numpy.zeros((nChunks, 2*len(products), LFFT))
-    masterSpectra = numpy.zeros((nChunks, 2*len(products), LFFT))
+    masterWeight = np.zeros((nChunks, 2*len(products), LFFT))
+    masterSpectra = np.zeros((nChunks, 2*len(products), LFFT))
     for i in range(nChunks):
-        print("Working on chunk #%i of %i" % (i+1, nChunks))
+        print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
             readT, t, data = idf.read(args.average/nChunks)
         except Exception as e:
-            print("Error: %s" % str(e))
+            print(f"Error: {str(e)}")
             continue
             
         ## Integrate up the chunck
@@ -131,7 +125,7 @@ def main(args):
         
     # Now that we have read through all of the chunks, perform the final averaging by
     # dividing by all of the chunks
-    spec = numpy.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
+    spec = np.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
     
     # Frequencies
     freq1 = freq + central_freq1
@@ -154,8 +148,8 @@ def main(args):
             units = units2
             
         ax = fig.add_subplot(figsX,figsY,i+1)
-        currSpectra = numpy.squeeze( numpy.log10(spec[i,:])*10.0 )
-        ax.plot(freq, currSpectra, label='%i (avg)' % (i+1))
+        currSpectra = np.squeeze( np.log10(spec[i,:])*10.0 )
+        ax.plot(freq, currSpectra, label=f"{i+1} (avg)")
         
         # If there is more than one chunk, plot the difference between the global 
         # average and each chunk
@@ -167,19 +161,19 @@ def main(args):
                     continue
                     
                 # Calculate the difference between the spectra and plot
-                subspectra = numpy.squeeze( numpy.log10(masterSpectra[j,i,:])*10.0 )
+                subspectra = np.squeeze( np.log10(masterSpectra[j,i,:])*10.0 )
                 diff = subspectra - currSpectra
                 ax.plot(freq, diff, label='%i' % j)
                 
-        ax.set_title('Beam %i, Tune. %i, %s' % (beam, i//len(products), products[i % len(products)]))
-        ax.set_xlabel('Frequency [%s]' % units)
+        ax.set_title(f"Beam {beam}, Tune. {i//len(products)}, {products[i % len(products)]}")
+        ax.set_xlabel(f"Frequency [{units}]")
         ax.set_ylabel('P.S.D. [dB/RBW]')
         ax.set_xlim([freq.min(), freq.max()])
         ax.legend(loc=0)
         
-        print("For beam %i, tune. %i, %s maximum in PSD at %.3f %s" % (beam, i//len(products), products[i % len(products)], freq[numpy.where( spec[i,:] == spec[i,:].max() )][0], units))
+        print(f"For beam {beam}, tune. {i//len(products)}, {products[i % len(products)]} maximum in PSD at {freq[np.where(spec[i,:]==spec[i,:].max())][0]:.3f} {units}")
         
-    print("RBW: %.4f %s" % ((freq[1]-freq[0]), units))
+    print(f"RBW: {freq[1]-freq[0]:.4f} {units}")
     plt.subplots_adjust(hspace=0.35, wspace=0.30)
     plt.show()
     

@@ -1,15 +1,9 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 Application to calculate real-time ephemeris for a LWA site.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 import time
 import curses
@@ -50,9 +44,9 @@ if __name__ == '__main__':
     elif site == 'ovrolwa':
         station = stations.lwa1
         station.name = 'OVRO-LWA'
-        station.lat, station.lon, station.elev = ('37.2397808', '-118.2816819', 1183.4839)
+        station.lat, station.lon, station.elev = ('37.23977727', '-118.2816667', 1183.48)
     else:
-        raise RuntimeError("Unknown site name: %s" % site)
+        raise RuntimeError(f"Unknown site name: {site}")
     site = transform.GeographicalPosition((station.long*180.0/math.pi, station.lat*180.0/math.pi), name=station.name)
     
     sun_pos = transform.PlanetaryPosition('Sun')

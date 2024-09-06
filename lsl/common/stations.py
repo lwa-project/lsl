@@ -2,29 +2,24 @@
 Module for creating object oriented representations of the LWA stations.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
-try:
-    import importlib.util
-except ImportError:
-    import imp
-import numpy
+import numpy as np
 import ephem
 import struct
+import weakref
+import importlib.util
 from textwrap import fill as tw_fill
 from functools import total_ordering
-    
+
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import EarthLocation, AltAz, CartesianRepresentation, ITRS
 from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as DATA_PATH
-from lsl.common import dp, mcs as mcsDP, adp, mcsADP
+from lsl.common import dp, mcs as mcsDP, adp, mcsADP, ndp, mcsNDP
 from lsl.misc.mathutils import to_dB, from_dB
 from lsl.common.data_access import DataAccess
 
@@ -32,9 +27,10 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '2.3'
+__version__ = '2.5'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
-        'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_full_stations']
+           'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_all_stations', 'get_full_stations',
+           'get_mini_stations',]
 
 
 _id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
@@ -49,45 +45,19 @@ def geo_to_ecef(lat, lon, elev):
     centered, earth-fixed coordinates.
     """
     
-    WGS84_a = 6378137.00000000
-    WGS84_b = 6356752.31424518
-    N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
-    
-    x = (N+elev)*numpy.cos(lat)*numpy.cos(lon)
-    y = (N+elev)*numpy.cos(lat)*numpy.sin(lon)
-    z = ((WGS84_b**2/WGS84_a**2)*N+elev)*numpy.sin(lat)
-    
-    return (x, y, z)
+    el = EarthLocation.from_geodetic(lon*astrounits.rad, lat*astrounits.rad, height=elev*astrounits.m,
+                                     ellipsoid='WGS84')
+    return (el.x.to('m').value, el.y.to('m').value, el.z.to('m').value)
 
 
 def ecef_to_geo(x, y, z):
     """
-    Convert earth-centered, earth-fixed coordinates to (rad), longitude 
-    (rad), elevation (m) using Bowring's method.
+    Convert earth-centered, earth-fixed coordinates to latitude (rad), longitude 
+    (rad), elevation (m).
     """
     
-    WGS84_a = 6378137.00000000
-    WGS84_b = 6356752.31424518
-    e2 = (WGS84_a**2 - WGS84_b**2) / WGS84_a**2
-    ep2 = (WGS84_a**2 - WGS84_b**2) / WGS84_b**2
-    
-    # Distance from rotation axis
-    p = numpy.sqrt(x**2 + y**2)
-    
-    # Longitude
-    lon = numpy.arctan2(y, x)
-    
-    # Latitude (using one iteration of Bowring's method)
-    psi = numpy.arctan2(WGS84_a*z, WGS84_b*p)
-    num = z + WGS84_b*ep2*numpy.sin(psi)**3
-    den = p - WGS84_a*e2*numpy.cos(psi)**3
-    lat = numpy.arctan2(num, den)
-    
-    # Elevation
-    N = WGS84_a**2 / numpy.sqrt(WGS84_a**2*numpy.cos(lat)**2 + WGS84_b**2*numpy.sin(lat)**2)
-    elev = p / numpy.cos(lat) - N
-    
-    return lat, lon, elev
+    el = EarthLocation.from_geocentric(x*astrounits.m, y*astrounits.m, z*astrounits.m)
+    return (el.lat.rad, el.lon.rad, el.height.to('m').value)
 
 
 def _build_repr(name, attrs=[]):
@@ -123,6 +93,7 @@ class LWAStationBase(object):
             self._antennas = list(antennas)
         self._sort_order = ''
         self._sort_antennas()
+        self._tag_antennas()
         
         if interface is None:
             self.interface = LSLInterface()
@@ -132,7 +103,7 @@ class LWAStationBase(object):
             self.interface = interface
             
     def __str__(self):
-        return "%s (%s) with %i antennas" % (self.name, self.id, len(self.antennas))
+        return f"{self.name} ({self.id}) with {len(self.antennas)} antennas"
         
     def __reduce__(self):
         return (LWAStationBase, (self.name, self.id, tuple(self.antennas), self.interface))
@@ -145,6 +116,7 @@ class LWAStationBase(object):
         
     def __setitem__(self, *args):
         self.antennas.__setitem__(*args)
+        self._tag_antennas(args[0])
         
     @property
     def antennas(self):
@@ -156,13 +128,14 @@ class LWAStationBase(object):
             raise TypeError("Expected a list")
         for i,antenna in enumerate(antennas):
             if not isinstance(antenna, Antenna):
-                raise TypeError("Expected index %i to be an Antenna" % i)
+                raise TypeError(f"Expected index {i} to be an Antenna")
         self._antennas = antennas
         
         # Fix the sorting
         orig_sort_order = self._sort_order
         self._sort_order = ''
         self._sort_antennas(attr=orig_sort_order)
+        self._tag_antennas()
         
     def _sort_antennas(self, attr='digitizer'):
         """
@@ -173,6 +146,18 @@ class LWAStationBase(object):
         if self._sort_order != attr:
             self._antennas.sort(key=lambda x: getattr(x, attr))
             self._sort_order = attr
+            
+    def _tag_antennas(self, index=None):
+        """
+        Tag the antenna stands with the station so that we can perform
+        coordinate transforms on the stands.
+        """
+        
+        if index is not None:
+            self._antennas[index].stand._parent = weakref.proxy(self)
+        else:
+            for a in self._antennas:
+                a.stand._parent = weakref.proxy(self)
 
 
 class LWAStation(ephem.Observer, LWAStationBase):
@@ -231,8 +216,8 @@ class LWAStation(ephem.Observer, LWAStationBase):
         ephem.Observer.__init__(self)
         LWAStationBase.__init__(self, name, id=id, antennas=antennas, interface=interface)
         
-        self.lat = lat * numpy.pi/180.0
-        self.long = long * numpy.pi/180.0
+        self.lat = lat * np.pi/180.0
+        self.long = long * np.pi/180.0
         self.elev = elev
         self.pressure = 0.0
         self.horizon = 0.0
@@ -241,7 +226,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         self.beamformer_min_delay_samples = None
         
     def __str__(self):
-        return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/numpy.pi, self.long*180.0/numpy.pi, self.elev, len(self.antennas))
+        return "%s (%s) at lat: %.3f, lng: %.3f, elev: %.1f m with %i antennas" % (self.name, self.id, self.lat*180.0/np.pi, self.long*180.0/np.pi, self.elev, len(self.antennas))
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -258,7 +243,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return tw_fill(_build_repr(n, a), subsequent_indent='    ')
         
     def __reduce__(self):
-        return (LWAStation, (self.name, self.lat*180/numpy.pi, self.long*180/numpy.pi, self.elev, self.id, tuple(self.antennas), self.interface))
+        return (LWAStation, (self.name, self.lat*180/np.pi, self.long*180/np.pi, self.elev, self.id, tuple(self.antennas), self.interface))
         
     def __hash__(self):
         return hash(self.__reduce__()[1])
@@ -287,7 +272,7 @@ class LWAStation(ephem.Observer, LWAStationBase):
             if JD:
                 # If the date is Julian, convert to Dublin Julian Date 
                 # which is used by ephem
-                date -= DJD_OFFSET
+                date = date - DJD_OFFSET
             oo.date = date
             
         return oo
@@ -310,6 +295,15 @@ class LWAStation(ephem.Observer, LWAStationBase):
         return geo_to_ecef(self.lat, self.long, self.elev)
         
     @property
+    def earth_location(self):
+        """
+        Return an astropy.coordinates.EarthLocation for the station.
+        """
+        
+        return EarthLocation.from_geodetic(self.long*astrounits.rad, self.lat*astrounits.rad, height=self.elev*astrounits.m,
+                                           ellipsoid='WGS84')
+        
+    @property
     def eci_transform_matrix(self):
         """
         Return a 3x3 transformation matrix that converts a baseline in 
@@ -318,9 +312,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         function in the lwda_fits-dev library.
         """
         
-        return numpy.array([[0.0, -numpy.sin(self.lat), numpy.cos(self.lat)], 
-                            [1.0, 0.0,                  0.0], 
-                            [0.0, numpy.cos(self.lat),  numpy.sin(self.lat)]])
+        return np.array([[0.0, -np.sin(self.lat), np.cos(self.lat)], 
+                         [1.0,  0.0,              0.0], 
+                         [0.0,  np.cos(self.lat), np.sin(self.lat)]])
         
     @property
     def eci_inverse_transform_matrix(self):
@@ -330,9 +324,9 @@ class LWAStation(ephem.Observer, LWAStationBase):
         elevation] for that baseline.
         """
         
-        return numpy.array([[ 0.0,                 1.0, 0.0                ],
-                            [-numpy.sin(self.lat), 0.0, numpy.cos(self.lat)],
-                            [ numpy.cos(self.lat), 0.0, numpy.sin(self.lat)]])
+        return np.array([[ 0.0,              1.0, 0.0             ],
+                         [-np.sin(self.lat), 0.0, np.cos(self.lat)],
+                         [ np.cos(self.lat), 0.0, np.sin(self.lat)]])
                         
     def get_enz_offset(self, locTo):
         """
@@ -342,26 +336,11 @@ class LWAStation(ephem.Observer, LWAStationBase):
         in meter along the east, north, and vertical directions.
         """
         
-        ecefFrom = self.geocentric_location
-        try:
-            ecefTo = locTo.geocentric_location
-        except AttributeError:
-            ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
-            
-        ecefFrom = numpy.array(ecefFrom)
-        ecefTo = numpy.array(ecefTo)
         
-        rho = ecefTo - ecefFrom
-        rot = numpy.array([[ numpy.sin(self.lat)*numpy.cos(self.long), numpy.sin(self.lat)*numpy.sin(self.long), -numpy.cos(self.lat)], 
-                        [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
-                        [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
-        sez = numpy.dot(rot, rho)
-        
-        # Convert from south, east, zenith to east, north, zenith
-        enz = 1.0*sez[[1,0,2]]
-        enz[1] *= -1.0
-        
-        return enz
+        az, alt, dist = self.get_pointing_and_distance(locTo)
+        return np.array([np.sin(az)*np.cos(alt),
+                         np.cos(az)*np.cos(alt),
+                         np.sin(alt)])*dist
         
     def get_pointing_and_distance(self, locTo):
         """
@@ -374,26 +353,20 @@ class LWAStation(ephem.Observer, LWAStationBase):
             Renamed from getPointingAndDirection to get_pointing_and_distance
         """
         
-        ecefFrom = self.geocentric_location
+        ecefFrom = self.earth_location.itrs
         try:
-            ecefTo = locTo.geocentric_location
+            ecefTo = locTo.itrs
         except AttributeError:
-            ecefTo = geo_to_ecef(float(locTo[0])*numpy.pi/180, float(locTo[1])*numpy.pi/180, locTo[2])
+            try:
+                ecefTo = locTo.earth_location
+            except AttributeError:
+                ecefTo = EarthLocation.from_geodetic(locTo[1]*astrounits.deg, locTo[0]*astrounits.deg, height=locTo[2]*astrounits.m,
+                                                     ellipsoid='WGS84')
+            ecefTo = ecefTo.itrs
             
-        ecefFrom = numpy.array(ecefFrom)
-        ecefTo = numpy.array(ecefTo)
-        
-        rho = ecefTo - ecefFrom
-        rot = numpy.array([[ numpy.sin(self.lat)*numpy.cos(self.long), numpy.sin(self.lat)*numpy.sin(self.long), -numpy.cos(self.lat)], 
-                           [-numpy.sin(self.long),                     numpy.cos(self.long),                      0                  ],
-                           [ numpy.cos(self.lat)*numpy.cos(self.long), numpy.cos(self.lat)*numpy.sin(self.long),  numpy.sin(self.lat)]])
-        sez = numpy.dot(rot, rho)
-        
-        d = numpy.sqrt( (rho**2).sum() )
-        el = numpy.arcsin(sez[2] / d)
-        az = numpy.arctan2(sez[1], -sez[0])
-        
-        return az, el, d
+        aa = AltAz(location=ecefFrom, obstime=ecefTo.obstime, pressure=0)
+        pd = ITRS(ecefTo.cartesian.xyz-ecefFrom.cartesian.xyz, obstime=ecefTo.obstime, location=ecefFrom).transform_to(aa)
+        return (pd.az.rad, pd.alt.rad, pd.distance.to('m').value)
         
     @property
     def stands(self):
@@ -432,9 +405,9 @@ class Antenna(object):
     Object to store the information about an antenna.  Stores antenna:
      * ID number (id)
      * ARX instance the antenna is attached to (arx)
-     * DP1/ROACH board number (board)
-     * DP1/ROACH  digitizer number (digitizer)
-     * DP/ADP rack input connector (input)
+     * DP1/ROACH/SNAP board number (board)
+     * DP1/ROACH/SNAP  digitizer number (digitizer)
+     * DP/ADP/NDP rack input connector (input)
      * Stand instance the antenna is part of (stand)
      * Polarization (0 == N-S; pol)
      * Antenna vertical mis-alignment in degrees (theta)
@@ -517,13 +490,13 @@ class Antenna(object):
         if isinstance(other, Antenna):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Antenna):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def response(self, dB=False):
         """
@@ -538,7 +511,7 @@ class Antenna(object):
         
         # Read in the data
         with DataAccess.open(filename, 'r') as fh:
-            data = numpy.loadtxt(fh)
+            data = np.loadtxt(fh)
         freq = data[:,0]*1e6
         ime = data[:,3]
         if dB:
@@ -581,20 +554,22 @@ class Stand(object):
         self.y = float(y)
         self.z = float(z)
         
+        self._parent = None
+        
     def __eq__(self, other):
         if isinstance(other, Stand):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Stand):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __str__(self):
-        return "Stand %i:  x=%+.2f m, y=%+.2f m, z=%+.2f m" % (self.id, self.x, self.y, self.z)
+        return f"Stand {self.id}: x={self.x:+.2f} m, y={self.y:+.2f} m, z={self.z:+.2f} m"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -615,7 +590,7 @@ class Stand(object):
         elif key == 2:
             return self.z
         else:
-            raise ValueError("Subscript %i out of range" % key)
+            raise ValueError(f"Subscript {key} out of range")
             
     def __setitem__(self, key, value):
         if key == 0:
@@ -625,7 +600,7 @@ class Stand(object):
         elif key == 2:
             self.z = float(value)
         else:
-            raise ValueError("Subscript %i out of range" % key)
+            raise ValueError(f"Subscript {key} out of range")
             
     def __add__(self, std):
         try:
@@ -652,6 +627,24 @@ class Stand(object):
                 out = (self.x-std, self.y-std, self.z-std)
                 
         return out
+        
+    @property
+    def xyz(self):
+        return (self.x, self.y, self.z)
+        
+    @property
+    def earth_location(self):
+        if self._parent is None:
+            raise RuntimeError("Cannot determine stands location without a reference point")
+            
+        epoch = AstroTime(2000, format='jyear', scale='utc')
+        center = self._parent.earth_location
+        aa = AltAz(CartesianRepresentation(self.y*astrounits.m, self.x*astrounits.m, self.z*astrounits.m),
+                   location=center, obstime=epoch)
+         
+        aa = aa.transform_to(ITRS(location=center, obstime=epoch))
+        aa = ITRS(aa.cartesian.xyz + center.itrs.cartesian.xyz, obstime=epoch)
+        return EarthLocation.from_geocentric(aa.x, aa.y, aa.z)
 
 
 @total_ordering
@@ -679,7 +672,7 @@ class FEE(object):
         self.status = int(status)
         
     def __str__(self):
-        return "FEE '%s': gain1=%.2f, gain2=%.2f; status is %i" % (self.id, self.gain1, self.gain2, self.status)
+        return f"FEE '{self.id}': gain1={self.gain1:.2f}, gain2={self.gain2:.2f}; status is {self.status}"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -697,13 +690,13 @@ class FEE(object):
         if isinstance(other, FEE):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, FEE):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def response(self, dB=False):
         """
@@ -719,7 +712,7 @@ class FEE(object):
         
         # Read in the data
         with DataAccess.open(filename, 'r') as fh:
-            data = numpy.loadtxt(fh)
+            data = np.loadtxt(fh)
         freq = data[:,0]*1e6
         gai = data[:,1]
         if not dB:
@@ -760,7 +753,7 @@ class Cable(object):
         self.clock_offset = 0.0
         
     def __str__(self):
-        return "Cable '%s' with length %.2f m (stretched to %.2f m)" % (self.id, self.length, self.length*self.stretch)
+        return f"Cable '{self.id}' with length {self.length:.2f} m (stretched to {self.length*self.stretch:.2f} m)"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -778,13 +771,13 @@ class Cable(object):
         if isinstance(other, Cable):
             return self.id == other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Cable):
             return self.id < other.id
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def delay(self, frequency=49e6, ns=False):
         """Get the delay associated with the cable in second (or nanoseconds 
@@ -795,7 +788,7 @@ class Cable(object):
         bulkDelay = self.length*self.stretch / (self.vf * speedOfLight)
         
         # Dispersion delay
-        dispDelay = self.dd * (self.length*self.stretch / 100.0) / numpy.sqrt(frequency / numpy.array(self.ref_freq))
+        dispDelay = self.dd * (self.length*self.stretch / 100.0) / np.sqrt(frequency / np.array(self.ref_freq))
         
         totlDelay = bulkDelay + dispDelay + self.clock_offset
         
@@ -814,9 +807,9 @@ class Cable(object):
             Added the `dB' keyword to allow dB to be returned.
         """
     
-        atten = 2 * self.a0 * self.length*self.stretch * numpy.sqrt(frequency / numpy.array(self.ref_freq)) 
-        atten += self.a1 * self.length*self.stretch * (frequency / numpy.array(self.ref_freq))
-        atten = numpy.exp(atten)
+        atten = 2 * self.a0 * self.length*self.stretch * np.sqrt(frequency / np.array(self.ref_freq)) 
+        atten += self.a1 * self.length*self.stretch * (frequency / np.array(self.ref_freq))
+        atten = np.exp(atten)
         
         if dB:
             atten = to_dB(atten)
@@ -849,7 +842,7 @@ class Cable(object):
         """
         
         # Generate the frequencies to use
-        freq = numpy.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
+        freq = np.array([10, 20, 30, 40, 50, 60, 70, 80, 90, 100])
         freq = freq*1e6
         
         # Compute the attenuation
@@ -878,6 +871,8 @@ class ARX(object):
     """
     
     def __init__(self, id, channel=0, asp_channel=0, input='', output=''):
+        if not isinstance(id, int):
+            id = int(id, 10)
         self.id = id
         self.channel = int(channel)
         self.asp_channel = int(asp_channel)
@@ -885,7 +880,7 @@ class ARX(object):
         self.output = output
         
     def __str__(self):
-        return "ARX Board %s, channel %i (ASP Channel %i)" % (self.id, self.channel, self.asp_channel)
+        return f"ARX Board {self.id}, channel {self.channel} (ASP Channel {self.asp_channel})"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -904,7 +899,7 @@ class ARX(object):
         if isinstance(other, ARX):
             return self.id == other.id and self.channel == other.channel
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def revision(self):
         """
@@ -916,11 +911,12 @@ class ARX(object):
         
         revision = 'unknown'
         try:
-            id = int(self.id, 10)
-            if id >= 100 and id < 200:
+            if self.id >= 100 and self.id < 200:
                 revision = 'D'
-            elif id >= 200 and id <= 300:
+            elif self.id >= 200 and self.id <= 300:
                 revision = 'G'
+            elif self.id >= 8200 and self.id <= 8300:
+                revision = 'H'
         except ValueError:
             pass
             
@@ -954,17 +950,17 @@ class ARX(object):
         """
         
         # Find the filename to use
-        filename = 'arx/ARX_board_%4s_filters_ch%i.npz' % (self.id, self.channel)
+        filename = f"arx/ARX_board_{self.id:04d}_filters.npz"
         
         # Read in the file and convert it to a numpy array
         with DataAccess.open(filename, 'rb') as fh:
             try:
-                dataDict = numpy.load(fh)
+                dataDict = np.load(fh)
             except IOError:
-                raise RuntimeError("Could not find the response data for ARX board #%s, channel %i" % (self.id, self.channel))
+                raise RuntimeError(f"Could not find the response data for ARX board #{self.id}, channel {self.channel}")
                 
-            freq = dataDict['freq']
-            data = dataDict['data']
+            freq = dataDict['freq'][...]
+            data = dataDict[f"ch{self.channel}"][...]
             try:
                 dataDict.close()
             except AttributeError:
@@ -993,7 +989,7 @@ class ARX(object):
                 ## Catch LWA1 boards
                 return (freq, data[:,1])
         else:
-            raise ValueError("Unknown ARX filter '%s'" % filter)
+            raise ValueError(f"Unknown ARX filter '{filter}'")
 
 
 class LSLInterface(object):
@@ -1022,14 +1018,17 @@ class LSLInterface(object):
             self._cache['backend'] = dp
         elif backend == 'lsl.common.adp':
             self._cache['backend'] = adp
+        elif backend == 'lsl.common.ndp':
+            self._cache['backend'] = ndp
         if mcs == 'lsl.common.mcs':
             self._cache['mcs'] = mcsDP
         elif mcs == 'lsl.common.mcsADP':
             self._cache['mcs'] = mcsADP
+        elif mcs == 'lsl.common.mcsNDP':
+            self._cache['mcs'] = mcsNDP
             
     def __str__(self):
-        return "LSL Interfaces:\n Backend: %s\n MCS: %s\n SDF: %s\n Metadata: %s\n SDM: %s" % \
-                (self.backend, self.mcs, self.sdf, self.metabundle, self.sdm)
+        return f"LSL Interfaces:\n Backend: {self.backend}\n MCS: {self.mcs}\n SDF: {self.sdf}\n Metadata: {self.metabundle}\n SDM: {self.sdm}"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -1045,18 +1044,13 @@ class LSLInterface(object):
         except KeyError:
             value = getattr(self, which)
             if value is None:
-                raise RuntimeError("Unknown module for interface type '%s'" % which)
-            try:
-                modSpec = importlib.util.find_spec(value, [os.path.dirname(__file__)])
-                modInfo = importlib.util.module_from_spec(modSpec)
-                modSpec.loader.exec_module(modInfo)
-                self._cache[which] = modInfo
-                if hasattr(modSpec.loader, 'file'):
-                    modSpec.loader.file.close()
-            except NameError:
-                modInfo = imp.find_module(value.split('.')[-1], [os.path.dirname(__file__)])
-                self._cache[which] = imp.load_module(value, modInfo)
-                modInfo[0].close()
+                raise RuntimeError(f"Unknown module for interface type '{which}'")
+            modSpec = importlib.util.find_spec(value, [os.path.dirname(__file__)])
+            modInfo = importlib.util.module_from_spec(modSpec)
+            modSpec.loader.exec_module(modInfo)
+            self._cache[which] = modInfo
+            if hasattr(modSpec.loader, 'file'):
+                modSpec.loader.file.close()
                 
         return self._cache[which]
 
@@ -1468,9 +1462,11 @@ def _parse_ssmif_text(filename_or_fh):
                 
             #
             # ROACH & Server Data - LWA-SV
+            #             and
+            # SNAP & Server Data - LWA-NA
             #
             
-            if keyword == 'N_ROACH':
+            if keyword in ('N_ROACH', 'N_SNAP'):
                 nRoach = int(value)
                 
                 roachID = ["UNK" for n in range(nRoach)]
@@ -1479,7 +1475,7 @@ def _parse_ssmif_text(filename_or_fh):
                 
                 continue
                 
-            if keyword == 'N_ROACHCH':
+            if keyword in ('N_ROACHCH', 'N_SNAPCH'):
                 nChanRoach = int(value)
                 
                 roachStat = [[3 for c in range(nChanRoach)] for n in range(nRoach)]
@@ -1489,31 +1485,31 @@ def _parse_ssmif_text(filename_or_fh):
                 
                 continue
                 
-            if keyword == 'ROACH_ID':
+            if keyword in ('ROACH_ID', 'SNAP_ID'):
                 roachID[ids[0]-1] = value
                 continue
                 
-            if keyword == 'ROACH_SLOT':
+            if keyword in ('ROACH_SLOT', 'SNAP_SLOT'):
                 roachSlot[ids[0]-1] = value
                 continue
                 
-            if keyword == 'ROACH_DESI':
+            if keyword in ('ROACH_DESI', 'SNAP_DESI'):
                 roachDesi[ids[0]-1] = int(value)
                 continue
                 
-            if keyword == 'ROACH_STAT':
+            if keyword in ('ROACH_STAT', 'SNAP_STAT'):
                 roachStat[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
-            if keyword == 'ROACH_INR':
+            if keyword in ('ROACH_INR', 'SNAP_INR'):
                 roachInR[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword == 'ROACH_INC':
+            if keyword in ('ROACH_INC', 'SNAP_INC'):
                 roachInC[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword == 'ROACH_ANT':
+            if keyword in ('ROACH_ANT', 'SNAP_ANT'):
                 roachAnt[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
@@ -1613,7 +1609,10 @@ def _parse_ssmif_binary(filename_or_fh):
         fh.seek(0)
         
         overrides = {}
-        if version in (8,9):
+        if version == 10:
+            ## NDP
+            mode = mcsNDP
+        elif version in (8,9):
             ## ADP
             mode = mcsADP
             if version == 8:
@@ -1718,28 +1717,51 @@ def _parse_ssmif_binary(filename_or_fh):
             dp2Stat = list(bssmif.eDP2Stat)
             dp2Desi = list(bssmif.eDP2Desi)
         except AttributeError:
-            #
-            # ROACH & Server Data
-            #
-            roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
-            roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-            roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
-            roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
-            roachDesi = list(bssmif.eRoachDesi)
-            roachStat = list(bssmif.eRoachStat)
-            roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
-            roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-            roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
-            roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-            roachAnt  = mcsDP.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
-            
-            serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
-            serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-            serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
-            serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
-            serverStat = list(bssmif.eServerStat)
-            serverDesi = list(bssmif.eServerDesi)
-            
+            try:
+                #
+                # ROACH & Server Data
+                #
+                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
+                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
+                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
+                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
+                roachDesi = list(bssmif.eRoachDesi)
+                roachStat = list(bssmif.eRoachStat)
+                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
+                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
+                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
+                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
+                roachAnt  = mcsDP.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
+                
+                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
+                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
+                serverStat = list(bssmif.eServerStat)
+                serverDesi = list(bssmif.eServerDesi)
+            except AttributeError:
+                #
+                # SNAP & Server Data
+                #
+                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
+                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
+                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
+                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
+                roachDesi = list(bssmif.eSnapDesi)
+                roachStat = list(bssmif.eSnapStat)
+                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
+                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
+                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
+                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
+                roachAnt  = mcsDP.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
+                
+                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
+                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
+                serverStat = list(bssmif.eServerStat)
+                serverDesi = list(bssmif.eServerDesi)
+                
         #
         # DR Data
         #
@@ -1783,7 +1805,7 @@ def parse_ssmif(filename_or_fh):
     elif ext == '.txt':
         ssmifDataDict = _parse_ssmif_text(filename_or_fh)
     else:
-        raise ValueError("Unknown file extension '%s', cannot tell if it is text or binary" % ext)
+        raise ValueError(f"Unknown file extension '{ext}', cannot tell if it is text or binary")
         
     # Unpack the dictionary into the current variable scope
     ## Site
@@ -1822,16 +1844,19 @@ def parse_ssmif(filename_or_fh):
     arxAnt   = ssmifDataDict['arxAnt']
     arxIn    = ssmifDataDict['arxIn']
     arxOut   = ssmifDataDict['arxOut']
-    ### DP/ADP
+    ### DP/ADP/NDP
     try:
         isDP = True
         dp1Ant = ssmifDataDict['dp1Ant']
         dp1InR = ssmifDataDict['dp1InR']
     except KeyError:
         isDP = False
-        roachAnt = ssmifDataDict['roachAnt']
-        roachInR = ssmifDataDict['roachInR']
-        
+        try:
+            roachAnt = ssmifDataDict['roachAnt']
+            roachInR = ssmifDataDict['roachInR']
+        except KeyError:
+            roachAnt = ssmifDataDict['snapAnt']
+            roachInR = ssmifDataDict['snapInR']
     # Build up a list of Stand instances and load them with data
     i = 1
     stands = []
@@ -1921,14 +1946,20 @@ def parse_ssmif(filename_or_fh):
             interface = LSLInterface(backend='lsl.common.dp', 
                                      mcs='lsl.common.mcs', 
                                      sdf='lsl.common.sdf', 
-                                     metabundle='lsl.common.metabundle', 
-                                     sdm='lsl.common.sdm')
+                                     metabundle='lsl.common.metabundleDP', 
+                                     sdm='lsl.common.sdmDP')
         elif idn in ('SV',):
             interface = LSLInterface(backend='lsl.common.adp', 
                                      mcs='lsl.common.mcsADP', 
                                      sdf='lsl.common.sdfADP', 
                                      metabundle='lsl.common.metabundleADP', 
                                      sdm='lsl.common.sdmADP')
+        elif idn in ('NA',):
+            interface = LSLInterface(backend='lsl.common.ndp', 
+                                     mcs='lsl.common.mcsNDP', 
+                                     sdf='lsl.common.sdfNDP', 
+                                     metabundle='lsl.common.metabundleNDP', 
+                                     sdm='lsl.common.sdmNDP')
         else:
             interface = None
             
@@ -1964,3 +1995,25 @@ def get_full_stations():
     """
     
     return [lwa1, lwasv]
+
+
+def get_mini_stations():
+    """
+    Function to return a list of mini stations.
+    
+    .. versionadded:: 1.2.0
+    """
+    
+    return [lwana,]
+
+
+def get_all_stations():
+    """
+    Function to return a list of all active stations.
+    
+    .. versionadded:: 3.0.0
+    """
+
+    stations = get_full_stations()
+    stations.extend(get_mini_stations())
+    return stations

@@ -2,15 +2,12 @@
 Unit test for the lsl.correlator.uvutils module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import warnings
 import unittest
-import numpy
+import ephem
+import numpy as np
+
+from astropy.coordinates import Angle
 
 from lsl.correlator import uvutils
 from lsl.common import stations
@@ -28,45 +25,25 @@ class uvutils_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy and python warnings."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         warnings.simplefilter('ignore')
 
     def test_baseline_gen(self):
         """Test that the generated baselines contain the correct numbers of elements."""
 
-        standList = numpy.array([100, 101, 102, 103])
+        standList = np.array([100, 101, 102, 103])
 
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutils.get_baselines(standList, include_auto=False)
         self.assertEqual(len(bl), 6)
-        bl = uvutils.get_baselines(standList, include_auto=True, indicies=False)
+        bl = uvutils.get_baselines(standList, include_auto=True)
         self.assertEqual(len(bl), 10)
-
-    def test_baseline_ind(self):
-        """Test that the baselines generated with indicies do return indicies and vice
-        versa."""
-
-        standList = numpy.array([100, 101, 102, 103])
-
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
-        bl = numpy.array(bl)
-        self.assertTrue(bl.min() == 100)
-        bl = uvutils.get_baselines(standList, include_auto=True, indicies=False)
-        bl = numpy.array(bl)
-        self.assertTrue(bl.min() == 100)
-
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=True)
-        bl = numpy.array(bl)
-        self.assertTrue(bl.max() < 100)
-        bl = uvutils.get_baselines(standList, include_auto=True, indicies=True)
-        bl = numpy.array(bl)
-        self.assertTrue(bl.max() < 100)
         
     def test_antenna_lookup(self):
         """Test baseline number to antenna lookup function."""
         
-        standList = numpy.array([100, 101, 102, 103])
+        standList = np.array([100, 101, 102, 103])
 
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
+        bl = uvutils.get_baselines(standList, include_auto=False)
         ind = uvutils.baseline_to_antennas(0, standList)
         self.assertEqual(ind[0], 100)
         self.assertEqual(ind[1], 101)
@@ -78,20 +55,20 @@ class uvutils_tests(unittest.TestCase):
     def test_baseline_lookup(self):
         """Test antennas to baseline lookup function."""
         
-        standList = numpy.array([100, 101, 102, 103])
-        bl = uvutils.get_baselines(standList, include_auto=False, indicies=False)
+        standList = np.array([100, 101, 102, 103])
+        bl = uvutils.get_baselines(standList, include_auto=False)
         
-        ind = uvutils.antennas_to_baseline(100, 101, standList, include_auto=False, indicies=False)
+        ind = uvutils.antennas_to_baseline(100, 101, standList, include_auto=False)
         self.assertEqual(ind, 0)
         
         ind = uvutils.antennas_to_baseline(100, 102, standList, baseline_list=bl)
         self.assertEqual(ind, 1)
         
-        ind = uvutils.antennas_to_baseline(0, 3, standList, include_auto=False, indicies=True)
-        self.assertEqual(ind, 2)
+        ind = uvutils.antennas_to_baseline(100, 103, standList, include_auto=True)
+        self.assertEqual(ind, 3)
         
-    def run_compute_uvw_test(self, antennas, freq):
-        out = uvutils.compute_uvw(antennas, freq=freq)
+    def run_compute_uvw_test(self, antennas, freq, HA=0.0, dec=34.0):
+        out = uvutils.compute_uvw(antennas, HA=HA, dec=dec, freq=freq)
         
         nbl = len(antennas)*(len(antennas)-1)//2
         try:
@@ -124,7 +101,7 @@ class uvutils_tests(unittest.TestCase):
         # Frequency is an array
         ## 1-D
         with self.subTest(mode='1D'):
-            freq = numpy.linspace(45e6, 60e6, 1024)
+            freq = np.linspace(45e6, 60e6, 1024)
             out0 = self.run_compute_uvw_test(antennas[0:60:2], freq)
             
         ## 2-D
@@ -140,8 +117,29 @@ class uvutils_tests(unittest.TestCase):
         # Make sure the values are the same
         out1.shape = out0.shape
         out2.shape = out0.shape
-        numpy.testing.assert_allclose(out0, out1)
-        numpy.testing.assert_allclose(out0, out2)
+        np.testing.assert_allclose(out0, out1)
+        np.testing.assert_allclose(out0, out2)
+        
+        # Pass in a list of baselines
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False)
+        out3 = uvutils.compute_uvw(bl, freq=freq)
+        self.assertEqual(len(out3), len(bl))
+        
+        # Angle support
+        freq = [45e6, 60e6]
+        HA = 1.0
+        dec = 34.0
+        out0 = self.run_compute_uvw_test(antennas[0:60:2], freq, HA=HA, dec=dec)
+        
+        HA = Angle('1h0m0s')
+        dec = Angle('34deg')
+        out1 = self.run_compute_uvw_test(antennas[0:60:2], freq, HA=HA, dec=dec)
+        np.testing.assert_allclose(out0, out1)
+        
+        HA = ephem.hours('1:00:00')
+        dec = ephem.degrees('34:00:00')
+        out1 = self.run_compute_uvw_test(antennas[0:60:2], freq, HA=HA, dec=dec)
+        np.testing.assert_allclose(out0, out1)
         
     def test_compute_uv_track(self):
         """Test that the compute_uv_track function runs."""
@@ -154,6 +152,23 @@ class uvutils_tests(unittest.TestCase):
         # Make sure we have the right dimensions
         self.assertEqual(out.shape, (435,2,512))
         
+        # Pass in a list of baselines
+        bl = uvutils.get_baselines(antennas[0:30:2], include_auto=False)
+        out0 = uvutils.compute_uv_track(bl)
+        self.assertEqual(len(out0), len(bl))
+        
+        # Angle support
+        dec = 34.0
+        out0 = uvutils.compute_uv_track(antennas[0:60:2], dec=dec)
+        
+        dec = Angle('34deg')
+        out1 = uvutils.compute_uv_track(antennas[0:60:2], dec=dec)
+        np.testing.assert_allclose(out0, out1)
+        
+        dec = ephem.degrees('34:00:00')
+        out1 = uvutils.compute_uv_track(antennas[0:60:2], dec=dec)
+        np.testing.assert_allclose(out0, out1)
+
         
 class uvutils_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.reader units 

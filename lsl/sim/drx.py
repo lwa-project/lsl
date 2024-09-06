@@ -3,13 +3,7 @@ Python module for creating creating, validating, and writing simulated
 DRX frames to a file.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 
 from lsl.common.dp import fS
 from lsl.reader import drx
@@ -29,7 +23,7 @@ def frame_to_frame(drx_frame):
     """
 
     # The raw frame
-    rawFrame = numpy.zeros(drx.FRAME_SIZE, dtype=numpy.uint8)
+    rawFrame = np.zeros(drx.FRAME_SIZE, dtype=np.uint8)
 
     # Part 1: The header
     ## Sync. words (0xDEC0DE5C)
@@ -84,10 +78,10 @@ def frame_to_frame(drx_frame):
         ### Round, clip, and convert to unsigned integers
         i = i.round()
         i = i.clip(-8, 7)
-        i = i.astype(numpy.int8)
+        i = i.astype(np.int8)
         q = q.round()
         q = q.clip(-8, 7)
-        q = q.astype(numpy.int8)
+        q = q.astype(np.int8)
     i += ((i & 8) << 1)
     q += ((q & 8) << 1)
     
@@ -196,37 +190,37 @@ class SimFrame(drx.Frame):
         # Is the beam number reasonable?
         if beam not in [1, 2, 3, 4]:
             if raise_errors:
-                raise ValueError("Invalid beam: '%s'" % beam)
+                raise ValueError(f"Invalid beam: '{beam}'")
             return False
 
         # Is the tunning number reasonable?
         if tune not in [1, 2]:
             if raise_errors:
-                raise ValueError("Invalid tuning: '%s'" % tune)
+                raise ValueError(f"Invalid tuning: '{tune}'")
             return False
 
         # Is the polarization reasonable?
         if pol not in [0, 1]:
             if raise_errors:
-                raise ValueError("Invalid polarization: '%s'" % tune)
+                raise ValueError(f"Invalid polarization: '{pol}'")
             return False
 
         # Is there data loaded into frame.payload.data?
         if self.payload.data is None:
             if raise_errors:
-                raise ValueError("Invalid data payload: '%s'" % self.payload.data)
+                raise ValueError(f"Invalid data payload: '{self.payload.data}'")
             return False
 
         # Does the data length make sense?
         if self.payload.data.shape[0] != 4096:
             if raise_errors:
-                raise ValueError("Invalid data length: %i", self.payload.data.shape[0])
+                raise ValueError(f"Invalid data length: {self.payload.data.shape[0]}")
             return False
 
         # Does the data type make sense?
         if self.payload.data.dtype != CI8 and self.payload.data.dtype.kind != 'c':
             if raise_errors:
-                raise ValueError("Invalid data type: '%s'" % self.payload.data.dtype.kind)
+                raise ValueError(f"Invalid data type: '{self.payload.data.dtype.kind}'")
             return False
             
         # If we made it this far, it's valid
@@ -259,4 +253,4 @@ class SimFrame(drx.Frame):
         if self.beam is None:
             return "Empty DRX SimFrame object"
         else:
-            return "DRX SimFrame for beam %i, tunning %i, pol. %i @ time %i" % (self.beam, self.tune, self.pol, self.obs_time)
+            return f"DRX SimFrame for beam {self.beam}, tunning {self.tune}, pol. {self.pol} @ time {self.obs_time}"

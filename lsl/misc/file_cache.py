@@ -9,10 +9,7 @@ import glob
 import time
 import contextlib
 from threading import Lock
-try:
-    from cStringIO import StringIO
-except ImportError:
-    from io import StringIO, BytesIO
+from io import StringIO, BytesIO
 from collections import namedtuple
     
 from lsl.misc.file_lock import FileLock, MemoryLock
@@ -31,7 +28,7 @@ class FileCache(object):
     def __init__(self, cache_dir, max_size=0):
         """
         Create a new FileCache instance using the specified cache directory and
-        maximum cache size.  If the maximum size is 0, no size limites are
+        maximum cache size in MB.  If the maximum size is 0, no size limites are
         enforced.
         """
         
@@ -78,7 +75,7 @@ class FileCache(object):
                 oldest = min(mtimes)
                 idx = mtimes.index(oldest)
                 try:
-                    os.path.unlink(filenames[idx])
+                    os.unlink(filenames[idx])
                     del filenames[idx]
                     del sizes[idx]
                     del mtimes[idx]
@@ -182,7 +179,7 @@ class FileCache(object):
 
 
 #: os.stat_result - like namedtuple for stat-ing a MemoryFile
-mf_stat_result = namedtuple('ms_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
+mf_stat_result = namedtuple('mf_stat_result', ['st_mode', 'st_ino', 'st_dev', 'st_nlink',
                                                'st_uid', 'st_gid', 'st_size',
                                                'st_atime', 'st_mtime', 'st_ctime'])
 
@@ -233,7 +230,10 @@ class MemoryFile(object):
         Current size of the buffer in bytes.
         """
         
-        return len(self._buffer)
+        mark = self._buffer.tell()
+        last = self._buffer.seek(0, 2)
+        self._buffer.seek(mark, 0)
+        return last
         
     @property
     def stat(self):
@@ -251,7 +251,7 @@ class MemoryFile(object):
         """
         
         if not self._closed:
-            raise IOError("MemoryFile:%s is already open" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is already open")
             
         self._lock.acquire(True)
         
@@ -275,7 +275,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         self._buffer.seek(pos, whence)
         
@@ -285,7 +285,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         return self._buffer.tell()
         
@@ -306,15 +306,11 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         contents = self._buffer.read(n)
         if not self._is_binary:
-            try:
-                contents = contents.decode()
-            except AttributeError:
-                # Python2 catch
-                pass
+            contents = contents.decode()
         return contents
         
     def readline(self, size=-1):
@@ -324,15 +320,11 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         contents = self._buffer.readline(size)
         if not self._is_binary:
-            try:
-                contents = contents.decode()
-            except AttributeError:
-                # Python2 catch
-                pass
+            contents = contents.decode()
         return contents
         
     def write(self, s):
@@ -342,13 +334,13 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
-        if self._is_binary:
+        if not self._is_binary:
             try:
                 s = s.encode()
             except AttributeError:
-                # Python2 catch
+                # Already encoded as binary
                 pass
         return self._buffer.write(s)
         
@@ -358,7 +350,7 @@ class MemoryFile(object):
         """
         
         if self._closed:
-            raise IOError("MemoryFile:%s is closed" % self.name)
+            raise IOError(f"MemoryFile:{self.name} is closed")
             
         self._buffer.flush()
         if self.mode.startswith('w') or self.mode.startswith('a'):
@@ -389,7 +381,7 @@ class MemoryCache(object):
     def __init__(self, max_size=0):
         """
         Create a new MemoryCache instance using the specified maximum cache
-        size.  If the maximum size is 0, no size limites are enforced.
+        size.  If the maximum size is 0 in MB, no size limites are enforced.
         """
         
         self.max_size = max_size
@@ -407,7 +399,7 @@ class MemoryCache(object):
             
         if max_size > 0:
             filenames = list(self._cache.keys())
-            sizes = [self._cache[filename].size for filename in filenames]
+            sizes = [self._cache[filename].size/1024.**2 for filename in filenames]
             mtimes = [self._cache[filename]._mtime for filename in filenames]
             
             # Delete until we mee the cache size limit or until there is only one
@@ -477,7 +469,7 @@ class MemoryCache(object):
         try:
             size = self._cache[filename].size
         except KeyError:
-            size = 0
+            raise OSError()
         finally:
             self._lock.release()
             
@@ -494,7 +486,7 @@ class MemoryCache(object):
         try:
             mtime = self._cache[filename].stat['st_mtime']
         except KeyError:
-            mtime = 0
+            raise OSError()
         finally:
             self._lock.release()
             
@@ -511,9 +503,7 @@ class MemoryCache(object):
         try:
             fstat = self._cache[filename].stat
         except KeyError:
-            fstat = mf_stat_result(st_mode=0, st_ino=0, st_dev=0, st_nlink=0,
-                                   st_uid=0, st_gid=0, st_size=0,
-                                   st_atime=0, st_mtime=0, st_ctime=0)
+            raise OSError()
         finally:
             self._lock.release()
             

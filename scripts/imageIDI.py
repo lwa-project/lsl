@@ -1,22 +1,19 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Script for making and displaying images of correlated data files.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    input = raw_input
-    
 import os
 import sys
 import pytz
-import numpy
+import numpy as np
 import argparse
+
 from astropy.io import fits as astrofits
+from astropy import units as astrounits
+from astropy.time import Time as AstroTime
+from astropy.coordinates import FK5
 
 from lsl import astro
 from lsl.sim import vis as simVis
@@ -72,7 +69,7 @@ def main(args):
         if args.dataset != -1 and args.dataset != set:
             continue
             
-        print("Set #%i of %i" % (set, nSets))
+        print(f"Set #{set} of {nSets}")
         dataDict = idi.get_data_set(set, min_uv=args.uv_min)
         
         # Build a list of unique JDs for the data
@@ -85,14 +82,14 @@ def main(args):
         lst = str(lo.sidereal_time())   # pylint:disable=no-member
         
         # Pull out the right channels
-        toWork = numpy.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
+        toWork = np.where( (freq >= args.freq_start) & (freq <= args.freq_stop) )[0]
         if len(toWork) == 0:
-            raise RuntimeError("Cannot find data between %.2f and %.2f MHz" % (args.freq_start/1e6, args.freq_stop/1e6))
+            raise RuntimeError(f"Cannot find data between {args.freq_start/1e6:.3f} and {args.freq_stop/1e6:.3f} MHz")
             
         # Integration report
-        print("    Date Observed: %s" % utc)
-        print("    LST: %s" % lst)
-        print("    Selected Frequencies: %.3f to %.3f MHz" % (freq[toWork[0]]/1e6, freq[toWork[-1]]/1e6))
+        print(f"    Date Observed: {str(utc)}")
+        print(f"    LST: {str(lst)}")
+        print(f"    Selected Frequencies: {freq[toWork[0]]/1e6:.3f} to {freq[toWork[-1]]/1e6:.3f} MHz")
         
         # Prune out what needs to go
         if args.include != 'any' or args.exclude != 'none':
@@ -103,7 +100,7 @@ def main(args):
             
             ## Report
             for pol in dataDict.pols:
-                print("        %s now has %i baselines" % (pol, len(dataDict.baselines)))
+                print(f"        {pol} now has {len(dataDict.baselines)} baselines")
                 
         # Build up the images for each polarization
         print("    Gridding")
@@ -159,9 +156,9 @@ def main(args):
                 ax.yaxis.set_major_formatter( NullFormatter() )
                 
                 if not args.utc:
-                    ax.set_title("%s @ %s LST" % (pol, lst))
+                    ax.set_title(f"{pol} @ {str(lst)} LST")
                 else:
-                    ax.set_title("%s @ %s UTC" % (pol, utc))
+                    ax.set_title(f"{pol} @ {str(utc)} UTC")
                 continue
                 
             # Display the image, save the limits, and label with the polarization/LST
@@ -170,29 +167,29 @@ def main(args):
             ylim = ax.get_ylim()
             fig.colorbar(cb, ax=ax)
             if not args.utc:
-                ax.set_title("%s @ %s LST" % (pol, lst))
+                ax.set_title(f"{pol} @ {str(lst)} LST")
             else:
-                ax.set_title("%s @ %s UTC" % (pol, utc))
+                ax.set_title(f"{pol} @ {str(utc)} UTC")
                 
             junk = img.image(center=(img.shape[0]//2,img.shape[1]//2))
-            print("%s: image is %.4f to %.4f with mean %.4f" % (pol, junk.min(), junk.max(), junk.mean()))
+            print(f"{pol}: image is {junk.min():.4f} to {junk.max():.4f} with mean {junk.mean():.4f}")
             
             # Turn off tick marks
             ax.xaxis.set_major_formatter( NullFormatter() )
             ax.yaxis.set_major_formatter( NullFormatter() )
             
             # Compute the positions of major sources and label the images
-            overlay.sources(ax, aa, simVis.SOURCES, label=not args.no_labels)
+            overlay.sources(ax, img, simVis.SOURCES, label=not args.no_labels)
             
             # Add in the horizon
-            overlay.horizon(ax, aa)
+            overlay.horizon(ax, img)
             
             # Add lines of constant RA and dec.
             if not args.no_grid:
                 if not args.topo:
-                    overlay.graticule_radec(ax, aa)
+                    overlay.graticule_radec(ax, img)
                 else:
-                    overlay.graticule_azalt(ax, aa)
+                    overlay.graticule_azalt(ax, img)
 
             # Reset the axes
             ax.set_xlim(xlim)
@@ -200,13 +197,6 @@ def main(args):
         plt.show()
         
         if args.fits is not None:
-            ## Load in the coordinates for the phase center
-            pc_ra = numpy.degrees(dataDict.phase_center._ra)
-            pc_dec = numpy.degrees(dataDict.phase_center._dec)
-            
-            ### Poll the ImgWPlus object for the proper pixel scale
-            pixel_size = img1.pixel_size
-        
             ## Loop over the images to build up the FITS file
             hdulist = [astrofits.PrimaryHDU(),]
             for img,pol in zip((img1,img2,img3,img4), (lbl1,lbl2,lbl3,lbl4)):
@@ -220,30 +210,27 @@ def main(args):
                     hdu = astrofits.ImageHDU(data=img, name=pol)
                     
                 ### Add in the coordinate information
-                hdu.header['EPOCH'] = 2000.0 + (jdList[0] - 2451545.0) / 365.25
-                hdu.header['CTYPE1'] = 'RA---SIN'
-                hdu.header['CRPIX1'] = img.shape[0]//2+1
-                hdu.header['CDELT1'] = -1 * numpy.degrees(pixel_size)
-                hdu.header['CRVAL1'] = pc_ra
-                hdu.header['CTYPE2'] = 'DEC--SIN'
-                hdu.header['CRPIX2'] = img.shape[1]//2+1
-                hdu.header['CDELT2'] = numpy.degrees(pixel_size)
-                hdu.header['CRVAL2'] = pc_dec
-                hdu.header['LONPOLE'] = 180.0
-                hdu.header['LATPOLE'] = 90.0
-                
+                wcs_hdr = img.wcs.to_header()
+                for key in wcs_hdr:
+                    hdu.header[key] = wcs_hdr[key]
+                    
                 ### Add the HDU to the list
                 hdulist.append(hdu)
                 
             ## Save the FITS file to disk
             hdulist = astrofits.HDUList(hdulist)
+            fitsname = args.fits
+            if args.dataset == -1 and nSets > 1:
+                fitsparts = os.path.splitext(args.fits)
+                fitsname = f"{fitsparts[0]}-t{set}{fitsparts[1]}"
+                
             overwrite = False
-            if os.path.exists(args.fits):
-                yn = input("WARNING: '%s' exists, overwrite? [Y/n]" % args.fits)
+            if os.path.exists(fitsname):
+                yn = input(f"WARNING: '{fitsname}' exists, overwrite? [Y/n]")
                 if yn not in ('n', 'N'):
                     overwrite = True
             try:
-                hdulist.writeto(args.fits, overwrite=overwrite)
+                hdulist.writeto(fitsname, overwrite=overwrite)
             except IOError as e:
                 print("WARNING: FITS image file not saved")
                 
@@ -283,6 +270,6 @@ if __name__ == "__main__":
     parser.add_argument('-g', '--no-grid', action='store_true', 
                         help='disable the coordinate grid')
     parser.add_argument('-f', '--fits', type=str, 
-                        help='save the images to the specified FITS image file')
+                        help='save the images to the FITS image file; if multiple data sets are imaged the filename is updated to include a "-t<data_set_number>" tag')
     args = parser.parse_args()
     main(args)

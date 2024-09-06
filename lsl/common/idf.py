@@ -29,18 +29,13 @@ scratch, this module also includes a simple parser for ID files.
 .. versionadded:: 1.2.4
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import re
 import copy
 import math
 import pytz
 import ephem
+from functools import total_ordering
 from datetime import datetime, timedelta
 
 from astropy import units as astrounits
@@ -48,6 +43,7 @@ from astropy.coordinates import Angle as AstroAngle
 
 from lsl.transform import Time
 from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
+from lsl.common._sdf_utils import *
 from lsl.common.color import colorfy
 
 from lsl.common.mcsADP import datetime_to_mjdmpm, mjdmpm_to_datetime
@@ -56,7 +52,7 @@ from lsl.common.stations import LWAStation, get_full_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common.sdf import UCF_USERNAME_RE, Observer
-from lsl.common import sdf, sdfADP
+from lsl.common import sdf, sdfADP, sdfNDP
 
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
@@ -118,7 +114,7 @@ class Project(object):
             self.project_office = project_office
             
     def __str__(self):
-        return "%s: %s with %i run(s) for %s" % (self.id, self.name, len(self.runs), str(self.observer))
+        return f"{self.id}: {self.name} with {len(self.runs)} run(s) for {str(self.observer)}"
         
     @classmethod
     def autofilled(cls, runs=None, comments=None, project_office=None):
@@ -146,12 +142,12 @@ class Project(object):
         runCount = 1
         if len(self.id) > 8:
             if verbose:
-                print("[%i] Project ID is too long" % (os.getpid(),))
+                pid_print("Project ID is too long")
             failures += 1
             
         for run in self.runs:
             if verbose:
-                print("[%i] Validating run %i" % (os.getpid(), runCount))
+                pid_print(f"Validating run {runCount}")
             if not run.validate(verbose=verbose):
                 failures += 1
                 
@@ -161,37 +157,6 @@ class Project(object):
             return True
         else:
             return False
-            
-    @staticmethod
-    def _render_file_size(size):
-        """Convert a file size in bytes to a easy-to-use string."""
-        
-        units = 'B'
-        if size >= 1024**4:
-            size /= 1024.0**4
-            units = 'TB'
-        elif size >= 1024**3:
-            size /= 1024.0**3
-            units = 'GB'
-        elif size >= 1024**2:
-            size /= 1024.0**2
-            units = 'MB'
-        elif size >= 1024**1:
-            size /= 1024.0**1
-            units = 'kB'
-            
-        return "%.2f %s" % (size, units)
-        
-    @staticmethod
-    def _render_bandwidth(filter, FILTER_CODES):
-        """Convert a filter number to an easy-to-use string."""
-        
-        if FILTER_CODES[filter] > 1e6:
-            return "%.3f MHz" % (FILTER_CODES[filter]/1e6,)
-        elif FILTER_CODES[filter] > 1e3:
-            return "%.3f kHz" % (FILTER_CODES[filter]/1e3,)
-        else:
-            return "%.3f Hz" % (FILTER_CODES[filter],)
             
     def append(self, newRun):
         """Add a new run to the list of runs."""
@@ -232,12 +197,12 @@ class Project(object):
             clean = ''
             if ses.comments:
                 clean = UCF_USERNAME_RE.sub('', ses.comments)
-            ses.comments = 'ucfuser:%s' % ses.ucf_username
+            ses.comments = f"ucfuser:{ses.ucf_username}"
             if len(clean) > 0:
                 ses.comments += ';;%s' % clean
         ## Project office comments, including the data return method
         if pos != 'None' and pos is not None:
-            pos = 'Requested data return method is %s;;%s' % (ses.dataReturnMethod, pos)
+            pos = f"Requested data return method is {ses.dataReturnMethod};;{pos}"
             
         ## PI Information
         output = ""
@@ -260,7 +225,7 @@ class Project(object):
         output += "RUN_INTTIME      %.3f\n" % (ses.correlator_inttime,)
         output += "RUN_BASIS        %s\n" % (ses.correlator_basis,)
         output += "RUN_REMPI        %s\n" % (ses.comments[:4090] if ses.comments else 'None provided',)
-        output += "RUN_REMPO        %s\n" % ("Requested data return method is %s" % ses.dataReturnMethod if pos == 'None' or pos is None else pos[:4090],)
+        output += "RUN_REMPO        %s\n" % (f"Requested data return method is {ses.dataReturnMethod}" if pos == 'None' or pos is None else pos[:4090],)
         output += "\n"
                     
         ## Scans
@@ -271,7 +236,7 @@ class Project(object):
             output += "SCAN_TARGET      %s\n" % (obs.target,)
             output += "SCAN_INTENT      %s\n" % (obs.intent,)
             output += "SCAN_REMPI       %s\n" % (obs.comments[:4090] if obs.comments else 'None provided',)
-            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (self._render_file_size(obs.dataVolumeStation), self._render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] is None else poo[i],)
+            output += "SCAN_REMPO       %s\n" % ("Estimated raw data volume for this scan is %s per station; %s total" % (render_file_size(obs.dataVolumeStation), render_file_size(obs.dataVolume)) if poo[i] == 'None' or poo[i] is None else poo[i],)
             output += "SCAN_START_MJD   %i\n" % (obs.mjd,)
             output += "SCAN_START_MPM   %i\n" % (obs.mpm,)
             output += "SCAN_START       %s\n" % (obs.start.strftime("%Z %Y/%m/%d %H:%M:%S") if isinstance(obs.start, datetime) else obs.start,)
@@ -289,7 +254,7 @@ class Project(object):
             output += "SCAN_FREQ2       %i\n" % (obs.freq2,)
             output += "SCAN_FREQ2+      %.9f MHz\n" % (obs.frequency2/1e6,)
             output += "SCAN_BW          %i\n" % (obs.filter,)
-            output += "SCAN_BW+         %s\n" % (self._render_bandwidth(obs.filter, obs.FILTER_CODES),)
+            output += "SCAN_BW+         %s\n" % (render_bandwidth(obs.filter, obs.FILTER_CODES),)
             ## Alternate phase centers
             if len(obs.alt_phase_centers) > 0:
                 output += "SCAN_ALT_N             %i\n" % (len(obs.alt_phase_centers),)
@@ -317,7 +282,7 @@ class Project(object):
         run and write it to the provided filename."""
         
         if os.path.exists(filename) and not overwrite:
-            raise RuntimeError("'%s' already exists" % filename)
+            raise RuntimeError(f"'{filename}' already exists")
             
         output = self.render(run=run, verbose=verbose)
         with open(filename, 'w') as fh:
@@ -344,8 +309,13 @@ class Project(object):
         sdfs = []
         for i,station in enumerate(ses.stations):
             ### Session
-            sdfmod = sdf if station.interface.sdf == 'lsl.common.sdf' else sdfADP
-            
+            if station.interface.sdf == 'lsl.common.sdfADP':
+                sdfmod = sdfADP
+            elif station.interface.sdf == 'lsl.common.sdfNDP':
+                sdfmod = sdfNDP
+            else:
+                sdfmod = sdf
+                
             session = sdfmod.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
                                      starting_session_id, observations=[], station=station)
             session.drx_beam = 1
@@ -423,6 +393,7 @@ class Project(object):
         return sdfs
 
 
+@total_ordering
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
@@ -445,7 +416,7 @@ class Run(object):
         self.stations = sdf._TypedParentList(LWAStation, None, stations)
         
     def __str__(self):
-        return "%i: %s with %i scans and correlator setup:\n  channels: %i\n  int. time: %f\n  basis: %s\n  stations: %s" % (self.id, self.name, len(self.scans), self.correlator_channels, self.correlator_inttime, self.correlator_basis, " ".join([s.id for s in self.stations]))
+        return f"{self.id}: {self.name} with {len(self.scans)} scans and correlator setup:\n  channels: {self.correlator_channels}\n  int. time: {self.correlator_inttime}\n  basis: {self.correlator_basis}\n  stations: {' '.join([s.id for s in self.stations])}"
         
     @property
     def stations(self):
@@ -482,7 +453,7 @@ class Run(object):
         
         value = int(value)
         if value < 16 or value > 32768 or value % 2:
-            raise ValueError("Invalid correlator channel count '%i'" % value)
+            raise ValueError(f"Invalid correlator channel count '{value}'")
         self.corr_channels = value
         
     @property
@@ -497,7 +468,7 @@ class Run(object):
         
         value = float(value)
         if value < 0.1 or value > 10.0:
-            raise ValueError("Invalid integration time '%.3f'" % value)
+            raise ValueError(f"Invalid integration time '{value:.3f}'")
         self.corr_inttime = value
         
     @property
@@ -510,7 +481,7 @@ class Run(object):
         """Set the correlator output polarization basis."""
         
         if value.lower() not in ('linear', 'circular', 'stokes'):
-            raise ValueError("Unknown polarization basis: %s" % value)
+            raise ValueError(f"Unknown polarization basis: {value}")
         self.corr_basis = value
         
     @property
@@ -523,7 +494,7 @@ class Run(object):
         'USB Harddrives'."""
         
         if method not in ('UCF', 'DRSU', 'USB Harddrives'):
-            raise ValueError("Unknown data return method: %s" % method)
+            raise ValueError(f"Unknown data return method: {method}")
             
         self.dataReturnMethod = method
         
@@ -544,7 +515,7 @@ class Run(object):
         totalData = 0.0
         if self.id < 1 or self.id > 9999:
             if verbose:
-                print("[%i] Error: Invalid run ID number '%i'" % (os.getpid(), self.id))
+                pid_print(f"Error: Invalid run ID number '{self.id}'")
             failures += 1
             
         station_count = {}
@@ -556,13 +527,13 @@ class Run(object):
         for station in station_count:
             if station_count[station] != 1:
                 if verbose:
-                    print("[%i] Error: Station '%s' is included %i times" % (os.getpid(), station, station_count[station]))
+                    pid_print(f"Error: Station '{station}' is included {station_count[station]} times")
                 failures += 1
                 
         scanCount = 1
         for obs in self.scans:
             if verbose:
-                print("[%i] Validating scan %i" % (os.getpid(), scanCount))
+                pid_print(f"Validating scan {scanCount}")
                 
             if not obs.validate(verbose=verbose):
                 failures += 1
@@ -571,7 +542,7 @@ class Run(object):
             if scanCount > 1:
                 if obs.filter != self.scans[scanCount-2].filter:
                     if verbose:
-                        print("[%i] Error: Filter code changes at scan %i" % (os.getpid(), scanCount))
+                        pid_print(f"Error: Filter code changes at scan {scanCount}")
                     failures += 1
                     
             scanCount += 1
@@ -586,7 +557,7 @@ class Run(object):
 
             for j in range(len(sObs)):
                 if verbose and i != j:
-                    print("[%i] Checking for overlap between scans %i and %i" % (os.getpid(), i+1, j+1))
+                    pid_print(f"Checking for overlap between scans {i+1} and {j+1}")
 
                 cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
                 cStop = cStart + int(sObs[j].dur)
@@ -601,12 +572,12 @@ class Run(object):
             
             if nOverlaps > maxOverlaps:
                 if verbose:
-                    print("[%i] Error: Scan %i overlaps with %s" % (os.getpid(), i+1, ','.join(["%i" % (j+1) for j in overlaps])))
+                    pid_print(f"Error: Scan {i+1} overlaps with "+(','.join(["%i" % (j+1) for j in overlaps])))
                 failures += 1
             
         if totalData >= (len(self.stations)*_DRSUCapacityTB*1024**4):
             if verbose:
-                print("[%i] Error: Total data volume for run exceeds per-station %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB,))
+                pid_print(f"Error: Total data volume for run exceeds per-station {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
         
         if failures == 0:
@@ -623,40 +594,7 @@ class Run(object):
             startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Run):
@@ -667,20 +605,10 @@ class Run(object):
             startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Run):
-            self.scans.sort()
-            other.scans.sort()
-            
-            startSelf = self.scans[0].mjd + self.scans[0].mpm / (1000.0*3600.0*24.0)
-            startOther = other.scans[0].mjd + other.scans[0].mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
+@total_ordering
 class Scan(object):
     """
     Class to hold the specifics of a scans.  It currently
@@ -747,7 +675,7 @@ class Scan(object):
     def intent(self, value):
         value = value.lower()
         if value not in ('fluxcal', 'phasecal', 'target', 'dummy'):
-            raise ValueError("Invalid scan intent '%s'" % value)
+            raise ValueError(f"Invalid scan intent '{value}'")
         self._intent = value
         
     @property
@@ -759,7 +687,7 @@ class Scan(object):
         
     @start.setter
     def start(self, value):
-        utc = sdf.parse_time(value)
+        utc = parse_time(value)
         self.mjd, self.mpm = datetime_to_mjdmpm(utc)
         
     @property
@@ -821,7 +749,7 @@ class Scan(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
-            raise ValueError("Invalid value for RA '%.6f' hr" % value)
+            raise ValueError(f"Invalid value for RA '{value:.6f}' hr")
         self._ra = value
         
     @property
@@ -838,7 +766,7 @@ class Scan(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
-            raise ValueError("Invalid value for dec. '%.6f' deg" % value)
+            raise ValueError(f"Invalid value for dec. '{value:+.6f}' deg")
         self._dec = value
         
     @property
@@ -972,36 +900,36 @@ class Scan(object):
         # Basic - Intent, duration, frequency, and filter code values
         if self.dur < 1:
             if verbose:
-                print("[%i] Error: Specified a duration of length zero" % os.getpid())
+                pid_print("Error: Specified a duration of length zero")
             failures += 1
         if self.freq1 < tuning_min or self.freq1 > tuning_max:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 1 is outside of LWA tuning range" % os.getpid())
+                pid_print("Error: Specified frequency for tuning 1 is outside of LWA tuning range")
             failures += 1
         if (self.freq2 < tuning_min or self.freq2 > tuning_max) and self.freq2 != 0:
             if verbose:
-                print("[%i] Error: Specified frequency for tuning 2 is outside of LWA tuning range" % os.getpid())
+                pid_print("Error: Specified frequency for tuning 2 is outside of LWA tuning range")
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
-                print("[%i] Error: Invalid filter code '%i'" % (os.getpid(), self.filter))
+                pid_print(f"Error: Invalid filter code '{self.filter}'")
             failures += 1
             
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan" % (os.getpid(), self.target_visibility*100.0))
+                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
             failures += 1
             
         # Advanced - alternate phase centers
         if len(self.alt_phase_centers) > _MAX_ALT_PHASE_CENTERS:
             if verbose:
-                print("[%i] Error: too many alternate phase centers defined" % os.getpid())
+                pid_print("Error: too many alternate phase centers defined")
             failures += 1
         for j,phase_center in enumerate(self.alt_phase_centers):
             if not phase_center.validate(verbose=verbose):
                 if verbose:
-                    print("[%i] Error: invalid alternate phase center %i" % (os.getpid(), j+1))
+                    pid_print(f"Error: invalid alternate phase center {j+1}")
                 failures += 1
                 
             ## Closeness to pointing center
@@ -1018,13 +946,13 @@ class Scan(object):
             beam = 2.0*74e6/max([self.frequency1, self.frequency2])
             if alt_sep > beam/2.0:
                 if verbose:
-                    print("[%i] Error: alternate phase center %i is %.1f degrees from pointing center" % (os.getpid(), j+1, alt_sep))
+                    pid_print(f"Error: alternate phase center {j+1} is {alt_sep:.1f} degrees from pointing center")
                 failures += 1
                 
         # Advanced - Data Volume
         if self.dataVolumeStation >= (_DRSUCapacityTB*1024**4):
             if verbose:
-                print("[%i] Error: Data volume exceeds %i TB DRSU limit" % (os.getpid(), _DRSUCapacityTB))
+                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
             
         # Any failures indicates a bad scan
@@ -1039,31 +967,7 @@ class Scan(object):
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf == startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ne__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf != startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __gt__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf > startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __ge__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf >= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
             
     def __lt__(self, other):
         if isinstance(other, Scan):
@@ -1071,15 +975,7 @@ class Scan(object):
             startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
             return startSelf < startOther
         else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
-            
-    def __le__(self, other):
-        if isinstance(other, Scan):
-            startSelf = self.mjd + self.mpm / (1000.0*3600.0*24.0)
-            startOther = other.mjd + other.mpm / (1000.0*3600.0*24.0)
-            return startSelf <= startOther
-        else:
-            raise TypeError("Unsupported type: '%s'" % type(other).__name__)
+            raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
 class DRX(Scan):
@@ -1184,7 +1080,7 @@ class AlternatePhaseCenter(object):
     def intent(self, value):
         value = value.lower()
         if value not in ('fluxcal', 'phasecal', 'target', 'dummy'):
-            raise ValueError("Invalid scan intent '%s'" % value)
+            raise ValueError(f"Invalid scan intent '{value}'")
         self._intent = value
         
     @property
@@ -1202,7 +1098,7 @@ class AlternatePhaseCenter(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('hourangle').value
         if value < 0.0 or value >= 24.0:
-            raise ValueError("Invalid value for RA '%.6f' hr" % value)
+            raise ValueError(f"Invalid value for RA '{value:.6f}' hr")
         self._ra = value
         
     @property
@@ -1220,7 +1116,7 @@ class AlternatePhaseCenter(object):
         elif isinstance(value, str):
             value = AstroAngle(value).to('deg').value
         if value < -90.0 or value > 90.0:
-            raise ValueError("Invalid value for dec. '%.6f' deg" % value)
+            raise ValueError(f"Invalid value for dec. '{value:+.6f}' deg")
         self._dec = value
         
     @property
@@ -1310,7 +1206,7 @@ class AlternatePhaseCenter(object):
         ## Advanced - Target Visibility
         if self.target_visibility < 1.0:
             if verbose:
-                print("[%i] Error: Target is only above the horizon for %.1f%% of the scan" % (os.getpid(), self.target_visibility*100.0))
+                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
             failures += 1
             
         # Any failures indicates a bad alternate phase center
@@ -1351,7 +1247,7 @@ def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
     if verbose:
-        print("[%i] Scan %i is mode %s" % (os.getpid(), obs_temp['id'], mode))
+        pid_print(f"Scan {obs_temp['id']} is mode {mode}")
         
     if mode == 'TRK_RADEC':
         obsOut = DRX(obs_temp['target'], obs_temp['intent'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], pm=obs_temp['pm'], comments=obs_temp['comments'])
@@ -1360,7 +1256,7 @@ def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
     elif mode == 'TRK_JOV':
         obsOut = Jovian(obs_temp['target'], obs_temp['intent'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
     else:
-        raise RuntimeError("Invalid mode encountered: %s" % mode)
+        raise RuntimeError(f"Invalid mode encountered: {mode}")
         
     # Add in the alternate phase centers
     if obs_temp['nAlt'] != len(alt_temps):
@@ -1523,7 +1419,7 @@ def parse_idf(filename, verbose=False):
                 project.project_office.scans[0].append( None )
             
                 if verbose:
-                    print("[%i] Started scan %i" % (os.getpid(), int(value)))
+                    pid_print(f"Started scan {value}")
                 
                 continue
             if keyword == 'SCAN_TARGET':
@@ -1652,7 +1548,7 @@ def parse_idf(filename, verbose=False):
             
             # Keywords that might indicate this is a SDF
             if keyword in ('SESSION_ID', 'SESSION_DRX_BEAM'):
-                raise RuntimeError("Invalid keyword encountered: %s" % keyword)
+                raise RuntimeError(f"Invalid keyword encountered: {keyword}")
             
         # Create the final scan
         if obs_temp['id'] != 0:

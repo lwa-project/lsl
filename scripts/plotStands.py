@@ -1,21 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Example script to read in the positions of stands at LWA-1 and make a plot
 of the site.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
 import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import sys
-import numpy
+import numpy as np
 import argparse
 
-from lsl.common import stations, metabundle, metabundleADP
+from lsl.common import stations, metabundle
 
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
@@ -26,33 +20,28 @@ telemetry.track_script()
 
 def main(args):
     # Parse command line
-    toMark = numpy.array(args.stand)-1
+    toMark = np.array(args.stand)-1
     
     # Setup the LWA station information
     if args.metadata is not None:
         try:
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
-            try:
-                station = metabundle.get_station(args.metadata, apply_sdm=True)
-            except:
-                station = metabundleADP.get_station(args.metadata, apply_sdm=True)
+            station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwasv:
         station = stations.lwasv
+    elif args.lwana:
+        station = stations.lwana
     else:
         station = stations.lwa1
     stands = station.stands
     stands.sort()
 
     # Load in the stand position data
-    data = numpy.zeros((len(stands)//2,3))
+    data = np.zeros((len(stands)//2,3))
     
-    i = 0
-    for stand in stands[::2]:
-        data[i,0] = stand.x
-        data[i,1] = stand.y
-        data[i,2] = stand.z
-        i += 1
+    for i,stand in enumerate(stands[::2]):
+        data[i,:] = stand.xyz
         
     # Color-code the stands by their elevation
     color = data[:,2]
@@ -69,7 +58,7 @@ def main(args):
     ax1.set_xlim([-80, 80])
     ax1.set_ylabel('$\Delta$Y [N-S; m]')
     ax1.set_ylim([-80, 80])
-    ax1.set_title('%s Site:  %.3f$^\circ$N, %.3f$^\circ$W' % (station.name, station.lat*180.0/numpy.pi, -station.long*180.0/numpy.pi))
+    ax1.set_title(f"{station.name} Site: {station.lat*180/np.pi:.3f}$^\circ$N, {-station.long*180/np.pi:.3f}$^\circ$W")
     
     ax2.scatter(data[:,0], data[:,2], c=color, s=40.0)
     ax2.xaxis.set_major_formatter( NullFormatter() )
@@ -110,8 +99,11 @@ if __name__ == "__main__":
         )
     parser.add_argument('stand', type=int, nargs='*', 
                         help='stand number to mark')
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA1')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
     parser.add_argument('-l', '--label', action='store_true', 
@@ -122,4 +114,3 @@ if __name__ == "__main__":
                         help='filename to save the plot to')
     args = parser.parse_args()
     main(args)
-    

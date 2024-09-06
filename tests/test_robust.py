@@ -2,17 +2,11 @@
 Unit test for the lsl.statistics.robust module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import warnings
 import unittest
-import numpy
+import numpy as np
 
 from lsl.statistics import robust
 
@@ -27,30 +21,36 @@ class robust_tests(unittest.TestCase):
     def setUp(self):
         """Turn off all numpy and python warnings."""
 
-        numpy.seterr(all='ignore')
+        np.seterr(all='ignore')
         warnings.simplefilter('ignore')
         
-        self.a = numpy.array([-0.76150888, 10.41767353,  0.02535887,  0.06452704,  0.39077118,\
-                              -0.46012172, -1.29228544, -0.98805374, -0.80730252,  0.40390247,\
-                              -0.47337081,  0.26920613, 19.80545004,  2.63821775, -0.05748825,\
-                               0.25774227, -1.00710488,  0.19595035, -0.48490421, -0.84487291,\
-                               2.98662808, -1.28819736,  0.95018522,  0.12127676,  0.72756194,\
-                              -0.19603773, -0.08496962, -0.06449421, -1.33233888, -5.84305279])
-        self.x = numpy.array([ 1.0,          2.0,          3.0,          4.0,\
-                               5.0,          6.0,          7.0,          8.0,\
-                               9.0,         10.0,         11.0,         12.0,\
-                              13.0,         14.0,         15.0])
-        self.y = numpy.array([ 0.61325352,  -0.49450263,   4.77442597,   5.12496658,\
-                               7.56993015,   7.87082987,   9.74932012,  10.22709808,\
-                              13.04686648,  43.84141192,  15.9691922 ,  18.58200951,\
-                              20.01579363,  20.2176033 ,  17.67552437])
-        self.y1 = numpy.array([3.30994402e-01,   8.53591441e+00,   1.98878210e+01,\
-                               3.77759480e+01,   5.85981538e+01,   9.70162465e+01,\
-                               1.00401918e+02,   1.56681195e+02,   1.97736474e+02,\
-                               2.45063947e+02,   2.96371189e+02,   3.54253174e+02,\
-                               4.14467552e+02,   4.83910450e+02,   5.20380581e+02])
-        self.x2 = numpy.arange(12000)*0.01
+        self.a = np.array([-0.76150888, 10.41767353,  0.02535887,  0.06452704,  0.39077118,\
+                           -0.46012172, -1.29228544, -0.98805374, -0.80730252,  0.40390247,\
+                           -0.47337081,  0.26920613, 19.80545004,  2.63821775, -0.05748825,\
+                            0.25774227, -1.00710488,  0.19595035, -0.48490421, -0.84487291,\
+                            2.98662808, -1.28819736,  0.95018522,  0.12127676,  0.72756194,\
+                           -0.19603773, -0.08496962, -0.06449421, -1.33233888, -5.84305279])
+        self.x = np.array([ 1.0,          2.0,          3.0,          4.0,\
+                            5.0,          6.0,          7.0,          8.0,\
+                            9.0,         10.0,         11.0,         12.0,\
+                           13.0,         14.0,         15.0])
+        self.y = np.array([ 0.61325352,  -0.49450263,   4.77442597,   5.12496658,\
+                            7.56993015,   7.87082987,   9.74932012,  10.22709808,\
+                           13.04686648,  43.84141192,  15.9691922 ,  18.58200951,\
+                           20.01579363,  20.2176033 ,  17.67552437])
+        self.y1 = np.array([3.30994402e-01,   8.53591441e+00,   1.98878210e+01,\
+                            3.77759480e+01,   5.85981538e+01,   9.70162465e+01,\
+                            1.00401918e+02,   1.56681195e+02,   1.97736474e+02,\
+                            2.45063947e+02,   2.96371189e+02,   3.54253174e+02,\
+                            4.14467552e+02,   4.83910450e+02,   5.20380581e+02])
+        self.x2 = np.arange(12000)*0.01
         self.y2 = self.x2**2 - 0.5*self.x2 + 1
+        
+        self.x3 = self.x2*0.1
+        self.y3 = 0.25*self.x3**3 + self.x3**2 - 0.5*self.x3 + 1
+        
+        self.x4 = self.x3*0.5
+        self.y4 = -0.125*self.x4**4 + 0.25*self.x4**3 + self.x4**2 - 0.5*self.x4 + 1
         
     def test_biweight(self):
         """Test the biweight mean function."""
@@ -255,7 +255,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(robust.biweight_mean(b, axis=1)[0], -0.177742, 6)
         self.assertAlmostEqual(robust.biweight_mean(b, axis=1)[1], -0.106250, 6)
         
-        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=bool))
+        b = np.ma.masked_array(self.a, mask=np.zeros(self.a.size, dtype=bool), dtype=self.a.dtype)
         b.mask[:b.size//2] = False
         b.mask[b.size//2:] = True
         self.assertAlmostEqual(robust.biweight_mean(b), -0.177742, 6)
@@ -275,7 +275,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(robust.mean(b, cut=2.0, axis=1)[0], -0.217644, 6)
         self.assertAlmostEqual(robust.mean(b, cut=2.0, axis=1)[1], -0.234631, 6)
         
-        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=bool))
+        b = np.ma.masked_array(self.a, mask=np.zeros(self.a.size, dtype=bool), dtype=self.a.dtype)
         b.mask[:b.size//2] = False
         b.mask[b.size//2:] = True
         self.assertAlmostEqual(robust.mean(b, cut=2.0), -0.217644, 6)
@@ -286,8 +286,15 @@ class robust_tests(unittest.TestCase):
     def test_mode(self):
         """Test the half-sample mode function."""
         
-        b = numpy.random.randn(512)**2 + 5
+        b = np.random.randn(512)**2 + 5
         self.assertAlmostEqual(robust.mode(b), 5.0, 2)
+
+        m = []
+        for i in range(256):
+            b = np.random.randn(3)**2 + 5
+            m.append(robust.mode(b))
+        m = sum(m)/len(m)
+        self.assertAlmostEqual(m, 5.5, 0)
         
     def test_std(self):
         """Test the outlier-resistant standard deviation function."""
@@ -299,7 +306,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(robust.std(b, axis=1)[0], 0.923335, 6)
         self.assertAlmostEqual(robust.std(b, axis=1)[1], 1.11836, 5)
         
-        b = numpy.ma.array(self.a, mask=numpy.zeros(self.a.size, dtype=bool))
+        b = np.ma.masked_array(self.a, mask=np.zeros(self.a.size, dtype=bool), dtype=self.a.dtype)
         b.mask[:b.size//2] = False
         b.mask[b.size//2:] = True
         self.assertAlmostEqual(robust.std(b), 0.923335, 6)
@@ -326,21 +333,21 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[0],  1.49534, 5)
         self.assertAlmostEqual(cc[1], -0.900498, 5)
         
-        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=bool))
+        b = np.ma.masked_array(self.y, mask=np.zeros(self.y.size, dtype=bool), dtype=self.y.dtype)
         b.mask[:10] = False
         b.mask[10:] = True
         cc = robust.linefit(self.x, b)
         self.assertAlmostEqual(cc[0],  1.56634, 5)
         self.assertAlmostEqual(cc[1], -1.31115, 5)
         
-        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=bool))
+        b = np.ma.masked_array(self.y, mask=np.zeros(self.y.size, dtype=bool), dtype=self.y.dtype)
         b.mask[:5] = False
         b.mask[5:] = True
         cc = robust.linefit(self.x, b)
         self.assertAlmostEqual(cc[0],  1.94324, 5)
         self.assertAlmostEqual(cc[1], -2.29467, 5)
         
-        b = numpy.ma.array(self.y, mask=numpy.zeros(self.y.size, dtype=bool))
+        b = np.ma.masked_array(self.y, mask=np.zeros(self.y.size, dtype=bool), dtype=self.y.dtype)
         b.mask[:5] = False
         b.mask[5:] = True
         cc = robust.linefit(self.x, b, bisector=True)
@@ -361,7 +368,7 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[1], -0.269859, 5)
         self.assertAlmostEqual(cc[2], -1.49629, 5)
         
-        b = numpy.ma.array(self.y1, mask=numpy.zeros(self.y1.size, dtype=bool))
+        b = np.ma.masked_array(self.y1, mask=np.zeros(self.y1.size, dtype=bool), dtype=self.y1.dtype)
         b.mask[:10] = False
         b.mask[10:] = True
         cc = robust.polyfit(self.x, b, 2)
@@ -373,6 +380,20 @@ class robust_tests(unittest.TestCase):
         self.assertAlmostEqual(cc[0],  1.0000001, 5)
         self.assertAlmostEqual(cc[1], -0.50001344, 4)
         self.assertAlmostEqual(cc[2],  1.0005343, 2)
+        
+        # Extend to higher orders
+        cc = robust.polyfit(self.x3, self.y3, 3)
+        self.assertAlmostEqual(cc[0],  0.2500000, 5)
+        self.assertAlmostEqual(cc[1],  1.0000001, 5)
+        self.assertAlmostEqual(cc[2], -0.50001344, 4)
+        self.assertAlmostEqual(cc[3],  1.0005343, 2)
+        
+        cc = robust.polyfit(self.x4, self.y4, 4)
+        self.assertAlmostEqual(cc[0], -0.1250000, 5)
+        self.assertAlmostEqual(cc[1],  0.2500000, 5)
+        self.assertAlmostEqual(cc[2],  1.0000001, 5)
+        self.assertAlmostEqual(cc[3], -0.50001344, 4)
+        self.assertAlmostEqual(cc[4],  1.0005343, 2)
 
 
 class robust_test_suite(unittest.TestSuite):

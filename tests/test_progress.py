@@ -2,14 +2,7 @@
 Unit test for regressions in the lsl.common.progress module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
-import numpy
 import unittest
 
 from lsl.common import progress
@@ -22,8 +15,8 @@ __author__    = "Jayce Dowell"
 class progress_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the regressions in LSL."""
     
-    def run_bar_default_test(self, bartype):
-        pbar = bartype()
+    def run_bar_default_test(self, bartype, **kwds):
+        pbar = bartype(**kwds)
         for i in range(101):
             pbar.inc(2)
             pbar.dec(1)
@@ -34,6 +27,7 @@ class progress_tests(unittest.TestCase):
         for bartype in (progress.ProgressBar, progress.ProgressBarPlus, progress.DownloadBar):
             with self.subTest(bartype=bartype):
                 self.run_bar_default_test(bartype)
+                self.run_bar_default_test(bartype, color='green')
                 
     def run_bar_attibutes_test(self, bartype):
         pbar2 = bartype()
@@ -53,15 +47,15 @@ class progress_tests(unittest.TestCase):
             with self.subTest(bartype=bartype):
                 self.run_bar_attibutes_test(bartype)
                 
-    def run_bar_show_test(self, bartype):
+    def run_bar_show_test(self, bartype, **kwds):
         # With percentage
-        pbar = bartype()
+        pbar = bartype(**kwds)
         for i in range(101):
             pbar.inc(1)
             pbar.show()
             
         # Without percentage
-        pbar = bartype(print_percent=False)
+        pbar = bartype(print_percent=False, **kwds)
         for i in range(101):
             pbar.inc(1)
             pbar.show()
@@ -72,6 +66,7 @@ class progress_tests(unittest.TestCase):
         for bartype in (progress.ProgressBar, progress.ProgressBarPlus, progress.DownloadBar):
             with self.subTest(bartype=bartype):
                 self.run_bar_show_test(bartype)
+                self.run_bar_show_test(bartype, color='green')
 
 
 class progress_test_suite(unittest.TestSuite):
