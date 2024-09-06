@@ -19,6 +19,8 @@ from lsl.common.mcs import datetime_to_mjdmpm, mjdmpm_to_datetime
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import List, Tuple, Union
+
 
 __version__ = '0.1'
 __all__ = ['positive_or_zero_int', 'positive_int', 'positive_or_zero_float', 
@@ -28,7 +30,7 @@ __all__ = ['positive_or_zero_int', 'positive_int', 'positive_or_zero_float',
            'csv_baseline_list', 'csv_hostname_list']
 
 
-def positive_or_zero_int(string):
+def positive_or_zero_int(string: str) -> int:
     """
     Convert a string to a positive (>=0) integer.
     """
@@ -44,7 +46,7 @@ def positive_or_zero_int(string):
     return value
 
 
-def positive_int(string):
+def positive_int(string: str) -> int:
     """
     Convert a string to a positive (>0) integer.
     """
@@ -56,7 +58,7 @@ def positive_int(string):
     return value
 
 
-def positive_or_zero_float(string):
+def positive_or_zero_float(string: str) -> float:
     """
     Convert a string to a positive (>=0.0) float.
     """
@@ -72,7 +74,7 @@ def positive_or_zero_float(string):
     return value
 
 
-def positive_float(string):
+def positive_float(string: str) -> float:
     """
     Convert a string to a positive (>0.0) float.
     """
@@ -84,7 +86,7 @@ def positive_float(string):
     return value
 
 
-def _get_units(string):
+def _get_units(string: str) -> Union[str,None]:
     """
     Function to search a string, starting at the end, to find units.
     """
@@ -102,44 +104,44 @@ def _get_units(string):
     return units
 
 
-def _quantitiy_to_hz(value):
+def _quantitiy_to_hz(value: str) -> float:
     """
     Convert a string into a frequency.  If no unit is provided, MHz is 
     assumed.
     """
     
     try:
-        value = float(value)
-        value *= 1e6
+        pvalue = float(value)
+        pvalue *= 1e6
     except ValueError:
         try:
-            value = units.quantity.Quantity(value)
-            value = value.to(units.Hz, equivalencies=units.spectral()).value
+            qvalue = units.quantity.Quantity(value)
+            pvalue = qvalue.to(units.Hz, equivalencies=units.spectral()).value
         except Exception as e:
             msg = f"{value} {str(e)}"
             raise ArgumentTypeError(msg)
-    return value
+    return pvalue
 
 
-def _quantitiy_to_m(value):
+def _quantitiy_to_m(value: str) -> float:
     """
     Convert a string into a wavelength.  If no unit is provided, m is 
     assumed.
     """
     
     try:
-        value = float(value)
+        pvalue = float(value)
     except ValueError:
         try:
-            value = units.quantity.Quantity(value)
-            value = value.to(units.meter, equivalencies=units.spectral()).value
+            qvalue = units.quantity.Quantity(value)
+            pvalue = qvalue.to(units.meter, equivalencies=units.spectral()).value
         except Exception as e:
             msg = f"{value} {str(e)}"
             raise ArgumentTypeError(msg)
-    return value
+    return pvalue
 
 
-def _frequency_conversion_base(string):
+def _frequency_conversion_base(string: str) -> Union[float,List[float]]:
     """
     Convert a frequency to a float Hz value.  This function accepts a variety 
     of string formats:
@@ -156,7 +158,7 @@ def _frequency_conversion_base(string):
     """
     
     try:
-        value = float(string)*1e6
+        pvalue = float(string)*1e6
     except ValueError:
         fields = string.split('~', 1)
         try:
@@ -170,15 +172,16 @@ def _frequency_conversion_base(string):
                 start = start+units2
         except ValueError:
             start, stop = fields[0], None
-        value = _quantitiy_to_hz(start)
+        pvalue = _quantitiy_to_hz(start)
         if stop is not None:
-            value = [value, _quantitiy_to_hz(stop)]
-            if value[1] < value[0]:
-                value.reverse()
-    return value
+            rvalue = [pvalue, _quantitiy_to_hz(stop)]
+            if rvalue[1] < rvalue[0]:
+                rvalue.reverse()
+            pvalue = rvalue     # type: ignore
+    return pvalue
 
 
-def frequency(string):
+def frequency(string: str) -> float:
     """
     Convert a frequency to a float Hz value.  This function accepts a variety 
     of string formats:
@@ -189,16 +192,13 @@ def frequency(string):
     """
     
     value = _frequency_conversion_base(string)
-    try:
-        len(value)
+    if isinstance(value, List):
         msg = f"{string} does not appear to be a single frequency"
         raise ArgumentTypeError(msg)
-    except TypeError:
-        pass
     return value
 
 
-def frequency_range(string):
+def frequency_range(string: str) -> List[float]:
     """
     Convert a frequency to a float Hz value.  This function accepts a variety 
     of string formats:
@@ -211,15 +211,13 @@ def frequency_range(string):
     """
     
     value = _frequency_conversion_base(string)
-    try:
-        len(value)
-    except TypeError:
+    if not isinstance(value, List):
         msg = f"{string} does not appear to be a frequency range"
         raise ArgumentTypeError(msg)
     return value
 
 
-def _wavelength_conversion_base(string):
+def _wavelength_conversion_base(string: str) -> Union[float,List[float]]:
     """
     Convert a wavelength to a float m value.  This function accepts a variety 
     of string formats:
@@ -236,7 +234,7 @@ def _wavelength_conversion_base(string):
     """
     
     try:
-        value = float(string)
+        pvalue = float(string)
     except ValueError:
         fields = string.split('~', 1)
         try:
@@ -250,15 +248,16 @@ def _wavelength_conversion_base(string):
                 start = start+units2
         except ValueError:
             start, stop = fields[0], None
-        value = _quantitiy_to_m(start)
+        pvalue = _quantitiy_to_m(start)
         if stop is not None:
-            value = [value, _quantitiy_to_m(stop)]
-            if value[1] < value[0]:
-                value.reverse()
-    return value
+            rvalue = [pvalue, _quantitiy_to_m(stop)]
+            if rvalue[1] < rvalue[0]:
+                rvalue.reverse()
+            pvalue = rvalue     # type: ignore
+    return pvalue
 
 
-def wavelength(string):
+def wavelength(string: str) -> float:
     """
     Convert a wavelength to a float m value.  This function accepts a variety 
     of string formats:
@@ -269,16 +268,13 @@ def wavelength(string):
     """
     
     value = _wavelength_conversion_base(string)
-    try:
-        len(value)
+    if isinstance(value, List):
         msg = f"{string} does not appear to be a single wavelength"
         raise ArgumentTypeError(msg)
-    except TypeError:
-        pass
     return value
 
 
-def wavelength_range(string):
+def wavelength_range(string: str) -> List[float]:
     """
     Convert a wavelength to a float m value.  This function accepts a variety 
     of string formats:
@@ -291,15 +287,13 @@ def wavelength_range(string):
     """
     
     value = _wavelength_conversion_base(string)
-    try:
-        len(value)
-    except TypeError:
+    if not isinstance(value, List):
         msg = f"{string} does not appear to be a wavelength range"
         raise ArgumentTypeError(msg)
     return value
 
 
-def date(string):
+def date(string: str) -> str:
     """
     Convert a data as either a YYYY[-/]MM[-/]DD or MJD string into a 
     YYYY/MM/DD string.
@@ -320,7 +314,7 @@ def date(string):
     return date
 
 
-def mjd(string):
+def mjd(string: str) -> int:
     """
     Convert a data as either a YYYY[-/]MM[-/]DD or MJD string into an integer
     MJD.
@@ -340,7 +334,7 @@ def mjd(string):
     return mjd
 
 
-def time(string):
+def time(string: str) -> str:
     """
     Covnert a time as HH:MM:SS[.SSS] or MPM string into a HH:MM:SS.SSSSSS 
     string.
@@ -369,7 +363,7 @@ def time(string):
     return stime
 
 
-def mpm(string):
+def mpm(string: str) -> int:
     """
     Covnert a time as HH:MM:SS[.SSS] or MPM string into an MPM integer.
     """
@@ -392,7 +386,7 @@ def mpm(string):
     return mpm
 
 
-def hours(string):
+def hours(string: str) -> ephem.hours:
     """
     Convert a 'HH[:MM[:SS[.SSS]]]' string into an ephem.hours instance.
     """
@@ -405,7 +399,7 @@ def hours(string):
     return value
 
 
-def csv_hours_list(string):
+def csv_hours_list(string:str) -> List[ephem.hours]:
     """
     Convert a comma-separated list of 'HH[:MM[:SS.[SSS]]]' string into a list 
     of ephem.hours instances.
@@ -421,7 +415,7 @@ def csv_hours_list(string):
     return value
 
 
-def degrees(string):
+def degrees(string: str) -> ephem.degrees:
     """
     Convert a 'sDD[:MM[:SS[.SSS]]]' string into an ephem.degrees instance.
     """
@@ -434,7 +428,7 @@ def degrees(string):
     return value
 
 
-def csv_degrees_list(string):
+def csv_degrees_list(string: str) -> List[ephem.degrees]:
     """
     Convert a comma-separated list of 'sDD[:MM[:SS.[SSS]]]' string into a list 
     of ephem.degrees instances.
@@ -450,17 +444,17 @@ def csv_degrees_list(string):
     return value
 
 
-def _int_item_or_range(string):
+def _int_item_or_range(string: str) -> List[int]:
     if string.find('~') != -1:
         start, stop = string.split('~', 1)
-        start, stop = int(start, 10), int(stop, 10)
-        value = list(range(start, stop+1))
+        startv, stopv = int(start, 10), int(stop, 10)
+        value = list(range(startv, stopv+1))
     else:
         value = [int(string, 10),]
     return value
 
 
-def csv_int_list(string):
+def csv_int_list(string: str) -> Union[List[int],str]:
     """
     Convert a comma-separated list of integers into a list of integers.  This 
     function also allows for ranges to be specifed using the '~' character.  
@@ -472,7 +466,7 @@ def csv_int_list(string):
     elif string in ('none', ''):
         value = 'none'
     else:
-        value = []
+        lvalue = []
         for item in string.split(','):
             item = item.strip().rstrip()
             if item == '':
@@ -482,11 +476,12 @@ def csv_int_list(string):
             except ValueError:
                 msg = f"{string} contains non-integer values"
                 raise ArgumentTypeError(msg)
-            value.extend(subvalue)
+            lvalue.extend(subvalue)
+        value = lvalue  # type: ignore
     return value
 
 
-def csv_baseline_list(string):
+def csv_baseline_list(string: str) -> Union[List[Tuple[int,int]],str]:
     """
     Convert a comma-separated list of baslines pairs into a list of baseline
     pairs.  Baseline pairs are defined as 'antenna1-antenna2' where 'antenna1'
@@ -498,7 +493,7 @@ def csv_baseline_list(string):
     elif string in ('none', ''):
         value = 'none'
     else:
-        value = []
+        lvalue = []
         for item in string.split(','):
             item = item.strip().rstrip()
             if item == '':
@@ -509,14 +504,15 @@ def csv_baseline_list(string):
                 msg = f"{string} contains non-baseline or non-integer values"
                 raise ArgumentTypeError(msg)
             try:
-                ant1 = _int_item_or_range(ant1)
-                ant2 = _int_item_or_range(ant2)
+                ant1l = _int_item_or_range(ant1)
+                ant2l = _int_item_or_range(ant2)
             except ValueError:
                 msg = f"{string} contains non-integer values"
                 raise ArgumentTypeError(msg)
-            for i in ant1:
-                for j in ant2:
-                    value.append( (i,j) )
+            for i in ant1l:
+                for j in ant2l:
+                    lvalue.append( (i,j) )
+        value = lvalue      # type: ignore
     return value
 
 
@@ -526,7 +522,7 @@ _HOSTNAME_RE = re.compile(r'^(?P<hostname>[a-zA-Z0-9-]*?)$')
 _HOSTNAME_RANGE_RE=re.compile(r'^(?P<hostbase>[a-zA-Z-]*?)(?P<start>[0-9]+)~(?P<stop>[0-9]+)$')
     
 
-def csv_hostname_list(string):
+def csv_hostname_list(string: str) -> List[str]:
     """
     Convert a comma-separated list of IPv4 addresses/hostnames into a list 
     IPv4 addresses/hostnames.  This function support indexing with the '~' 

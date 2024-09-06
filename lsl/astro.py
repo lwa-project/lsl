@@ -23,6 +23,8 @@ from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK4, FK5, Galacti
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Optional, Tuple, Union
+
 
 __version__   = '0.6'
 __all__ = ['dms', 'hms', 'date', 'zonedate', 'rst_time', 'hrz_posn', 'equ_posn', 
@@ -67,7 +69,7 @@ class dms(object):
       seconds - Angle seconds (float).
     """
     
-    def __init__(self, neg = False, degrees = 0, minutes = 0, seconds = 0.0):
+    def __init__(self, neg: bool=False, degrees: int=0, minutes: int=0, seconds: float=0.0):
         """
         Create a dms object.
         
@@ -159,7 +161,7 @@ class dms(object):
     def __lt__(self, other):
         return True if self.__cmp__(other) < 0 else False
         
-    def to_deg(self):
+    def to_deg(self) -> float:
         """
         Convert angles degrees, minutes, seconds to float degrees.
         Returns angle in degrees (float).
@@ -167,7 +169,7 @@ class dms(object):
         
         return dms_to_deg(self)
         
-    def to_rad(self):
+    def to_rad(self) -> float:
         """
         Convert angles degrees, minutes, seconds to float radians.
         Returns angle in radians (float).
@@ -175,7 +177,7 @@ class dms(object):
         
         return dms_to_rad(self)
         
-    def to_hms(self):
+    def to_hms(self) -> "hms":
         """
         Convert angles degrees, minutes seconds to hours, minutes, seconds.
         Returns: object of type hms representing angle.
@@ -195,7 +197,7 @@ class hms(object):
       seconds - Angle/time seconds (float).
     """
     
-    def __init__(self, hours = 0, minutes = 0, seconds = 0.0):
+    def __init__(self, hours: int=0, minutes: int=0, seconds: float=0.0):
         """
         Create a hms object.
         
@@ -272,7 +274,7 @@ class hms(object):
     def __lt__(self, other):
         return True if self.__cmp__(other) < 0 else False
         
-    def to_deg(self):
+    def to_deg(self) -> float:
         """
         Convert angles hours, minutes, seconds to float degrees.
         Returns angle in degrees (float).
@@ -280,7 +282,7 @@ class hms(object):
         
         return hms_to_deg(self)
         
-    def to_rad(self):
+    def to_rad(self) -> float:
         """
         Convert angles hours, minutes, second to float radians.
         Returns angle in radians (float).
@@ -288,7 +290,7 @@ class hms(object):
         
         return hms_to_rad(self)
         
-    def to_dms(self):
+    def to_dms(self) -> dms:
         """
         Convert angle hours, minutes, seconds to degrees, minutes, seconds.
         Returns: object of type dms representing angle.
@@ -296,7 +298,7 @@ class hms(object):
         
         return deg_to_dms(self.to_deg())
         
-    def to_sec(self):
+    def to_sec(self) -> float:
         """
         Convert angle hours, minutes, seconds to seconds.
         Returns: time/angle as seconds.
@@ -319,7 +321,7 @@ class date(object):
       seconds - Date seconds (float).
     """
     
-    def __init__(self, years = 2000, months = 1, days = 1, hours = 0, minutes = 0, seconds = 0.0):
+    def __init__(self, years: int=2000, months: int=1, days: int=1, hours: int=0, minutes: int=0, seconds: float=0.0):
         """
         Create a date object.
         
@@ -401,7 +403,7 @@ class date(object):
     def __lt__(self, other):
         return True if self.__cmp__(other) < 0 else False
         
-    def to_zone(self, gmtoff = None):
+    def to_zone(self, gmtoff: Optional[int]= None) -> "zonedate":
         """
         Convert UTC calendar time to local calendar time.
         
@@ -417,7 +419,7 @@ class date(object):
             
         return date_to_zonedate(self, gmtoff)             
     
-    def to_jd(self):
+    def to_jd(self) -> float:
         """
         Convert calendar time to Julian day.
         Returns UTC time in Julian days (float).
@@ -425,7 +427,7 @@ class date(object):
         
         return get_julian_day(self)
         
-    def load(self, dateStr, timeStr):
+    def load(self, dateStr: str, timeStr: str):
         """
         Load date object from formatted strings.
         
@@ -483,7 +485,7 @@ class date(object):
         except ValueError:
             raise ValueError(f"seconds incorrectly formated: {secondStr}")
         if second < 0.0 or second >= 60.0:
-            raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
+            raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {second:0.3f}")
             
         # set attributes
         self.years = year
@@ -509,7 +511,7 @@ class zonedate(object):
       gmtoff  - Seconds offset from GM (integer).
     """
     
-    def __init__(self, years = 2000, months = 1, days = 1, hours = 0, minutes = 0, seconds = 0.0, gmtoff = 0):
+    def __init__(self, years: int=2000, months: int=1, days: int=1, hours: int=0, minutes: int=0, seconds: float=0.0, gmtoff: int=0):
         """
         Create a zonedate object.
         
@@ -596,7 +598,7 @@ class zonedate(object):
     def __lt__(self, other):
         return True if self.__cmp__(other) < 0 else False
         
-    def to_date(self):
+    def to_date(self) -> date:
         """
         Convert local calendar time to UTC calendar time.
         Returns object of type date representing UTC time.
@@ -604,7 +606,7 @@ class zonedate(object):
         
         return zonedate_to_date(self)
         
-    def to_jd(self):
+    def to_jd(self) -> float:
         """
         Convert calendar time to Julian day.
         Returns UTC time in Julian days (float).
@@ -623,7 +625,7 @@ class rst_time(object):
       transit - Transit time in UTC Julian days (float).
     """
     
-    def __init__(self, rise = None, set = None, transit = None):
+    def __init__(self, rise: Optional[Union[date,float]]=None, set: Optional[Union[date,float]]=None, transit: Optional[Union[date,float]]=None):
         """
         Create a rst_time object.
         
@@ -671,7 +673,7 @@ class rst_time(object):
         
         return (rst_time, (self.rise, self.set, self.transit))
         
-    def format(self):
+    def format(self) -> Tuple[date,date,date]:
         """
         Return a tuple (rise, set, transit) where all three are date
         objects representing the ephemeris times.
@@ -698,7 +700,7 @@ class hrz_posn(object):
     _astropy = None
     _distance = None
     
-    def __init__(self, az = 0.0, alt = 0.0):
+    def __init__(self, az: float=0.0, alt: float=0.0):
         """
         Create a hrz_posn object.
         
@@ -713,7 +715,7 @@ class hrz_posn(object):
             self.alt = alt
             
     @classmethod
-    def from_astropy(kls, value):
+    def from_astropy(kls, value: SkyCoord):
         if not isinstance(value, SkyCoord):
             raise TypeError("Expected an object of type SkyCoord")
             
@@ -731,7 +733,7 @@ class hrz_posn(object):
         return _posn
         
     @property
-    def az(self):
+    def az(self) -> float:
         """
         Azimiuth in degrees.
         """
@@ -739,7 +741,7 @@ class hrz_posn(object):
         return self._az
         
     @az.setter
-    def az(self, value):
+    def az(self, value: float):
         if self.astropy is not None:
             raise RuntimeError("Cannot set az when this.astropy is not None")
             
@@ -748,7 +750,7 @@ class hrz_posn(object):
         self._az = value
         
     @property
-    def alt(self):
+    def alt(self) -> float:
         """
         Altitude in degrees.
         """
@@ -756,7 +758,7 @@ class hrz_posn(object):
         return self._alt
         
     @alt.setter
-    def alt(self, value):
+    def alt(self, value: float):
         if self.astropy is not None:
             raise RuntimeError("Cannot set alt when this.astropy is not None")
             
@@ -765,7 +767,7 @@ class hrz_posn(object):
         self._alt = value
         
     @property
-    def distance(self):
+    def distance(self) -> Optional[float]:
         """
         Distance in pc or None is the distance is unknown.
         """
@@ -773,10 +775,10 @@ class hrz_posn(object):
         return self._distance
         
     @property
-    def astropy(self):
+    def astropy(self) -> SkyCoord:
         return self._astropy
         
-    def zen(self, value = None):
+    def zen(self, value: Optional[float]=None) -> Union[float,None]:
         """
         If value is None, returns position zenith angle (float degrees 
         [0, 180])  Otherwise, sets the altitude according to the zenith angle
@@ -787,7 +789,8 @@ class hrz_posn(object):
             return 90.0 - self.alt
         if value <  0.0 or value > 180.0:
             raise ValueError(f"value paramerer range is [0.0, 180.0], is set to {value:0.3f}")
-        self.alt = 90.0 - value 
+        self.alt = 90.0 - value
+        return None
         
     def __str__(self):
         """
@@ -870,7 +873,7 @@ class hrz_posn(object):
         
         return get_equ_from_hrz(self, observer, jD)         
         
-    def dir_cos(self):
+    def dir_cos(self) -> Tuple[float,float,float]:
         """
         Get direction cosines from horizontal coordinates.
         
@@ -901,7 +904,7 @@ class equ_posn(object):
     _pm_dec = None
     _distance = None
     
-    def __init__(self, ra = 0.0, dec = 0.0):
+    def __init__(self, ra: float=0.0, dec: float=0.0):
         """
         Create a equ_posn object.
         
@@ -918,7 +921,7 @@ class equ_posn(object):
             self.dec = dec
             
     @classmethod
-    def from_astropy(kls, value):
+    def from_astropy(kls, value: Union[SkyCoord,ICRS,FK4,FK5]):
         if not isinstance(value, (SkyCoord, ICRS, FK4, FK5)):
             raise TypeError("Expected an object of type SkyCoord, ICRS, FK4, or FK5")
             
@@ -942,7 +945,7 @@ class equ_posn(object):
         return _posn
         
     @property
-    def ra(self):
+    def ra(self) -> float:
         """
         RA in degrees.
         """
@@ -950,7 +953,7 @@ class equ_posn(object):
         return self._ra
         
     @ra.setter
-    def ra(self, value):
+    def ra(self, value: Union[hms,float]):
         if self.astropy is not None:
             raise RuntimeError("Cannot set ra when this.astropy is not None")
             
@@ -961,7 +964,7 @@ class equ_posn(object):
         self._ra = value
         
     @property
-    def dec(self):
+    def dec(self) -> float:
         """
         Declination in degrees.
         """
@@ -969,7 +972,7 @@ class equ_posn(object):
         return self._dec
         
     @dec.setter
-    def dec(self, value):
+    def dec(self, value: Union[dms,float]):
         if self.astropy is not None:
             raise RuntimeError("Cannot set dec when this.astropy is not None")
             
@@ -980,7 +983,7 @@ class equ_posn(object):
         self._dec = value
         
     @property
-    def pm_ra(self):
+    def pm_ra(self) -> Union[float,None]:
         """
         Proper motion in RA in mas/yr or None if it is unknown.
         """
@@ -988,7 +991,7 @@ class equ_posn(object):
         return self._pm_ra
         
     @property
-    def pm_dec(self):
+    def pm_dec(self) -> Union[float,None]:
         """
         Proper motion in declination in mas/yr or None if it is unknown.
         """
@@ -996,7 +999,7 @@ class equ_posn(object):
         return self._pm_dec
         
     @property
-    def distance(self):
+    def distance(self) -> Union[float,None]:
         """
         Distance in pc or None if it is unknown.
         """
@@ -1004,7 +1007,7 @@ class equ_posn(object):
         return self._distance
         
     @property
-    def astropy(self):
+    def astropy(self) -> Union[SkyCoord,ICRS,FK4,FK5]:
         return self._astropy
         
     def __str__(self):
@@ -1068,7 +1071,7 @@ class equ_posn(object):
             
         return (self.ra != other.ra) or (self.dec != other.dec)
         
-    def to_hrz(self, observer, jD):
+    def to_hrz(self, observer: "geo_posn", jD: float) -> hrz_posn:
         """
         Get local horizontal coordinates from equatorial/celestial coordinates.
         
@@ -1081,7 +1084,7 @@ class equ_posn(object):
         
         return get_hrz_from_equ(self, observer, jD)
         
-    def to_gal(self, jD):
+    def to_gal(self, jD: float) -> "gal_posn":
         """
         Get J2000 galactic coordinates from apparent equatorial coordinates.
         
@@ -1094,7 +1097,7 @@ class equ_posn(object):
         equ = get_equ_prec2(self, jD, J2000_UTC_JD)
         return get_gal_from_equ(equ)
         
-    def to_ecl(self, jD):
+    def to_ecl(self, jD: float) -> "ecl_posn":
         """
         Get ecliptical coordinates from equatorial coordinates.
         
@@ -1105,7 +1108,7 @@ class equ_posn(object):
         
         return get_ecl_from_equ(self, jD)
         
-    def angular_separation(self, posn):
+    def angular_separation(self, posn: "equ_posn") -> float:
         """
         Get angular separation from equatorial position.
         
@@ -1116,7 +1119,7 @@ class equ_posn(object):
         
         return get_angular_separation(self, posn) 
         
-    def format(self):
+    def format(self) -> Tuple[hms,dms]:
         """
         Return a tuple (ra, dec) where ra is an hms object and
         dec is a dms object representing ra and dec position coordinates.
@@ -1124,7 +1127,7 @@ class equ_posn(object):
             
         return (deg_to_hms(self.ra), deg_to_dms(self.dec)) 
         
-    def precess(self, jD):
+    def precess(self, jD: float) -> "equ_posn":
         """
         Get position of celestial object accounting for precession.
         The equatorial coordinates should be for the J2000 epoch.
@@ -1162,7 +1165,7 @@ class gal_posn(object):
     _pm_b = None
     _distance = None
     
-    def __init__(self, l = 0.0, b = 0.0):
+    def __init__(self, l: float=0.0, b: float=0.0):
         """
         Create a gal_posn object.
         
@@ -1179,7 +1182,7 @@ class gal_posn(object):
             self.b = b
             
     @classmethod
-    def from_astropy(kls, value):
+    def from_astropy(kls, value: SkyCoord):
         if not isinstance(value, SkyCoord):
             raise TypeError("Expected an object of type SkyCoord")
             
@@ -1202,7 +1205,7 @@ class gal_posn(object):
         return _posn
         
     @property
-    def l(self):
+    def l(self) -> float:
         """
         Galactic longitude in degrees.
         """
@@ -1210,7 +1213,7 @@ class gal_posn(object):
         return self._l
         
     @l.setter
-    def l(self, value):
+    def l(self, value: Union[hms,float]):
         if self.astropy is not None:
             raise RuntimeError("Cannot set l when this.astropy is not None")
             
@@ -1221,7 +1224,7 @@ class gal_posn(object):
         self._l = value
         
     @property
-    def b(self):
+    def b(self) -> float:
         """
         Galactic latitude in degrees.
         """
@@ -1229,7 +1232,7 @@ class gal_posn(object):
         return self._b
         
     @b.setter
-    def b(self, value):
+    def b(self, value: Union[dms,float]):
         if self.astropy is not None:
             raise RuntimeError("Cannot set b when this.astropy is not None")
             
@@ -1240,7 +1243,7 @@ class gal_posn(object):
         self._b = value
         
     @property
-    def pm_l(self):
+    def pm_l(self) -> Union[float,None]:
         """
         Proper motion in Galactic longitude in mas/yr or None if it is unknown.
         """
@@ -1248,7 +1251,7 @@ class gal_posn(object):
         return self._pm_l
         
     @property
-    def pm_b(self):
+    def pm_b(self) -> Union[float,None]:
         """
         Proper motion in Galactic latitude in mas/yr or None if it is unknown.
         """
@@ -1256,7 +1259,7 @@ class gal_posn(object):
         return self._pm_b
         
     @property
-    def distance(self):
+    def distance(self) -> Union[float,None]:
         """
         Distance in pc or None if it is unknown.
         """
@@ -1264,7 +1267,7 @@ class gal_posn(object):
         return self._distance
         
     @property
-    def astropy(self):
+    def astropy(self) -> SkyCoord:
         return self._astropy
         
     def __str__(self):
@@ -1335,7 +1338,7 @@ class gal_posn(object):
             
         return (self.l != other.l) or (self.b != other.b)
         
-    def to_equ(self, jD):
+    def to_equ(self, jD: float) -> equ_posn:
         """
         Get apparent equatorial coordinates from J2000 galactic coordinates.
         
@@ -1348,7 +1351,7 @@ class gal_posn(object):
         equ = get_equ_from_gal(self)
         return get_equ_prec(equ, jD)
         
-    def format(self):
+    def format(self) -> Tuple[dms,dms]:
         """
         Return a tuple (lng, lat) where lng is an dms object and
         lat is a dms object representing galactic longitude and latitude
@@ -1373,7 +1376,7 @@ class rect_posn(object):
       rect_posn[2] = Z
     """
     
-    def __init__(self, X = 0.0, Y = 0.0, Z = 0.0): 
+    def __init__(self, X: float=0.0, Y: float=0.0, Z: float=0.0): 
         """
         Create a rect_posn object
         Param: X - Position X coordinate (float).
@@ -1477,7 +1480,7 @@ class ecl_posn(object):
     _pm_lat = None
     _distance = None
     
-    def __init__(self, lng = 0.0, lat = 0.0):
+    def __init__(self, lng: float=0.0, lat: float=0.0):
         if lng is not None:
             self.lng = lng
             
@@ -1485,7 +1488,7 @@ class ecl_posn(object):
             self.lat = lat
             
     @classmethod
-    def from_astropy(kls, value):
+    def from_astropy(kls, value: SkyCoord):
         if not isinstance(value, SkyCoord):
             raise TypeError("Expected an object of type SkyCoord")
             
@@ -1508,7 +1511,7 @@ class ecl_posn(object):
         return _posn
         
     @property
-    def lng(self):
+    def lng(self) -> float:
         """
         Ecliptic longitude in degees.
         """
@@ -1516,7 +1519,7 @@ class ecl_posn(object):
         return self._lng
         
     @lng.setter
-    def lng(self, value):
+    def lng(self, value: Union[dms,float]):
         if self.astropy is not None:
             raise RuntimeError("Cannot set lng when this.astropy is not None")
             
@@ -1527,7 +1530,7 @@ class ecl_posn(object):
         self._lng = value
         
     @property
-    def lat(self):
+    def lat(self) -> float:
         """
         Ecliptic latitude in degrees.
         """
@@ -1535,7 +1538,7 @@ class ecl_posn(object):
         return self._lat
         
     @lat.setter
-    def lat(self, value):
+    def lat(self, value: Union[dms,float]):
         if self.astropy is not None:
             raise RuntimeError("Cannot set lat when this.astropy is not None")
             
@@ -1546,7 +1549,7 @@ class ecl_posn(object):
         self._lat = value
         
     @property
-    def pm_lng(self):
+    def pm_lng(self) -> Union[float,None]:
         """
         Proper motion in Ecliptic longitude in mas/yr or None if it is unknown.
         """
@@ -1554,7 +1557,7 @@ class ecl_posn(object):
         return self._pm_lng
         
     @property
-    def pm_lat(self):
+    def pm_lat(self) -> Union[float,None]:
         """
         Proper motion in Ecliptic latitude in mas/yr or None if it is unknown.
         """
@@ -1562,7 +1565,7 @@ class ecl_posn(object):
         return self._pm_lat
         
     @property
-    def distance(self):
+    def distance(self) -> Union[float,None]:
         """
         Distance in pc or None if it is unknown.
         """
@@ -1570,7 +1573,7 @@ class ecl_posn(object):
         return self._distance
         
     @property
-    def astropy(self):
+    def astropy(self) -> SkyCoord:
         return self._astropy
         
     def __str__(self):
@@ -1621,7 +1624,7 @@ class ecl_posn(object):
         else:
             raise ValueError(f"subscript {key} out of range")
             
-    def to_equ(self, jD):
+    def to_equ(self, jD: float) -> equ_posn:
         """
         Get equatorial coordinates from ecliptical coordinates for a given time.
         
@@ -1632,7 +1635,7 @@ class ecl_posn(object):
         
         return get_equ_from_ecl(self, jD)
         
-    def format(self):
+    def format(self) -> Tuple[dms,dms]:
         """
         Return a tuple (lng, lat) where lng is an dms object and
         lat is a dms object representing longitude and latitude
@@ -1646,7 +1649,7 @@ class ecl_posn(object):
 # time helper python fucntions
 ######################################################################
 
-def get_gmtoff():
+def get_gmtoff() -> int:
     """
     Get local UTC offset based on Python time module and system info.
     """ 
@@ -1661,7 +1664,7 @@ def get_gmtoff():
 # General Conversion Functions
 ######################################################################
 
-def date_to_zonedate(date, gmtoff):
+def date_to_zonedate(date: date, gmtoff: int) -> zonedate:
     """
     Convert UTC calendar time to local calendar time.
     
@@ -1687,7 +1690,7 @@ def date_to_zonedate(date, gmtoff):
     return _zdate
 
 
-def zonedate_to_date(zonedate):
+def zonedate_to_date(zonedate: zonedate) -> date:
     """
     Convert local calendar time to UTC calendar time.
     
@@ -1697,10 +1700,10 @@ def zonedate_to_date(zonedate):
     """
     
     t0, junk = str(zonedate).rsplit(None, 1)
-    t0 = time.strptime(t0, "%Y-%m-%d %H:%M:%S.%f")
+    tt0 = time.strptime(t0, "%Y-%m-%d %H:%M:%S.%f")
     fracSec = zonedate.seconds - int(zonedate.seconds)
-    t1 = timegm(t0) - zonedate.gmtoff
-    years, months, days, hours, minutes, seconds, wday, yday, dst = time.gmtime(t1)
+    tt1 = timegm(tt0) - zonedate.gmtoff
+    years, months, days, hours, minutes, seconds, wday, yday, dst = time.gmtime(tt1)
     
     _date = date()
     _date.years = years
@@ -1712,7 +1715,7 @@ def zonedate_to_date(zonedate):
     return _date
 
 
-def rad_to_deg(radians):
+def rad_to_deg(radians: float) -> float:
     """
     Convert radians to degrees.
     
@@ -1724,7 +1727,7 @@ def rad_to_deg(radians):
     return radians * 180.0/math.pi
 
 
-def deg_to_rad(degrees):
+def deg_to_rad(degrees: float) -> float:
     """
     Convert degres to radians.
     
@@ -1736,7 +1739,7 @@ def deg_to_rad(degrees):
     return degrees * math.pi/180.0
 
 
-def dms_to_rad(dms):
+def dms_to_rad(dms: dms) -> float:
     """
     Convert angles degrees, minutes, seconds to radians.
     
@@ -1749,7 +1752,7 @@ def dms_to_rad(dms):
     return deg_to_rad(degrees)
 
 
-def dms_to_deg(dms):
+def dms_to_deg(dms: dms) -> float:
     """
     Convert angles degrees, minutes, seconds to float degrees.
     
@@ -1777,7 +1780,7 @@ def _float_to_sexa(value):
     return sgn, d, m, s
 
 
-def deg_to_dms(degrees):
+def deg_to_dms(degrees: float) -> dms:
     """
     Convert angles float degrees to degrees, minutes, seconds.
     
@@ -1798,7 +1801,7 @@ def deg_to_dms(degrees):
     return _dms
 
 
-def rad_to_dms(radians):
+def rad_to_dms(radians: float) -> dms:
     """
     Convert angles float radians to degrees, minutes, seconds.
     
@@ -1811,7 +1814,7 @@ def rad_to_dms(radians):
     return deg_to_dms(degrees)
 
 
-def hms_to_deg(hms):
+def hms_to_deg(hms: hms) -> float:
     """
     Convert angles hours, minutes, seconds to float degrees.
     
@@ -1825,7 +1828,7 @@ def hms_to_deg(hms):
     return degrees
 
 
-def hms_to_rad(hms):
+def hms_to_rad(hms: hms) -> float:
     """
     Convert angles hours, minutes, seconds to float radians.
     
@@ -1838,7 +1841,7 @@ def hms_to_rad(hms):
     return deg_to_rad(degrees)
 
 
-def deg_to_hms(degrees):
+def deg_to_hms(degrees: float) -> hms:
     """
     Convert angles float degrees to hours, minutes, seconds.
     
@@ -1851,7 +1854,7 @@ def deg_to_hms(degrees):
     return hms(h, m, s)
 
 
-def rad_to_hms(radians):
+def rad_to_hms(radians: float) -> hms:
     """
     Convert angles float radians to hours, minutes, seconds.
     
@@ -1864,7 +1867,7 @@ def rad_to_hms(radians):
     return deg_to_hms(degrees)
 
 
-def add_secs_hms(hms, seconds):
+def add_secs_hms(hms: hms, seconds: float) -> hms:
     """
     Add seconds to time/angle hours, minutes, seconds.
     
@@ -1879,7 +1882,7 @@ def add_secs_hms(hms, seconds):
     return deg_to_hms(degrees)
 
 
-def add_hms(source, dest):
+def add_hms(source: hms, dest: hms) -> hms:
     """
     Adds time/angle hours, minutes, seconds.
     
@@ -1894,14 +1897,14 @@ def add_hms(source, dest):
     degrees1 += degrees2
     _hms = deg_to_hms(degrees1)
     
-    dest.degrees = 1*_hms.hours
+    dest.hours   = 1*_hms.hours
     dest.minutes = 1*_hms.minutes
     dest.seconds = 1*_hms.seconds
     
     return dest
 
 
-def hrz_to_nswe(pos):
+def hrz_to_nswe(pos: hrz_posn) -> str:
     """
     Get cardinal/ordinal azimuth direction.
     
@@ -1921,7 +1924,7 @@ def hrz_to_nswe(pos):
         return 'W'
 
 
-def range_degrees(degrees):
+def range_degrees(degrees: float) -> float:
     """
     Put angle into range [0, 360].
     
@@ -1937,7 +1940,7 @@ def range_degrees(degrees):
 # General Calendar Functions
 ######################################################################
 
-def get_julian_day(date):
+def get_julian_day(date: date) -> float:
     """
     Convert calendar time to Julian day.
     
@@ -1953,7 +1956,7 @@ def get_julian_day(date):
     return d.jd
     
     
-def get_julian_local_date(zonedate):
+def get_julian_local_date(zonedate: zonedate) -> float:
     """
     Convert local calendar time to Julian day.
     
@@ -1966,7 +1969,7 @@ def get_julian_local_date(zonedate):
     return get_julian_day(_date)
 
 
-def get_date(jD):
+def get_date(jD: float) -> date:
     """
     Convert Julian day to calendar time.
     
@@ -1988,7 +1991,7 @@ def get_date(jD):
     return _date
 
 
-def get_day_of_week(date):
+def get_day_of_week(date: date) -> int:
     """
     Gets day of week from calendar time.
     
@@ -2001,7 +2004,7 @@ def get_day_of_week(date):
     return (int(round(jd)) + 1) % 7
 
 
-def get_julian_from_sys():
+def get_julian_from_sys() -> float:
     """
     Returns UTC Julian day (float) from system clock.
     """
@@ -2010,7 +2013,7 @@ def get_julian_from_sys():
     return t0.utc.jd
 
 
-def get_date_from_sys():
+def get_date_from_sys() -> date:
     """
     Gets calendar time from system clock.
     
@@ -2022,7 +2025,7 @@ def get_date_from_sys():
     return _date
 
 
-def get_julian_from_timet(timet):
+def get_julian_from_timet(timet: float) -> float:
     """
     Gets Julian day from Unix time.
     
@@ -2035,7 +2038,7 @@ def get_julian_from_timet(timet):
     return t.jd
 
 
-def get_timet_from_julian(jD):
+def get_timet_from_julian(jD: float) -> float:
     """
     Gets Unix time from Julian day.
     
@@ -2049,10 +2052,191 @@ def get_timet_from_julian(jD):
 
 
 ######################################################################
+# Position utility classes
+######################################################################
+
+class geo_posn(object):
+    """
+    Class to represent geographical position in terms of longitude, lattitude,
+    and elevation.  This is a set of geodetic coordinates based on the WGS84 model.
+    
+    Public members:
+      lng - longitude (float)
+      lat - latitude (float)
+      elv - elevation (float)
+    
+    Members may also be accessed by subscript:
+      geo_posn[0] = lng
+      geo_posn[1] = lat
+      geo_posn[2] = elv
+    """
+    
+    _astropy = None
+    
+    def __init__(self, lng: float=0.0, lat: float=0.0, elv: float=0.0):
+        """
+        Create a geo_posn object.
+        
+        Param: lng - longitude coordinate
+                    Object of type dms or float degrees (-360.0, 360.0).
+        Param: lat - Position latitude coordinate
+                    Object of type dms or float degrees [-90.0, 90.0].
+        Param: elv - elevation (float meters)
+        """
+        
+        if lng is not None:
+            self.lng = lng
+            
+        if lat is not None:
+            self.lat = lat
+            
+        if elv is not None:
+            self.elv = elv
+            
+    @classmethod
+    def from_astropy(kls, value: EarthLocation):
+        if not isinstance(value, EarthLocation):
+            raise TypeError("Expected an object of type EarthLocation")
+            
+        _posn = kls()
+        _posn._astropy = value
+        _posn._lng = value.lon.wrap_at(360*astrounits.deg).deg
+        _posn._lat = value.lat.deg
+        _posn._elv = value.height.to('m').value
+        return _posn
+        
+    @property
+    def lng(self) -> float:
+        return self._lng
+        
+    @lng.setter
+    def lng(self, value: Union[dms,float]):
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set lng when this.astropy is not None")
+            
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value <= -360.0 or value >= 360.0:
+            raise ValueError(f"lng parameter range is (-360.0, 360.0), is set to {value:0.3f}")
+        self._lng = value
+        
+    @property
+    def lat(self) -> float:
+        return self._lat
+        
+    @lat.setter
+    def lat(self, value: Union[dms,float]):
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set lat when this.astropy is not None")
+            
+        if isinstance(value, dms):
+            value = value.to_deg()
+        if value < -90.0 or value > 90.0:
+            raise ValueError(f"lat paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+        self._lat = value
+    
+    @property
+    def elv(self) -> float:
+        return self._elv
+        
+    @elv.setter
+    def elv(self, value: float):
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot elv when this.astropy is not None")
+            
+        self._elv = value
+        
+    @property
+    def astropy(self) -> EarthLocation:
+        return self._astropy
+        
+    def __str__(self):
+        """
+        geo_posn object print/str method.
+        """
+        
+        return f"{self.lng:0.3f} {self.lat:0.3f} {self.elv:0.3f}"
+        
+    def __repr__(self):
+        """
+        geo_posn object repr string method
+        """
+        
+        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat), repr(self.elv))
+            
+    def __reduce__(self):
+        """
+        geo_posn object pickle reduce method.
+        """
+        
+        return (geo_posn, (self.lng, self.lat, self.elv))
+        
+    def __getitem__(self, key):
+        """
+        Get members by subscript index.
+        """
+        
+        if key == 0:
+            return self.lng
+        elif key == 1:
+            return self.lat
+        elif key == 2:
+            return self.elv
+        else:
+            raise ValueError(f"subscript {key} out of range")
+                
+    def __setitem__(self, key, value):
+        """
+        Set members by subscript index.
+        """
+        
+        if self.astropy is not None:
+            raise RuntimeError(f"Cannot set index {key} when this.astropy is not None")
+            
+        if key == 0:
+            self.lng = value
+        elif key == 1:
+            self.lat = value
+        elif key == 2:
+            self.elv = value
+        else:
+            raise ValueError(f"subscript {key} out of range")
+        
+    def __eq__(self, other):
+        """
+        geo_posn equality test.
+        """
+        
+        if not isinstance(other, geo_posn):
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
+            
+        return (self.lng == other.lng) and (self.lat == other.lat) and (self.elv == other.elv)
+            
+    def __ne__(self, other):
+        """
+        geo_posn non-equality test.
+        """
+        
+        if not isinstance(other, geo_posn):
+            raise TypeError(f"comparison not supported for type {type(other).__name__}")
+            
+        return (self.lng != other.lng) or (self.lat != other.lat) or (self.elv != other.elv)
+        
+    def format(self) -> Tuple[dms,dms,float]:
+        """
+        Return a tuple (lng, lat) where lng is an dms object and
+        lat is a dms object representing longitude and latitude
+        position coordinates.
+        """
+        
+        return (deg_to_dms(self.lng), deg_to_dms(self.lat), self.elv)
+
+
+######################################################################
 # Transformation of Coordinates Functions
 ######################################################################
 
-def get_hrz_from_equ(target, observer, jD):
+def get_hrz_from_equ(target: equ_posn, observer: geo_posn, jD: float) -> hrz_posn:
     """
     Get local horizontal coordinates from equatorial/celestial coordinates.
     
@@ -2082,7 +2266,7 @@ def get_hrz_from_equ(target, observer, jD):
     return hrz_posn.from_astropy(sc)
 
 
-def get_equ_from_hrz(target, observer, jD):
+def get_equ_from_hrz(target: hrz_posn, observer: geo_posn, jD: float) -> equ_posn:
     """
     Get equatorial/celestial coordinates from local horizontal coordinates.
     
@@ -2110,7 +2294,7 @@ def get_equ_from_hrz(target, observer, jD):
     return equ_posn.from_astropy(sc)
 
 
-def get_ecl_from_rect(rect):
+def get_ecl_from_rect(rect: rect_posn) -> ecl_posn:
     """
     Get ecliptical coordinates from rectangular coordinates.
     
@@ -2125,11 +2309,11 @@ def get_ecl_from_rect(rect):
     
     sc = GeocentricTrueEcliptic(CartesianRepresentation(x*astrounits.au, y*astrounits.au, z*astrounits.au),
                                 equinox='J2000')
-
+    
     return ecl_posn.from_astropy(sc)
 
 
-def get_equ_from_ecl(target, jD):
+def get_equ_from_ecl(target: ecl_posn, jD: float) -> equ_posn:
     """
     Get J2000 equatorial coordinates from ecliptical coordinates for a given
     time.
@@ -2151,7 +2335,7 @@ def get_equ_from_ecl(target, jD):
     return equ_posn.from_astropy(sc)
 
 
-def get_ecl_from_equ(target, jD):
+def get_ecl_from_equ(target: equ_posn, jD: float) -> ecl_posn:
     """
     Get ecliptical coordinates from J2000 equatorial coordinates for a given
     time.
@@ -2175,7 +2359,7 @@ def get_ecl_from_equ(target, jD):
     return ecl_posn.from_astropy(sc)
 
 
-def get_equ_from_gal(target):
+def get_equ_from_gal(target: gal_posn) -> equ_posn:
     """
     Get J2000 equatorial coordinates from galactic coordinates.
     
@@ -2197,7 +2381,7 @@ def get_equ_from_gal(target):
     return equ_posn.from_astropy(sc)
 
 
-def get_gal_from_equ(target):
+def get_gal_from_equ(target: equ_posn) -> gal_posn:
     """
     Get galactic coordinates from J2000 equatorial coordinates.
     
@@ -2224,7 +2408,7 @@ def get_gal_from_equ(target):
 # Sidereal Time Functions
 ######################################################################
 
-def get_apparent_sidereal_time(jD):
+def get_apparent_sidereal_time(jD: float) -> float:
     """
     Get apparent sidereal time from Julian day.
     
@@ -2239,7 +2423,7 @@ def get_apparent_sidereal_time(jD):
     return gast.hourangle
 
 
-def get_mean_sidereal_time(jD):
+def get_mean_sidereal_time(jD: float) -> float:
     """
     Get mean sidereal time from Julian day.
     
@@ -2259,7 +2443,7 @@ def get_mean_sidereal_time(jD):
 # Angular Separation Functions
 ######################################################################
 
-def get_angular_separation(posn1, posn2):
+def get_angular_separation(posn1: equ_posn, posn2: equ_posn) -> float:
     """  
     Get angular separation from equatorial positions.
     
@@ -2283,7 +2467,7 @@ def get_angular_separation(posn1, posn2):
     return sep.deg
 
 
-def get_rel_posn_angle(posn1, posn2):
+def get_rel_posn_angle(posn1: equ_posn, posn2: equ_posn):
     """
     Get relative position angle from equatorial positions.
     
@@ -2313,7 +2497,7 @@ def get_rel_posn_angle(posn1, posn2):
 
 _DEFAULT_PROPER_MOTION = equ_posn(0.0, 0.0)
 
-def get_apparent_posn(mean_position, jD, proper_motion = None):
+def get_apparent_posn(mean_position: equ_posn, jD: float, proper_motion: Optional[Tuple[Union[float,None],Union[float,None]]]=None) -> equ_posn:
     """
     Get apparent position of celestial object accounting for precession, nutation, 
     aberration, and optionally proper motion.
@@ -2330,7 +2514,7 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
     """
     
     if proper_motion is None:
-        proper_motion = [mean_position.pm_ra, mean_position.pm_dec]
+        proper_motion = (mean_position.pm_ra, mean_position.pm_dec)
     if proper_motion[0] is None:
         proper_motion = (_DEFAULT_PROPER_MOTION[0], proper_motion[1])
     if proper_motion[1] is None:
@@ -2340,7 +2524,7 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
     sc = mean_position.astropy
     if sc is None:
         sc = SkyCoord(mean_position.ra*astrounits.deg, mean_position.dec*astrounits.deg,
-                      pm_ra_cosdec=proper_motion[0]*math.cos(proper_motion[1]/1000/3600*math.pi/180)*astrounits.mas/astrounits.yr,
+                      pm_ra_cosdec=proper_motion[0]*math.cos(proper_motion[1]/1000/3600*math.pi/180)*astrounits.mas/astrounits.yr,  # type: ignore
                       pm_dec= proper_motion[1]*astrounits.mas/astrounits.yr,
                       frame='fk5', equinox='J2000')
     sc = sc.transform_to(PrecessedGeocentric(equinox=t, obstime=t))
@@ -2352,7 +2536,7 @@ def get_apparent_posn(mean_position, jD, proper_motion = None):
 # Precession Functions
 ######################################################################
 
-def get_equ_prec(mean_position, jD):
+def get_equ_prec(mean_position: equ_posn, jD: float) -> equ_posn:
     """
     Get position of celestial object accounting for precession.
     Only works for converting to and from J2000 epoch.
@@ -2374,7 +2558,7 @@ def get_equ_prec(mean_position, jD):
     return equ_posn.from_astropy(sc)
 
 
-def get_equ_prec2(mean_position, fromJD, toJD):
+def get_equ_prec2(mean_position: equ_posn, fromJD: float, toJD: float) -> equ_posn:
     """
     Get position of celestial object accounting for precession.
     
@@ -2401,7 +2585,7 @@ def get_equ_prec2(mean_position, fromJD, toJD):
 # Rise, Set, Transit functions
 ######################################################################
 
-def get_object_rst(jD, observer, target):
+def get_object_rst(jD: float, observer: geo_posn, target: equ_posn) -> Union[rst_time,None]:
     """
     Get rise, set, and transit times of a celstial object.
     
@@ -2494,7 +2678,7 @@ def get_object_rst(jD, observer, target):
 
 SOLAR_SYSTEM_EPHEMERIS_TO_USE = 'de432s'
 
-def _get_solar_system_rst(jD, observer, body):
+def _get_solar_system_rst(jD: float, observer: geo_posn, body: str) -> Union[rst_time,None]:
     """
     Get rise, set, and transit times of a solar system body.
     
@@ -2597,7 +2781,7 @@ def _get_solar_system_rst(jD, observer, body):
 #  Solar Functions
 ######################################################################
 
-def get_solar_equ_coords(jD):
+def get_solar_equ_coords(jD: float) -> equ_posn:
     """
     Get Sun's apparent equatorial coordinates from Julian day.
     Accounts for aberration and precession, and nutation.
@@ -2617,7 +2801,7 @@ def get_solar_equ_coords(jD):
     return equ_posn.from_astropy(b)
 
 
-def get_solar_rst(jD, observer):
+def get_solar_rst(jD: float, observer: geo_posn) -> Union[rst_time,None]:
     """
     Get Sun's rise, transit, set times from Julian day.
     
@@ -2635,7 +2819,7 @@ def get_solar_rst(jD, observer):
 #  Jupiter Functions
 ######################################################################
 
-def get_jupiter_equ_coords(jD):
+def get_jupiter_equ_coords(jD: float) -> equ_posn:
     """
     Get Jupiter's apparent equatorial coordinates from Julian day.
     Accounts for aberration and precession, but not nutation.
@@ -2655,7 +2839,7 @@ def get_jupiter_equ_coords(jD):
     return equ_posn.from_astropy(b)
 
 
-def get_jupiter_rst(jD, observer):
+def get_jupiter_rst(jD: float, observer: geo_posn) -> Union[rst_time,None]:
     """
     Get Jupiter's rise, transit, set times from Julian day.
     
@@ -2673,7 +2857,7 @@ def get_jupiter_rst(jD, observer):
 # Saturn Functions
 ######################################################################
 
-def get_saturn_equ_coords(jD):
+def get_saturn_equ_coords(jD: float) -> equ_posn:
     """   
     Get Saturn's apparent equatorial coordinates from Julian day.
     Accounts for aberration and precession, but not nutation.
@@ -2693,7 +2877,7 @@ def get_saturn_equ_coords(jD):
     return equ_posn.from_astropy(b)
 
 
-def get_saturn_rst(jD, observer):
+def get_saturn_rst(jD: float, observer: geo_posn) -> Union[rst_time,None]:
     """
     Get Saturn's rise, transit, set times from Julian day.
     
@@ -2711,7 +2895,7 @@ def get_saturn_rst(jD, observer):
 # Lunar Functions
 ######################################################################
 
-def get_lunar_equ_coords(jD):
+def get_lunar_equ_coords(jD: float) -> equ_posn:
     """
     Get the Moon's apparent equatorial coordinates from Julian day.
     Accounts for aberration and precession, but not nutation.
@@ -2731,7 +2915,7 @@ def get_lunar_equ_coords(jD):
     return equ_posn.from_astropy(b)
 
 
-def get_lunar_rst(jD, observer):
+def get_lunar_rst(jD: float, observer: geo_posn) -> Union[rst_time,None]:
     """
     Get the Moon's rise, transit, set times from Julian day.
     
@@ -2749,7 +2933,7 @@ def get_lunar_rst(jD, observer):
 # Venus Functions
 ######################################################################
 
-def get_venus_equ_coords(jD):
+def get_venus_equ_coords(jD: float) -> equ_posn:
     """
     Get Venus' apparent equatorial coordinates from Julian day.
     Accounts for aberration and precession, but not nutation.
@@ -2769,7 +2953,7 @@ def get_venus_equ_coords(jD):
     return equ_posn.from_astropy(b)
 
 
-def get_venus_rst(jD, observer):
+def get_venus_rst(jD: float, observer: geo_posn) -> Union[rst_time,None]:
     """
     Get Venus' rise, transit, set times from Julian day.
     
@@ -2787,7 +2971,7 @@ def get_venus_rst(jD, observer):
 # Mars Functions
 ######################################################################
 
-def get_mars_equ_coords(jD):
+def get_mars_equ_coords(jD: float) -> equ_posn:
     """
     Get Mars' apparent equatorial coordinates from Julian day.
     Accounts for aberration and precession, but not nutation.
@@ -2807,7 +2991,7 @@ def get_mars_equ_coords(jD):
     return equ_posn.from_astropy(b)
 
 
-def get_mars_rst(jD, observer):
+def get_mars_rst(jD: float, observer: geo_posn) -> Union[rst_time,None]:
     """
     Get Mars' rise, transit, set times from Julian day.
     
@@ -2866,7 +3050,7 @@ Velocity of light in meters/second.
 VELOCITY_OF_LIGHT = 2.99792458e8
 
 
-def sec_to_jd(secs):
+def sec_to_jd(secs: float) -> float:
     """
     Convert seconds into julian days.
     
@@ -2878,7 +3062,7 @@ def sec_to_jd(secs):
     return secs / SECS_IN_DAY
 
 
-def jd_to_sec(jD):
+def jd_to_sec(jD: float) -> float:
     """
     Convert Julian days into seconds.
     
@@ -2894,7 +3078,7 @@ def jd_to_sec(jD):
 # Time utility functions
 ######################################################################
 
-def range_hours(hours):
+def range_hours(hours: float) -> float:
     """
     Put an hour time value into the correct range [0.0, 24.0].
     """
@@ -2910,7 +3094,7 @@ def range_hours(hours):
     return hours - temp
 
 
-def jd_to_mjd(jd):
+def jd_to_mjd(jd: float) -> float:
     """
     Get modified julian day value from julian day value.
     
@@ -2925,7 +3109,7 @@ def jd_to_mjd(jd):
     return (jd - MJD_OFFSET)
 
 
-def mjd_to_jd(mjd):
+def mjd_to_jd(mjd: float) -> float:
     """
     Get julian day value from modified julian day value.
     
@@ -2944,7 +3128,7 @@ FIRST_LEAP_UTC = 2441317.5
 
 _UNIX_EPOCH_AT = AstroTime(0, format='unix', scale='utc')
 
-def leap_secs(utcJD):
+def leap_secs(utcJD: float) -> float:
     """
     Get the number of leap seconds for given UTC time value.
     
@@ -2963,7 +3147,7 @@ def leap_secs(utcJD):
     return round(diff_jd - diff_unix, 1) + 8   # +8 for initial 10 s offset between TAI and UTC
 
 
-def utc_to_tai(utcJD):
+def utc_to_tai(utcJD: float) -> float:
     """
     Get the TAI JD time value for a given UTC JD time value.
     
@@ -2977,7 +3161,7 @@ def utc_to_tai(utcJD):
     return t.tai.jd
 
 
-def tai_to_utc(taiJD):
+def tai_to_utc(taiJD: float) -> float:
     """
     Get the UTC JD time value for a given TAI JD time value.
     
@@ -2991,7 +3175,7 @@ def tai_to_utc(taiJD):
     return t.utc.jd
 
 
-def taimjd_to_utcjd(taiMJD):
+def taimjd_to_utcjd(taiMJD: float) -> float:
     """
     Get the UTC JD time value for a given TAI MJD value.
     
@@ -3004,7 +3188,7 @@ def taimjd_to_utcjd(taiMJD):
     return t.utc.jd
 
 
-def utcjd_to_taimjd(utcJD):
+def utcjd_to_taimjd(utcJD: float) -> float:
     """
     Get the TAI MJD time value for a given UTC JD value.
     
@@ -3017,7 +3201,7 @@ def utcjd_to_taimjd(utcJD):
     return t.tai.mjd
 
 
-def unix_to_utcjd(unixTime):
+def unix_to_utcjd(unixTime: Union[int,float]) -> float:
     """
     Get the UTC JD time value for a given UNIX time value.
     
@@ -3030,7 +3214,7 @@ def unix_to_utcjd(unixTime):
     return t.jd
 
 
-def unix_to_taimjd(unixTime):
+def unix_to_taimjd(unixTime: Union[int,float]) -> float:
     """
     Get the TAI MJD time value for a given UNIX time value.
     
@@ -3043,7 +3227,7 @@ def unix_to_taimjd(unixTime):
     return t.tai.mjd
 
 
-def utcjd_to_unix(utcJD):
+def utcjd_to_unix(utcJD: float) -> float:
     """
     Get UNIX time value for a given UTC JD value.
     
@@ -3056,7 +3240,7 @@ def utcjd_to_unix(utcJD):
     return t.unix
 
 
-def taimjd_to_unix(taiMJD):
+def taimjd_to_unix(taiMJD: float) -> float:
     """
     Get UNIX time value for a given TAI MJDvalue.
     
@@ -3069,7 +3253,7 @@ def taimjd_to_unix(taiMJD):
     return t.utc.unix
 
 
-def tai_to_tt(taiJD):
+def tai_to_tt(taiJD: float) -> float:
     """
     Get the TT JD time value for a given TAI JD time value.
     
@@ -3082,7 +3266,7 @@ def tai_to_tt(taiJD):
     return t.tt.jd
 
 
-def tt_to_tai(ttJD):
+def tt_to_tai(ttJD: float) -> float:
     """
     Get the TAI JD time value for a given TT JD time value.
     
@@ -3095,7 +3279,7 @@ def tt_to_tai(ttJD):
     return t.tai.jd
 
 
-def utc_to_tt(utcJD):
+def utc_to_tt(utcJD: float) -> float:
     """
     Get the TT JD time value for a given UTC JD time value.
     
@@ -3108,7 +3292,7 @@ def utc_to_tt(utcJD):
     return t.tt.jd
 
 
-def tt_to_utc(ttJD):
+def tt_to_utc(ttJD: float) -> float:
     """
     Get the UTC JD time value for a given TT JD time value.
     
@@ -3121,7 +3305,7 @@ def tt_to_utc(ttJD):
     return t.utc.jd
 
 
-def tt_to_tdb(ttJD):
+def tt_to_tdb(ttJD: float) -> float:
     """
     Get the TDB JD time value for a given TT JD time value.
     Adopted from "Astronomical Almanac Supplement", Seidelmann 1992, 2.222-1.
@@ -3135,7 +3319,7 @@ def tt_to_tdb(ttJD):
     return t.tdb.jd  
 
 
-def get_tai_from_sys():
+def get_tai_from_sys() -> float:
     """
     Return the current time taken from the system clock as a
     TAI MJD (float).
@@ -3145,7 +3329,7 @@ def get_tai_from_sys():
     return t0.tai.mjd
 
 
-def hms_to_sec(hms):
+def hms_to_sec(hms: hms) -> float:
     """
     Convert hours, minutes, seconds to seconds.
     
@@ -3157,7 +3341,7 @@ def hms_to_sec(hms):
     return hms.hours*3600.0 + hms.minutes*60.0 + hms.seconds
 
 
-def deg_to_sec(degrees):
+def deg_to_sec(degrees: float) -> float:
     """
     Convert longitude degrees into time seconds.
     
@@ -3170,7 +3354,7 @@ def deg_to_sec(degrees):
     return hours*3600.0
 
 
-def get_local_sidereal_time(lng, jD):
+def get_local_sidereal_time(lng: float, jD: float) -> float:
     """
     Get apparent local sidereal time from Julian day.
     
@@ -3186,191 +3370,10 @@ def get_local_sidereal_time(lng, jD):
 
 
 ######################################################################
-# Position utility classes
-######################################################################
-
-class geo_posn(object):
-    """
-    Class to represent geographical position in terms of longitude, lattitude,
-    and elevation.  This is a set of geodetic coordinates based on the WGS84 model.
-    
-    Public members:
-      lng - longitude (float)
-      lat - latitude (float)
-      elv - elevation (float)
-    
-    Members may also be accessed by subscript:
-      geo_posn[0] = lng
-      geo_posn[1] = lat
-      geo_posn[2] = elv
-    """
-    
-    _astropy = None
-    
-    def __init__(self, lng = 0.0, lat = 0.0, elv = 0.0):
-        """
-        Create a geo_posn object.
-        
-        Param: lng - longitude coordinate
-                    Object of type dms or float degrees (-360.0, 360.0).
-        Param: lat - Position latitude coordinate
-                    Object of type dms or float degrees [-90.0, 90.0].
-        Param: elv - elevation (float meters)
-        """
-        
-        if lng is not None:
-            self.lng = lng
-            
-        if lat is not None:
-            self.lat = lat
-            
-        if elv is not None:
-            self.elv = elv
-            
-    @classmethod
-    def from_astropy(kls, value):
-        if not isinstance(value, EarthLocation):
-            raise TypeError("Expected an object of type EarthLocation")
-            
-        _posn = kls()
-        _posn._astropy = value
-        _posn._lng = value.lon.wrap_at(360*astrounits.deg).deg
-        _posn._lat = value.lat.deg
-        _posn._elv = value.height.to('m').value
-        return _posn
-        
-    @property
-    def lng(self):
-        return self._lng
-        
-    @lng.setter
-    def lng(self, value):
-        if self.astropy is not None:
-            raise RuntimeError(f"Cannot set lng when this.astropy is not None")
-            
-        if isinstance(value, dms):
-            value = value.to_deg()
-        if value <= -360.0 or value >= 360.0:
-            raise ValueError(f"lng parameter range is (-360.0, 360.0), is set to {value:0.3f}")
-        self._lng = value
-        
-    @property
-    def lat(self):
-        return self._lat
-        
-    @lat.setter
-    def lat(self, value):
-        if self.astropy is not None:
-            raise RuntimeError(f"Cannot set lat when this.astropy is not None")
-            
-        if isinstance(value, dms):
-            value = value.to_deg()
-        if value < -90.0 or value > 90.0:
-            raise ValueError(f"lat paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
-        self._lat = value
-    
-    @property
-    def elv(self):
-        return self._elv
-        
-    @elv.setter
-    def elv(self, value):
-        if self.astropy is not None:
-            raise RuntimeError(f"Cannot elv when this.astropy is not None")
-            
-        self._elv = value
-        
-    @property
-    def astropy(self):
-        return self._astropy
-        
-    def __str__(self):
-        """
-        geo_posn object print/str method.
-        """
-        
-        return f"{self.lng:0.3f} {self.lat:0.3f} {self.elv:0.3f}"
-        
-    def __repr__(self):
-        """
-        geo_posn object repr string method
-        """
-        
-        return "%s.%s(%s,%s,%s)" % (type(self).__module__, type(self).__name__, repr(self.lng), repr(self.lat), repr(self.elv))
-            
-    def __reduce__(self):
-        """
-        geo_posn object pickle reduce method.
-        """
-        
-        return (geo_posn, (self.lng, self.lat, self.elv))
-        
-    def __getitem__(self, key):
-        """
-        Get members by subscript index.
-        """
-        
-        if key == 0:
-            return self.lng
-        elif key == 1:
-            return self.lat
-        elif key == 2:
-            return self.elv
-        else:
-            raise ValueError(f"subscript {key} out of range")
-                
-    def __setitem__(self, key, value):
-        """
-        Set members by subscript index.
-        """
-        
-        if self.astropy is not None:
-            raise RuntimeError(f"Cannot set index {key} when this.astropy is not None")
-            
-        if key == 0:
-            self.lng = value
-        elif key == 1:
-            self.lat = value
-        elif key == 2:
-            self.elv = value
-        else:
-            raise ValueError(f"subscript {key} out of range")
-        
-    def __eq__(self, other):
-        """
-        geo_posn equality test.
-        """
-        
-        if not isinstance(other, geo_posn):
-            raise TypeError(f"comparison not supported for type {type(other).__name__}")
-            
-        return (self.lng == other.lng) and (self.lat == other.lat) and (self.elv == other.elv)
-            
-    def __ne__(self, other):
-        """
-        geo_posn non-equality test.
-        """
-        
-        if not isinstance(other, geo_posn):
-            raise TypeError(f"comparison not supported for type {type(other).__name__}")
-            
-        return (self.lng != other.lng) or (self.lat != other.lat) or (self.elv != other.elv)
-        
-    def format(self):
-        """
-        Return a tuple (lng, lat) where lng is an dms object and
-        lat is a dms object representing longitude and latitude
-        position coordinates.
-        """
-        
-        return (deg_to_dms(self.lng), deg_to_dms(self.lat), self.elv)
-
-
-######################################################################
 # Pointing utility functions
 ######################################################################
 
-def dir_cos(posn):
+def dir_cos(posn: hrz_posn) -> Tuple[float,float,float]:
     """
     Get direction cosines from azimuth and zenith angles.
     This function calculates the cosine values based on the LWA coordinate system:
@@ -3383,8 +3386,8 @@ def dir_cos(posn):
     Returns a tuple (l,m,n) of float values for the direction cosines.
     """
     
-    azRad = math.radians(posn.az)
-    zenRad = math.radians(posn.zen())
+    azRad = math.radians(posn.az)   # type: ignore
+    zenRad = math.radians(posn.zen())   # type: ignore
     szen = math.sin(zenRad)
     
     l = (szen * math.sin(azRad))
@@ -3394,7 +3397,7 @@ def dir_cos(posn):
     return (l, m, n)
 
 
-def get_rect_from_equ(posn):
+def get_rect_from_equ(posn: equ_posn) -> rect_posn:
     """
     Transform equatorial coordinates to rectangular coordinates.
     
@@ -3414,7 +3417,7 @@ def get_rect_from_equ(posn):
     return rect_posn(x, y, z)
 
 
-def get_equ_from_rect(posn):
+def get_equ_from_rect(posn: rect_posn) -> equ_posn:
     """
     Transform rectangular coordinates to equatorial coordinates.
     
@@ -3432,7 +3435,7 @@ def get_equ_from_rect(posn):
     return equ_posn.from_astropy(sc)
 
 
-def get_geo_from_rect(posn):
+def get_geo_from_rect(posn: rect_posn) -> geo_posn:
     """
     Transform ECEF rectangular coordinates to geographical coordinates.
     Adapoted from "Satellite Orbits", Montenbruck and Gill 2005, 5.85 - 5.88.
@@ -3448,7 +3451,7 @@ def get_geo_from_rect(posn):
     return geo_posn.from_astropy(el)
 
 
-def get_rect_from_geo(posn):
+def get_rect_from_geo(posn: geo_posn) -> rect_posn:
     """
     Transform geographical coordinates to ECEF rectangular coordinates.
     Adopted from "Satellite Orbits", Montenbruck and Gill 2005, 5.83 - 5.84.
@@ -3469,7 +3472,7 @@ def get_rect_from_geo(posn):
     return rect_posn(x, y, z)
 
 
-def get_precession(jD1, pos, jD2):
+def get_precession(jD1: float, pos: equ_posn, jD2: float) -> equ_posn:
     """
     Caculate precession of equatorial coordinates from one epoch to
     another.
@@ -3490,7 +3493,7 @@ def get_precession(jD1, pos, jD2):
     return equ_posn.from_astropy(sc)
 
 
-def B1950_to_J2000(pos):
+def B1950_to_J2000(pos: equ_posn) -> equ_posn:
     """
     Convert B1950 epoch to J2000 epoch for equatorial coordinates.
     
@@ -3512,7 +3515,7 @@ def B1950_to_J2000(pos):
     return equ_posn.from_astropy(sc)
 
 
-def J2000_to_B1950(pos):
+def J2000_to_B1950(pos: equ_posn) -> equ_posn:
     """
     Convert J2000 epoch to B1950 epoch for equatorial coordinates.
     
@@ -3534,7 +3537,7 @@ def J2000_to_B1950(pos):
     return equ_posn.from_astropy(sc)
 
 
-def resolve_name(name):
+def resolve_name(name: str) -> equ_posn:
     """
     Given the name of an astronomical source resolve it into coordinates.
     
@@ -3550,30 +3553,30 @@ def resolve_name(name):
         with urlopen('https://cdsweb.u-strasbg.fr/cgi-bin/nph-sesame/-oxp/SNV?%s' % quote_plus(name)) as result:
             tree = ElementTree.fromstring(result.read())
             target = tree.find('Target')
-            service = target.find('Resolver')
-            ra = service.find('jradeg')
-            dec = service.find('jdedeg')
+            service = target.find('Resolver')   # type: ignore
+            ra = service.find('jradeg') # type: ignore
+            dec = service.find('jdedeg')    # type: ignore
             try:
-                pm = service.find('pm')
+                pm = service.find('pm') # type: ignore
             except Exception as e:
                 pm = None
             try:
-                plx = service.find('plx')
+                plx = service.find('plx')   # type: ignore
             except Exception as e:
                 plx = None
                 
-            service = service.attrib['name'].split('=', 1)[1]
-            ra = float(ra.text)
-            dec = float(dec.text)
+            service = service.attrib['name'].split('=', 1)[1]   # type: ignore
+            ra = float(ra.text) # type: ignore
+            dec = float(dec.text)   # type: ignore
             coordsys = 'J2000'
             if pm is not None:
-                pmRA = float(pm.find('pmRA').text)
-                pmDec = float(pm.find('pmDE').text)
+                pmRA = float(pm.find('pmRA').text)  # type: ignore
+                pmDec = float(pm.find('pmDE').text) # type: ignore
             else:
                 pmRA = None
                 pmDec = None
             if plx is not None:
-                dist = float(plx.find('v').text)
+                dist = float(plx.find('v').text)    # type: ignore
             else:
                 dist = None
                 
