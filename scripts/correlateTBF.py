@@ -44,8 +44,8 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
     srate = idf.get_info('sample_rate')
     
     # Break the frequency range into IFs
-    chan = numpy.round(freq / srate)
-    nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+    chan = np.round(freq / srate)
+    nif = len(np.where(np.diff(chan) > 1)[0]) + 1
     freq = freq.reshape(nif, -1)
     
     # Decimate in frequency if requested
@@ -103,14 +103,14 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         
         ## Apply the cable delays as phase rotations
         for i in range(dataX.shape[0]):
-            gain = numpy.sqrt( antennasX[i].cable.gain(freq_flat) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasX[i].cable.delay(freq_flat) \
+            gain = np.sqrt( antennasX[i].cable.gain(freq_flat) )
+            phaseRot = np.exp(2j*np.pi*freq_flat*(antennasX[i].cable.delay(freq_flat) \
                                                    -antennasX[i].stand.z/speedOfLight))
             for j in range(dataX.shape[2]):
                 dataX[i,:,j] *= phaseRot / gain
         for i in range(dataY.shape[0]):
-            gain = numpy.sqrt( antennasY[i].cable.gain(freq_flat) )
-            phaseRot = numpy.exp(2j*numpy.pi*freq_flat*(antennasY[i].cable.delay(freq_flat)\
+            gain = np.sqrt( antennasY[i].cable.gain(freq_flat) )
+            phaseRot = np.exp(2j*np.pi*freq_flat*(antennasY[i].cable.delay(freq_flat)\
                                                    -antennasY[i].stand.z/speedOfLight))
             for j in range(dataY.shape[2]):
                 dataY[i,:,j] *= phaseRot / gain
@@ -226,8 +226,8 @@ def main(args):
         nSets = nSets - int(args.offset*sample_rate) // nFrames
         
         central_freq = idf.get_info('freq1')
-        chan = numpy.round(central_freq / sample_rate)
-        nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+        chan = np.round(central_freq / sample_rate)
+        nif = len(np.where(np.diff(chan) > 1)[0]) + 1
         central_freq = central_freq.reshape(nif, -1)
         central_freq = central_freq[:,central_freq.shape[1]//2]
         
