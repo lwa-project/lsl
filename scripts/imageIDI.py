@@ -50,11 +50,11 @@ def main(args):
     freq_if = freq*1.0
     freq_if = freq_if.reshape(nif, -1)  
     
-    print("Raw Stand Count: %i" % nStand)
-    print("Final Baseline Count: %i" % (nStand*(nStand-1)/2,))
-    print("Spectra Coverage: %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq_if[0,0]/1e6, freq_if[0,-1]/1e6, freq_if.shape[1], (freq_if[0,1] - freq_if[0,0])/1e3))
+    print(f"Raw Stand Count: {nStand}")
+    print(f"Final Baseline Count: {nStand*(nStand-1)//2}")
+    print(f"Spectra Coverage: {freq_if[0,0]/1e6:.3f} to {freq_if[0,-1]/1e6:.3f} MHz in {freq_if.shape[1]} channels ({(freq_if[0,1] - freq_if[0,0])/1e3:.2f} kHz/channel)")
     for i in range(1, nif):
-        print("                  %.3f to %.3f MHz in %i channels (%.2f kHz/channel)" % (freq_if[i,0]/1e6, freq_if[i,-1]/1e6, freq_if.shape[1], (freq_if[i,1] - freq_if[i,0])/1e3))
+        print(f"                  {freq_if[i,0]/1e6:.3f} to {freq_if[i,-1]/1e6:.3f} MHz in {freq_if.shape[1]} channels ({(freq_if[i,1] - freq_if[i,0])/1e3:.2f} kHz/channel)")
     try:
         print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
     except KeyError:
