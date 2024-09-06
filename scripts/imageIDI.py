@@ -45,8 +45,8 @@ def main(args):
     freq = idi.freq
     
     chan_width = freq[1]-freq[0]
-    chan = numpy.round(freq / chan_width)
-    nif = len(numpy.where(numpy.diff(chan) > 1)[0]) + 1
+    chan = np.round(freq / chan_width)
+    nif = len(np.where(np.diff(chan) > 1)[0]) + 1
     freq_if = freq*1.0
     freq_if = freq_if.reshape(nif, -1)  
     
