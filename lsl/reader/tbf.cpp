@@ -1,5 +1,6 @@
 #include "Python.h"
 #include <cmath>
+#include <cstdint>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API

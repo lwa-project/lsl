@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "Python.h"
 
 #if defined(__linux__)

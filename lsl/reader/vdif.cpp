@@ -1,5 +1,6 @@
 #include "Python.h"
 #include <cmath>
+#include <cstdint>
 #include <complex>
 #include <type_traits>
 

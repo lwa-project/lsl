@@ -1,6 +1,5 @@
 #include "Python.h"
 #include <cmath>
-#include <math.h>
 #include <complex>
 #include <fftw3.h>
 
