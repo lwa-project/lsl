@@ -134,7 +134,7 @@ class Sd(WriterBase):
         Create a SpectrometerData object to store a collection of spectra.
         """
         
-        if type(pol) == str:
+        if isinstance(pol, str):
             numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol

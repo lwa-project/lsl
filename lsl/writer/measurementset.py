@@ -180,7 +180,7 @@ try:
             specified TAI MJD time.
             """
             
-            if type(pol) == str:
+            if isinstance(pol, str):
                 numericPol = self._STOKES_CODES[pol.upper()]
             else:
                 numericPol = pol

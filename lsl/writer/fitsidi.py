@@ -177,7 +177,8 @@ class WriterBase(object):
             
             return np.argsort(packed)
             
-    def parse_time(self, ref_time):
+    @staticmethod
+    def parse_time(ref_time):
         """
         Given a time as either a integer, float, string, or datetime object, 
         convert it to a string in the formation 'YYYY-MM-DDTHH:MM:SS'.
@@ -257,7 +258,7 @@ class WriterBase(object):
         """
         
         for pol in polList:
-            if type(pol) == str:
+            if isinstance(pol, str):
                 numericPol = self._STOKES_CODES[pol.upper()]
             else:
                 numericPol = pol
