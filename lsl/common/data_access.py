@@ -104,7 +104,7 @@ class _DataAccess(object):
                 mtime = calendar.timegm(mtime.timetuple())
         except IOError as e:
             warnings.warn(colorfy("{{%%yellow Error finding modification time of file from %s: %s}}" % (url, str(e))), RuntimeWarning)
-        except socket.timeout:
+        except (socket.timeout, TimeoutError):
             pass
         except HTTPError:
             pass
@@ -157,7 +157,7 @@ class _DataAccess(object):
         except IOError as e:
             warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
             received = 0
-        except socket.timeout:
+        except (socket.timeout, TimeoutError):
             received = 0
         except HTTPError:
             received = 0

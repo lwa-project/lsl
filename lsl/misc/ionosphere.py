@@ -506,7 +506,7 @@ def _download_worker_standard(url, filename):
     except IOError as e:
         warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         data = ''
-    except socket.timeout:
+    except (socket.timeout, TimeoutError):
         data = ''
         
     # Did we get anything or, at least, enough of something like it looks like 
