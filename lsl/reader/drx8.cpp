@@ -12,8 +12,6 @@
   DRX8 Reader
 */
 
-#pragma pack(push)
-#pragma pack(1)
 typedef struct __attribute__((packed)) {
     uint32_t sync_word;
     union {
@@ -46,11 +44,10 @@ typedef struct __attribute__((packed)) {
 } DRX8Payload;
 
 
-typedef struct {
+typedef struct __attribute__((packed)) {
     DRX8Header header;
     DRX8Payload payload;
 } DRX8Frame;
-#pragma pack(pop)
 
 
 PyObject *drx8_method = NULL;
