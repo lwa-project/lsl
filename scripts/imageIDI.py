@@ -44,9 +44,17 @@ def main(args):
     nchan = len(idi.freq)
     freq = idi.freq
     
+    chan_width = freq[1]-freq[0]
+    chan = np.round(freq / chan_width)
+    nif = len(np.where(np.diff(chan) > 1)[0]) + 1
+    freq_if = freq*1.0
+    freq_if = freq_if.reshape(nif, -1)  
+    
     print(f"Raw Stand Count: {nStand}")
     print(f"Final Baseline Count: {nStand*(nStand-1)//2}")
-    print(f"Spectra Coverage: {freq[0]/1e6:.3f} to {freq[-1]/1e6:.3f} MHz in {nchan} channels ({(freq[1] - freq[0])/1e3:.2f} kHz/channel)")
+    print(f"Spectra Coverage: {freq_if[0,0]/1e6:.3f} to {freq_if[0,-1]/1e6:.3f} MHz in {freq_if.shape[1]} channels ({(freq_if[0,1] - freq_if[0,0])/1e3:.2f} kHz/channel)")
+    for i in range(1, nif):
+        print(f"                  {freq_if[i,0]/1e6:.3f} to {freq_if[i,-1]/1e6:.3f} MHz in {freq_if.shape[1]} channels ({(freq_if[i,1] - freq_if[i,0])/1e3:.2f} kHz/channel)")
     try:
         print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
     except KeyError:
