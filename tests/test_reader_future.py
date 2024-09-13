@@ -56,7 +56,6 @@ class reader_future_tests(unittest.TestCase):
         fh.close()
         
         # Compare
-        print(frame3.payload.data.dtype)
         data1 = frame3.payload.data['re'] + 1j*frame3.payload.data['im']
         data2 = frame4.payload.data['re'] + 1j*frame4.payload.data['im']
         for i in range(512):
