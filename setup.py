@@ -1,20 +1,11 @@
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
+
 import os
 import sys
 import glob
 import tempfile
 import subprocess
 
-from setuptools import setup, Extension
-try:
-    from setuptools import find_namespace_packages
-except ImportError:
-    from setuptools import find_packages as find_namespace_packages
+from setuptools import setup, Extension, find_namespace_packages
 from distutils import log
 from distutils.command.build import build
 try:
@@ -29,21 +20,15 @@ except ImportError:
 try:
     import numpy
 except Exception as e:
-    raise RuntimeError("numpy is required to run setup.py: %s" % str(e))
-    
-PY2 = sys.version_info.major < 3
-if PY2:
-    ASTROPY_VERSION = 'astropy<3.0'
-    HEALPY_VERSION = 'healpy<1.14.0'
-else:
-    ASTROPY_VERSION = 'astropy>=3.0'
-    HEALPY_VERSION = 'healpy'
+    raise RuntimeError(f"numpy is required to run setup.py: {str(e)}")
 
 
 def get_version():
     """Read the VERSION file and return the version number as a string."""
 
-    return open('VERSION').read().strip()
+    with open('VERSION', 'r') as fh:
+        version = fh.read().strip()
+    return version
 
 
 def get_description(filename):
@@ -51,10 +36,9 @@ def get_description(filename):
     section."""
 
     desc = ''
-    fh = open(filename, 'r')
-    lines = fh.readlines()
-    fh.close()
-
+    with open(filename, 'r') as fh:
+        lines = fh.readlines()
+        
     inDescription = False
     for line in lines:
         if line.find('DESCRIPTION') == 0:
@@ -91,8 +75,8 @@ def get_openmp():
     curdir = os.getcwd()
     os.chdir(tmpdir)
     
-    fh = open('test.c', 'w')
-    fh.write(r"""#include <omp.h>
+    with open('test.c', 'w') as fh:
+        fh.write(r"""#include <omp.h>
 #include <stdio.h>
 int main(void) {
 #pragma omp parallel
@@ -100,8 +84,7 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 return 0;
 }
 """)
-    fh.close()
-    
+        
     ccmd = []
     ccmd.extend( cc )
     ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
@@ -110,8 +93,7 @@ return 0;
     elif os.path.basename(cc[0]).find('clang') != -1:
         ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
     try:
-        with open('/dev/null', 'wb') as devnull:
-            output = subprocess.check_call(ccmd, stderr=devnull)
+        output = subprocess.check_call(ccmd, stderr=subprocess.DEVNULL)
         outCFLAGS = ['-fopenmp',]
         outLIBS = []
         if os.path.basename(cc[0]).find('gcc') != -1:
@@ -120,7 +102,7 @@ return 0;
             outLIBS.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
             
     except subprocess.CalledProcessError:
-        print("WARNING:  OpenMP does not appear to be supported by %s, disabling" % cc[0])
+        print(f"WARNING:  OpenMP does not appear to be supported by {cc[0]}, disabling")
         outCFLAGS = []
         outLIBS = []
         
@@ -140,17 +122,20 @@ def get_gsl():
         subprocess.check_call(['pkg-config', 'gsl', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0].rstrip().split()
+        outVersion = p.communicate()[0].decode()
+        outVersion = outVersion.rstrip().split()
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0].rstrip().split()
+        outCFLAGS = p.communicate()[0].decode()
+        outCFLAGS = outCFLAGS.rstrip().split()
         try:
             outCFLAGS = [str(v, 'utf-8') for v in outCFLAGS]
         except TypeError:
             pass
         
         p = subprocess.Popen(['pkg-config', 'gsl', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0].rstrip().split()
+        outLIBS = p.communicate()[0].decode()
+        outLIBS = outLIBS.rstrip().split()
         try:
             outLIBS = [str(v, 'utf-8') for v in outLIBS]
         except TypeError:
@@ -176,19 +161,11 @@ def get_fftw():
         subprocess.check_call(['pkg-config', 'fftw3f', '--exists'])
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--modversion'], stdout=subprocess.PIPE)
-        outVersion = p.communicate()[0]
-        try:
-            outVersion = outVersion.decode()
-        except AttributeError:
-            pass
+        outVersion = p.communicate()[0].decode()
         outVersion = outVersion.strip().split()
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--cflags'], stdout=subprocess.PIPE)
-        outCFLAGS = p.communicate()[0]
-        try:
-            outCFLAGS = outCFLAGS.decode()
-        except AttributeError:
-            pass
+        outCFLAGS = p.communicate()[0].decode()
         outCFLAGS = outCFLAGS.rstrip().split()
         try:
             outCFLAGS = [str(v) for v in outCFLAGS]
@@ -196,11 +173,7 @@ def get_fftw():
             pass
         
         p = subprocess.Popen(['pkg-config', 'fftw3f', '--libs'], stdout=subprocess.PIPE)
-        outLIBS = p.communicate()[0]
-        try:
-            outLIBS = outLIBS.decode()
-        except AttributeError:
-            pass
+        outLIBS = p.communicate()[0].decode()
         outLIBS = outLIBS.rstrip().split()
         try:
             outLIBS = [str(v) for v in outLIBS]
@@ -208,7 +181,7 @@ def get_fftw():
             pass
             
         if len(outVersion) > 0:
-            print("Found FFTW3, version %s" % str(outVersion[0]))
+            print(f"Found FFTW3, version {outVersion[0]}")
             
     except (OSError, subprocess.CalledProcessError):
         print("WARNING:  single precision FFTW3 cannot be found, using defaults")
@@ -224,10 +197,7 @@ def write_version_info():
     lslVersion = get_version()
     shortVersion = '.'.join(lslVersion.split('.')[:2])
     
-    contents = """# -*- coding: utf-8 -*-
-# This file is automatically generated by setup.py
-
-from __future__ import print_function
+    contents = f"""# This file is automatically generated by setup.py
 
 import os
 import glob
@@ -252,19 +222,19 @@ def get_fingerprint():
     
     filenames = []
     for ext in ('.py', '.so'):
-        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), '*%%s' %% ext)) )
-        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), '*', '*%%s' %% ext)) )
+        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), f"*{{ext}}")) )
+        filenames.extend( glob.glob(os.path.join(os.path.dirname(__file__), '*', f"*{{ext}}")) )
         
     m = hashlib.md5()
     for filename in filenames:
-        m.update(_get_md5(filename))
+        m.update(_get_md5(filename).encode())
     return m.hexdigest()
 
-version = '%s'
-full_version = '%s'
-short_version = '%s'
+version = '{lslVersion}'
+full_version = '{lslVersion}'
+short_version = '{shortVersion}'
 
-""" % (lslVersion, lslVersion, shortVersion)
+"""
     
     with open('lsl/version/__init__.py', 'w') as fh:
         fh.write(contents)
@@ -336,8 +306,8 @@ class lsl_build_ext(build_ext):
         if os.getenv('WITH_FFTW', None) is not None:
             self.with_fftw = os.getenv('WITH_FFTW')
         if self.with_fftw is not None:
-            fftwFlags = ['-I%s/include' % self.with_fftw,]
-            fftwLibs = ['-L%s/lib' % self.with_fftw, '-lfftw3f']
+            fftwFlags = [f"-I{self.with_fftw}/include",]
+            fftwLibs = [f"-L{self.with_fftw}/lib", '-lfftw3f']
         else:
             fftwFlags, fftwLibs = get_fftw()
             
@@ -370,7 +340,7 @@ coreExtraLibs = []
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
-ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/reader/tbw.cpp', 'lsl/reader/tbn.cpp', 'lsl/reader/drx.cpp', 'lsl/reader/drspec.cpp', 'lsl/reader/vdif.cpp', 'lsl/reader/tbf.cpp', 'lsl/reader/cor.cpp'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
+ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/reader/tbw.cpp', 'lsl/reader/tbn.cpp', 'lsl/reader/drx.cpp', 'lsl/reader/drx8.cpp', 'lsl/reader/drspec.cpp', 'lsl/reader/vdif.cpp', 'lsl/reader/tbf.cpp', 'lsl/reader/cor.cpp'], include_dirs=[numpy.get_include()], extra_compile_args=['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '-funroll-loops']),
             Extension('common._fir', ['lsl/common/fir.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._spec', ['lsl/correlator/spec.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
@@ -397,20 +367,19 @@ setup(
                    'Intended Audience :: Science/Research',
                    'License :: OSI Approved :: GNU General Public License (GPL)',
                    'Topic :: Scientific/Engineering :: Astronomy',
-                   'Programming Language :: Python :: 2',
-                   'Programming Language :: Python :: 2.7',
                    'Programming Language :: Python :: 3',
-                   'Programming Language :: Python :: 3.5',
-                   'Programming Language :: Python :: 3.6',
-                   'Programming Language :: Python :: 3.7',
                    'Programming Language :: Python :: 3.8',
+                   'Programming Language :: Python :: 3.9',
+                   'Programming Language :: Python :: 3.10',
+                   'Programming Language :: Python :: 3.11',
+                   'Programming Language :: Python :: 3.12',
                    'Operating System :: MacOS :: MacOS X',
                    'Operating System :: POSIX :: Linux'],
     packages = find_namespace_packages(), 
     scripts = glob.glob('scripts/*.py'), 
-    python_requires='>=2.7', 
+    python_requires='>=3.8', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = [ASTROPY_VERSION, HEALPY_VERSION, 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
+    install_requires = ['astropy>=5.2', 'jplephem', 'healpy', 'h5py', 'numpy>=1.7', 'scipy>=0.19', 'pyephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,

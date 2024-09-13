@@ -24,16 +24,10 @@ of the data, including various window functions and time averaging.
     All of the functions here now return all 'LFFT' channels.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import ephem
-import numpy
+import numpy as np
 from astropy.constants import c as speedOfLight
-from astropy.coordinates import AltAz as AstroAltAz
+from astropy.coordinates import AltAz, SkyCoord
 
 from lsl.reader.base import CI8
 from lsl.common import dp as dp_common
@@ -64,7 +58,7 @@ def pol_to_pols(pol):
         elif p in ('Y', 'L'):
             out.append(1)
         else:
-            raise RuntimeError("Unknown polarization code '%s'" % pol)
+            raise RuntimeError(f"Unknown polarization code '{pol}'")
         
     return out
 
@@ -75,7 +69,7 @@ def null_window(L):
     function returned a numpy array of '1's of the specified length.
     """
 
-    return numpy.ones(L)
+    return np.ones(L)
 
 
 def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
@@ -101,7 +95,7 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
         doFFTShift = True
         central_freq = float(central_freq)
         if signals.dtype == CI8:
-            signals = signals.view(numpy.int8)
+            signals = signals.view(np.int8)
             signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
@@ -112,11 +106,11 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     # frequency space.
     if sample_rate is None:
         sample_rate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
+    freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     # Deal with TBW and TBN data in the correct way
     if doFFTShift:
         freq += central_freq
-        freq = numpy.fft.fftshift(freq)
+        freq = np.fft.fftshift(freq)
     freq = freq[:LFFT]
     
     if window is null_window:
@@ -154,7 +148,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
         doFFTShift = True
         central_freq = float(central_freq)
         if signals.dtype == CI8:
-            signals = signals.view(numpy.int8)
+            signals = signals.view(np.int8)
             signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
@@ -171,11 +165,11 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     # frequency space.
     if sample_rate is None:
         sample_rate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
+    freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     # Deal with TBW and TBN data in the correct way
     if doFFTShift:
         freq += central_freq
-        freq = numpy.fft.fftshift(freq)
+        freq = np.fft.fftshift(freq)
     freq = freq[:LFFT]
     
     if window is null_window:
@@ -206,14 +200,14 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         
     .. versionchanged:: 1.0.0
         Added a phase-center keyword that accept a two-element tuple of 
-        azimuth and elelvation (in degrees) to change where the 
-        correlations are phased to
+        azimuth and altitude (in degrees) to change where the correlations are
+        phased to
         
     .. versionchanged:: 1.1.0
         Made the 'phase_center' keyword more flexible.  It can now be either:
          * 'z' to denote the zenith,
          * a ephem.Body instances which has been computed for the observer, or
-         * a two-element tuple of azimuth, elevation in degrees.
+         * a two-element tuple of azimuth, altitude in degrees.
          
     .. versionchanged:: 1.2.5
         Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
@@ -233,7 +227,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -243,7 +237,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         doFFTShift = True
         central_freq = float(central_freq)
         if signals.dtype == CI8:
-            signals = signals.view(numpy.int8)
+            signals = signals.view(np.int8)
             signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
@@ -251,47 +245,52 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         
     if sample_rate is None:
         sample_rate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
+    freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
         freq += central_freq
-        freq = numpy.fft.fftshift(freq)
+        freq = np.fft.fftshift(freq)
     freq = freq[:LFFT]
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phase_center == 'z':
-        azPC = 0.0
-        elPC = numpy.pi/2.0
-    else:
-        if isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            elPC = phase_center.alt * 1.0
-        elif isinstance(phase_center, AstroAltAz):
-            azPC = phase_center.az.radian
-            elPC = phase_center.alt.radian
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
         else:
-            azPC = phase_center[0]*numpy.pi/180.0
-            elPC = phase_center[1]*numpy.pi/180.0
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
             
-    source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
-                    numpy.cos(elPC)*numpy.cos(azPC), 
-                    numpy.sin(elPC)])
+    source = np.array([np.cos(altPC)*np.sin(azPC), 
+                       np.cos(altPC)*np.cos(azPC), 
+                       np.sin(altPC)])
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals
     dlyRef = len(freq)//2
-    delays1 = numpy.zeros((nStands,LFFT))
-    delays2 = numpy.zeros((nStands,LFFT))
+    delays1 = np.zeros((nStands,LFFT))
+    delays2 = np.zeros((nStands,LFFT))
     for i in list(range(nStands)):
-        xyz1 = numpy.array([antennas1[i].stand.x, antennas1[i].stand.y, antennas1[i].stand.z])
-        xyz2 = numpy.array([antennas2[i].stand.x, antennas2[i].stand.y, antennas2[i].stand.z])
+        xyz1 = np.array(antennas1[i].stand.xyz)
+        xyz2 = np.array(antennas2[i].stand.xyz)
         
-        delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / speedOfLight
-        delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / speedOfLight
-    if not numpy.isfinite(delays1.max()):
-        delays1[numpy.where( ~numpy.isfinite(delays1) )] = delays1[numpy.where( numpy.isfinite(delays1) )].max()
-    if not numpy.isfinite(delays2.max()):
-        delays2[numpy.where( ~numpy.isfinite(delays2) )] = delays2[numpy.where( numpy.isfinite(delays2) )].max()
+        delays1[i,:] = antennas1[i].cable.delay(freq) - np.dot(source, xyz1) / speedOfLight
+        delays2[i,:] = antennas2[i].cable.delay(freq) - np.dot(source, xyz2) / speedOfLight
+    if not np.isfinite(delays1.max()):
+        delays1[np.where( ~np.isfinite(delays1) )] = delays1[np.where( np.isfinite(delays1) )].max()
+    if not np.isfinite(delays2.max()):
+        delays2[np.where( ~np.isfinite(delays2) )] = delays2[np.where( np.isfinite(delays2) )].max()
     if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
         minDelay = delays1[:,dlyRef].min()
     else:
@@ -326,25 +325,22 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
-        fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
-        nonAuto = numpy.where( fom != 0 )[0]
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True)
+        fom = np.array([a1.stand != a2.stand for (a1,a2) in baselinesFull])
+        nonAuto = np.where(fom)[0]
         output = output[nonAuto,:]
         
     # Apply cable gain corrections (if needed)
     if gain_correct:
         for bl in range(output.shape[0]):
-            cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
-            cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
+            cableGain1 = baselines[bl][0].cable.gain(freq)
+            cableGain2 = baselines[bl][1].cable.gain(freq)
             
-            output[bl,:] /= numpy.sqrt(cableGain1*cableGain2)
+            output[bl,:] /= np.sqrt(cableGain1*cableGain2)
             
     # Create antenna baseline list (if needed)
     if return_baselines:
-        antennaBaselines = []
-        for bl in range(output.shape[0]):
-            antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
-        returnValues = (antennaBaselines, freq, output)
+        returnValues = (baselines, freq, output)
     else:
         returnValues = (freq, output)
 
@@ -363,14 +359,14 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     
     .. versionchanged:: 1.0.0
         Added a phase_center keyword that accept a two-element tuple of 
-        azimuth and elelvation (in degrees) to change where the 
-        correlations are phased to
+        azimuth and altitude (in degrees) to change where the correlations are
+        phased to
         
     .. versionchanged:: 1.1.0
         Made the 'phase_center' keyword more flexible.  It can now be either:
          * 'z' to denote the zenith,
          * a ephem.Body instances which has been computed for the observer, or
-         * a two-element tuple of azimuth, elevation in degrees.
+         * a two-element tuple of azimuth, altitude in degrees.
          
     .. versionchanged:: 1.2.5
         Added the 'pfb' keyword to enable a 4-tap Hamming windowed PFB.  Enabling
@@ -387,7 +383,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
     
     nStands = len(antennas1)
-    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto, indicies=True)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto)
     
     # Figure out if we are working with complex (I/Q) data or only real.  This
     # will determine how the FFTs are done since the real data mirrors the pos-
@@ -397,7 +393,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         doFFTShift = True
         central_freq = float(central_freq)
         if signals.dtype == CI8:
-            signals = signals.view(numpy.int8)
+            signals = signals.view(np.int8)
             signals = signals.reshape(signals.shape[:-1]+(-1, 2))
     else:
         lFactor = 2
@@ -405,46 +401,51 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
 
     if sample_rate is None:
         sample_rate = dp_common.fS
-    freq = numpy.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
+    freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
         freq += central_freq
-        freq = numpy.fft.fftshift(freq)
+        freq = np.fft.fftshift(freq)
     freq = freq[:LFFT]
     
     # Get the location of the phase center in radians and create a 
     # pointing vector
-    if phase_center == 'z':
-        azPC = 0.0
-        elPC = numpy.pi/2.0
-    else:
-        if isinstance(phase_center, ephem.Body):
-            azPC = phase_center.az * 1.0
-            elPC = phase_center.alt * 1.0
-        elif isinstance(phase_center, AstroAltAz):
-            azPC = phase_center.az.radian
-            elPC = phase_center.alt.radian
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
         else:
-            azPC = phase_center[0]*numpy.pi/180.0
-            elPC = phase_center[1]*numpy.pi/180.0
-    source = numpy.array([numpy.cos(elPC)*numpy.sin(azPC), 
-                    numpy.cos(elPC)*numpy.cos(azPC), 
-                    numpy.sin(elPC)])
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
+    source = np.array([np.cos(altPC)*np.sin(azPC), 
+                       np.cos(altPC)*np.cos(azPC), 
+                       np.sin(altPC)])
                     
     # Define the cable/signal delay caches to help correlate along and compute 
     # the delays that we need to apply to align the signals
     dlyRef = len(freq)//2
-    delays1 = numpy.zeros((nStands,LFFT))
-    delays2 = numpy.zeros((nStands,LFFT))
+    delays1 = np.zeros((nStands,LFFT))
+    delays2 = np.zeros((nStands,LFFT))
     for i in list(range(nStands)):
-        xyz1 = numpy.array([antennas1[i].stand.x, antennas1[i].stand.y, antennas1[i].stand.z])
-        xyz2 = numpy.array([antennas2[i].stand.x, antennas2[i].stand.y, antennas2[i].stand.z])
+        xyz1 = np.array(antennas1[i].stand.xyz)
+        xyz2 = np.array(antennas2[i].stand.xyz)
         
-        delays1[i,:] = antennas1[i].cable.delay(freq) - numpy.dot(source, xyz1) / speedOfLight
-        delays2[i,:] = antennas2[i].cable.delay(freq) - numpy.dot(source, xyz2) / speedOfLight
-    if not numpy.isfinite(delays1.max()):
-        delays1[numpy.where( ~numpy.isfinite(delays1) )] = delays1[numpy.where( numpy.isfinite(delays1) )].max()
-    if not numpy.isfinite(delays2.max()):
-        delays2[numpy.where( ~numpy.isfinite(delays2) )] = delays2[numpy.where( numpy.isfinite(delays2) )].max()
+        delays1[i,:] = antennas1[i].cable.delay(freq) - np.dot(source, xyz1) / speedOfLight
+        delays2[i,:] = antennas2[i].cable.delay(freq) - np.dot(source, xyz2) / speedOfLight
+    if not np.isfinite(delays1.max()):
+        delays1[np.where( ~np.isfinite(delays1) )] = delays1[np.where( np.isfinite(delays1) )].max()
+    if not np.isfinite(delays2.max()):
+        delays2[np.where( ~np.isfinite(delays2) )] = delays2[np.where( np.isfinite(delays2) )].max()
     if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
         minDelay = delays1[:,dlyRef].min()
     else:
@@ -472,25 +473,22 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         # Remove auto-correlations from the output of the X engine if we don't 
         # need them.  To do this we need to first build the full list of baselines
         # (including auto-correlations) and then prune that.
-        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True, indicies=True)
-        fom = numpy.array([a1-a2 for (a1,a2) in baselinesFull])
-        nonAuto = numpy.where( fom != 0 )[0]
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True)
+        fom = np.array([a1.stand != a2.stand for (a1,a2) in baselinesFull])
+        nonAuto = np.where(fom)[0]
         output = output[:,nonAuto,:]
         
     # Apply cable gain corrections (if needed)
     if gain_correct:
         for bl in range(output.shape[0]):
-            cableGain1 = antennas1[baselines[bl][0]].cable.gain(freq)
-            cableGain2 = antennas2[baselines[bl][1]].cable.gain(freq)
+            cableGain1 = baselines[bl][0].cable.gain(freq)
+            cableGain2 = baselines[bl][1].cable.gain(freq)
             
-            output[:,bl,:] /= numpy.sqrt(cableGain1*cableGain2)
+            output[:,bl,:] /= np.sqrt(cableGain1*cableGain2)
             
     # Create antenna baseline list (if needed)
     if return_baselines:
-        antennaBaselines = []
-        for bl in range(output.shape[1]):
-            antennaBaselines.append( (antennas1[baselines[bl][0]], antennas2[baselines[bl][1]]) )
-        returnValues = (antennaBaselines, freq, output)
+        returnValues = (baselines, freq, output)
     else:
         returnValues = (freq, output)
 

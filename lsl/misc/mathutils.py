@@ -2,16 +2,10 @@
 Useful math functions for LWA work.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import math
 import warnings
 
-import numpy
+import numpy as np
 from scipy.special import sph_harm
 
 from lsl.common.color import colorfy
@@ -43,7 +37,7 @@ def regrid(x, y, newx, allow_extrapolation = False, method = 'spline'):
     elif method == 'spline':
         return _regrid_spline(x, y, newx, allow_extrapolation)
     else:
-        raise ValueError("interp method '%s' not recognized" % method)
+        raise ValueError(f"interp method '{method}' not recognized")
 
 
 def _regrid_linear(x, y, newx, allow_extrapolation=False):
@@ -55,11 +49,11 @@ def _regrid_linear(x, y, newx, allow_extrapolation=False):
         warnings.warn(colorfy("{{%yellow allow_extrapolation=True not honored for regrid_linear"), RuntimeWarning)
         
     if newx.min() < x.min():
-        raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
+        raise ValueError(f"x.min({x.min()}) must be smaller than newx.min({newx.min()})")
     if newx.max() > x.max():
-        raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
+        raise ValueError(f"x.max({x.max()}) must be larger than newx.max({newx.max()})")
         
-    return numpy.interp(newx, x, y)
+    return np.interp(newx, x, y)
 
 
 def _regrid_spline(x, y, newx, allow_extrapolation=False):
@@ -71,9 +65,9 @@ def _regrid_spline(x, y, newx, allow_extrapolation=False):
 
     if not allow_extrapolation:
         if newx.min() < x.min():
-            raise ValueError('x.min(%f) must be smaller than newx.min(%f)' % (x.min(), newx.min()))
+            raise ValueError(f"x.min({x.min()}) must be smaller than newx.min({newx.min()})")
         if newx.max() > x.max():
-            raise ValueError('x.max(%f) must be larger than newx.max(%f)' % (x.max(), newx.max()))
+            raise ValueError(f"x.max({x.max()}) must be larger than newx.max({newx.max()})")
     spl = interpolate.splrep(x, y)
     newy = interpolate.splev(newx, spl)
     
@@ -94,11 +88,11 @@ def downsample(vector, factor, rescale=True):
         warnings.warn(colorfy("{{%%yellow Oldlen %d, newlen %d}}" % (len(vector), newlen)), RuntimeWarning)
         vector = vector[:newlen]
     if rescale:
-        newvector = numpy.reshape(vector, (len(vector)//factor, factor))/float(factor)
+        newvector = np.reshape(vector, (len(vector)//factor, factor))/float(factor)
     else:
-        newvector = numpy.reshape(vector, (len(vector)//factor, factor))
+        newvector = np.reshape(vector, (len(vector)//factor, factor))
         
-    return numpy.add.reduce(newvector, 1)
+    return np.add.reduce(newvector, 1)
 
 
 def smooth(x, window_len=10, window='hanning'):
@@ -128,7 +122,7 @@ def smooth(x, window_len=10, window='hanning'):
         >>> y=smooth(x)
     
     .. seealso:: 
-        numpy.hanning, numpy.hamming, numpy.bartlett, numpy.blackman, numpy.convolve
+        np.hanning, np.hamming, np.bartlett, np.blackman, np.convolve
         scipy.signal.lfilter
     
     TODO: the window parameter could be the window itself if an array instead of a string
@@ -146,14 +140,14 @@ def smooth(x, window_len=10, window='hanning'):
     if not window in ['flat', 'hanning', 'hamming', 'bartlett', 'blackman']:
         raise ValueError("Window is on of 'flat', 'hanning', 'hamming', 'bartlett', 'blackman'")
         
-    s = numpy.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
+    s = np.r_[2*x[0]-x[window_len:1:-1],x,2*x[-1]-x[-1:-window_len:-1]]
     #print(len(s))
     if window == 'flat': #moving average
-        w = numpy.ones(window_len, dtype=s.dtype)
+        w = np.ones(window_len, dtype=s.dtype)
     else:
-        w = eval('numpy.'+window+'(window_len)')
+        w = eval('np.'+window+'(window_len)')
         
-    y = numpy.convolve(w/w.sum(), s, mode='same')
+    y = np.convolve(w/w.sum(), s, mode='same')
     return y[window_len-1:-window_len+1]
 
 
@@ -170,7 +164,7 @@ def cphase(cmplx):
     Return the polar phases of complex values as radians.
     """
     
-    return numpy.angle(cmplx)
+    return np.angle(cmplx)
 
 
 def cpolar(cmplx):
@@ -180,8 +174,8 @@ def cpolar(cmplx):
     where N is the length of the cmplx input array.
     """
     
-    if isinstance(cmplx, (numpy.ndarray, list, tuple)):
-        return numpy.array(list(zip(cmagnitude(cmplx), cphase(cmplx))))
+    if isinstance(cmplx, (np.ndarray, list, tuple)):
+        return np.array(list(zip(cmagnitude(cmplx), cphase(cmplx))))
     else:
         return (cmagnitude(cmplx), cphase(cmplx))
 
@@ -192,8 +186,8 @@ def creal(cmplx):
     expressed in polar form (magnitude, phase).
     """
     
-    if isinstance(cmplx, numpy.ndarray):
-        return (cmplx[...,0] * numpy.cos(cmplx[...,1]))
+    if isinstance(cmplx, np.ndarray):
+        return (cmplx[...,0] * np.cos(cmplx[...,1]))
     else:
         return (cmplx[0] * math.cos(cmplx[1]))
 
@@ -204,8 +198,8 @@ def cimag(cmplx):
     expressed in polar form (magnitude, phase).
     """
     
-    if isinstance(cmplx, numpy.ndarray):
-        return (cmplx[...,0] * numpy.sin(cmplx[...,1]))
+    if isinstance(cmplx, np.ndarray):
+        return (cmplx[...,0] * np.sin(cmplx[...,1]))
     else:
         return (cmplx[0] * math.sin(cmplx[1]))
 
@@ -216,8 +210,8 @@ def crect(cmplx):
     values (magnitude, phase).
     """
     
-    if isinstance(cmplx, numpy.ndarray):
-        ret = numpy.empty((len(cmplx),), numpy.complex64 if cmplx.dtype == numpy.float32 else numpy.complex128)
+    if isinstance(cmplx, np.ndarray):
+        ret = np.empty((len(cmplx),), np.complex64 if cmplx.dtype == np.float32 else np.complex128)
         ret.real = creal(cmplx)
         ret.imag = cimag(cmplx)
         return ret         
@@ -230,7 +224,7 @@ def to_dB(factor):
     Convert from linear units to decibels.
     """
     
-    return 10.0 * numpy.log10(factor)
+    return 10.0 * np.log10(factor)
 
 
 def from_dB(dB):
@@ -238,7 +232,7 @@ def from_dB(dB):
     Convert from decibels to linear units.
     """
     
-    return numpy.power(10.0, (dB/10.0))
+    return np.power(10.0, (dB/10.0))
 
 
 def ndft(t, x):
@@ -249,22 +243,22 @@ def ndft(t, x):
     """
     
     # Setup the output dtype to make sure that we have enough precision
-    if x.dtype in (numpy.complex128, numpy.float64):
-        dtype = numpy.complex128
+    if x.dtype in (np.complex128, np.float64):
+        dtype = np.complex128
     else:
-        dtype = numpy.complex64
+        dtype = np.complex64
         
     # Create the output NDFT array and fill it
-    out = numpy.zeros(x.shape, dtype=dtype)
+    out = np.zeros(x.shape, dtype=dtype)
     for m in range(out.size):
         mPrime = out.size//2 - m
         s = 0.0j
         for n in range(out.size):
-            s += x[n]*numpy.exp(-2j*numpy.pi*t[n]*mPrime / (t.max() - t.min()))
+            s += x[n]*np.exp(-2j*np.pi*t[n]*mPrime / (t.max() - t.min()))
         out[m] = s
         
     # Create the output frequency array and fill it
-    f = numpy.zeros_like(t)
+    f = np.zeros_like(t)
     for m in range(out.size):
         mPrime = out.size//2 - m
         f[m] = mPrime / (t.max() - t.min())
@@ -283,13 +277,13 @@ def gaussian1d(height, center, width):
     >>> center = 5.0
     >>> width = 2.1
     >>> gauFnc = guassian1d(height, center, width)
-    >>> value = gauFnc(numpy.arange(0, 100))
+    >>> value = gauFnc(np.arange(0, 100))
     
     Based on: http://code.google.com/p/agpy/source/browse/trunk/agpy/gaussfitter.py
     """
     
     width = float(width)
-    return lambda x: height*numpy.exp(-(center-x)**2/2.0/width**2)
+    return lambda x: height*np.exp(-(center-x)**2/2.0/width**2)
 
 
 def gaussian2d(height, centerX, centerY, widthMaj, widthMin, angle=0.0):
@@ -303,8 +297,8 @@ def gaussian2d(height, centerX, centerY, widthMaj, widthMin, angle=0.0):
 
     widthMaj = float(widthMaj)
     widthMin = float(widthMin)
-    pa = angle*numpy.pi/180.0
-    return lambda x,y: height*numpy.exp(-((((x-centerX)*numpy.cos(pa)+(y-centerY)*numpy.sin(pa))/widthMaj)**2 + ((-(x-centerX)*numpy.sin(pa)+(y-centerY)*numpy.cos(pa))/widthMin)**2)/2.0)
+    pa = angle*np.pi/180.0
+    return lambda x,y: height*np.exp(-((((x-centerX)*np.cos(pa)+(y-centerY)*np.sin(pa))/widthMaj)**2 + ((-(x-centerX)*np.sin(pa)+(y-centerY)*np.cos(pa))/widthMin)**2)/2.0)
 
 
 def gaussparams(data, x=None, y=None):
@@ -325,15 +319,15 @@ def gaussparams(data, x=None, y=None):
     if len(data.shape) == 1:
         # 1-D Data
         if x is None:
-            x = numpy.arange(data.size)
+            x = np.arange(data.size)
         center = (x*data).sum() / total
-        width = numpy.sqrt(abs(numpy.sum((x-center)**2*data)/total))
+        width = np.sqrt(abs(np.sum((x-center)**2*data)/total))
         return height, center, width
         
     elif len(data.shape) == 2:
         # 2-D Data
         if x is None or y is None:
-            x, y = numpy.indices(data.shape)
+            x, y = np.indices(data.shape)
             
         # Break the problem down into two 1-D filts
         profileX = data.sum(axis=1)
@@ -347,7 +341,7 @@ def gaussparams(data, x=None, y=None):
         
     else:
         # N-D data
-        raise ValueError("Cannot estimate parameters for %i-D" % (len(data.shape),))        
+        raise ValueError(f"Cannot estimate parameters for {len(data.shape)}-D")        
 
 
 def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
@@ -378,24 +372,24 @@ def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
     
     .. note::
         sphfit was designed to fit the LWA dipole response pattern as a function of
-        azimuth and elevation.  Elevation angles are mapped to theta angles by adding
-        pi/2 so that an elevation of 90 degrees corresponds to a theta of 180 degrees.
+        azimuth and altitude.  Altitude angles are mapped to theta angles by adding
+        pi/2 so that an altitude of 90 degrees corresponds to a theta of 180 degrees.
         To fit in terms of spherical coordianates, subtract pi/2 from the theta values
         before running.
     """
     
     if degrees:
-        rAz = az*numpy.pi/180.0
-        rAlt = alt*numpy.pi/180.0
+        rAz = az*np.pi/180.0
+        rAlt = alt*np.pi/180.0
     else:
         rAz = 1.0*az
         rAlt = 1.0*alt
-    rAlt += numpy.pi/2
-    sinAlt = numpy.sin(rAlt)
+    rAlt += np.pi/2
+    sinAlt = np.sin(rAlt)
     
     if real_only:
         nTerms = (lmax*(lmax+3)+2)//2
-        terms = numpy.zeros(nTerms, dtype=numpy.complex64)
+        terms = np.zeros(nTerms, dtype=np.complex64)
         
         t = 0
         for l in range(lmax+1):
@@ -406,7 +400,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
                 
     else:
         nTerms = (lmax+1)**2
-        terms = numpy.zeros(nTerms, dtype=numpy.complex64)
+        terms = np.zeros(nTerms, dtype=np.complex64)
         
         t = 0
         for l in range(lmax+1):
@@ -441,41 +435,41 @@ def sphval(terms, az, alt, degrees=False, real_only=False):
     
     .. note::
         sphfit was designed to fit the LWA dipole response pattern as a function of
-        azimuth and elevation.  Elevation angles are mapped to theta angles by adding
-        pi/2 so that an elevation of 90 degrees corresponds to a theta of 180 degrees.
+        azimuth and altitude.  Altitude angles are mapped to theta angles by adding
+        pi/2 so that an altitude of 90 degrees corresponds to a theta of 180 degrees.
         To spherical harmonics in terms of spherical coordianates, subtract pi/2 from 
         the theta values before running.
     """
     
     if degrees:
-        rAz = az*numpy.pi/180.0
-        rAlt = alt*numpy.pi/180.0
+        rAz = az*np.pi/180.0
+        rAlt = alt*np.pi/180.0
     else:
         rAz = 1.0*az
         rAlt = 1.0*alt
-    rAlt += numpy.pi/2
+    rAlt += np.pi/2
     
     nTerms = terms.size
     if real_only:
-        lmax = int((numpy.sqrt(1+8*nTerms)-3)/2)
+        lmax = int((np.sqrt(1+8*nTerms)-3)/2)
 
         t = 0
-        out = numpy.zeros(az.shape, dtype=numpy.float32)
+        out = np.zeros(az.shape, dtype=np.float32)
         for l in range(lmax+1):
             Ylm = sph_harm(0, l, rAz, rAlt)
-            out += numpy.real(terms[t]*Ylm)
+            out += np.real(terms[t]*Ylm)
             t += 1
             for m in range(1, l+1):
                 Ylm = sph_harm(m, l, rAz, rAlt)
-                out += numpy.real(terms[t]*Ylm)
-                out += numpy.real(terms[t]*Ylm.conj()/(-1)**m)
+                out += np.real(terms[t]*Ylm)
+                out += np.real(terms[t]*Ylm.conj()/(-1)**m)
                 t += 1
                 
     else:
-        lmax = int(numpy.sqrt(nTerms)-1)
+        lmax = int(np.sqrt(nTerms)-1)
         
         t = 0
-        out = numpy.zeros(az.shape, dtype=numpy.complex64)
+        out = np.zeros(az.shape, dtype=np.complex64)
         for l in range(lmax+1):
             for m in range(-l, l+1):
                 Ylm = sph_harm(m, l, rAz, rAlt)

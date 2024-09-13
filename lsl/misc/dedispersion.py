@@ -3,13 +3,7 @@ Module for calculating dispersion delay due to an ionized ISM and performing
 incoherent/coherent dedispersion.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
-import numpy
+import numpy as np
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -43,12 +37,12 @@ def delay(freq, dm):
     try:
         freq.size
     except AttributeError:
-        freq = numpy.array(freq, ndmin=1)
+        freq = np.array(freq, ndmin=1)
     ## Right size?
     singleFreq = False
     if freq.size == 1:
         singleFreq = True
-        freq = numpy.append(freq, numpy.inf)
+        freq = np.append(freq, np.inf)
         
     # Delay in s
     tDelay = dm*_D*((1e6/freq)**2 - (1e6/freq.max())**2)
@@ -60,7 +54,7 @@ def delay(freq, dm):
     return tDelay
 
 
-def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=numpy.nan):
+def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=np.nan):
     """
     Given a list of frequencies in Hz, a 2-D array of spectra as a function of
     time (time by frequency), and an integration time in seconds, perform 
@@ -78,19 +72,19 @@ def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=numpy.nan)
     
     # Validate the boundary mode
     if boundary not in ('wrap', 'fill'):
-        raise ValueError("Unknown boundary handling type '%s'" % boundary)
+        raise ValueError(f"Unknown boundary handling type '{boundary}'")
         
     # Compute the dispersive delay for the given frequency range
     tDelay = delay(freq, dm)
     
     # Convert the delays to integration periods
-    tDelay = numpy.round(tDelay / tInt)
-    tDelay = tDelay.astype(numpy.int32)
+    tDelay = np.round(tDelay / tInt)
+    tDelay = tDelay.astype(np.int32)
     
     # Roll the various frequency bins by the right amount
     ddWaterfall = waterfall*0.0
     for i,d in enumerate(tDelay):
-        ddWaterfall[:,i] = numpy.roll(waterfall[:,i], -d)
+        ddWaterfall[:,i] = np.roll(waterfall[:,i], -d)
         if boundary == 'fill' and d > 0:
             ddWaterfall[-d:,i] = fill_value
             
@@ -112,7 +106,7 @@ def get_coherent_sample_size(central_freq, sample_rate, dm):
 
     delayBand = dm*_D *((1e6/(F0-BW/2.0))**2 - (1e6/(F0+BW/2.0))**2)	# Dispersion delay across the band
     samples = delayBand*BW									# Conversion to samples
-    samples = 2**(numpy.ceil(numpy.log(samples)/numpy.log(2)))		# Conversion to next largest power of 2
+    samples = 2**(np.ceil(np.log(samples)/np.log(2)))		# Conversion to next largest power of 2
     samples *= 2											# Correction for the 'wings' of the convolution
     
     return int(samples)
@@ -129,7 +123,7 @@ def _taper(freq):
     fMHz1 = freqMHz - fMHz0
     BW = fMHz1.max() - fMHz1.min()
 
-    taper = 1.0 / numpy.sqrt( 1.0 + ( numpy.abs(fMHz1) / (0.47*BW) )**80 )
+    taper = 1.0 / np.sqrt( 1.0 + ( np.abs(fMHz1) / (0.47*BW) )**80 )
 
     return taper
 
@@ -145,7 +139,7 @@ def _chirp(freq, dm, taper=False):
     fMHz0 = freqMHz.mean()
     fMHz1 = freqMHz - fMHz0
     
-    chirp = numpy.exp(-2j*numpy.pi*_D*1e6 / (fMHz0**2*(fMHz0 + fMHz1)) * dm*fMHz1**2)
+    chirp = np.exp(-2j*np.pi*_D*1e6 / (fMHz0**2*(fMHz0 + fMHz1)) * dm*fMHz1**2)
     if taper:
         chirp *= _taper(freq)
     
@@ -187,7 +181,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         N = get_coherent_sample_size(central_freq, sample_rate, dm)
         
         # Compute the chirp function 
-        freq = numpy.fft.fftfreq(N, d=1.0/sample_rate) + central_freq 
+        freq = np.fft.fftfreq(N, d=1.0/sample_rate) + central_freq 
         chirp = _chirp(freq, dm, taper=taper) 
         chirp = chirp.astype(timeseries.dtype)
         
@@ -197,8 +191,8 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
             
     # Figure out the output array size
     nSets = len(timeseries) // N
-    outT = numpy.zeros(timeseries.size, dtype=t.dtype)
-    outD = numpy.zeros(timeseries.size, dtype=timeseries.dtype)
+    outT = np.zeros(timeseries.size, dtype=t.dtype)
+    outD = np.zeros(timeseries.size, dtype=timeseries.dtype)
     
     if nSets == 0:
         raise RuntimeWarning("Too few data samples for proper dedispersion")
@@ -209,8 +203,8 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         stop = start + N
         
         if start < 0:
-            timeIn = numpy.zeros(N, dtype=t.dtype)
-            dataIn = numpy.zeros(N, dtype=timeseries.dtype)
+            timeIn = np.zeros(N, dtype=t.dtype)
+            dataIn = np.zeros(N, dtype=timeseries.dtype)
             
             if previous_data is not None:
                 try:
@@ -223,8 +217,8 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
             dataIn[-start:N] = timeseries[0:N+start]
             
         elif stop > timeseries.size:
-            timeIn = numpy.zeros(N, dtype=t.dtype)
-            dataIn = numpy.zeros(N, dtype=timeseries.dtype)
+            timeIn = np.zeros(N, dtype=t.dtype)
+            dataIn = np.zeros(N, dtype=timeseries.dtype)
             
             if next_data is not None:
                 try:
@@ -242,9 +236,9 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
             dataIn = timeseries[start:stop]
             
         timeOut = timeIn
-        dataOut = numpy.fft.fft( dataIn )
+        dataOut = np.fft.fft( dataIn )
         dataOut *= chirp
-        dataOut = numpy.fft.ifft( dataOut )
+        dataOut = np.fft.ifft( dataOut )
         
         # Get the output data ranges
         outStart  = N//2*i

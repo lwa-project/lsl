@@ -11,15 +11,9 @@ CASA with the ATNF Spectral Analysis Package (ASAP).
     the :mod:`lsl.writer.fitsidi` writer.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import gc
-import numpy
+import numpy as np
 import warnings
 from astropy.time import Time as AstroTime
 from astropy.io import fits as astrofits
@@ -77,7 +71,7 @@ class Sd(WriterBase):
     def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
         """
         Initialize a new SDFITS object using a filename and a reference time
-        given in seconds since the UNIX 1970 ephem, a python datetime object, or a
+        given in seconds since the UNIX 1970 epoch, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         
         .. versionchanged:: 1.1.2
@@ -100,7 +94,7 @@ class Sd(WriterBase):
             if overwrite:
                 os.unlink(filename)
             else:
-                raise IOError("File '%s' already exists" % filename)
+                raise IOError(f"File '{filename}' already exists")
         self.FITS = astrofits.open(filename, mode='append', memmap=memmap)
 
     def set_site(self, site):
@@ -140,7 +134,7 @@ class Sd(WriterBase):
         Create a SpectrometerData object to store a collection of spectra.
         """
         
-        if type(pol) == str:
+        if isinstance(pol, str):
             numericPol = STOKES_CODES[pol.upper()]
         else:
             numericPol = pol
@@ -276,7 +270,7 @@ class Sd(WriterBase):
             
             if dataSet.pol == self.stokes[-1]:
                 for b in rawList:
-                    matrix = numpy.zeros((self.nStokes,self.nChan), dtype=numpy.float32)
+                    matrix = np.zeros((self.nStokes,self.nChan), dtype=np.float32)
                     for p in range(self.nStokes):
                         try:
                             matrix[p,:] = tempMList[self.stokes[p]][b]
@@ -289,136 +283,136 @@ class Sd(WriterBase):
         
         # Scan number
         c1  = astrofits.Column(name='SCAN', format='1I', 
-                        array=numpy.array(scanList))
+                        array=np.array(scanList))
         ## Cycle
         #c2 = astrofits.Column(name='CYCLE', format='1J', 
-                        #array=numpy.array([1,]*len(scanList)))
+                        #array=np.array([1,]*len(scanList)))
         # DATE-OBS
         c3  = astrofits.Column(name='DATE-OBS', format='10A', 
-                        array = numpy.array(dateList))
+                        array = np.array(dateList))
         # Time elapsed since 0h
         c4  = astrofits.Column(name='TIME', format='1D', unit = 's', 
-                        array = numpy.array(timeList))
+                        array = np.array(timeList))
         # Integration time (seconds)
         c5  = astrofits.Column(name='EXPOSURE', format='1E', unit='s', 
-                        array=numpy.array(intTimeList, dtype=numpy.float32))
+                        array=np.array(intTimeList, dtype=np.float32))
         # Object name
         c6  = astrofits.Column(name='OBJECT', format='16A', 
-                        array=numpy.array(['LWA_OBS',]*len(scanList)))
+                        array=np.array(['LWA_OBS',]*len(scanList)))
         # Object position (deg and deg)
         c7  = astrofits.Column(name='OBJ-RA', format='1D', unit='deg', 
-                        array=numpy.array([0.0,]*len(scanList)))
+                        array=np.array([0.0,]*len(scanList)))
         c8  = astrofits.Column(name='OBJ-DEC', format='1D', unit='deg', 
-                        array=numpy.array([0.0,]*len(scanList)))
+                        array=np.array([0.0,]*len(scanList)))
         # Rest frequency (Hz)
         c9  = astrofits.Column(name='RESTFRQ', format='1D', unit='Hz', 
-                        array=numpy.array([0.0,]*len(scanList)))
+                        array=np.array([0.0,]*len(scanList)))
         # Observation mode
         c10 = astrofits.Column(name='OBSMODE', format='16A', 
-                        array=numpy.array([self.mode,]*len(scanList)))
+                        array=np.array([self.mode,]*len(scanList)))
         # Beam (tuning)
         c11 = astrofits.Column(name='BEAM', format='1I', 
-                        array=numpy.array(beamList))
+                        array=np.array(beamList))
         # IF
         c12 = astrofits.Column(name='IF', format='1I', 
-                        array=numpy.array([self.freq[0].id,]*len(scanList)))
+                        array=np.array([self.freq[0].id,]*len(scanList)))
         # Frequency resolution (Hz)
         c13 = astrofits.Column(name='FREQRES', format='1D', unit='Hz', 
-                        array=numpy.array([self.freq[0].chWidth,]*len(scanList)))
+                        array=np.array([self.freq[0].chWidth,]*len(scanList)))
         # Bandwidth of the system (Hz)
         c14 = astrofits.Column(name='BANDWID', format='1D', unit='Hz', 
-                        array=numpy.array([self.freq[0].totalBW,]*len(scanList)))
+                        array=np.array([self.freq[0].totalBW,]*len(scanList)))
         # Frequency axis - 1
         c15 = astrofits.Column(name='CRPIX1', format='1E',
-                        array=numpy.array([self.refPix,]*len(scanList)))
+                        array=np.array([self.refPix,]*len(scanList)))
         c16 = astrofits.Column(name='CRVAL1', format='1D', unit='Hz', 
-                        array=numpy.array([self.refVal,]*len(scanList)))
+                        array=np.array([self.refVal,]*len(scanList)))
         c17 = astrofits.Column(name='CDELT1', format='1D', unit='Hz', 
-                        array=numpy.array([self.freq[0].chWidth,]*len(scanList)))
+                        array=np.array([self.freq[0].chWidth,]*len(scanList)))
         c18 = astrofits.Column(name='CRVAL3', format='1D', unit='deg', 
-                        array=numpy.array([0.0,]*len(scanList)))
+                        array=np.array([0.0,]*len(scanList)))
         # Dec. axis - 4
         c19 = astrofits.Column(name='CRVAL4', format='1D', unit='deg', 
-                        array=numpy.array([0.0,]*len(scanList)))
+                        array=np.array([0.0,]*len(scanList)))
         ## Scan rate
         #c20 = astrofits.Column(name='SCANRATE', format='2E', unit='deg/s', 
-                        #array=numpy.array([[0,0],]*len(scanList)))
+                        #array=np.array([[0,0],]*len(scanList)))
                         
         #
         # Calibration information (currently not implemented)
         #
         ## System temperature  *** UNKNOWN ***
         #c21 =  astrofits.Column(name='TSYS', format='2E', unit='K', 
-                        #array=numpy.array([[self.tSys,self.tSys],]*len(scanList)))
+                        #array=np.array([[self.tSys,self.tSys],]*len(scanList)))
         ## CALFCTR *** UNKNOWN ***
         #c22 =  astrofits.Column(name='CALFCTR', format='2E', unit='K', 
-                        #array=numpy.array([[1,1],]*len(scanList)))
+                        #array=np.array([[1,1],]*len(scanList)))
         
         # Data
         c23 = astrofits.Column(name='DATA', format='%iE' % (self.nStokes*self.nChan), unit='UNCALIB', 
-                        array=numpy.array(mList))
+                        array=np.array(mList))
                         
         #
         # Data masking table (currently not implemented)
         #
         # Flag table
         #c24 = astrofits.Column(name='FLAGGED', format='%iB' % (self.nStokes*self.nChan), 
-                        #array=numpy.array([[0,]*self.nStokes*self.nChan for s in scanList]))
+                        #array=np.array([[0,]*self.nStokes*self.nChan for s in scanList]))
         
         #
         # Calibration information (currently not implemented)
         #
         ## TCAL *** UNKNOWN ***
         #c25 = astrofits.Column(name='TCAL', format='2E', unit='Jy', 
-                        #array=numpy.array([[1,1] for s in scanList]))
+                        #array=np.array([[1,1] for s in scanList]))
         ## TCALTIME *** UNKNOWN ***
         #c26 = astrofits.Column(name='TCALTIME', format='16A', 
-                        #array=numpy.array(['UNKNOWN',]*len(scanList)))
+                        #array=np.array(['UNKNOWN',]*len(scanList)))
         
         #
         # Pointing information (currently not implemented)
         #
         ## Azimuth *** UNKNOWN ***
         #c27 = astrofits.Column(name='AZIMUTH', format='1E', unit='deg', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## Elevation *** UNKNOWN ***
         #c28 = astrofits.Column(name='ELEVATIO', format='1E', unit='deg', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## Parallactic angle *** UNKNOWN ***
         #c29 = astrofits.Column(name='PARANGLE', format='1E', unit='deg', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         
         #
         # Focusing information (currently not implemented and probably never will be)
         #
         ## FOCUSAXI *** NOT NEEDED ***
         #c30 = astrofits.Column(name='FOCUSAXI', format='1E', unit='m', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## FOCUSTAN *** NOT NEEDED ***
         #c31 = astrofits.Column(name='FOCUSTAN', format='1E', unit='m', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## FOCUSROT *** NOT NEEDED ***
         #c32 = astrofits.Column(name='FOCUSROT', format='1E', unit='deg', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         
         #
         # Weather information (currently not implemented)
         #
         ## Ambient temperature *** UNKNOWN ***
         #c33 = astrofits.Column(name='TAMBIENT', format='1E', unit='C', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## Air pressure *** UNKNOWN ***
         #c34 = astrofits.Column(name='PRESSURE', format='1E', unit='Pa', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## Humidity *** UNKNOWN ***
         #c35 = astrofits.Column(name='HUMIDITY', format='1E', unit='%', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## Wind speed *** UNKNOWN ***
         #c36 = astrofits.Column(name='WINDSPEE', format='1E', unit='m/s', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         ## Wind direction *** UNKNOWN ***
         #c37 = astrofits.Column(name='WINDDIRE', format='1E', unit='deg', 
-                        #array=numpy.array([0,]*len(scanList)))
+                        #array=np.array([0,]*len(scanList)))
         
         # Gather together all of the needed columns and figure out which ones
         # store the data and flag tables.  This information is needed later to

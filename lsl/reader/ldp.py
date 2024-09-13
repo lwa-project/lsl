@@ -11,24 +11,21 @@ Data format objects included are:
   * TBFFile
   * CORFILE
 
-Also included are the LWA1DataFile, LWASVDataFile, and LWADataFile functions 
-that take a filename and try to determine the correct data format object to
-use.
+Also included are the LWA1DataFile, LWASVDataFile, LWANADataFile, and LWADataFile
+functions that take a filename and try to determine the correct data format
+object to use.
+
+.. versionchanged:: 2.1.6
+    Added support for LWA-NA NDP data
 
 .. versionchanged:: 1.2.0
     Added support for LWA-SV ADP data
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import abc
 import copy
-import numpy
+import numpy as np
 import warnings
 from textwrap import fill as tw_fill
 from scipy.stats import norm
@@ -36,6 +33,7 @@ from collections import deque, defaultdict
 
 from lsl.common.dp import fS
 from lsl.common.adp import fC
+from lsl.common.ndp import fC as ndp_fC
 from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
@@ -51,7 +49,7 @@ telemetry.track_module()
 
 __version__ = '0.5'
 __all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
-           'LWASVDataFile', 'LWADataFile']
+           'LWASVDataFile', 'LWANADataFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):
@@ -157,7 +155,7 @@ class LDPFileBase(object):
             raise AttributeError("'%s' object has no attribute '%s'" % (type(self).__name__, name))
             
     def __str__(self):
-        return "%s @ %s" % (type(self).__name__, self.filename)
+        return f"{type(self).__name__} @ {self.filename}"
         
     def __repr__(self):
         n = self.__class__.__name__
@@ -202,8 +200,17 @@ class LDPFileBase(object):
             try:
                 return self.description[key]
             except KeyError:
-                raise ValueError("Unknown key '%s'" % key)
+                raise ValueError(f"Unknown key '{key}'")
                 
+    @property
+    def info(self):
+        """
+        Return a dictionary containing metadata about the file.  Equivalent to
+        calling get_info(None).
+        """
+        
+        return self.description
+        
     def get_remaining_frame_count(self):
         """
         Return the number of frames left in the file.
@@ -477,7 +484,7 @@ class TBWFile(LDPFileBase):
         setTimeRef = 1000
         
         # Initialize the output data array
-        data = numpy.zeros((self.description['nantenna'], nFrames*dataSize), dtype=numpy.int16)
+        data = np.zeros((self.description['nantenna'], nFrames*dataSize), dtype=np.int16)
         
         # Read in the next frame and anticipate any problems that could occur
         i = 0
@@ -742,9 +749,9 @@ class TBNFile(LDPFileBase):
         setTime = None
         count = [0 for i in range(self.description['nantenna'])]
         if return_ci8:
-            data = numpy.zeros((self.description['nantenna'], frame_count*512), dtype=CI8)
+            data = np.zeros((self.description['nantenna'], frame_count*512), dtype=CI8)
         else:
-            data = numpy.zeros((self.description['nantenna'], frame_count*512), dtype=numpy.complex64)
+            data = np.zeros((self.description['nantenna'], frame_count*512), dtype=np.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -775,7 +782,7 @@ class TBNFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
@@ -802,7 +809,7 @@ class TBNFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
@@ -851,7 +858,7 @@ class TBNFile(LDPFileBase):
             count = {}
             for i in range(self.description['nantenna']):
                 count[i] = 0
-            data = numpy.zeros((self.description['nantenna'], nframe*512))
+            data = np.zeros((self.description['nantenna'], nframe*512))
             for i in range(nframe):
                 for j in range(self.description['nantenna']):
                     # Read in the next frame and anticipate any problems that could occur
@@ -866,7 +873,7 @@ class TBNFile(LDPFileBase):
                     aStand = 2*(s-1) + p
                     
                     try:
-                        data[aStand, count[aStand]*512:(count[aStand]+1)*512] = numpy.abs( cFrame.payload.data )
+                        data[aStand, count[aStand]*512:(count[aStand]+1)*512] = np.abs( cFrame.payload.data )
                         count[aStand] +=  1
                     except ValueError:
                         pass
@@ -1141,9 +1148,9 @@ class DRXFile(LDPFileBase):
         # Setup the output arrays
         setTime = None
         if return_ci8:
-            data = numpy.zeros((4,frame_count*4096), dtype=CI8)
+            data = np.zeros((4,frame_count*4096), dtype=CI8)
         else:
-            data = numpy.zeros((4,frame_count*4096), dtype=numpy.complex64)
+            data = np.zeros((4,frame_count*4096), dtype=np.complex64)
             
         # Go!
         nFrameSets = 0
@@ -1203,7 +1210,7 @@ class DRXFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                         
                 if setTime is None:
                     if time_in_samples:
@@ -1231,7 +1238,7 @@ class DRXFile(LDPFileBase):
                         if self.ignore_timetag_errors:
                             warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
                         else:
-                            raise RuntimeError("Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i" % (self._timetagSkip, t, p, actStep))
+                            raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                             
                     if setTime is None:
                         if time_in_samples:
@@ -1282,7 +1289,7 @@ class DRXFile(LDPFileBase):
         # Sample the data
         with FilePositionSaver(self.fh):
             count = {0:0, 1:0, 2:0, 3:0}
-            data = numpy.zeros((4, nframe*4096))
+            data = np.zeros((4, nframe*4096))
             for i in range(nframe):
                 for j in range(self.description['nbeampol']):
                     # Read in the next frame and anticipate any problems that could occur
@@ -1296,7 +1303,7 @@ class DRXFile(LDPFileBase):
                     b,t,p = cFrame.id
                     aStand = 2*(t-1) + p
                     
-                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = numpy.abs( cFrame.payload.data )
+                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = np.abs( cFrame.payload.data )
                     count[aStand] +=  1
                     
         # Statistics
@@ -1496,7 +1503,7 @@ class DRSpecFile(LDPFileBase):
         frame_count = frame_count if frame_count else 1
         
         # Setup the output arrays
-        data = numpy.zeros((2*self.description['nproduct'],frame_count,self.description['LFFT']), dtype=numpy.float32)
+        data = np.zeros((2*self.description['nproduct'],frame_count,self.description['LFFT']), dtype=np.float32)
         
         # Go!
         nFrameSets = 0
@@ -1516,7 +1523,7 @@ class DRSpecFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip} but found {actStep}")
                     
             if setTime is None:
                 if time_in_samples:
@@ -1675,7 +1682,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=
         
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA1 data file" % filename)
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 data file")
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
@@ -1728,20 +1735,22 @@ class TBFFile(LDPFileBase):
                 tbf.read_frame(self.fh)
                 break
             except errors.SyncError:
-                self.fh.seek(-tbf.FRAME_SIZE+1, 1)
+                self.fh.seek(1, 1)
                 
         # Skip over any DRX frames the start of the file
         i = 0
         while True:
             try:
+                mark = self.fh.tell()
                 tbf.read_frame(self.fh)
+                frame_size = self.fh.tell() - mark
                 break
             except errors.SyncError:
                 i += 1
-                self.fh.seek(-tbf.FRAME_SIZE+drx.FRAME_SIZE, 1)
+                self.fh.seek(drx.FRAME_SIZE, 1)
         if i == 0:
-            self.fh.seek(-tbf.FRAME_SIZE, 1)
-        self.fh.seek(-tbf.FRAME_SIZE, 1)
+            self.fh.seek(-frame_size, 1)
+        self.fh.seek(-frame_size, 1)
         
         return True
         
@@ -1752,16 +1761,22 @@ class TBFFile(LDPFileBase):
         
         with FilePositionSaver(self.fh):
             # Read in frame
+            mark = self.fh.tell()
             junkFrame = tbf.read_frame(self.fh)
-            self.fh.seek(-tbf.FRAME_SIZE, 1)
+            frame_size = self.fh.tell() - mark
+            self.fh.seek(-frame_size, 1)
             
             # Basic file information
             try:
                 filesize = os.fstat(self.fh.fileno()).st_size
             except AttributeError:
                 filesize = self.fh.size
-            nFramesFile = (filesize - self.fh.tell()) // tbf.FRAME_SIZE
+            nFramesFile = (filesize - self.fh.tell()) // frame_size
+            adp_id = junkFrame.adp_id
+            nstand = junkFrame.nstand
             srate = fC
+            if adp_id & 0x04:
+                srate = ndp_fC
             bits = 4
             nFramesPerObs = tbf.get_frames_per_obs(self.fh)
             nchan = tbf.get_channel_count(self.fh)
@@ -1771,9 +1786,9 @@ class TBFFile(LDPFileBase):
             self.mapper = tbf.get_first_channel(self.fh, all_frames=True)
             
             # Check for contiguous frequency coverage
-            chan_steps = numpy.diff(self.mapper)
+            chan_steps = np.diff(self.mapper)
             if not all(chan_steps == tbf.FRAME_CHANNEL_COUNT):
-                bad_steps = numpy.where(chan_steps != tbf.FRAME_CHANNEL_COUNT)[0]
+                bad_steps = np.where(chan_steps != tbf.FRAME_CHANNEL_COUNT)[0]
                 warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
                 
             # Find the "real" starttime
@@ -1783,14 +1798,14 @@ class TBFFile(LDPFileBase):
             startRaw = junkFrame.payload.timetag
             
         # Calculate the frequencies
-        freq = numpy.zeros(nchan)
+        freq = np.zeros(nchan)
         for i,c in enumerate(self.mapper):
-            freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + numpy.arange(tbf.FRAME_CHANNEL_COUNT)
-        freq *= fC
+            freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + np.arange(tbf.FRAME_CHANNEL_COUNT)
+        freq *= srate
         
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbf.FRAME_SIZE,
-                            'sample_rate': srate, 'data_bits': bits, 
-                            'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
+                            'sample_rate': srate, 'data_bits': bits,
+                            'nantenna': nstand*2, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
                             'start_time_samples': startRaw}
                         
         # Initialize the buffer as part of the description process
@@ -1810,13 +1825,15 @@ class TBFFile(LDPFileBase):
             than to the start of the file
         """
         
+        frame_size = self.description['frame_size']
+        
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
             if curr is None:
                 frame = tbf.read_frame(self.fh)
-                self.fh.seek(-tbf.FRAME_SIZE, 1)
+                self.fh.seek(-frame_size, 1)
                 curr = frame.payload.time_tag
             buffer_offset = curr - self._timetag
             buffer_offset = buffer_offset / fS
@@ -1825,7 +1842,7 @@ class TBFFile(LDPFileBase):
         framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
         frameOffset = int(offset * self.description['sample_rate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
-        self.fh.seek(frameOffset*tbf.FRAME_SIZE, 1)
+        self.fh.seek(frameOffset*frame_size, 1)
         
         # Update the file metadata
         self._describe_file()
@@ -1908,9 +1925,9 @@ class TBFFile(LDPFileBase):
         setTime = None
         count = [0 for i in range(framesPerObs)]
         if return_ci8:
-            data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=CI8)
+            data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=CI8)
         else:
-            data = numpy.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=numpy.complex64)
+            data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=np.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -1946,7 +1963,7 @@ class TBFFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
@@ -1959,7 +1976,7 @@ class TBFFile(LDPFileBase):
                         setTime = cFrame.time
                         
                 subData = cFrame.payload.data
-                subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
+                subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
                 subData = subData.T
                 
                 aStand = self.mapper.index(first_chan)
@@ -1979,7 +1996,7 @@ class TBFFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
@@ -1992,7 +2009,7 @@ class TBFFile(LDPFileBase):
                             setTime = cFrame.time
                         
                     subData = cFrame.payload.data
-                    subData.shape = (tbf.FRAME_CHANNEL_COUNT,512)
+                    subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
                     subData = subData.T
                     
                     aStand = self.mapper.index(first_chan)
@@ -2078,7 +2095,10 @@ class CORFile(LDPFileBase):
             except AttributeError:
                 filesize = self.fh.size
             nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
+            adp_id = junkFrame.adp_id
             srate = fC
+            if adp_id & 0x04:
+                srate = ndp_fC
             bits = 32
             nFramesPerObs = cor.get_frames_per_obs(self.fh)
             nchan = cor.get_channel_count(self.fh)
@@ -2114,10 +2134,10 @@ class CORFile(LDPFileBase):
             self.cmapperd[c] = i
             
         # Calculate the frequencies
-        freq = numpy.zeros(nchan)
+        freq = np.zeros(nchan)
         for i,c in enumerate(self.cmapper):
-            freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + numpy.arange(cor.FRAME_CHANNEL_COUNT)
-        freq *= fC
+            freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + np.arange(cor.FRAME_CHANNEL_COUNT)
+        freq *= srate
         
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': cor.FRAME_SIZE,
                             'sample_rate': srate, 'data_bits': bits, 
@@ -2232,7 +2252,7 @@ class CORFile(LDPFileBase):
         eofFound = False
         setTime = None
         count = [0 for i in range(framesPerObs)]
-        data = numpy.zeros((self.description['nbaseline'], self.description['nchan'], 2, 2, frame_count), dtype=numpy.complex64)
+        data = np.zeros((self.description['nbaseline'], self.description['nchan'], 2, 2, frame_count), dtype=np.complex64)
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -2268,7 +2288,7 @@ class CORFile(LDPFileBase):
                 if self.ignore_timetag_errors:
                     warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                 else:
-                    raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
             
             for cFrame in cFrames:
@@ -2299,7 +2319,7 @@ class CORFile(LDPFileBase):
                     if self.ignore_timetag_errors:
                         warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
                     else:
-                        raise RuntimeError("Invalid timetag skip encountered, expected %i, but found %i" % (timetagSkip, actStep))
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
                 
                 for cFrame in cFrames:
@@ -2363,7 +2383,189 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         
         ## Sort out the frame size.  This is tricky because DR spectrometer files
         ## have frames of different sizes depending on the mode
-        if mode == drspec:
+        if mode == tbf:
+            try:
+                mfs = tbf.get_frame_size(fh)
+            except:
+                mfs = 0
+        elif mode == drspec:
+            try:
+                mfs = drspec.get_frame_size(fh)
+            except:
+                mfs = 0
+        else:
+            mfs = mode.FRAME_SIZE
+            
+        ## Loop over the frame size to try and find what looks like valid data.  If
+        ## is is found, set 'foundMatch' to True.
+        for i in range(mfs):
+            try:
+                junkFrame = mode.read_frame(fh)
+                foundMatch = True
+                break
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                fh.seek(-mfs+1, 1)
+                
+        ## Did we strike upon a valid frame?
+        if foundMatch:
+            ### Is so, we now need to try and read more frames to make sure we have 
+            ### the correct type of file
+            fh.seek(-mfs, 1)
+            
+            try:
+                for i in range(2):
+                    junkFrame = mode.read_frame(fh)
+                if mode == tbf and junkFrame.nstand != 256:
+                    raise errors.SyncError
+                foundMode = True
+            except errors.EOFError:
+                break
+            except errors.SyncError:
+                ### Reset for the next mode...
+                fh.seek(0)
+        else:
+            ### Reset for the next mode...
+            fh.seek(0)
+            
+        ## Did we read more than one valid frame?
+        if foundMode:
+            break
+            
+    # There is an ambiguity that can arise for TBF data such that it *looks* 
+    # like DRX.  If the identified mode is DRX, skip halfway into the file and 
+    # verify that it is still DRX.   We also need to catch the LWA1 TBN vs.
+    # TBW ambiguity since we could have been given an LWA1 file by accident.
+    if mode in (drx, tbn):
+        ## Sort out the frame size
+        omfs = mode.FRAME_SIZE
+        
+        ## Seek half-way in
+        if is_splitfile:
+            nFrames = fh.size//omfs
+        else:
+            nFrames = os.path.getsize(filename)//omfs
+        fh.seek(nFrames//2*omfs)
+        
+        ## Read a bit of data to try to find the right type
+        for mode in (tbn, drx, tbf):
+            ### Set if we find a valid frame marker
+            foundMatch = False
+            ### Set if we can read more than one valid successfully
+            foundMode = False
+            
+            ### Sort out the frame size.
+            try:
+                mfs = mode.FRAME_SIZE
+            except AttributeError:
+                mfs = 0
+                
+            ### Loop over the frame size to try and find what looks like valid data.  If
+            ### is is found, set 'foundMatch' to True.
+            for i in range(mfs):
+                try:
+                    junkFrame = mode.read_frame(fh)
+                    foundMatch = True
+                    break
+                except errors.EOFError:
+                    break
+                except errors.SyncError:
+                    fh.seek(-mfs+1, 1)
+                    
+            ### Did we strike upon a valid frame?
+            if foundMatch:
+                #### Is so, we now need to try and read more frames to make sure we have 
+                #### the correct type of file
+                fh.seek(-mfs, 1)
+                
+                try:
+                    for i in range(4):
+                        junkFrame = mode.read_frame(fh)
+                    if mode == tbf and junkFrame.nstand != 256:
+                        raise errors.SyncError
+                    foundMode = True
+                except errors.SyncError:
+                    #### Reset for the next mode...
+                    fh.seek(nFrames//2*omfs)
+            else:
+                #### Reset for the next mode...
+                fh.seek(nFrames//2*omfs)
+                
+            ### Did we read more than one valid frame?
+            if foundMode:
+                break
+                
+    fh.seek(0)
+    if not is_splitfile:
+        fh.close()
+        fh = None
+    
+    # Raise an error if nothing is found
+    if not foundMode:
+        raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
+        
+    # Otherwise, build and return the correct LDPFileBase sub-class
+    if mode == drx:
+        ldpInstance = DRXFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == tbn:
+        ldpInstance = TBNFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == tbf:
+        ldpInstance = TBFFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == cor:
+        ldpInstance = CORFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    else:
+        ldpInstance = DRSpecFile(filename=filename, fh=fh,
+                                 ignore_timetag_errors=ignore_timetag_errors,
+                                 buffering=buffering)
+        
+    # Done
+    return ldpInstance
+
+
+def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
+    """
+    Wrapper around the various LWA-NA-related classes defined here that takes
+    a file, determines the data type, and initializes and returns the 
+    appropriate LDP class.
+    """
+    
+    # Open the file as appropriate
+    is_splitfile = False
+    if fh is None:
+        fh = open(filename, 'rb')
+    else:
+        filename = fh.name
+        if not isinstance(fh, SplitFileWrapper):
+            if fh.mode.find('b') == -1:
+                fh.close()
+                fh = open(filename, 'rb')
+        else:
+            is_splitfile = True
+            
+    # Read a bit of data to try to find the right type
+    for mode in (drx, tbf, cor, drspec):
+        ## Set if we find a valid frame marker
+        foundMatch = False
+        ## Set if we can read more than one valid successfully
+        foundMode = False
+        
+        ## Sort out the frame size.  This is tricky because DR spectrometer files
+        ## have frames of different sizes depending on the mode
+        if mode == tbf:
+            try:
+                mfs = tbf.get_frame_size(fh)
+            except:
+                mfs = 0
+        elif mode == drspec:
             try:
                 mfs = drspec.get_frame_size(fh)
             except:
@@ -2408,8 +2610,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             
     # There is an ambiguity that can arise for TBF data such that it *looks* 
     # like DRX.  If the identified mode is DRX, skip halfway into the file and 
-    # verify that it is still DRX.   We also need to catch the LWA1 TBN vs.
-    # TBW ambiguity since we could have been given an LWA1 file by accident.
+    # verify that it is still DRX.
     if mode in (drx, tbn):
         ## Sort out the frame size
         omfs = mode.FRAME_SIZE
@@ -2422,15 +2623,18 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
-        for mode in (tbn, drx, tbf):
+        for mode in (drx, tbf):
             ### Set if we find a valid frame marker
             foundMatch = False
             ### Set if we can read more than one valid successfully
             foundMode = False
             
             ### Sort out the frame size.
-            mfs = mode.FRAME_SIZE
-            
+            try:
+                mfs = mode.FRAME_SIZE
+            except AttributeError:
+                mfs = 0
+                
             ### Loop over the frame size to try and find what looks like valid data.  If
             ### is is found, set 'foundMatch' to True.
             for i in range(mfs):
@@ -2471,15 +2675,11 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
     
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA-NA data file")
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
         ldpInstance = DRXFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == tbn:
-        ldpInstance = TBNFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
     elif mode == tbf:
@@ -2528,9 +2728,19 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
         except RuntimeError:
             pass
             
+    # LWA-NA?
+    if not found:
+        try:
+            ldpInstance = LWANADataFile(filename=filename, fh=fh,
+                                       ignore_timetag_errors=ignore_timetag_errors,
+                                       buffering=buffering)
+            found = True
+        except RuntimeError:
+            pass
+            
     # Failed?
     if not found:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA1 or LWA-SV data file" % filename)
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 or LWA-SV data file")
         
     return ldpInstance
 

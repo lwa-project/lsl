@@ -4,25 +4,16 @@ Basic telemetry client for LSL to help establish usage patterns
 .. versionadded:: 2.0.0
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
+import sys
 import time
 import uuid
 import atexit
 import socket
 import inspect
 import warnings
-try:
-    from urllib2 import urlopen
-    from urllib import urlencode
-except ImportError:
-    from urllib.request import urlopen
-    from urllib.parse import urlencode
+from urllib.request import urlopen
+from urllib.parse import urlencode
 from threading import RLock
 from functools import wraps
 
@@ -58,7 +49,7 @@ try:
         
     _IS_READONLY = False
 except OSError as e:
-    _INSTALL_KEY = None
+    _INSTALL_KEY = ''
     _IS_READONLY = True
     
     warnings.warn("Could not create telemetry cache, telemetry will be disabled for this session: %s" % str(e),
@@ -75,6 +66,7 @@ class _TelemetryClient(object):
         # Setup
         self.key = key
         self.version = version
+        self.py_version = "%i.%i" % (sys.version_info.major, sys.version_info.minor)
         self.max_entries = TELE_CONFIG.get('max_entries')
         self.timeout = TELE_CONFIG.get('timeout')
         
@@ -137,15 +129,11 @@ class _TelemetryClient(object):
                     payload = urlencode({'timestamp'   : int(tNow),
                                          'key'         : self.key, 
                                          'version'     : self.version,
+                                         'py_version'  : self.py_version,
                                          'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
                                          'payload'     : payload})
-                    try:
-                        payload = payload.encode()
-                    except AttributeError:
-                        pass
-                    uh = urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload, 
-                                 timeout=self.timeout)
-                    status = uh.read()
+                    with urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload.encode(), timeout=self.timeout) as uh:
+                        status = uh.read()
                     if status == '':
                         self.clear()
                         success = True

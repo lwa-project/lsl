@@ -2,17 +2,11 @@
 Unit test for the lsl.statistics.kurtosis module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import time
 import warnings
 import unittest
-import numpy
+import numpy as np
 
 from lsl.statistics import kurtosis
 
@@ -39,7 +33,7 @@ class kurtosis_tests(unittest.TestCase):
     def test_kurtosis(self):
         """Test that spectal kurtosis runs"""
         
-        data = numpy.random.randn(300) + numpy.random.randn(300)*1j
+        data = np.random.randn(300) + np.random.randn(300)*1j
         sk = kurtosis.spectral_fft(data)
         lower, upper = kurtosis.get_limits(6, data.size, N=1)
         self.assertTrue(sk > lower)
@@ -48,8 +42,8 @@ class kurtosis_tests(unittest.TestCase):
     def test_kurtosis_axis(self):
         """Test that spectral kurtosis runs along an axis"""
         
-        data = numpy.random.randn(300, 128) + numpy.random.randn(300, 128)*1j
-        sk0 = numpy.zeros(data.shape[1])
+        data = np.random.randn(300, 128) + np.random.randn(300, 128)*1j
+        sk0 = np.zeros(data.shape[1])
         for i in range(data.shape[1]):
             sk0[i] = kurtosis.spectral_fft(data[:,i])
         sk1 = kurtosis.spectral_fft(data, axis=0)

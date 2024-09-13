@@ -1,19 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """
 Utility for estimating the ionospheric contribution to the DM and RM for
 a given point on the sky at a given time.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import sys
 import ephem
-import numpy
+import numpy as np
 import argparse
 from datetime import datetime
 
@@ -30,14 +24,14 @@ telemetry.track_script()
 def main(args):
     # Inputs
     if args.file is not None:
-        mjdList = numpy.loadtxt(args.file)
+        mjdList = np.loadtxt(args.file)
         mjdList = mjdList.ravel()
         
-        mjdList = numpy.sort(mjdList)
+        mjdList = np.sort(mjdList)
         
     else:
-        tStart = "%s %s" % (args.StartDate, args.StartTime)
-        tStop = "%s %s" % (args.StopDate, args.StopTime)
+        tStart = f"{args.StartDate} {args.StartTime}"
+        tStop = f"{args.StopDate} {args.StopTime}"
         
         # YYYY/MM/DD HH:MM:SS -> datetime instance
         tStart = datetime.strptime(tStart, "%Y/%m/%d %H:%M:%S.%f")
@@ -49,10 +43,12 @@ def main(args):
         mjd,mpm = datetime_to_mjdmpm(tStop)
         mjdStop = mjd + mpm/1000.0/86400.0
         
-        mjdList = numpy.linspace(mjdStart, mjdStop, args.n_samples)
+        mjdList = np.linspace(mjdStart, mjdStop, args.n_samples)
     
     # Setup everything for computing the position of the source
     if args.lwasv:
+        site = stations.lwasv
+    elif args.lwana:
         site = stations.lwasv
     elif args.ovrolwa:
         site = stations.lwa1
@@ -87,8 +83,8 @@ def main(args):
         # Set the date and compute the location of the target
         obs.date = mjd + astro.MJD_OFFSET - astro.DJD_OFFSET
         bdy.compute(obs)
-        az = bdy.az*180/numpy.pi
-        el = bdy.alt*180/numpy.pi
+        az = bdy.az*180/np.pi
+        el = bdy.alt*180/np.pi
         
         if el > 0:
             # Get the latitude, longitude, and height of the ionospheric pierce 
@@ -104,11 +100,11 @@ def main(args):
             
             # Rotate the ECEF field into topocentric coordinates so that we can 
             # get the magnetic field along the line of sight
-            rot = numpy.array([[ numpy.sin(site.lat)*numpy.cos(site.long), numpy.sin(site.lat)*numpy.sin(site.long), -numpy.cos(site.lat)], 
-                               [-numpy.sin(site.long),                     numpy.cos(site.long),                      0                  ],
-                               [ numpy.cos(site.lat)*numpy.cos(site.long), numpy.cos(site.lat)*numpy.sin(site.long),  numpy.sin(site.lat)]])
+            rot = np.array([[ np.sin(site.lat)*np.cos(site.long), np.sin(site.lat)*np.sin(site.long), -np.cos(site.lat)], 
+                            [-np.sin(site.long),                     np.cos(site.long),                      0                  ],
+                            [ np.cos(site.lat)*np.cos(site.long), np.cos(site.lat)*np.sin(site.long),  np.sin(site.lat)]])
             ## ECEF -> SEZ
-            sez = numpy.dot(rot, numpy.array([Bx, By, Bz]))
+            sez = np.dot(rot, np.array([Bx, By, Bz]))
             ## SEZ -> NEZ
             enz = 1.0*sez[[1,0,2]]
             enz[1] *= -1.0
@@ -116,10 +112,10 @@ def main(args):
             # Compute the pointing vector for this direction and use that to get
             # B parallel.  Note that we need a negative sign when we dot to get
             # the direction of propagation right.
-            pnt = numpy.array([numpy.cos(el*numpy.pi/180)*numpy.sin(az*numpy.pi/180),
-                        numpy.cos(el*numpy.pi/180)*numpy.cos(az*numpy.pi/180), 
-                        numpy.sin(el*numpy.pi/180)])
-            Bparallel = -numpy.dot(pnt, enz)
+            pnt = np.array([np.cos(el*np.pi/180)*np.sin(az*np.pi/180),
+                            np.cos(el*np.pi/180)*np.cos(az*np.pi/180), 
+                            np.sin(el*np.pi/180)])
+            Bparallel = -np.dot(pnt, enz)
             
             # Compute the dispersion measure and the RMS
             DM    = 3.24078e-23 * (tec*1e16)
@@ -156,6 +152,8 @@ if __name__ == "__main__":
     sgroup = parser.add_mutually_exclusive_group(required=False)
     sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='calculate for LWA-SV instead of LWA1')
+    sgroup.add_argument('-a', '--lwana', action='store_true', 
+                        help='calculate for LWA-NA instead of LWA1')
     sgroup.add_argument('-o', '--ovrolwa', action='store_true',
                         help='calculate for OVRO-LWA instead of LWA1')
     parser.add_argument('-n', '--n-samples', type=aph.positive_int, default=11, 
@@ -177,4 +175,3 @@ if __name__ == "__main__":
                         help='use the high time resolution UQRG data products')
     args = parser.parse_args()
     main(args)
-    

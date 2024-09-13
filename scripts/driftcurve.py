@@ -1,19 +1,13 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 Predict driftcurve for a given site using a given antenna model.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import sys
 import math
-import numpy
+import numpy as np
 import pylab
 import argparse
 
@@ -42,6 +36,9 @@ def main(args):
     if args.lwasv:
         nam = 'lwasv'
         sta = stations.lwasv
+    elif args.lwana:
+        nam = 'lwana'
+        sta = stations.lwana
     elif args.ovrolwa:
         nam = 'ovro'
         sta = stations.lwa1
@@ -53,27 +50,27 @@ def main(args):
     # Read in the skymap (GSM or LF map @ 74 MHz)
     if not args.lfsm:
         smap = skymap.SkyMapGSM(freq_MHz=args.frequency/1e6)
-        if args.verbose:
-            print("Read in GSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
+        smap_name = 'GSM'
     else:
         smap = skymap.SkyMapLFSM(freq_MHz=args.frequency/1e6)
-        if args.verbose:
-            print("Read in LFSM map at %.2f MHz of %s pixels; min=%f, max=%f" % (args.frequency/1e6, len(smap.ra), smap._power.min(), smap._power.max()))
-            
-    # Beam pattern function
+        smap_name = 'LFSM'
+    if args.verbose:
+        print(f"Read in {smap_name} map at {args.frequency/1e6:.2f} MHz of {len(smap.ra)} pixels; min={smap._power.min()}, max={smap._power.max()}")
+        
+    # Dipole beam pattern function
     model = 'llfss' if args.empirical else 'empirical'
     pol = 'XX' if args.pol == 'EW' else 'YY'
     bfunc = lambda x, y: beam_response(model, pol, x, y, frequency=args.frequency, degrees=True)
     
     if args.do_plot:
-        az = numpy.zeros((90,360))
-        alt = numpy.zeros((90,360))
+        az = np.zeros((90,360))
+        alt = np.zeros((90,360))
         for i in range(360):
             az[:,i] = i
         for i in range(90):
             alt[i,:] = i
         pylab.figure(1)
-        pylab.title("Beam Response: %s pol. @ %0.2f MHz" % (args.pol, args.frequency/1e6))
+        pylab.title(f"Antenna Response: {args.pol} pol. @ {args.frequency/1e6:.2f} MHz")
         pylab.imshow(bfunc(az, alt), extent=(0,359, 0,89), origin='lower')
         pylab.xlabel("Azimuth [deg]")
         pylab.ylabel("Altitude [deg]")
@@ -84,7 +81,7 @@ def main(args):
     t0 = astro.get_julian_from_sys()
     lst = astro.get_local_sidereal_time(sta.long*180.0/math.pi, t0) / 24.0
     t0 -= lst*(23.933/24.0) # Compensate for shorter sidereal days
-    times = numpy.arange(0.0, 1.0, args.time_step/1440.0) + t0
+    times = np.arange(0.0, 1.0, args.time_step/1440.0) + t0
     
     lstList = []
     powListAnt = [] 
@@ -104,15 +101,14 @@ def main(args):
             lstH = int(lst)
             lstM = int((lst - lstH)*60.0)
             lstS = ((lst - lstH)*60.0 - lstM)*60.0
-            sys.stdout.write("LST: %02i:%02i:%04.1f, Power_ant: %.1f K\r" % (lstH, lstM, lstS, powerAnt))
+            sys.stdout.write(f"LST: {lstH:02d}:{lstM:02d}:{lstS:04.1f}, Power_ant: {powerAnt:.1f} K\r")
             sys.stdout.flush()
     sys.stdout.write("\n")
             
     # plot results
     if args.do_plot:
         pylab.figure(2)
-        pylab.title("Driftcurve: %s pol. @ %0.2f MHz - %s" % \
-            (args.pol, args.frequency/1e6, nam.upper()))
+        pylab.title(f"Driftcurve: {args.pol} pol. @ {args.frequency/1e6:.2f} MHz - {nam.upper()}")
         pylab.plot(lstList, powListAnt, "ro", label="Antenna Pattern")
         pylab.xlabel("LST [hours]")
         pylab.ylabel("Temp. [K]")
@@ -120,12 +116,11 @@ def main(args):
         pylab.draw()
         pylab.show()
     
-    outputFile = "driftcurve_%s_%s_%.2f.txt" % (nam, args.pol, args.frequency/1e6)
-    print("Writing driftcurve to file '%s'" % outputFile)
-    mf = file(outputFile, "w")
-    for lst,pow in zip(lstList, powListAnt):
-        mf.write("%f  %f\n" % (lst, pow))
-    mf.close()
+    outputFile = f"driftcurve_{nam}_{args.pol}_{args.frequency/1e6:.2f}.txt"
+    print(f"Writing driftcurve to file '{outputFile}'")
+    with open(outputFile, "w") as mf:
+        for lst,pow in zip(lstList, powListAnt):
+            mf.write(f"{lst}  {pow}\n")
 
 
 if __name__ == '__main__':
@@ -136,8 +131,10 @@ if __name__ == '__main__':
     parser.add_argument('-f', '--frequency', type=aph.frequency, default='74.0', 
                     help='frequency of the simulation in MHz')
     sgroup = parser.add_mutually_exclusive_group(required=False)
-    sgroup.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup.add_argument('-s', '--lwasv', action='store_true',
                         help='calculate for LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true',
+                        help='calculate for LWA-NA instead of LWA1')
     sgroup.add_argument('-o', '--ovrolwa', action='store_true',
                         help='calculate for OVRO-LWA instead of LWA1')
     parser.add_argument('-p', '--pol', type=str, default='EW', 

@@ -2,12 +2,6 @@
 Extended unit test for the lsl.reader.ldp module.
 """
 
-# Python2 compatibility
-from __future__ import print_function, division, absolute_import
-import sys
-if sys.version_info < (3,):
-    range = xrange
-    
 import os
 import unittest
 import tempfile
@@ -47,8 +41,9 @@ class extended_ldp_tests(unittest.TestCase):
         
         for filename,url in zip((tbnFile, drxFile, drspecFile), (_TBN_URL,_DRX_URL,_SPC_URL)):
             if not os.path.exists(filename):
-                subprocess.check_call(['curl', url, 
-                                   '--range', '0-%i' % (250*1024*1024), 
+                subprocess.check_call(['curl', url,
+                                   '--silent',
+                                   '--range', '0-%i' % (250*1024*1024),
                                    '-o', filename])
                 
     def test_tbn_estimate(self):
