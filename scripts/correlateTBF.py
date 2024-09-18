@@ -256,9 +256,9 @@ def main(args):
         leftToDo = args.samples
         while leftToDo > 0:
             if args.casa:
-                fitsFilename = f"{basename}.ms_{s+1}")
+                fitsFilename = f"{basename}.ms_{s+1}"
             else:
-                fitsFilename = f"{basename}.FITS_{s+1}")
+                fitsFilename = f"{basename}.FITS_{s+1}"
                 
             if leftToDo > 100:
                 chunk = 100
