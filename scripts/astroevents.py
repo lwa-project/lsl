@@ -41,7 +41,7 @@ if __name__ == '__main__':
     nam = station.name
     lng = astro.deg_to_dms(station.long*180/math.pi)
     lat = astro.deg_to_dms(station.lat*180/math.pi)
-    lwa_lnlat = astro.lnlat_posn(lng, lat)
+    lwa_lnlat = astro.geo_posn(lng, lat)
     
     print('---------------------------------------------------------------')
     print('%s location' % nam)
