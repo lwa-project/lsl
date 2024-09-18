@@ -178,7 +178,7 @@ def main(args):
         station = stations.lwasv
     antennas = station.antennas
     
-    with LWADataFile(filename) as idf:
+    with LWADataFile(args.filename) as idf:
         if not isinstance(idf, TBFFile):
             raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBF file")
             
@@ -250,7 +250,7 @@ def main(args):
         # Loop over junks of 100 integrations to make sure that we don't overflow 
         # the FITS IDI memory buffer
         s = 0
-        basename = os.path.split(filename)[1]
+        basename = os.path.split(args.filename)[1]
         basename, ext = os.path.splitext(basename)
         
         leftToDo = args.samples
