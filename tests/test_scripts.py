@@ -48,7 +48,7 @@ class scripts_tests(unittest.TestCase):
                         self.assertTrue(False, f"{entry['path']}:{entry['line']} - {entry['message']}")
                         
     def test_help(self):
-        """Help test of the LSL scripts."""
+        """Help/documentation in the LSL scripts."""
         
         _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
         _SCRIPTS.sort()
@@ -57,7 +57,7 @@ class scripts_tests(unittest.TestCase):
             with self.subTest(script=name):
                 try:
                     status = subprocess.check_call([sys.executable, script, '--help'],
-                                                   stdout=subprocess.DEVNULL,# stderr=subprocess.DEVNULL,
+                                                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                                    cwd=os.path.dirname(MODULE_BUILD))
                     self.assertTrue(status == 0, f"Non-zero exit code when running script with '--help' flag: {status}")
                 except subprocess.CalledProcessError as e:
