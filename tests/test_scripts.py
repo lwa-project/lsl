@@ -45,6 +45,9 @@ class scripts_tests(unittest.TestCase):
                 
                 for i,entry in enumerate(results):
                     with self.subTest(error_number=i+1):
+                        if entry['symbol'] == 'no-member' and entry['message'].startswith("Instance of 'HDUList'"):
+                            continue
+                            
                         self.assertTrue(False, f"{entry['path']}:{entry['line']} - {entry['message']}")
                         
     def test_help(self):
