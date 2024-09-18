@@ -24,6 +24,9 @@ __version__  = "0.2"
 __author__   = "Jayce Dowell"
 
 
+_PYLINT_IGNORES = [('no-member', "Instance of 'HDUList'"),]
+
+
 @unittest.skipUnless(run_scripts_tests, "requires the 'pylint' module")
 class scripts_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the LSL scripts."""
@@ -44,7 +47,12 @@ class scripts_tests(unittest.TestCase):
                 
                 for i,entry in enumerate(results):
                     with self.subTest(error_number=i+1):
-                        if entry['symbol'] == 'no-member' and entry['message'].startswith("Instance of 'HDUList'"):
+                        false_positive = False
+                        for isym,imesg in _PYLINT_IGNORES:
+                            if entry['symbol'] == isym and entry['message'].startswith(imesg):
+                                false_positive = True
+                                break
+                        if false_positive:
                             continue
                             
                         self.assertTrue(False, f"{entry['path']}:{entry['line']} - {entry['symbol']} - {entry['message']}")
