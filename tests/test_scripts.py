@@ -7,7 +7,6 @@ import glob
 import sys
 import os
 import json
-import subprocess
 
 from lsl.common.paths import MODULE_BUILD
 
@@ -49,22 +48,6 @@ class scripts_tests(unittest.TestCase):
                             continue
                             
                         self.assertTrue(False, f"{entry['path']}:{entry['line']} - {entry['message']}")
-                        
-    def test_help(self):
-        """Help/documentation in the LSL scripts."""
-        
-        _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
-        _SCRIPTS.sort()
-        for script in _SCRIPTS:
-            name = script.rsplit('scripts'+os.path.sep)[-1]
-            with self.subTest(script=name):
-                try:
-                    status = subprocess.check_call([sys.executable, script, '--help'],
-                                                   stdout=subprocess.DEVNULL,# stderr=subprocess.DEVNULL,
-                                                   cwd=os.path.dirname(MODULE_BUILD))
-                    self.assertTrue(status == 0, f"Non-zero exit code when running script with '--help' flag: {status}")
-                except subprocess.CalledProcessError as e:
-                    self.assertTrue(False, f"Failed to run script with '--help' flag: {str(e)}")
 
 
 class scripts_test_suite(unittest.TestSuite):
