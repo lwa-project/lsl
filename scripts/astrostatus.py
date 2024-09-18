@@ -128,7 +128,7 @@ if __name__ == '__main__':
             strdict['sun_alt'] = "%6.2f" % sun_hrz.alt
             strdict['sun_az'] = "%6.2f" % sun_hrz.az
             try:
-                if sun_hrz.alt > last_sun_hrz.alt:
+                if sun_hrz.alt > last_sun_hrz.alt:      # pylint: disable=used-before-assignment
                     sun_rising = True
                 else:
                     sun_rising = False
@@ -144,7 +144,7 @@ if __name__ == '__main__':
             strdict['jup_alt'] = "%6.2f" % jup_hrz.alt
             strdict['jup_az'] = "%6.2f" % jup_hrz.az
             try:
-                if jup_hrz.alt > last_jup_hrz.alt:
+                if jup_hrz.alt > last_jup_hrz.alt:      # pylint: disable=used-before-assignment
                     jup_rising = True
                 else:
                     jup_rising = False
@@ -160,7 +160,7 @@ if __name__ == '__main__':
             strdict['gal_alt'] = "%6.2f" % gal_hrz.alt
             strdict['gal_az'] = "%6.2f" % gal_hrz.az
             try:
-                if gal_hrz.alt > last_gal_hrz.alt:
+                if gal_hrz.alt > last_gal_hrz.alt:      # pylint: disable=used-before-assignment
                     gal_rising = True
                 else:
                     gal_rising = False
@@ -176,7 +176,7 @@ if __name__ == '__main__':
             strdict['tau_alt'] = "%6.2f" % tau_hrz.alt
             strdict['tau_az'] = "%6.2f" % tau_hrz.az
             try:
-                if tau_hrz.alt > last_tau_hrz.alt:
+                if tau_hrz.alt > last_tau_hrz.alt:      # pylint: disable=used-before-assignment
                     tau_rising = True
                 else:
                     tau_rising = False
@@ -192,7 +192,7 @@ if __name__ == '__main__':
             strdict['cas_alt'] = "%6.2f" % cas_hrz.alt
             strdict['cas_az'] = "%6.2f" % cas_hrz.az
             try:
-                if cas_hrz.alt > last_cas_hrz.alt:
+                if cas_hrz.alt > last_cas_hrz.alt:      # pylint: disable=used-before-assignment
                     cas_rising = True
                 else:
                     cas_rising = False
@@ -208,7 +208,7 @@ if __name__ == '__main__':
             strdict['cyg_alt'] = "%6.2f" % cyg_hrz.alt
             strdict['cyg_az'] = "%6.2f" % cyg_hrz.az
             try:
-                if cyg_hrz.alt > last_cyg_hrz.alt:
+                if cyg_hrz.alt > last_cyg_hrz.alt:      # pylint: disable=used-before-assignment
                     cyg_rising = True
                 else:
                     cyg_rising = False
