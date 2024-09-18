@@ -144,7 +144,7 @@ def main(args):
     #
     import shutil
     import tempfile
-    from distutils import sysconfig
+    import sysconfig
     from distutils import ccompiler
     compiler = ccompiler.new_compiler()
     sysconfig.get_config_vars()
