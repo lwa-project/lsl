@@ -24,7 +24,9 @@ __version__  = "0.2"
 __author__   = "Jayce Dowell"
 
 
-_PYLINT_IGNORES = [('no-member', "Instance of 'HDUList'"),]
+_PYLINT_IGNORES = [('no-member',         "Instance of 'HDUList'"),
+                   ('no-name-in-module', "No name 'c' in module 'astropy.constants'"),
+                   ('no-name-in-module', "No name 'XEngine2' in module 'lsl.correlator._core'")]
 
 
 @unittest.skipUnless(run_scripts_tests, "requires the 'pylint' module")
