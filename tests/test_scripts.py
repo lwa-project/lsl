@@ -47,7 +47,7 @@ class scripts_tests(unittest.TestCase):
                         if entry['symbol'] == 'no-member' and entry['message'].startswith("Instance of 'HDUList'"):
                             continue
                             
-                        self.assertTrue(False, f"{entry['path']}:{entry['line']} - {entry['message']}")
+                        self.assertTrue(False, f"{entry['path']}:{entry['line']} - {entry['symbol']} - {entry['message']}")
 
 
 class scripts_test_suite(unittest.TestSuite):
