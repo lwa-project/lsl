@@ -7,6 +7,7 @@ import glob
 import sys
 import os
 import json
+import subprocess
 
 from lsl.common.paths import MODULE_BUILD
 
@@ -34,8 +35,8 @@ class scripts_tests(unittest.TestCase):
         _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
         _SCRIPTS.sort()
         for script in _SCRIPTS:
-            name = script.rsplit('scripts')[-1]
-            with self.subTest(script=name.replace(os.path.sep, '')):
+            name = script.rsplit('scripts'+os.path.sep)[-1]
+            with self.subTest(script=name):
                 pylint_output = StringIO()
                 reporter = JSONReporter(pylint_output)
                 pylint_args = [script, "-E", "--extension-pkg-whitelist=numpy", "--init-hook='import sys; sys.path=[%s]; sys.path.insert(0, \"%s\")'" % (",".join(['"%s"' % p for p in sys.path]), os.path.dirname(MODULE_BUILD))]
@@ -45,6 +46,22 @@ class scripts_tests(unittest.TestCase):
                 for i,entry in enumerate(results):
                     with self.subTest(error_number=i+1):
                         self.assertTrue(False, f"{entry['path']}:{entry['line']} - {entry['message']}")
+                        
+    def test_help(self):
+        """Help test of the LSL scripts."""
+        
+        _SCRIPTS = glob.glob(os.path.join(MODULE_BUILD, '..', 'scripts', '*.py'))
+        _SCRIPTS.sort()
+        for script in _SCRIPTS:
+            name = script.rsplit('scripts'+os.path.sep)[-1]
+            with self.subTest(script=name):
+                try:
+                    status = subprocess.check_call([sys.executable, script, '--help'],
+                                                   stdout=subprocess.DEVNULL,# stderr=subprocess.DEVNULL,
+                                                   cwd=os.path.dirname(MODULE_BUILD))
+                    self.assertTrue(status == 0, f"Non-zero exit code when running script with '--help' flag: {status}")
+                except subprocess.CalledProcessError as e:
+                    self.assertTrue(False, f"Failed to run script with '--help' flag: {str(e)}")
 
 
 class scripts_test_suite(unittest.TestSuite):
