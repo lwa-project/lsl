@@ -60,7 +60,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
     
     # Setup the set time as a python datetime instance so that it can be easily printed
     setDT = setTime.datetime
-    print(f"Working on set #{s+1} ({setTime-ref_time:.3f} seconds after set #1 = {setDT.strftime('%Y/%m/%d %H:%M:%S.%f')}")
+    print(f"Working on set #1 ({setTime-ref_time:.3f} seconds after set #1 = {setDT.strftime('%Y/%m/%d %H:%M:%S.%f')}")
     
     # In order for the TBW stuff to actaully run, we need to run in with sub-
     # integrations.  8 sub-integrations (61.2 ms / 8 = 7.7 ms per section) 
@@ -115,7 +115,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
         sys.stdout.write(pb.show()+'\r')
         sys.stdout.write('\n')
         sys.stdout.flush()
-    print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
+    print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime):.3f} s per integration)")
     
     fits.write()
     fits.close()
@@ -136,7 +136,7 @@ def main(args):
         station = stations.lwa1
     antennas = station.antennas
     
-    idf = LWA1DataFile(args.filename)
+    idf = LWADataFile(args.filename)
     if not isinstance(idf, TBWFile):
         raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBW file")
         

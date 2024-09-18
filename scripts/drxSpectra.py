@@ -4,6 +4,7 @@
 Given a DRX file, plot the time averaged spectra for each beam output.
 """
 
+import os
 import sys
 import math
 import numpy as np

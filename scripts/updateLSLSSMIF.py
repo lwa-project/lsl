@@ -8,6 +8,7 @@ releases.
 import os
 import re
 import sys
+import time
 from urllib.request import urlopen
 import hashlib
 import argparse
@@ -105,7 +106,7 @@ def main(args):
         _url = "https://lda10g.alliance.unm.edu/metadata/lwasv/ssmif/"
     elif args.lwana:
         _name = 'LWA-NA'
-        _ssmif = os.path.join(dataPath, 'lwana-ssmif.txt')
+        _ssmif = 'lwana-ssmif.txt'
         _url = "https://lda10g.alliance.unm.edu/metadata/lwana/ssmif/"
     else:
         _name = 'LWA1'

@@ -164,7 +164,7 @@ def main(args):
                         diff = subspectra - currSpectra
                         ax.plot(freq/1e6, diff)
                         
-                ax.set_title(f"Stand: {antennas[i].stand.id} ({antennas[i].pol}); Dig: {antennas[i].digitizer} [{antennas[i].combined_status}]"
+                ax.set_title(f"Stand: {antennas[i].stand.id} ({antennas[i].pol}); Dig: {antennas[i].digitizer} [{antennas[i].combined_status}]")
                 ax.set_xlabel('Frequency [MHz]')
                 ax.set_ylabel('P.S.D. [dB/RBW]')
                 ax.set_xlim([10,90])

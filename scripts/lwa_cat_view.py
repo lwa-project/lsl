@@ -237,7 +237,7 @@ class SourceWindow(Tkinter.Toplevel):
         (cur_ra, cur_dec) = cur_equ.format()
         
         if self.catalog is None:
-            gal = astro.get_gal_from_equ2000(mean_equ)
+            gal = astro.get_gal_from_equ(mean_equ)
         else:
             gal = self.position.j2000_gal
         (gal_lng, gal_lat) = gal.format()

@@ -75,7 +75,7 @@ def main(args):
         nBL = len(dataDict.baselines)
         args.nbaseline = min([args.nbaseline, nBL])
         nplot = min([25, args.nbaseline])
-        nrow = int(round(numpy.sqrt(nplot)))
+        nrow = int(round(np.sqrt(nplot)))
         while nplot % nrow != 0:
             nrow -= 1
         ncol = nplot // nrow

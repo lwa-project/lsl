@@ -54,7 +54,7 @@ def main(args):
 
         print(f"Observation #{o['obs_id']}")
         print(f" Start: {o['mjd']}, {o['mpm']} -> {tStart[-1]}")
-        print(f" Mode: {o['mode'].name})
+        print(f" Mode: {o['mode'].name}")
         print(f" BW: {o['bw']}")
         print(f" Target: {sdf.sessions[0].observations[o['obs_id']-1].target}")
     print(" ")

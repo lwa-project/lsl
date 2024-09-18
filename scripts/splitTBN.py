@@ -49,7 +49,7 @@ def main(args):
     
     nCaptures = sizeB // tbn.FRAME_SIZE // (nFramesX + nFramesY)
     
-    print(f"Filename:    {filename})
+    print(f"Filename:    {filename}")
     print(f"Size:        {sizeB/1024**2:.1f} MB")
     print(f"Captures:    {nCaptures} ({nCaptures*512/sample_rate:.3f} seconds)")
     print(f"Stands:      {nFramesX+nFramesY} ({nFramesX} x pol., {nFramesY} y pol.)")

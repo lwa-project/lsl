@@ -232,12 +232,27 @@ class _DataAccess(object):
         
         self._data_cache.remove(filename)
         
+    def getsize(self, filename):
+        """
+        Return the size of a file in the cache.
+        """
+        
+        return self._data_cache.getsize(filename)
+        
     def getmtime(self, filename):
         """
         Return the last modification time of a file in the cache.
         """
         
         return self._data_cache.getmtime(filename)
+        
+    def stat(self, filename):
+        """
+        Return the os.stat_result value for a file in the cache.
+        """
+        
+        return self._data_cache.stat(filename)
+    
 
 
 #: DataAccess instance for accessing LSL software data

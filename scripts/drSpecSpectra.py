@@ -5,6 +5,7 @@ Given a DR spectrometer file, plot the time averaged spectra for each
 polarization product.
 """
 
+import os
 import sys
 import math
 import numpy as np
@@ -48,7 +49,7 @@ def _best_freq_units(freq):
 def main(args):
     idf = LWADataFile(args.filename)
     if not isinstance(idf, DRSpecFile):
-        raise RuntimeError("File '%s' does not appear to be a valid DR spectrometer file" % os.path.basename(filename))
+        raise RuntimeError("File '%s' does not appear to be a valid DR spectrometer file" % os.path.basename(args.filename))
         
     # Basic file informaiton
     nFramesFile = idf.get_info('nframe')
