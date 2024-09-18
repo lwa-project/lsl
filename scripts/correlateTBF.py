@@ -178,7 +178,7 @@ def main(args):
         station = stations.lwasv
     antennas = station.antennas
     
-    with LWASVDataFile(filename) as idf:
+    with LWADataFile(filename) as idf:
         if not isinstance(idf, TBFFile):
             raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBF file")
             
