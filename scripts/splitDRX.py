@@ -95,7 +95,7 @@ def main(args):
         
         ## If the offset is zero, we are done.  Otherwise, apply the offset
         ## and check the location in the file again/
-        if cOffset is 0:
+        if cOffset == 0:
             break
         fh.seek(cOffset*drx.FRAME_SIZE, 1)
     
