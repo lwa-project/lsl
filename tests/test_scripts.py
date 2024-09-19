@@ -26,7 +26,8 @@ __author__   = "Jayce Dowell"
 
 _PYLINT_IGNORES = [('no-member',         "Instance of 'HDUList'"),
                    ('no-name-in-module', "No name 'c' in module 'astropy.constants'"),
-                   ('no-name-in-module', "No name 'XEngine2' in module 'lsl.correlator._core'")]
+                   ('no-name-in-module', "No name 'XEngine2' in module 'lsl.correlator._core'"),
+                   ('import-error',      "Unable to import 'Tkinter'")]
 
 
 @unittest.skipUnless(run_scripts_tests, "requires the 'pylint' module")
