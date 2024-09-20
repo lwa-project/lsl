@@ -142,23 +142,24 @@ def main(args):
     #
     # Compiler check
     #
-    import shutil
-    import tempfile
-    import sysconfig
-    from distutils import ccompiler
-    compiler = ccompiler.new_compiler()
-    sysconfig.get_config_vars()
-    sysconfig.customize_compiler(compiler)
-    cc = compiler.compiler
-    
-    print(f"Compiler: {cc[0]}")
-    
-    tmpdir = tempfile.mkdtemp()
-    curdir = os.getcwd()
-    os.chdir(tmpdir)
-    
-    with open('test.c', 'w') as fh:
-        fh.write(r"""#include <omp.h>
+    try:
+        import shutil
+        import tempfile
+        from distutils import sysconfig
+        from distutils import ccompiler
+        compiler = ccompiler.new_compiler()
+        sysconfig.get_config_vars()
+        sysconfig.customize_compiler(compiler)
+        cc = compiler.compiler
+        
+        print(f"Compiler: {cc[0]}")
+        
+        tmpdir = tempfile.mkdtemp()
+        curdir = os.getcwd()
+        os.chdir(tmpdir)
+        
+        with open('test.c', 'w') as fh:
+            fh.write(r"""#include <omp.h>
 #include <stdio.h>
 int main(void) {
 #pragma omp parallel
@@ -166,50 +167,53 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 return 0;
 }
 """)
+            
+        ccmd = []
+        ccmd.extend( cc )
+        ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
+        if os.path.basename(cc[0]).find('gcc') != -1:
+            ccmd.append( '-lgomp' )
+        elif os.path.basename(cc[0]).find('clang') != -1:
+            ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
+        openmp_support = "No"
+        try:
+            p = subprocess.Popen(ccmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            o, e = p.communicate()
+            openmp_support =" Yes" if p.returncode == 0 else "No"
+        except subprocess.CalledProcessError:
+            pass
+        print(f"Compiler OpenMP Support: {openmp_support}")
+        if openmp_support == 'Yes':
+            o = o.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
+            for i in range(len(o)):
+                o[i] = '  %s' % o[i]
+            o = '\n'.join(o)
+            e = e.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
+            for i in range(len(e)):
+                e[i] = '  %s' % e[i]
+            e = '\n'.join(e)
+            
+            print("Compiler OpenMP Test Command:")
+            print("  %s" % ' '.join(ccmd))
+            print("Compiler OpenMP Test Output:")
+            print(o)
+            print("Compiler OpenMP Test Errors:")
+            print(e)
+            
+        os.chdir(curdir)
+        shutil.rmtree(tmpdir)
         
-    ccmd = []
-    ccmd.extend( cc )
-    ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
-    if os.path.basename(cc[0]).find('gcc') != -1:
-        ccmd.append( '-lgomp' )
-    elif os.path.basename(cc[0]).find('clang') != -1:
-        ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
-    openmp_support = "No"
-    try:
-        p = subprocess.Popen(ccmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        o, e = p.communicate()
-        openmp_support =" Yes" if p.returncode == 0 else "No"
-    except subprocess.CalledProcessError:
-        pass
-    print(f"Compiler OpenMP Support: {openmp_support}")
-    if openmp_support == 'Yes':
-        o = o.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
-        for i in range(len(o)):
-            o[i] = '  %s' % o[i]
-        o = '\n'.join(o)
+        p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        _, e = p.communicate()
         e = e.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
         for i in range(len(e)):
             e[i] = '  %s' % e[i]
         e = '\n'.join(e)
-        
-        print("Compiler OpenMP Test Command:")
-        print("  %s" % ' '.join(ccmd))
-        print("Compiler OpenMP Test Output:")
-        print(o)
-        print("Compiler OpenMP Test Errors:")
+        print("Compiler Version:")
         print(e)
-        
-    os.chdir(curdir)
-    shutil.rmtree(tmpdir)
-    
-    p = subprocess.Popen([cc[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    _, e = p.communicate()
-    e = e.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
-    for i in range(len(e)):
-        e[i] = '  %s' % e[i]
-    e = '\n'.join(e)
-    print("Compiler Version:")
-    print(e)
+        print(" ")
+    except ImportError as e:
+        print(f"Cannot determine compiler OpenMP support: {str(e)}")
     print(" ")
     
     #
