@@ -212,7 +212,6 @@ return 0;
             o, e = p.communicate()
             openmp_support =" Yes" if p.returncode == 0 else "No"
         except subprocess.CalledProcessError:
-            print(e)
             pass
         print(f"Compiler OpenMP Support: {openmp_support}")
         if openmp_support == 'Yes':
