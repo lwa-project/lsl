@@ -47,7 +47,11 @@ def main(args):
         modSpec = importlib.util.find_spec(mod, [os.path.dirname(__file__)])
         if modSpec != None:
             modInfo = importlib.util.module_from_spec(modSpec)
-            modSpec.loader.exec_module(modInfo)
+            try:
+                modSpec.loader.exec_module(modInfo)
+            except ImportError:
+                print(f"{mod}: not found")
+                continue
             if hasattr(modSpec.loader, 'file'):
                 modSpec.loader.file.close()
                 
