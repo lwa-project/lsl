@@ -15,8 +15,11 @@ import platform
 import subprocess
 import importlib.util
 
-from lsl.misc import telemetry
-telemetry.track_script()
+try:
+    from lsl.misc import telemetry
+    telemetry.track_script()
+except ImportError:
+    pass
 
 
 def main(args):
