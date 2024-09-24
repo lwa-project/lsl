@@ -181,13 +181,18 @@ return 0;
         lpath = ''
         if is_clang:
             # Crude fix for clang + homebrew
-            _ipath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'omp.h'])
-            if _ipath != b'':
-                ipath = os.path.dirname(_ipath.decode())
-            _lpath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'libomp.a'])
-            if _lpath != b'':
-                lpath = os.path.dirname(_lpath.decode())
-                
+            try:
+                _ipath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'omp.h'])
+                if _ipath != b'':
+                    ipath = os.path.dirname(_ipath.decode())
+            except subprocess.CalledProcessError:
+                pass
+            try:
+                _lpath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'libomp.a'])
+                if _lpath != b'':
+                    lpath = os.path.dirname(_lpath.decode())
+            except subprocess.CalledProcessError:
+                pass
         ccmd = []
         ccmd.extend( cc )
         if is_clang:
