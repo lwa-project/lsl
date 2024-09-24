@@ -175,19 +175,39 @@ return 0;
 }
 """)
             
+        is_gcc = (os.path.basename(cc[0]).find('gcc') != -1)
+        is_clang = (os.path.basename(cc[0]).find('clang') != -1)
+        ipath = ''
+        lpath = ''
+        if is_clang:
+            # Crude fix for clang + homebrew
+            _ipath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'omp.h'])
+            if _ipath != b'':
+                ipath = os.path.dirname(_ipath.decode())
+            _lpath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'libomp.a'])
+            if _lpath != b'':
+                lpath = os.path.dirname(_lpath.decode())
+                
         ccmd = []
         ccmd.extend( cc )
+        if is_clang:
+            if ipath != '':
+                ccmd.append( '-I'+ipath )
+            ccmd.append( '-Xclang' )
         ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
-        if os.path.basename(cc[0]).find('gcc') != -1:
+        if is_gcc:
             ccmd.append( '-lgomp' )
-        elif os.path.basename(cc[0]).find('clang') != -1:
-            ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
+        elif is_clang:
+            if lpath != '':
+                ccmd.append( '-L'+lpath )
+            ccmd.append( '-lomp' )
         openmp_support = "No"
         try:
             p = subprocess.Popen(ccmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             o, e = p.communicate()
             openmp_support =" Yes" if p.returncode == 0 else "No"
         except subprocess.CalledProcessError:
+            print(e)
             pass
         print(f"Compiler OpenMP Support: {openmp_support}")
         if openmp_support == 'Yes':

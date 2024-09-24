@@ -84,23 +84,43 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 return 0;
 }
 """)
+    
+    # Compiler selection/specific paths
+    is_gcc = (os.path.basename(cc[0]).find('gcc') != -1)
+    is_clang = (os.path.basename(cc[0]).find('clang') != -1)
+    ipath = ''
+    lpath = ''
+    if is_clang:
+        # Crude fix for clang + homebrew
+        _ipath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'omp.h'])
+        if _ipath != b'':
+            ipath = os.path.dirname(_ipath.decode())
+        _lpath = subprocess.check_output(['find', '/opt/homebrew/Cellar/libomp', '-name', 'libomp.a'])
+        if _lpath != b'':
+            lpath = os.path.dirname(_lpath.decode())
+            
+    # Compiler and linker flags
+    outCFLAGS = []
+    outLIBS = []
+    if is_clang:
+        if ipath != '':
+            outCFLAGS.append( '-I'+ipath )
+        outCFLAGS.append( '-Xclang' )
+    outCFLAGS.append( '-fopenmp' )
+    if is_gcc:
+        outLIBS.append( '-lgomp' )
+    elif is_clang:
+        if lpath != '':
+            outLIBS.append( '-L'+lpath )
+        outLIBS.append( '-lomp' )
         
     ccmd = []
     ccmd.extend( cc )
-    ccmd.extend( ['-fopenmp', 'test.c', '-o test'] )
-    if os.path.basename(cc[0]).find('gcc') != -1:
-        ccmd.append( '-lgomp' )
-    elif os.path.basename(cc[0]).find('clang') != -1:
-        ccmd.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
+    ccmd.extend( outCFLAGS )
+    ccmd.extend( ['test.c', '-o test'] )
+    ccmd.extend( outLIBS )
     try:
         output = subprocess.check_call(ccmd, stderr=subprocess.DEVNULL)
-        outCFLAGS = ['-fopenmp',]
-        outLIBS = []
-        if os.path.basename(cc[0]).find('gcc') != -1:
-            outLIBS.append( '-lgomp' )
-        elif os.path.basename(cc[0]).find('clang') != -1:
-            outLIBS.extend( ['-L/opt/local/lib/libomp', '-lomp'] )
-            
     except subprocess.CalledProcessError:
         print(f"WARNING:  OpenMP does not appear to be supported by {cc[0]}, disabling")
         outCFLAGS = []
