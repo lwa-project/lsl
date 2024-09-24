@@ -111,8 +111,8 @@ def main(args):
             
     ## Via 'ldconfig'
     try:
-        o = subprocess.check_output(['ldconfig', '-v'], stderr=subprocess.DEVNULL)
-        o = o.decode().split('\n')
+        p = subprocess.run(['ldconfig', '-v'], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL, check=False)
+        o = p.stdout.decode().split('\n')
         
         for lib in ('libfftw3f', 'libgdbm', 'librt', 'libgsl'):
             libBaseName = lib.replace('lib', '')
