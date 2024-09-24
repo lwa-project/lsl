@@ -2,20 +2,15 @@
 import os
 import sys
 import glob
+import logging
 import tempfile
 import subprocess
 
 from setuptools import setup, Extension, find_namespace_packages
-from distutils import log
-from distutils.command.build import build
-try:
-    # Attempt to use Cython for building extensions, if available
-    from Cython.Distutils.build_ext import build_ext
-    # Additionally, assert that the compiler module will load
-    # also. Ref #1229.
-    __import__('Cython.Compiler.Main')
-except ImportError:
-    from distutils.command.build_ext import build_ext
+from setuptools.command.build import build
+from setuptools.command.build_ext import build_ext
+
+log = logging.getLogger('__main__')
 
 try:
     import numpy
@@ -355,7 +350,7 @@ class lsl_build_ext(build_ext):
         ## HACK: Update the log verbosity - for some reason this gets set to 
         ##       WARN when I replace build_ext
         try:
-            log.set_threshold(min([log.INFO, log._global_log.threshold]))
+            log.setLevel(min([logging.INFO, log.level]))
         except AttributeError:
             pass
 
