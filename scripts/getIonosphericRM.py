@@ -73,9 +73,11 @@ def main(args):
         mtype = 'USTEC'
     elif args.uqr:
         mtype = 'UQR'
+    elif args.glotec:
+        mtype = 'GloTEC'
     else:
         mtype = 'IGS'
-    
+        
     # Go!
     print("%-13s  %-6s  %-6s  %-21s  %-15s" % ("MJD", "Az.", "El.", "DM [pc/cm^3]", "RM [1/m^2]"))
     print("-"*(13+2+6+2+6+2+21+2+15))
@@ -173,5 +175,7 @@ if __name__ == "__main__":
                         help='use the USTEC data products')
     mgroup.add_argument('-q', '--uqr', action='store_true', 
                         help='use the high time resolution UQRG data products')
+    mgroup.add_argument('-g', '--glotec', action='store_true', 
+                        help='use the experimental GloTEC data products')
     args = parser.parse_args()
     main(args)

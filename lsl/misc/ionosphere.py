@@ -6,6 +6,7 @@ for ionospheric corrections.
 import os
 import sys
 import gzip
+import json
 import ephem
 import numpy as np
 import socket
@@ -13,7 +14,7 @@ import tarfile
 import warnings
 import subprocess
 from io import StringIO
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from datetime import datetime, timedelta
 from ftplib import FTP_TLS, error_perm as FTP_ERROR_PERM, error_temp as FTP_ERROR_TEMP
 
@@ -483,7 +484,10 @@ def _download_worker_standard(url, filename):
     # Attempt to download the data
     print(f"Downloading {url}")
     try:
-        tecFH = urlopen(url, timeout=DOWN_CONFIG.get('timeout'))
+        req = Request(url)
+        if os.path.splitext(url)[1] not in ('.Z', '.gz'):
+            req.add_header('Accept-encoding', 'gzip')
+        tecFH = urlopen(req, timeout=DOWN_CONFIG.get('timeout'))
         remote_size = int(tecFH.headers["Content-Length"])
         
         pbar = DownloadBar(max=remote_size)
@@ -733,13 +737,8 @@ def _download_code(mjd, type='final'):
 
 def _download_ustec(mjd):
     """
-    Given an MJD value, download the corresponding JPL final data product 
-    for that day.
-    
-    .. note::
-        By default the "final" product is downloaded.  However, the "rapid" 
-        data product may be downloaded if the 'type' keyword is set to 
-        "rapid".
+    Given an MJD value, download the corresponding USTEC data product for that
+    day.
     """
     
     # Convert the MJD to a datetime instance so that we can pull out the year
@@ -755,6 +754,30 @@ def _download_ustec(mjd):
     
     # Attempt to download the data
     return _download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, filename), filename)
+
+
+def _download_glotec(mjd):
+    """
+    Given an MJD value, download the corresponding GloTEC data products for that
+    day.
+    """
+    
+    # Convert the MJD to a datetime instance so that we can pull out the year
+    # and the day-of-year
+    mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
+    dt = mjdmpm_to_datetime(int(mjd), mpm)
+    if dt.microsecond > 500000:
+        dt = dt.replace(microsecond=0)
+        dt += timedelta(seconds=1)
+        
+    year = dt.year
+    month = dt.month
+    dateStr = dt.strftime("%Y%m%dT%H%M%S")
+    # Build up the filename
+    filename = f"glotec_icao_{dateStr}Z.geojson"
+    
+    # Attempt to download the data
+    return _download_worker('%s/%s' % (IONO_CONFIG.get('glotec_url'), filename), filename)
 
 
 def _parse_tec_map(filename_or_fh):
@@ -1187,6 +1210,67 @@ def _parse_ustec_map(filename_or_fh):
     return output
 
 
+def _parse_glotec_map(filename_or_fh):
+    """
+    Parse an individual TEC map from the GloTEC project.  This returns a four-
+    element tuple of:
+     * 2-D array of latitude values for the maps in degrees
+     * 2-D array of longitude values for the maps in degrees
+     * 2-D array of TEC values in TECU.  The dimensions are latitude by 
+        longitude
+     * 2-D array of TEC RMS values in TECU.  The dimensions are latitude 
+        by longitude.
+    """
+    
+    # Open the TEC file for reading
+    try:
+        fh = open(filename_or_fh, 'r')
+        do_close = True
+    except TypeError:
+        fh = filename_or_fh
+        do_close = False
+        
+    try:
+        jdata = json.load(fh)
+        
+        lngs = [[]]
+        lats = [[]]
+        data = [[]]
+        rdata = [[]]
+        for feature in jdata['features']:
+            lng, lat = feature['geometry']['coordinates']
+            tec, rms = feature['properties']['tec'], feature['properties']['anomaly']
+            
+            if len(lngs[-1]) and lng < lngs[-1][-1]:
+                lats.append([])
+                lngs.append([])
+                data.append([])
+                rdata.append([])
+            lats[-1].append(lat)
+            lngs[-1].append(lng)
+            data[-1].append(tec)
+            rdata[-1].append(rms)
+            
+    finally:
+        if do_close:
+            fh.close()
+            
+    # Bring it into NumPy
+    lats = np.array(lats)
+    lngs = np.array(lngs)
+    data = np.array(data)
+    rdata = np.array(rdata)
+    
+    # Reverse
+    lats = lats[::-1,:]
+    lngs = lngs[::-1,:]
+    data = data[::-1,:]
+    rdata = rdata[::-1,:]
+    
+    # Done
+    return lats, lngs, data, rdata
+
+
 def _load_map(mjd, type='IGS'):
     """
     Given an MJD value, load the corresponding TEC map.  If the map is not
@@ -1260,6 +1344,17 @@ def _load_map(mjd, type='IGS'):
         filenameTemplate = '%s_ustec.tar.gz'
         filenameAltTemplate = '%s_ustec.tar.gz'
         
+    elif type.upper() == 'GLOTEC':
+        # Cache entry name
+        cacheName = 'TEC-GLOTEC-%i' % mjd
+        
+        ## Download helper
+        downloader = _download_glotec
+        
+        ## Filename templates
+        filenameTemplate = 'glotec_icao_%sZ.geojson'
+        filenameAltTemplate = 'glotec_icao_%sZ.geojson'
+        
     else:
         raise ValueError(f"Unknown data source '{type}'")
         
@@ -1274,7 +1369,56 @@ def _load_map(mjd, type='IGS'):
         mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
         dt = mjdmpm_to_datetime(int(mjd), mpm)
         
-        if type.upper() == 'USTEC':
+        if type.upper() == 'GLOTEC':
+            # Loop over 10 min intervals in the day
+            daily_mjds = []
+            daily_tec = []
+            daily_rms = []
+            
+            idt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            idt -= timedelta(seconds=5*60)
+            for i in range(-5, 24*60+10, 10):
+                ## Get the YMDHMS string
+                imjd, impm = datetime_to_mjdmpm(idt)
+                imjd = imjd + impm/1000./86400
+                dateStr = idt.strftime("%Y%m%dT%H%M%S")
+                
+                ## Figure out the filename
+                filename = filenameTemplate % (dateStr)
+                
+                ## Is the primary file in the disk cache?
+                if filename not in _CACHE_DIR:
+                    ### Can we download it?
+                    status = downloader(imjd)
+                    
+                else:
+                    ## Good we have the primary file
+                    pass
+                    
+                ## Parse it and add it to the list
+                daily_mjds.append(imjd)
+                with _CACHE_DIR.open(filename, 'rb') as fh:
+                    daily_lats, daily_lngs, tec, rms = _parse_glotec_map(fh)
+                daily_tec.append(tec)
+                daily_rms.append(rms)
+                
+                ## Update the time
+                idt += timedelta(seconds=10*60)
+                
+            # list -> np.array
+            daily_mjds = np.array(daily_mjds)
+            daily_tec = np.array(daily_tec)
+            daily_rms = np.array(daily_rms)
+            
+            # Build the output
+            daily_output = {'dates': daily_mjds,
+                            'lats': daily_lats, 'lngs': daily_lngs,
+                            'tec': daily_tec, 'rms': daily_rms}
+            
+            # Cache
+            _ONLINE_CACHE[cacheName] = daily_output
+            
+        elif type.upper() == 'USTEC':
             # Pull out a YMD string
             dateStr = dt.strftime("%Y%m%d")
             
@@ -1347,7 +1491,11 @@ def get_tec_value(mjd, lat=None, lng=None, include_rms=False, type='IGS'):
     # Load in the right map
     tecMap = _load_map(mjd, type=type)
     
-    if type.upper() == 'USTEC':
+    if type.upper() == 'GLOTEC':
+        # Figure out the closest model point(s) to the requested MJD taking into
+        # account that a new model is generated every ten minutes
+        best = np.where( np.abs((tecMap['dates']-mjd)) < 10/60./24.0 )[0]
+    elif type.upper() == 'USTEC':
         # Figure out the closest model point(s) to the requested MJD taking into
         # account that a new model is generated every fifteen minutes
         best = np.where( np.abs((tecMap['dates']-mjd)) < 15/60./24.0 )[0]
