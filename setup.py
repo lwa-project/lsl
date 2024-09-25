@@ -7,7 +7,10 @@ import tempfile
 import subprocess
 
 from setuptools import setup, Distribution, Extension, find_namespace_packages
-from setuptools.command.build import build
+try:
+    from setuptools.command.build import build
+except ImportError:
+    from distutils.command.build import build
 from setuptools.command.build_ext import build_ext
 
 log = logging.getLogger('__main__')
