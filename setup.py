@@ -121,7 +121,7 @@ return 0;
             cc.link_executable(['test.o'], 'test', extra_postargs=outLIBS)
         except Exception as e:
             print(f"WARNING:  OpenMP does not appear to be supported by {cc.compiler[0]}, disabling")
-            print(f"WARNING: {str(e)})
+            print(f"WARNING: {str(e)}")
             outCFLAGS = []
             outLIBS = []
             

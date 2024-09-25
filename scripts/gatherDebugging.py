@@ -220,7 +220,7 @@ return 0;
                 pass
             print(f"Compiler OpenMP Support: {openmp_support}")
             
-        os.chdir(curdir)
+            os.chdir(curdir)
         p = subprocess.Popen([cc.compiler[0], '-v'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         _, e = p.communicate()
         e = e.decode(encoding='ascii', errors='ignore').split('\n')[:-1]
