@@ -88,6 +88,10 @@ DEFAULTS_IONO['ustec_url'] = {'value': 'http://www.ngdc.noaa.gov/stp/iono/ustec/
                               'help':  'primary URL for accessing the USTEC data products'}
 DEFAULTS_IONO['ustec_mirror'] = {'value': None,
                                  'help':  'mirror URL for accessing the USTEC data products'}
+DEFAULTS_IONO['glotec_url'] = {'value': 'https://services.swpc.noaa.gov/experimental/products/glotec/geojson_2d_urt/',
+                              'help':  'primary URL for accessing the GloTEC data products'}
+DEFAULTS_IONO['glotec_mirror'] = {'value': None,
+                                 'help':  'mirror URL for accessing the GloTEC data products'}
 DEFAULTS_IONO['max_cache_size'] = {'value': -1,
                                    'help':  'maximum cache size in MB; <= 0 disables cache size limiting'}
 
