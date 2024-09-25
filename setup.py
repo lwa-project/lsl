@@ -6,7 +6,7 @@ import logging
 import tempfile
 import subprocess
 
-from setuptools import setup, Extension, find_namespace_packages
+from setuptools import setup, Distribution, Extension, find_namespace_packages
 from setuptools.command.build import build
 from setuptools.command.build_ext import build_ext
 
@@ -54,35 +54,22 @@ def get_openmp():
     """Try to compile/link an example program to check for OpenMP support.
     
     Based on:
-    1) http://stackoverflow.com/questions/16549893/programatically-testing-for-openmp-support-from-a-python-setup-script
-    2) https://github.com/lpsinger/healpy/blob/6c3aae58b5f3281e260ef7adce17b1ffc68016f0/setup.py
+     1) http://stackoverflow.com/questions/16549893/programatically-testing-for-openmp-support-from-a-python-setup-script
+     2) https://github.com/lpsinger/healpy/blob/6c3aae58b5f3281e260ef7adce17b1ffc68016f0/setup.py
+     3) https://github.com/pypa/setuptools/issues/2806#issuecomment-961805789
     """
     
-    import shutil
-    from distutils import sysconfig
-    from distutils import ccompiler
-    compiler = ccompiler.new_compiler()
-    sysconfig.get_config_vars()
-    sysconfig.customize_compiler(compiler)
-    cc = compiler.compiler
-    
-    tmpdir = tempfile.mkdtemp()
-    curdir = os.getcwd()
-    os.chdir(tmpdir)
-    
-    with open('test.c', 'w') as fh:
-        fh.write(r"""#include <omp.h>
-#include <stdio.h>
-int main(void) {
-#pragma omp parallel
-printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_threads());
-return 0;
-}
-""")
+    d = Distribution()
+    b = d.get_command_obj('build_ext')
+    b.finalize_options()
+    b.extensions = [Extension('test', ['test.c'])]
+    b.build_extensions = lambda: None
+    b.run()
     
     # Compiler selection/specific paths
-    is_gcc = (os.path.basename(cc[0]).find('gcc') != -1)
-    is_clang = (os.path.basename(cc[0]).find('clang') != -1)
+    cc = b.compiler
+    is_gcc = (os.path.basename(cc.compiler[0]).find('gcc') != -1)
+    is_clang = (os.path.basename(cc.compiler[0]).find('clang') != -1)
     ipath = ''
     lpath = ''
     if is_clang:
@@ -115,22 +102,30 @@ return 0;
             outLIBS.append( '-L'+lpath )
         outLIBS.append( '-lomp' )
         
-    ccmd = []
-    ccmd.extend( cc )
-    ccmd.extend( outCFLAGS )
-    ccmd.extend( ['test.c', '-o test'] )
-    ccmd.extend( outLIBS )
-    try:
-        output = subprocess.check_call(ccmd, stderr=subprocess.DEVNULL)
-    except subprocess.CalledProcessError:
-        print(f"WARNING:  OpenMP does not appear to be supported by {cc[0]}, disabling")
-        outCFLAGS = []
-        outLIBS = []
+    curdir = os.getcwd()
+    with tempfile.TemporaryDirectory() as tmpdir:
+        os.chdir(tmpdir)
         
-    finally:
-        os.chdir(curdir)
-        shutil.rmtree(tmpdir)
+        with open('test.c', 'w') as fh:
+            fh.write(r"""#include <omp.h>
+#include <stdio.h>
+int main(void) {
+#pragma omp parallel
+printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_threads());
+return 0;
+}
+""")
         
+        try:
+            cc.compile(['test.c'], extra_postargs=outCFLAGS)
+            cc.link_executable(['test.o'], 'test', extra_postargs=outLIBS)
+        except Exception:
+            print(f"WARNING:  OpenMP does not appear to be supported by {cc[0]}, disabling")
+            outCFLAGS = []
+            outLIBS = []
+        finally:
+            os.chdir(curdir)
+            
     return outCFLAGS, outLIBS
 
 
