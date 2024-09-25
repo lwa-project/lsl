@@ -115,17 +115,18 @@ printf("Hello from thread %d, nthreads %d\n", omp_get_thread_num(), omp_get_num_
 return 0;
 }
 """)
-        
+            
         try:
             cc.compile(['test.c'], extra_postargs=outCFLAGS)
             cc.link_executable(['test.o'], 'test', extra_postargs=outLIBS)
-        except Exception:
-            print(f"WARNING:  OpenMP does not appear to be supported by {cc[0]}, disabling")
+        except Exception as e:
+            print(f"WARNING:  OpenMP does not appear to be supported by {cc.compiler[0]}, disabling")
+            print(f"WARNING: {str(e)})
             outCFLAGS = []
             outLIBS = []
-        finally:
-            os.chdir(curdir)
             
+        os.chdir(curdir)
+        
     return outCFLAGS, outLIBS
 
 
