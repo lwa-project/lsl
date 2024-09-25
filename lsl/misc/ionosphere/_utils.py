@@ -14,6 +14,9 @@ from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.common.progress import DownloadBar
 from lsl.common.color import colorfy
 
+from lsl.config import LSL_CONFIG
+DOWN_CONFIG = LSL_CONFIG.view('download')
+
 
 _CACHE_DIR = None
 
