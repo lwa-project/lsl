@@ -1,6 +1,7 @@
 3.0.1
  * Fixed a problem with lsl.sim.beam.beam_response when scalar azimuth/altitude are provided
  * Fixed a problem with lsl.sim.beam.beam_response returning NaNa for 'empirical' and 'llfss'
+ * Updated FrameTimestamp.__float__ to strictly return a float
 
 3.0.0
  * Switch to the GNU scientific library for internal Bessel functions
