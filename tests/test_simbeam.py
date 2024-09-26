@@ -24,6 +24,9 @@ class sim_beam_tests(unittest.TestCase):
     def test_response(self):
         """Test that the beam_response function actually runs."""
         
+        az0 = 0.0
+        alt0 = 45.0
+        
         az = np.arange(360)
         alt = np.arange(360)*0 + 45
         
@@ -32,6 +35,10 @@ class sim_beam_tests(unittest.TestCase):
         az2, alt2 = np.meshgrid(az2, alt2)
         
         for model in simbeam.get_avaliable_models():
+            with self.subTest(model=model, dim=0):
+                pattern = simbeam.beam_response(model, 'XX', az0, alt0, frequency=70e6)
+                self.assertTrue(isinstance(pattern, float))
+                
             with self.subTest(model=model, dim=1):
                 pattern = simbeam.beam_response(model, 'XX', az, alt, frequency=70e6)
                 self.assertEqual(pattern.shape, az.shape)

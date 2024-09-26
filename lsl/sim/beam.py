@@ -307,11 +307,15 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
     pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
     
     # Evaluate
-    ffreq = np.ones(az.size)*frequency
-    faz = az.ravel()
-    falt = alt.ravel()
-    resp = pfunc((ffreq, falt, faz))
-    resp.shape = az.shape
+    if isinstance(az, np.ndarray):
+        ffreq = np.ones(az.size)*frequency
+        faz = az.ravel()
+        falt = alt.ravel()
+        resp = pfunc((ffreq, falt, faz))
+        resp.shape = az.shape
+    else:
+        resp = pfunc((frequency, alt, az))
+        resp = resp.item()
     return resp
 
 

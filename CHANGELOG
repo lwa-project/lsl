@@ -1,3 +1,6 @@
+3.0.1
+ * Fixed a problem with lsl.sim.beam.beam_reponse when scalar azimuth/altitude are provided
+
 3.0.0
  * Switch to the GNU scientific library for internal Bessel functions
  * Fixed an undefined variable error in lsl.statistics.robust.polyfit
