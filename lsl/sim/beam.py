@@ -304,17 +304,28 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
         
     # Build up the correct polarization product
     P = _compute_from_feeds(pol, XE, XH, YE, YH)
-    pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+    if mfreq.size > 1:
+        is_3d = True
+        pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+    else:
+        is_3d = False
+        pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
     
     # Evaluate
     if isinstance(az, np.ndarray):
         ffreq = np.ones(az.size)*frequency
         faz = az.ravel()
         falt = alt.ravel()
-        resp = pfunc((ffreq, falt, faz))
+        if is_3d:
+            resp = pfunc((ffreq, falt, faz))
+        else:
+            resp = pfunc((falt, faz))
         resp.shape = az.shape
     else:
-        resp = pfunc((frequency, alt, az))
+        if is_3d:
+            resp = pfunc(([frequency], [alt], [az]))
+        else:
+            resp = pfunc(([alt], [az]))
         resp = resp.item()
     return resp
 

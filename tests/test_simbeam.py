@@ -38,14 +38,17 @@ class sim_beam_tests(unittest.TestCase):
             with self.subTest(model=model, dim=0):
                 pattern = simbeam.beam_response(model, 'XX', az0, alt0, frequency=70e6)
                 self.assertTrue(isinstance(pattern, float))
+                self.assertTrue(np.isfinite(pattern))
                 
             with self.subTest(model=model, dim=1):
                 pattern = simbeam.beam_response(model, 'XX', az, alt, frequency=70e6)
                 self.assertEqual(pattern.shape, az.shape)
+                self.assertTrue(np.isfinite(pattern[0]))
                 
             with self.subTest(model=model, dim=2):
                 pattern = simbeam.beam_response(model, 'XX', az2, alt2, frequency=70e6)
                 self.assertEqual(pattern.shape, az2.shape)
+                self.assertTrue(np.isfinite(pattern[0,0]))
                 
         for bad_model in ('bad'):
             with self.subTest(bad_model=bad_model):
