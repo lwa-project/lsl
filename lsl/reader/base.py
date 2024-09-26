@@ -425,7 +425,7 @@ class FrameTimestamp(object):
             raise TypeError("unsupported format string passed to %s.__format__" % type(self).__name__)
             
     def __float__(self):
-        return self._time.unix
+        return float(self._time.unix)
         
     def __getitem__(self, i):
         t = self._time.unix
