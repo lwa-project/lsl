@@ -1,3 +1,7 @@
+3.0.2
+ * Enabled caching in lsl.sim.beam to reduce the number of times a model is loaded
+ * Updated lsl.common.data_access to request file be gzip compressed when downloaded
+
 3.0.1
  * Fixed a problem with lsl.sim.beam.beam_response/mueller_matrix when scalar azimuth/altitude are provided
  * Fixed a problem with lsl.sim.beam.beam_response/mueller_matrix returning NaNa for 'empirical' and 'llfss'

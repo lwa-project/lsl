@@ -8,7 +8,7 @@ import calendar
 import warnings
 import contextlib
 from datetime import datetime
-from urllib.request import urlopen
+from urllib.request import Request, urlopen
 from urllib.error import HTTPError
 
 from lsl.common.paths import DATA as DATA_PATH
@@ -128,7 +128,10 @@ class _DataAccess(object):
         try:
             mtime = 0.0
             remote_size = 1
-            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')) as uh:
+            req = Request(url)
+            if os.path.splitext(url)[1] not in ('.Z', '.gz'):
+                req.add_header('Accept-encoding', 'gzip')
+            with urlopen(req, timeout=DOWN_CONFIG.get('timeout')) as uh:
                 remote_size = int(uh.headers["Content-Length"])
                 mtime = uh.headers['Last-Modified']
                 
