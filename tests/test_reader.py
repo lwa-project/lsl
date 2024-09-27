@@ -845,6 +845,13 @@ class reader_tests(unittest.TestCase):
                 self.assertAlmostEqual(round(frame1.payload.data[i,j]), frame3.payload.data[i,j], 5)
                 self.assertAlmostEqual(round(frame2.payload.data[i,j]), frame4.payload.data[i,j], 5)
                 
+    def test_vdif_time(self):
+        """Test VDIF time interpretation."""
+        
+        f = vdif.FrameHeader(seconds_from_epoch=623633800, ref_epoch=0,
+                             frame_in_second=0, version=0)
+        self.assertEqual(f.time.unix, 1570318600)
+        
     def test_vdif_errors(self):
         """Test reading in all frames from a truncated VDIF file."""
         

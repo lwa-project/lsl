@@ -31,6 +31,7 @@ from datetime import datetime
 
 from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
 
+from lsl.astro import leap_secs
 from lsl.common.mcs import datetime_to_mjdmpm
 from lsl.reader.base import *
 from lsl.reader._gofast import read_vdif, read_vdif_i8
@@ -120,7 +121,10 @@ class FrameHeader(FrameHeaderBase):
         # and convert it to a MJD
         frameDT = AstroTime(f"{2000+self.ref_epoch//2}-{(self.ref_epoch % 2)*6+1}-1 00:00:00",
                             format='iso', scale='utc')
+        frameLS = leap_secs(frameDT.jd)
         frameDT += AstroDelta(self.seconds_from_epoch, format='sec')
+        frameLS -= leap_secs(frameDT.jd)
+        frameDT -= AstroDelta(frameLS, format='sec')
         
         if self.sample_rate == 0.0:
             # Try to get the sub-second time by parsing the extended user data
