@@ -8,6 +8,7 @@ import sys
 import ephem
 import numpy as np
 import warnings
+from functools import lru_cache
 from datetime import datetime, timedelta
 
 from scipy.special import lpmv
@@ -23,46 +24,28 @@ from astropy.coordinates import Angle as AstroAngle
 from lsl.common.stations import geo_to_ecef
 from lsl.common.data_access import DataAccess
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
-from lsl.misc.file_cache import FileCache, MemoryCache
 from lsl.common.color import colorfy
 
-from lsl.misc.ionosphere._utils import set_cache_dir
 from lsl.misc.ionosphere import _igs, _jpl, _emr, _uqr, _code, _ustec, _glotec
-
-from lsl.config import LSL_CONFIG
-IONO_CONFIG = LSL_CONFIG.view('ionosphere')
-DOWN_CONFIG = LSL_CONFIG.view('download')
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = "0.7"
+__version__ = "0.8"
 __all__ = ['get_magnetic_field', 'compute_magnetic_declination', 'compute_magnetic_inclination', 
            'get_tec_value', 'get_ionospheric_pierce_point']
 
-
-# Create the cache directory
-try:
-    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache'),
-                           max_size=lambda: IONO_CONFIG.get('max_cache_size'))
-except OSError:
-    _CACHE_DIR = MemoryCache(max_size=lambda: IONO_CONFIG.get('max_cache_size'))
-    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
-set_cache_dir(_CACHE_DIR)
-
-
-# Create the on-line cache
-_ONLINE_CACHE = {}
 
 # Radius of the Earth in meters for the IGRF
 _RADIUS_EARTH = 6371.2*1e3
 
 
-def _load_igrf(fh):
+@lru_cache(maxsize=8)
+def _load_igrf():
     """
-    Given an open file handle pointing to a list of IGRF coefficients, load in
-    the data and return a dictionary containing the raw coefficients.
+    Load in the list of IGRF coefficient data and return a dictionary
+    containing the raw coefficients.
     
     The dictionary keys are:
      * years - list of years for each of the models
@@ -78,39 +61,40 @@ def _load_igrf(fh):
     # Go!
     dataCos = {}
     dataSin = {}
-    for line in fh:
-        ## Is this line a comment?
-        line = line.replace('\n', '')
-        if line.find('#') != -1:
-            continue
-            
-        ## Is it a header?
-        if line.find('IGRF') != -1:
-            continue
-        if line.find('g/h') != -1:
-            fields = line.split(None)
-            years = [float(value) for value in fields[3:-1]]
-            continue
-            
-        ## Must be data...  parse it
-        fields = line.split(None)
-        t, n, m = fields[0], int(fields[1]), int(fields[2])
-        c = np.array([float(v) for v in fields[3:]])
-        
-        ## Sort out cosine (g) vs. sine (h)
-        if t == 'g':
-            try:
-                dataCos[n][m] = c
-            except KeyError:
-                dataCos[n] = [np.zeros(len(years)+1) for i in range(n+1)]
-                dataCos[n][m] = c
-        else:
-            try:
-                dataSin[n][m] = c
-            except KeyError:
-                dataSin[n] = [np.zeros(len(years)+1) for i in range(n+1)]
-                dataSin[n][m] = c
+    with DataAccess.open('geo/igrf13coeffs.txt', 'r') as fh:
+        for line in fh:
+            ## Is this line a comment?
+            line = line.replace('\n', '')
+            if line.find('#') != -1:
+                continue
                 
+            ## Is it a header?
+            if line.find('IGRF') != -1:
+                continue
+            if line.find('g/h') != -1:
+                fields = line.split(None)
+                years = [float(value) for value in fields[3:-1]]
+                continue
+                
+            ## Must be data...  parse it
+            fields = line.split(None)
+            t, n, m = fields[0], int(fields[1]), int(fields[2])
+            c = np.array([float(v) for v in fields[3:]])
+            
+            ## Sort out cosine (g) vs. sine (h)
+            if t == 'g':
+                try:
+                    dataCos[n][m] = c
+                except KeyError:
+                    dataCos[n] = [np.zeros(len(years)+1) for i in range(n+1)]
+                    dataCos[n][m] = c
+            else:
+                try:
+                    dataSin[n][m] = c
+                except KeyError:
+                    dataSin[n] = [np.zeros(len(years)+1) for i in range(n+1)]
+                    dataSin[n][m] = c
+                    
     # Build the output
     output = {'years': years, 'g': dataCos, 'h': dataSin}
     
@@ -279,14 +263,8 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     ln = np.arctan2(xyz[1], xyz[0])
     
     # Load in the coefficients
-    try:
-        coeffs = _ONLINE_CACHE['IGRF']
-    except KeyError:
-        with DataAccess.open('geo/igrf13coeffs.txt', 'r') as fh:
-            _ONLINE_CACHE['IGRF'] = _load_igrf(fh)
-            
-        coeffs = _ONLINE_CACHE['IGRF']
-        
+    coeffs = _load_igrf()
+    
     # Compute the coefficients for the epoch
     coeffs = _compute_igrf_coefficents(year, coeffs)
     
@@ -390,6 +368,7 @@ def compute_magnetic_inclination(Bn, Be, Bz):
     return incl*180.0/np.pi
 
 
+@lru_cache(maxsize=64)
 def _load_map(mjd, type='IGS'):
     """
     Given an MJD value, load the corresponding TEC map.  If the map is not
@@ -449,14 +428,8 @@ def _load_map(mjd, type='IGS'):
     else:
         raise ValueError(f"Unknown data source '{type}'")
         
-    try:
-        # Is it already in the on-line cache?
-        tecMap = _ONLINE_CACHE[cacheName]
-    except KeyError:
-        # Nope, we need to fetch it
-        _ONLINE_CACHE[cacheName] = loader(mjd)    
-        tecMap = _ONLINE_CACHE[cacheName]
-        
+    tecMap = loader(mjd)    
+    
     # Done
     return tecMap
 

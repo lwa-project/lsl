@@ -13,21 +13,28 @@ from ftplib import FTP_TLS, error_perm as FTP_ERROR_PERM, error_temp as FTP_ERRO
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.common.progress import DownloadBar
 from lsl.common.color import colorfy
+from lsl.misc.file_cache import FileCache, MemoryCache
 
 from lsl.config import LSL_CONFIG
+IONO_CONFIG = LSL_CONFIG.view('ionosphere')
 DOWN_CONFIG = LSL_CONFIG.view('download')
 
 
-_CACHE_DIR = None
+# Create the cache directory
+try:
+    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache'),
+                           max_size=lambda: IONO_CONFIG.get('max_cache_size'))
+except OSError:
+    _CACHE_DIR = MemoryCache(max_size=lambda: IONO_CONFIG.get('max_cache_size'))
+    warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
 
-
-def set_cache_dir(cache_dir):
-    global _CACHE_DIR
-    _CACHE_DIR = cache_dir
-    
 
 def get_cache_dir():
-    global _CACHE_DIR
+    """
+    Return the current instance of FileCache/MemoryCache used for data file
+    caching.
+    """
+    
     return _CACHE_DIR
 
 

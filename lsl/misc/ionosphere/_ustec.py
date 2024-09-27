@@ -17,7 +17,7 @@ FILENAME_TEMPLATE = '%s_ustec.tar.gz'
 FILENAME_TEMPLATE_ALT = '%s_ustec.tar.gz'
 
 
-_CACHE_DIR = None
+_CACHE_DIR = get_cache_dir()
 
 
 def _download(mjd, type='final'):
@@ -337,10 +337,6 @@ def _parse_ustec_map(filename_or_fh):
 
 
 def load_mjd(mjd):
-    global _CACHE_DIR
-    if _CACHE_DIR is None:
-        _CACHE_DIR = get_cache_dir()
-        
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
