@@ -2,6 +2,7 @@
 import os
 import sys
 import time
+import zlib
 import shutil
 import socket
 import calendar
@@ -129,12 +130,15 @@ class _DataAccess(object):
             mtime = 0.0
             remote_size = 1
             req = Request(url)
-            if os.path.splitext(url)[1] not in ('.Z', '.gz'):
-                req.add_header('Accept-encoding', 'gzip')
+            if os.path.splitext(url)[1] not in ('.Z', '.gz', '.bz2', '.zip'):
+                req.add_header('Accept-Encoding', 'gzip')
             with urlopen(req, timeout=DOWN_CONFIG.get('timeout')) as uh:
                 remote_size = int(uh.headers["Content-Length"])
                 mtime = uh.headers['Last-Modified']
-                
+                is_gzip = (uh.headers['Content-Encoding'] == 'gzip')
+                if is_gzip:
+                    decomp = zlib.decompressobj(zlib.MAX_WBITS|32)
+                    
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
                 mtime = calendar.timegm(mtime.timetuple())
                 
@@ -148,6 +152,8 @@ class _DataAccess(object):
                         received += len(data)
                         pbar.inc(len(data))
                         
+                        if is_gzip:
+                            data = decomp.decompress(data)
                         fh.write(data)
                         
                     if is_interactive:

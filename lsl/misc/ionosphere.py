@@ -7,6 +7,7 @@ import os
 import sys
 import gzip
 import json
+import zlib
 import ephem
 import numpy as np
 import socket
@@ -486,10 +487,13 @@ def _download_worker_standard(url, filename):
     try:
         req = Request(url)
         if os.path.splitext(url)[1] not in ('.Z', '.gz'):
-            req.add_header('Accept-encoding', 'gzip')
+            req.add_header('Accept-Encoding', 'gzip')
         tecFH = urlopen(req, timeout=DOWN_CONFIG.get('timeout'))
         remote_size = int(tecFH.headers["Content-Length"])
-        
+        is_gzip = (tecFH.headers['Content-Encoding'] == 'gzip')
+        if is_gzip:
+            decomp = zlib.decompressobj(zlib.MAX_WBITS|32)
+            
         pbar = DownloadBar(max=remote_size)
         while True:
             new_data = tecFH.read(DOWN_CONFIG.get('block_size'))
@@ -497,6 +501,8 @@ def _download_worker_standard(url, filename):
                 break
             pbar.inc(len(new_data))
             try:
+                if is_gzip:
+                    new_data = decomp.decompress(new_data)
                 data += new_data
             except NameError:
                 data = new_data
