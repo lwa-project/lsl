@@ -3,6 +3,7 @@ import sys
 import h5py
 import ephem
 import numpy as np
+from functools import lru_cache
 from collections import OrderedDict
 from scipy.interpolate import interp1d, RegularGridInterpolator
 
@@ -26,6 +27,7 @@ _MODELS['nec_015']   = 'antenna/NEC_er-3p0_sig-0p015.hdf5'
 _MODELS['nec_030']   = 'antenna/NEC_er-3p0_sig-0p030.hdf5'
 
 
+@lru_cache(maxsize=10)
 def _load_response_fitted(frequency, corrected=False):
     """
     Given an observing frequency in Hz, load in the empirical model (see LWA
@@ -110,6 +112,7 @@ def _load_response_fitted(frequency, corrected=False):
     return output
 
 
+@lru_cache(maxsize=10)
 def _load_response_full(frequency, model='nec_004'):
     """
     Given an observing frequency in Hz, load in data from an electromagnetic
@@ -190,6 +193,8 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
     Given a model source, an array of azimuth values and an array of altitude
     values, compute the Mueller matrix for an isolated LWA dipole.  Returns the
     Mueller matrix with shape (4,4)+az.shape.
+    
+    .. note:: If az/alt are scalar then a (4,4) matrix is returned.
     """
     
     # Convert
@@ -202,6 +207,11 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
         alt = alt.deg
     elif isinstance(az, ephem.Angle) or not degrees:
         alt = alt * 180/np.pi
+        
+    is_1d = False
+    if not isinstance(az, np.ndarray) or not isinstance(alt, np.ndarray):
+        is_1d = True
+        az, alt = np.array(az), np.array(alt)
         
     # Load in correct the Jones matrix
     mfreq, maz, malt, J = _jones_matrix(model, frequency=frequency)
@@ -236,8 +246,12 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
     for i in range(4):
         for j in range(4):
             P = M[i,j,...]
-            pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
-            resp[i,j,:] = pfunc((ffreq, falt, faz))
+            if mfreq.size > 1:
+                pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+                resp[i,j,:] = pfunc((ffreq, falt, faz))
+            else:
+                pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
+                resp[i,j,:] = pfunc((falt, faz))
     resp.shape = (4,4)+az.shape
     
     return resp
@@ -293,6 +307,11 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
     elif isinstance(az, ephem.Angle) or not degrees:
         alt = alt * 180/np.pi
         
+    is_1d = False
+    if not isinstance(az, np.ndarray) or not isinstance(alt, np.ndarray):
+        is_1d = True
+        az, alt = np.array(az), np.array(alt)
+        
     # Load
     model = model.lower()
     if model == 'empirical':
@@ -304,14 +323,26 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
         
     # Build up the correct polarization product
     P = _compute_from_feeds(pol, XE, XH, YE, YH)
-    pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+    if mfreq.size > 1:
+        is_3d = True
+        pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+    else:
+        is_3d = False
+        pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
     
     # Evaluate
     ffreq = np.ones(az.size)*frequency
     faz = az.ravel()
     falt = alt.ravel()
-    resp = pfunc((ffreq, falt, faz))
+    if is_3d:
+        resp = pfunc((ffreq, falt, faz))
+    else:
+        resp = pfunc((falt, faz))
     resp.shape = az.shape
+    
+    if is_1d:
+        resp = resp.item()
+        
     return resp
 
 
