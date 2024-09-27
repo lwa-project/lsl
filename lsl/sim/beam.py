@@ -190,6 +190,8 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
     Given a model source, an array of azimuth values and an array of altitude
     values, compute the Mueller matrix for an isolated LWA dipole.  Returns the
     Mueller matrix with shape (4,4)+az.shape.
+    
+    .. note:: If az/alt are scalar then a (4,4) matrix is returned.
     """
     
     # Convert
@@ -202,6 +204,11 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
         alt = alt.deg
     elif isinstance(az, ephem.Angle) or not degrees:
         alt = alt * 180/np.pi
+        
+    is_1d = False
+    if not isinstance(az, np.ndarray) or not isinstance(alt, np.ndarray):
+        is_1d = True
+        az, alt = np.array(az), np.array(alt)
         
     # Load in correct the Jones matrix
     mfreq, maz, malt, J = _jones_matrix(model, frequency=frequency)
@@ -236,8 +243,12 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
     for i in range(4):
         for j in range(4):
             P = M[i,j,...]
-            pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
-            resp[i,j,:] = pfunc((ffreq, falt, faz))
+            if mfreq.size > 1:
+                pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+                resp[i,j,:] = pfunc((ffreq, falt, faz))
+            else:
+                pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
+                resp[i,j,:] = pfunc((falt, faz))
     resp.shape = (4,4)+az.shape
     
     return resp
@@ -293,6 +304,11 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
     elif isinstance(az, ephem.Angle) or not degrees:
         alt = alt * 180/np.pi
         
+    is_1d = False
+    if not isinstance(az, np.ndarray) or not isinstance(alt, np.ndarray):
+        is_1d = True
+        az, alt = np.array(az), np.array(alt)
+        
     # Load
     model = model.lower()
     if model == 'empirical':
@@ -312,21 +328,18 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
         pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
     
     # Evaluate
-    if isinstance(az, np.ndarray):
-        ffreq = np.ones(az.size)*frequency
-        faz = az.ravel()
-        falt = alt.ravel()
-        if is_3d:
-            resp = pfunc((ffreq, falt, faz))
-        else:
-            resp = pfunc((falt, faz))
-        resp.shape = az.shape
+    ffreq = np.ones(az.size)*frequency
+    faz = az.ravel()
+    falt = alt.ravel()
+    if is_3d:
+        resp = pfunc((ffreq, falt, faz))
     else:
-        if is_3d:
-            resp = pfunc(([frequency], [alt], [az]))
-        else:
-            resp = pfunc(([alt], [az]))
+        resp = pfunc((falt, faz))
+    resp.shape = az.shape
+    
+    if is_1d:
         resp = resp.item()
+        
     return resp
 
 

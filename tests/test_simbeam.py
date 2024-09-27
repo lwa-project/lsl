@@ -86,6 +86,9 @@ class sim_beam_tests(unittest.TestCase):
         Test that the mueller_matrix function actually runs.
         """
         
+        az0 = 0.0
+        alt0 = 45.0
+        
         az = np.arange(360)
         alt = np.arange(360)*0 + 45
         
@@ -94,13 +97,26 @@ class sim_beam_tests(unittest.TestCase):
         az2, alt2 = np.meshgrid(az2, alt2)
         
         for model in simbeam.get_avaliable_models():
+            with self.subTest(model=model, dim=0):
+                pattern = simbeam.mueller_matrix(model, az0, alt0, frequency=70e6)
+                self.assertEqual(pattern.shape, (4,4))
+                for i in range(4):
+                    for j in range(4):
+                        self.assertTrue(np.isfinite(pattern[i,j]))
+                        
             with self.subTest(model=model, dim=1):
                 pattern = simbeam.mueller_matrix(model, az, alt, frequency=70e6)
                 self.assertEqual(pattern.shape, (4,4)+az.shape)
-                
+                for i in range(4):
+                    for j in range(4):
+                        self.assertTrue(np.isfinite(pattern[i,j,0]))
+                        
             with self.subTest(model=model, dim=2):
                 pattern = simbeam.mueller_matrix(model, az2, alt2, frequency=70e6)
                 self.assertEqual(pattern.shape, (4,4)+az2.shape)
+                for i in range(4):
+                    for j in range(4):
+                        self.assertTrue(np.isfinite(pattern[i,j,0,0]))
 
 
 class sim_beam_test_suite(unittest.TestSuite):
