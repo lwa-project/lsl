@@ -5,6 +5,10 @@ from lsl.config import LSL_CONFIG
 IONO_CONFIG = LSL_CONFIG.view('ionosphere')
 
 
+__version__ = '0.1'
+__all__ = ['FILENAME_TEMPLATE', 'FILENAME_TEMPLATE_ALT', 'load_mjd']
+
+
 FILENAME_TEMPLATE = 'jplg%03i0.%02ii.Z'
 FILENAME_TEMPLATE_ALT = 'jprg%03i0.%02ii.Z'
 
@@ -47,4 +51,9 @@ def _download(mjd, type='final', cache_dir=None):
 
 
 def load_mjd(mjd):
+    """
+    Given an MJD value, load the corresponding TEC map.  If the map is not
+    avaliable on disk, download it.
+    """
+    
     return base_load_mjd(mjd, FILENAME_TEMPLATE, FILENAME_TEMPLATE_ALT, _download)

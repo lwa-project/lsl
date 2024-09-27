@@ -20,6 +20,10 @@ IONO_CONFIG = LSL_CONFIG.view('ionosphere')
 DOWN_CONFIG = LSL_CONFIG.view('download')
 
 
+__version__ = '0.1'
+__all__ = ['get_cache_dir', 'download_worker', 'load_mjd']
+
+
 # Create the cache directory
 try:
     _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache'),
@@ -38,7 +42,7 @@ def get_cache_dir():
     return _CACHE_DIR
 
 
-def convert_to_gzip(filename):
+def _convert_to_gzip(filename):
     """
     Given a unix compressed .Z file, convert it to a gzip .gz file and update
     the cache.
@@ -55,7 +59,7 @@ def convert_to_gzip(filename):
             gh.write(uncompressed)
 
 
-def download_worker_cddis(url, filename):
+def _download_worker_cddis(url, filename):
     """
     Download the URL from gdc.cddis.eosdis.nasa.gov via FTP-SSL and save it to a file.
     """
@@ -110,14 +114,14 @@ def download_worker_cddis(url, filename):
     ## Further processing, if needed
     if os.path.splitext(url)[1] == '.Z':
         ## Save it to a regular gzip'd file after uncompressing it.
-        convert_to_gzip(filename)
+        _convert_to_gzip(filename)
         
     # Done
     ftps.close()
     return True
 
 
-def download_worker_standard(url, filename):
+def _download_worker_standard(url, filename):
     """
     Download the URL and save it to a file.
     """
@@ -169,7 +173,7 @@ def download_worker_standard(url, filename):
         ## Further processing, if needed
         if os.path.splitext(url)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
-            convert_to_gzip(filename)
+            _convert_to_gzip(filename)
             
         return True
 
@@ -181,14 +185,14 @@ def download_worker(url, filename):
     
     # Attempt to download the data
     if url.find('gdc.cddis.eosdis.nasa.gov') != -1:
-        status = download_worker_cddis(url, filename)
+        status = _download_worker_cddis(url, filename)
     else:
-        status = download_worker_standard(url, filename)
+        status = _download_worker_standard(url, filename)
         
     return status
 
 
-def parse_tec_map(filename_or_fh):
+def _parse_tec_map(filename_or_fh):
     """
     Given the name of a file containing a TEC map from the IGC, parse it 
     and return a dictionary containing the files data.
@@ -324,6 +328,12 @@ def parse_tec_map(filename_or_fh):
 
 
 def load_mjd(mjd, filenameTemplate, filenameAltTemplate, downloader):
+    """
+    Given an MJD value, filenaming templates, and a function to download
+    missing files, load the corresponding TEC map.  If the map is not
+    already avaliable on disk, download it with the downloader.
+    """
+    
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
@@ -359,6 +369,6 @@ def load_mjd(mjd, filenameTemplate, filenameAltTemplate, downloader):
         
     # Parse it
     with _CACHE_DIR.open(filename, 'rb') as fh:
-        data_set = parse_tec_map(fh)
+        data_set = _parse_tec_map(fh)
         
     return data_set

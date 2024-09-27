@@ -13,6 +13,10 @@ from lsl.config import LSL_CONFIG
 IONO_CONFIG = LSL_CONFIG.view('ionosphere')
 
 
+__version__ = '0.1'
+__all__ = ['FILENAME_TEMPLATE', 'FILENAME_TEMPLATE_ALT', 'load_mjd']
+
+
 FILENAME_TEMPLATE = '%s_ustec.tar.gz'
 FILENAME_TEMPLATE_ALT = '%s_ustec.tar.gz'
 
@@ -337,6 +341,11 @@ def _parse_ustec_map(filename_or_fh):
 
 
 def load_mjd(mjd):
+    """
+    Given an MJD value, load the corresponding TEC map.  If the map is not
+    avaliable on disk, download it.
+    """
+    
     # Convert the MJD to a datetime instance so that we can pull out the year
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
