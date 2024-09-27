@@ -3,6 +3,7 @@ import sys
 import h5py
 import ephem
 import numpy as np
+from functools import lru_cache
 from collections import OrderedDict
 from scipy.interpolate import interp1d, RegularGridInterpolator
 
@@ -26,6 +27,7 @@ _MODELS['nec_015']   = 'antenna/NEC_er-3p0_sig-0p015.hdf5'
 _MODELS['nec_030']   = 'antenna/NEC_er-3p0_sig-0p030.hdf5'
 
 
+@lru_cache(maxsize=10)
 def _load_response_fitted(frequency, corrected=False):
     """
     Given an observing frequency in Hz, load in the empirical model (see LWA
@@ -110,6 +112,7 @@ def _load_response_fitted(frequency, corrected=False):
     return output
 
 
+@lru_cache(maxsize=10)
 def _load_response_full(frequency, model='nec_004'):
     """
     Given an observing frequency in Hz, load in data from an electromagnetic
