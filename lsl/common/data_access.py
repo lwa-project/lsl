@@ -20,8 +20,91 @@ from lsl.common.color import colorfy
 from lsl.config import LSL_CONFIG
 DOWN_CONFIG = LSL_CONFIG.view('download')
 
-__version__ = '0.1'
-__all__ = ['DataAccess']
+__version__ = '0.2'
+__all__ = ['download_file', 'DataAccess']
+
+
+def download_file(url, filename_or_fh, byte_range=None):
+    """
+    Given a URL and either a filename or open file handle, download the URL and
+    write the data.  Returns a three-element tuple:
+     * the remote size as reported by 'Content-Length',
+     * the number of bytes recieved, and
+     * the URL modification time as reported by the 'Last-Modified' HTTP header.
+    All three will be 0 if there was a problem downloading the file.
+    
+    .. note::  If `byte_range` is not None then only the porition of the file
+               between [start_byte, end_byte] is downloaded.
+    """
+    
+    is_interactive = sys.__stdin__.isatty()
+    
+    req = Request(url)
+    if os.path.splitext(url)[1] not in ('.Z', '.gz', '.bz2', '.tgz', '.zip'):
+        req.add_header('Accept-Encoding', 'gzip')
+    if byte_range is not None:
+        if not isinstance(byte_range, (tuple, list)):
+            byte_range = [0, byte_range]
+        else:
+            if len(byte_range) != 2:
+                raise ValueError("Expected byte_range to be either an integer, two-element list, or None")
+        req.add_header("Range", f"bytes={int(byte_range[0])}-{int(byte_range[1])}")
+    
+    do_close = False
+    if isinstance(filename_or_fh, str):
+        filename_or_fh = open(filename_or_fh, 'wb')
+        do_close = True
+    else:
+        if filename_or_fh.mode.find('wb') == -1:
+            raise RuntimeError("filename_or_fh appears to not be opened for binary writing")
+            
+    print(f"Downloading {url}")
+    try:
+        received = 0
+        mtime = 0.0
+        remote_size = 0
+        with urlopen(req, timeout=DOWN_CONFIG.get('timeout')) as uh:
+            remote_size = int(uh.headers["Content-Length"])
+            mtime = uh.headers['Last-Modified']
+            is_gzip = (uh.headers['Content-Encoding'] == 'gzip')
+            if is_gzip:
+                decomp = zlib.decompressobj(zlib.MAX_WBITS|32)
+                
+            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+            mtime = calendar.timegm(mtime.timetuple())
+            
+            pbar = DownloadBar(max=remote_size)
+            received = 0
+            while True:
+                data = uh.read(DOWN_CONFIG.get('block_size'))
+                if len(data) == 0:
+                    break
+                received += len(data)
+                pbar.inc(len(data))
+                
+                if is_gzip:
+                    data = decomp.decompress(data)
+                filename_or_fh.write(data)
+                
+                if is_interactive:
+                    sys.stdout.write(pbar.show()+'\r')
+                    sys.stdout.flush()
+                    
+            if is_interactive:
+                sys.stdout.write(pbar.show()+'\n')
+                sys.stdout.flush()
+    except IOError as e:
+        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
+        received = 0
+    except (socket.timeout, TimeoutError):
+        received = 0
+    except HTTPError:
+        received = 0
+        
+    if do_close:
+        filename_or_fh.close()
+        
+    return (remote_size, received, mtime)
 
 
 class _DataAccess(object):
@@ -125,51 +208,10 @@ class _DataAccess(object):
         url = self._BASE_URL+'/'+relative_url
         if use_backup:
             url = self._BACKUP_URL+'/'+relative_url
-        print(f"Downloading {url}")
-        try:
-            mtime = 0.0
-            remote_size = 1
-            req = Request(url)
-            if os.path.splitext(url)[1] not in ('.Z', '.gz', '.bz2', '.zip'):
-                req.add_header('Accept-Encoding', 'gzip')
-            with urlopen(req, timeout=DOWN_CONFIG.get('timeout')) as uh:
-                remote_size = int(uh.headers["Content-Length"])
-                mtime = uh.headers['Last-Modified']
-                is_gzip = (uh.headers['Content-Encoding'] == 'gzip')
-                if is_gzip:
-                    decomp = zlib.decompressobj(zlib.MAX_WBITS|32)
-                    
-                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
-                mtime = calendar.timegm(mtime.timetuple())
-                
-                pbar = DownloadBar(max=remote_size)
-                received = 0
-                with self._data_cache.open(filename, 'wb') as fh:
-                    while True:
-                        data = uh.read(DOWN_CONFIG.get('block_size'))
-                        if len(data) == 0:
-                            break
-                        received += len(data)
-                        pbar.inc(len(data))
-                        
-                        if is_gzip:
-                            data = decomp.decompress(data)
-                        fh.write(data)
-                        
-                    if is_interactive:
-                        sys.stdout.write(pbar.show()+'\r')
-                        sys.stdout.flush()
-                        
-                if is_interactive:
-                    sys.stdout.write(pbar.show()+'\n')
-                    sys.stdout.flush()
-        except IOError as e:
-            warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
-            received = 0
-        except (socket.timeout, TimeoutError):
-            received = 0
-        except HTTPError:
-            received = 0
+            
+        mtime = 0
+        with self._data_cache.open(filename, 'wb') as fh:
+            remote_size, received, mtime = download_file(url, fh)
             
         with self._data_cache.open(metaname, 'w') as fh:
             fh.write(f"created: {time.time():.0f}\n")
