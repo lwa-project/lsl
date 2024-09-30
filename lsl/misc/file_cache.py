@@ -49,7 +49,8 @@ class FileCache(object):
             
         # Make sure we can write here
         with self._lock:
-            assert(self._lock.locked())
+            if not self._lock.locked():
+                raise RuntimeError(f"Could not acquire {self.cache_dir} lock.  Is another process holding the lock?")
             with open(os.path.join(self.cache_dir, 'write.test'), 'w') as fh:
                 fh.write('test')
             os.unlink(os.path.join(self.cache_dir, 'write.test'))
