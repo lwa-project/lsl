@@ -17,7 +17,7 @@ from lsl.reader.base import FrameTimestamp
 from lsl.common.data_access import download_file
 
 
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -28,6 +28,9 @@ if os.getenv('GITHUB_ACTIONS', None) is not None:
 
 _VDIF_URL = 'https://fornax.phys.unm.edu/lwa/data/eLWA_test_small_raw.tar.gz'
 
+tarFile = os.path.join(os.path.dirname(__file__), 'data', 'eLWA_test_raw.tar.gz')
+vdifFile = os.path.join(os.path.dirname(__file__), 'data', '19A-065_sb37228330_1_1_000.58761.982590671294.4.1.AC-01.0000.vdif')
+
 
 @unittest.skipUnless(run_extended_tests, "requires appropriate environment variable to be set")
 class extended_reader_tests(unittest.TestCase):
@@ -37,17 +40,15 @@ class extended_reader_tests(unittest.TestCase):
     def setUp(self):
         """Create the temporary file directory."""
         
-        if not os.path.exists('eLWA_test_raw.tar.gz'):
-            download_file(_VDIF_URL, 'eLWA_test_raw.tar.gz')
-            subprocess.check_call(['tar', 'xzf', 'eLWA_test_raw.tar.gz'])
+        if not os.path.exists(tarFile):
+            download_file(_VDIF_URL, tarFile)
+            subprocess.check_call(['tar', '-C', os.path.dirname(tarFile), '-xzf', tarFile])
             
     def test_vdif_guppi_header(self):
         """Test reading a VDIF file with a GUPPI header."""
         
-        filename = glob.glob('*.vdif')[0]
-        
         # Open the file
-        fh = open(filename, 'rb')
+        fh = open(vdifFile, 'rb')
         
         # Make sure it is there
         self.assertTrue(vdif.has_guppi_header(fh))
@@ -68,10 +69,8 @@ class extended_reader_tests(unittest.TestCase):
     def test_vdif_frames_per_second(self):
         """Test reading a VDIF file with a GUPPI header."""
         
-        filename = glob.glob('*.vdif')[0]
-        
         # Open the file
-        fh = open(filename, 'rb')
+        fh = open(vdifFile, 'rb')
         
         # Read the GUPPI header and a frame
         header = vdif.read_guppi_header(fh)
