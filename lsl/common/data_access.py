@@ -74,6 +74,7 @@ def download_file(url, filename_or_fh, byte_range=None):
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
                 mtime = calendar.timegm(mtime.timetuple())
             else:
+                warnings.warn(f"Cannot find a 'Last-Modified' time for {url}, modification time will be set to zero")
                 mtime = 0.0
                 
             pbar = DownloadBar(max=remote_size)
