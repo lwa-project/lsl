@@ -70,9 +70,12 @@ def download_file(url, filename_or_fh, byte_range=None):
             if is_gzip:
                 decomp = zlib.decompressobj(zlib.MAX_WBITS|32)
                 
-            mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
-            mtime = calendar.timegm(mtime.timetuple())
-            
+            if mtime is not None:
+                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+                mtime = calendar.timegm(mtime.timetuple())
+            else:
+                mtime = 0.0
+                
             pbar = DownloadBar(max=remote_size)
             received = 0
             while True:
