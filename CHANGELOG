@@ -1,6 +1,8 @@
 3.0.2
  * Enabled caching in lsl.sim.beam to reduce the number of times a model is loaded
  * Updated lsl.common.data_access to request file be gzip compressed when downloaded
+ * Refactored lsl.common.data_access to expose the internal downloader function
+ * Added better warnings/error messages to lsl.misc.file_cache and lsl.misc.file_lock to help debug stuck locks
 
 3.0.1
  * Fixed a problem with lsl.sim.beam.beam_response/mueller_matrix when scalar azimuth/altitude are provided
