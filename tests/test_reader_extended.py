@@ -14,6 +14,7 @@ from lsl.reader import vdif
 from lsl.reader import drspec
 from lsl.reader import errors
 from lsl.reader.base import FrameTimestamp
+from lsl.common.data_access import download_file
 
 
 __version__  = "0.1"
@@ -37,9 +38,7 @@ class extended_reader_tests(unittest.TestCase):
         """Create the temporary file directory."""
         
         if not os.path.exists('eLWA_test_raw.tar.gz'):
-            subprocess.check_call(['curl', _VDIF_URL,
-                                   '--silent',
-                                   '-o', 'eLWA_test_raw.tar.gz'])
+            download_file(_VDIF_URL, 'eLWA_test_raw.tar.gz')
             subprocess.check_call(['tar', 'xzf', 'eLWA_test_raw.tar.gz'])
             
     def test_vdif_guppi_header(self):
