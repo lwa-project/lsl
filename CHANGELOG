@@ -5,6 +5,7 @@
  * Added better warnings/error messages to lsl.misc.file_cache and lsl.misc.file_lock to help debug stuck locks
  * Updated lsl.common.idf to default to using all (full + mini) stations
  * Fixed the units on the final report of a DownloadBar run
+ * Worked on improving the performance of "return_ci8=True" in lsl.reader.ldp
 
 3.0.1
  * Fixed a problem with lsl.sim.beam.beam_response/mueller_matrix when scalar azimuth/altitude are provided

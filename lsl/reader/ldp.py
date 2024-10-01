@@ -750,8 +750,11 @@ class TBNFile(LDPFileBase):
         count = [0 for i in range(self.description['nantenna'])]
         if return_ci8:
             data = np.zeros((self.description['nantenna'], frame_count*512), dtype=CI8)
+            data_view = data.view(np.int8)
         else:
             data = np.zeros((self.description['nantenna'], frame_count*512), dtype=np.complex64)
+            data_view = data.view(np.float32)
+            
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -795,7 +798,7 @@ class TBNFile(LDPFileBase):
                     else:
                         setTime = cFrame.time
                         
-                data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
+                data_view[aStand,  count[aStand]*1024:(count[aStand]+1)*1024] = cFrame.payload.data.view(data_view.dtype)
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -822,7 +825,7 @@ class TBNFile(LDPFileBase):
                         else:
                             setTime = cFrame.time
                         
-                    data[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data
+                    data_view[aStand,  count[aStand]*1024:(count[aStand]+1)*1024] = cFrame.payload.data.view(data_view.dtype)
                     count[aStand] += 1
                 nFrameSets += 1
                 
@@ -1149,8 +1152,10 @@ class DRXFile(LDPFileBase):
         setTime = None
         if return_ci8:
             data = np.zeros((4,frame_count*4096), dtype=CI8)
+            data_view = data.view(np.int8)
         else:
             data = np.zeros((4,frame_count*4096), dtype=np.complex64)
+            data_view = data.view(np.float32)
             
         # Go!
         nFrameSets = 0
@@ -1218,7 +1223,7 @@ class DRXFile(LDPFileBase):
                     else:
                         setTime = cFrame.time
                         
-                data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
+                data_view[aStand, count[aStand]*8192:(count[aStand]+1)*8192] = cFrame.payload.data.view(data_view.dtype)
                 count[aStand] +=  1
                 self._timetag[aStand] = cTimetag
             nFrameSets += 1
@@ -1246,7 +1251,7 @@ class DRXFile(LDPFileBase):
                         else:
                             setTime = cFrame.time
                             
-                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data
+                    data_view[aStand, count[aStand]*8192:(count[aStand]+1)*8192] = cFrame.payload.data.view(data_view.dtype)
                     count[aStand] +=  1
                     self._timetag[aStand] = cTimetag
                 nFrameSets += 1
@@ -1926,8 +1931,11 @@ class TBFFile(LDPFileBase):
         count = [0 for i in range(framesPerObs)]
         if return_ci8:
             data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=CI8)
+            data_view = data.view(np.int8)
         else:
             data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=np.complex64)
+            data_view = data.view(np.float32)
+            
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -1980,7 +1988,7 @@ class TBFFile(LDPFileBase):
                 subData = subData.T
                 
                 aStand = self.mapper.index(first_chan)
-                data[:,aStand*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData
+                data_view[:,aStand*2*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*2*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -2013,7 +2021,7 @@ class TBFFile(LDPFileBase):
                     subData = subData.T
                     
                     aStand = self.mapper.index(first_chan)
-                    data[:,aStand*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData
+                    data_view[:,aStand*2*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*2*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
                     count[aStand] += 1
                 nFrameSets += 1
                 
