@@ -10,6 +10,7 @@ from urllib.request import Request, urlopen
 from datetime import datetime, timedelta
 from ftplib import FTP_TLS, error_perm as FTP_ERROR_PERM, error_temp as FTP_ERROR_TEMP
 
+from lsl.common.data_access import download_file
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.common.progress import DownloadBar
 from lsl.common.color import colorfy
@@ -126,56 +127,29 @@ def _download_worker_standard(url, filename):
     Download the URL and save it to a file.
     """
     
-    is_interactive = sys.__stdin__.isatty()
-    
-    # Attempt to download the data
-    print(f"Downloading {url}")
+    status = False
     try:
-        req = Request(url)
-        if os.path.splitext(url)[1] not in ('.Z', '.gz'):
-            req.add_header('Accept-encoding', 'gzip')
-        tecFH = urlopen(req, timeout=DOWN_CONFIG.get('timeout'))
-        remote_size = int(tecFH.headers["Content-Length"])
-        
-        pbar = DownloadBar(max=remote_size)
-        while True:
-            new_data = tecFH.read(DOWN_CONFIG.get('block_size'))
-            if len(new_data) == 0:
-                break
-            pbar.inc(len(new_data))
-            try:
-                data += new_data
-            except NameError:
-                data = new_data
-            if is_interactive:
-                sys.stdout.write(pbar.show()+'\r')
-                sys.stdout.flush()
-        tecFH.close()
-        if is_interactive:
-            sys.stdout.write(pbar.show()+'\n')
-            sys.stdout.flush()
-    except IOError as e:
-        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
-        data = ''
-    except (socket.timeout, TimeoutError):
-        data = ''
-        
-    # Did we get anything or, at least, enough of something like it looks like 
-    # a real file?
-    if len(data) < 3:
-        ## Fail
-        return False
-    else:
-        ## Success!  Save it to a file
+        # Attempt to download the data
         with _CACHE_DIR.open(filename, 'wb') as fh:
-            fh.write(data)
+            _, received, mtime = download_file(url, fh)
             
-        ## Further processing, if needed
+        # Did we get anything or, at least, enough of something like it looks like 
+        # a real file?
+        if received < 3:
+            raise RuntimeError("Received too few bytes")
+            
+        # Further processing, if needed
         if os.path.splitext(url)[1] == '.Z':
             ## Save it to a regular gzip'd file after uncompressing it.
             _convert_to_gzip(filename)
             
-        return True
+        status = True
+        
+    except RuntimeError:
+        # Failed to download, remove the empty file
+        _CACHE_DIR.remove(filename)
+        
+    return status
 
 
 def download_worker(url, filename):
