@@ -6,6 +6,7 @@ import os
 import unittest
 import tempfile
 import shutil
+import numpy as np
 
 from lsl.reader import ldp
 from lsl.reader import errors
@@ -296,6 +297,15 @@ class ldp_tests(unittest.TestCase):
         tInt, tStart, data = f.read(1.00, return_ci8=True)
         self.assertEqual(len(data.shape), 2)
         
+        # Go back and try it again without ci8 support
+        f.reset()
+        _, _, data2 = f.read(1.00, return_ci8=False)
+        data = data['re'] + 1j*data['im']
+        np.testing.assert_equal(data, data)
+        
+        # Close it out
+        f.close()
+        
     ### DRX ###
     
     def test_ldp_drx(self):
@@ -472,6 +482,15 @@ class ldp_tests(unittest.TestCase):
         # Read a chunk - long
         tInt, tStart, data = f.read(1.00, return_ci8=True)
         self.assertEqual(len(data.shape), 2)
+        
+        # Go back and try it again without ci8 support
+        f.reset()
+        _, _, data2 = f.read(1.00, return_ci8=False)
+        data = data['re'] + 1j*data['im']
+        np.testing.assert_equal(data, data2)
+        
+        # Close it out
+        f.close()
         
     ### DR Spectrometer ###
     

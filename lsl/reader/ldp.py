@@ -1931,10 +1931,10 @@ class TBFFile(LDPFileBase):
         count = [0 for i in range(framesPerObs)]
         if return_ci8:
             data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=CI8)
-            data_view = data.view(np.int8)
+            data_view = data.view(np.int16)
         else:
             data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=np.complex64)
-            data_view = data.view(np.float32)
+            data_view = data.view(np.float64)
             
         while True:
             if eofFound or nFrameSets == frame_count:
@@ -1988,7 +1988,7 @@ class TBFFile(LDPFileBase):
                 subData = subData.T
                 
                 aStand = self.mapper.index(first_chan)
-                data_view[:,aStand*2*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*2*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
+                data_view[:,aStand*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -2021,7 +2021,7 @@ class TBFFile(LDPFileBase):
                     subData = subData.T
                     
                     aStand = self.mapper.index(first_chan)
-                    data_view[:,aStand*2*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*2*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
+                    data_view[:,aStand*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
                     count[aStand] += 1
                 nFrameSets += 1
                 
