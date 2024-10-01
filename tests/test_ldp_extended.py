@@ -11,6 +11,7 @@ import subprocess
 from lsl.reader import ldp
 from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
+from lsl.common.data_access import download_file
 
 
 __version__  = "0.1"
@@ -41,10 +42,7 @@ class extended_ldp_tests(unittest.TestCase):
         
         for filename,url in zip((tbnFile, drxFile, drspecFile), (_TBN_URL,_DRX_URL,_SPC_URL)):
             if not os.path.exists(filename):
-                subprocess.check_call(['curl', url,
-                                   '--silent',
-                                   '--range', '0-%i' % (250*1024*1024),
-                                   '-o', filename])
+                download_file(url, filename, byte_range=[0, 250*1024*1024])
                 
     def test_tbn_estimate(self):
         """Test estimating power levels in a TBN file."""

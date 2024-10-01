@@ -48,7 +48,7 @@ from lsl.common.color import colorfy
 
 from lsl.common.mcsADP import datetime_to_mjdmpm, mjdmpm_to_datetime
 from lsl.common.adp import freq_to_word, word_to_freq
-from lsl.common.stations import LWAStation, get_full_stations, lwa1
+from lsl.common.stations import LWAStation, get_all_stations, lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common.sdf import UCF_USERNAME_RE, Observer
@@ -397,7 +397,7 @@ class Project(object):
 class Run(object):
     """Class to hold all of the scans in an interferometer run."""
     
-    def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, correlator_channels=512, correlator_inttime=1.0, correlator_basis='linear', stations=get_full_stations()):
+    def __init__(self, name, id, scans=None, data_return_method='DRSU', comments=None, correlator_channels=512, correlator_inttime=1.0, correlator_basis='linear', stations=get_all_stations()):
         self.name = name
         self.id = int(id)
         self.scans = sdf._TypedParentList(Scan, self)
@@ -1362,7 +1362,7 @@ def parse_idf(filename, verbose=False):
                 continue
             if keyword == 'RUN_STATIONS':
                 use_stations = []
-                possible = get_full_stations()
+                possible = get_all_stations()
                 for field in value.split(','):
                     field = field.strip().rstrip()
                     if field.lower() == 'all':

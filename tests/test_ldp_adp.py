@@ -4,6 +4,7 @@ Unit test for the ADP portion of the lsl.reader.ldp module.
 
 import os
 import unittest
+import numpy as np
 
 from lsl.reader import ldp
 from lsl.reader import errors
@@ -62,6 +63,12 @@ class ldp_adp_tests(unittest.TestCase):
         # Close it out
         f.close()
         
+        # Do it all again but this time with return_ci8=True
+        f = ldp.TBFFile(tbfFile)
+        tInt, tStart, data2 = f.read(0.1, return_ci8=True)
+        data2 = data2['re'] + 1j*data2['im']
+        np.testing.assert_equal(data, data2)
+        
     def test_ldp_tbf_nocheck(self):
         """Test the LDP interface for a TBF file."""
         
@@ -87,6 +94,44 @@ class ldp_adp_tests(unittest.TestCase):
         
         # Reset
         f.reset()
+        
+        # Close it out
+        f.close()
+        
+    def test_ldp_tbf_ci8(self):
+        """Test the LDP interface for a TBF file, ci8 style."""
+        
+        f = ldp.TBFFile(tbfFile)
+        
+        # File info
+        self.assertEqual(f.get_info("nantenna"), 512)
+        self.assertEqual(f.get_info("sample_rate"), 25e3)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info('nframe'), 5)
+
+        self.assertEqual(f.nantenna, 512)
+        self.assertEqual(f.sample_rate, 25e3)
+        self.assertEqual(f.data_bits, 4)
+        self.assertEqual(f.nframe, 5)
+        
+        # Read a frame
+        frame = f.read_frame(return_ci8=True)
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(0.1, return_ci8=True)
+        
+        # Go back and try it again without ci8 support
+        f.reset()
+        _, _, data2 = f.read(0.1, return_ci8=False)
+        data = data['re'] + 1j*data['im']
+        np.testing.assert_equal(data, data2)
         
         # Close it out
         f.close()
