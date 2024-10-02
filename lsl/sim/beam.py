@@ -14,7 +14,7 @@ from lsl.common.data_access import DataAccess
 from lsl.misc import telemetry
 telemetry.track_module()
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['mueller_matrix', 'beam_response', 'get_avaliable_models']
 
 
@@ -165,7 +165,7 @@ def _load_response_full(frequency, model='nec_004'):
 def _jones_matrix(model, frequency=74e6):
     """
     Given a EM model name, load in the model and return a four element tuple of:
-     * frequencyy (1D; Hz)
+     * frequency (1D; Hz)
      * azimuth (1D; degrees)
      * altitude (1D; degrees)
      * Jones matrix (5D; 2 x 2 x freq x alt x az)
@@ -186,6 +186,48 @@ def _jones_matrix(model, frequency=74e6):
                   
     # Return
     return mfreq, maz, malt, J
+
+
+@lru_cache(maxsize=10)
+def _build_mueller_interpolator(model, frequency):
+    # Load in correct the Jones matrix
+    mfreq, maz, malt, J = _jones_matrix(model, frequency=frequency)
+    
+    # Set the "A" matrix
+    A = np.array([[1, 0,   0,  1],
+                  [1, 0,   0, -1],
+                  [0, 1,   1,  0],
+                  [0, 1j, -1j, 0]])
+                  
+    # Compute the Kronecker product of J and J*
+    M = np.zeros((4,4,J.shape[2],J.shape[3],J.shape[4]), dtype=J.dtype)
+    M[:2,:2,...] = J[0,0,...]*J.conj()
+    M[:2,2:,...] = J[0,1,...]*J.conj()
+    M[2:,:2,...] = J[1,0,...]*J.conj()
+    M[2:,2:,...] = J[1,1,...]*J.conj()
+    
+    # Swap the axis order to make the matrix multiplication easier
+    M = M.transpose(2,3,4,0,1)
+    
+    # Compute the Mueller matrix
+    M = np.matmul(A, np.matmul(M, np.linalg.inv(A)))
+    
+    # Another axis swap to put the polarization axes first
+    M = M.transpose(3,4,0,1,2)
+    
+    # Evaluate at each azimuth/altitude using a 3D interpolation function
+    pfuncs = [None,]*16
+    for i in range(4):
+        for j in range(4):
+            P = M[i,j,...]
+            if mfreq.size > 1:
+                is_3d = True
+                pfuncs[4*i+j] = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+            else:
+                is_3d = False
+                pfuncs[4*i+j] = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
+                
+    return (is_3d, pfuncs)
 
 
 def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
@@ -213,30 +255,8 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
         is_1d = True
         az, alt = np.array(az), np.array(alt)
         
-    # Load in correct the Jones matrix
-    mfreq, maz, malt, J = _jones_matrix(model, frequency=frequency)
-    
-    # Set the "A" matrix
-    A = np.array([[1, 0,   0,  1],
-                  [1, 0,   0, -1],
-                  [0, 1,   1,  0],
-                  [0, 1j, -1j, 0]])
-                  
-    # Compute the Kronecker product of J and J*
-    M = np.zeros((4,4,J.shape[2],J.shape[3],J.shape[4]), dtype=J.dtype)
-    M[:2,:2,...] = J[0,0,...]*J.conj()
-    M[:2,2:,...] = J[0,1,...]*J.conj()
-    M[2:,:2,...] = J[1,0,...]*J.conj()
-    M[2:,2:,...] = J[1,1,...]*J.conj()
-    
-    # Swap the axis order to make the matrix multiplication easier
-    M = M.transpose(2,3,4,0,1)
-    
-    # Compute the Mueller matrix
-    M = np.matmul(A, np.matmul(M, np.linalg.inv(A)))
-    
-    # Another axis swap to put the polarization axes first
-    M = M.transpose(3,4,0,1,2)
+    # Load the interpolators
+    is_3d, pfuncs = _build_mueller_interpolator(model, frequency)
     
     # Evaluate at each azimuth/altitude using a 3D interpolation function
     ffreq = np.ones(az.size)*frequency
@@ -245,13 +265,10 @@ def mueller_matrix(model, az, alt, frequency=74e6, degrees=True):
     resp = np.zeros((4,4)+faz.shape, dtype=np.float64)
     for i in range(4):
         for j in range(4):
-            P = M[i,j,...]
-            if mfreq.size > 1:
-                pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
-                resp[i,j,:] = pfunc((ffreq, falt, faz))
+            if is_3d:
+                resp[i,j,:] = pfuncs[4*i+j]((ffreq, falt, faz))
             else:
-                pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
-                resp[i,j,:] = pfunc((falt, faz))
+                resp[i,j,:] = pfuncs[4*i+j]((falt, faz))
     resp.shape = (4,4)+az.shape
     
     return resp
@@ -289,6 +306,36 @@ def _compute_from_feeds(pol, XE, XH, YE, YH):
         raise ValueError(f"Unknown polarization produce '{pol}'")
 
 
+@lru_cache(maxsize=10)
+def _build_response_interpolator(model, pol, frequency):
+    """
+    Create a RegularGridInterpolator for a beam model/pol/frequency set.
+    Returns a two element tuple of:
+     * is_3d - a Boolean of whether or not the interpolator accepts frequency,
+               azimuth, and altitude (True) or only azimuth and altitude (False)
+     * pfunc - the interpolator function itself
+    """
+    
+    model = model.lower()
+    if model == 'empirical':
+        mfreq, maz, malt, XE, XH, YE, YH = _load_response_fitted(frequency, corrected=False)
+    elif model == 'llfss':
+        mfreq, maz, malt, XE, XH, YE, YH = _load_response_fitted(frequency, corrected=True)
+    else:
+        mfreq, maz, malt, XE, XH, YE, YH = _load_response_full(frequency, model=model)
+        
+    # Build up the correct polarization product
+    P = _compute_from_feeds(pol, XE, XH, YE, YH)
+    if mfreq.size > 1:
+        is_3d = True
+        pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
+    else:
+        is_3d = False
+        pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
+        
+    return (is_3d, pfunc)
+
+    
 def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
     """
     Return the response of an isolated LWA dipole in a particular azimuth/
@@ -313,22 +360,7 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
         az, alt = np.array(az), np.array(alt)
         
     # Load
-    model = model.lower()
-    if model == 'empirical':
-        mfreq, maz, malt, XE, XH, YE, YH = _load_response_fitted(frequency, corrected=False)
-    elif model == 'llfss':
-        mfreq, maz, malt, XE, XH, YE, YH = _load_response_fitted(frequency, corrected=True)
-    else:
-        mfreq, maz, malt, XE, XH, YE, YH = _load_response_full(frequency, model=model)
-        
-    # Build up the correct polarization product
-    P = _compute_from_feeds(pol, XE, XH, YE, YH)
-    if mfreq.size > 1:
-        is_3d = True
-        pfunc = RegularGridInterpolator((mfreq, malt, maz), P.real, bounds_error=False, fill_value=np.nan)
-    else:
-        is_3d = False
-        pfunc = RegularGridInterpolator((malt, maz), P[0,:,:].real, bounds_error=False, fill_value=np.nan)
+    is_3d, pfunc  = _build_response_interpolator(model.lower(), pol, frequency)
     
     # Evaluate
     ffreq = np.ones(az.size)*frequency
