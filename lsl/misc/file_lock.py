@@ -47,7 +47,6 @@ class FileLock(object):
         t0 = time.time()
         emit_waiting_warning = 0
         
-        pid = os.getpid()
         ident = current_thread().ident
         while not self._locked:
             try:
@@ -55,12 +54,11 @@ class FileLock(object):
                 # it
                 fh = open(self._lockname, 'a+')
                 try:
-                    owner_info = fh.read().split()
-                    owner_pid, owner_ident = int(owner_info[0], 10), int(owner_info[1], 10)
-                except (IndexError, ValueError):
-                    owner_pid = owner_ident = 0
+                    owner_ident = int(fh.read(), 10)
+                except ValueError:
+                    owner_ident = 0
                     
-                if pid != owner_pid or ident != owner_ident:
+                if ident != owner_ident:
                     ## If we don't own it, try to claim an exclusive lock on it.
                     fcntl.flock(fh, fcntl.LOCK_EX|fcntl.LOCK_NB)
                     
@@ -77,7 +75,7 @@ class FileLock(object):
                     ## to _our_lock so that we know that we need to clean things
                     ## up when we are done.
                     fh.truncate(0)
-                    fh.write(f"{pid} {ident}")
+                    fh.write("%i" % ident)
                     fh.flush()
                     self._our_lock = fh
                 else:
