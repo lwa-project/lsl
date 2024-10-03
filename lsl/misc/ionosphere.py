@@ -1352,7 +1352,8 @@ def _load_map(mjd, type='IGS'):
         
     elif type.upper() == 'GLOTEC':
         # Cache entry name
-        cacheName = 'TEC-GLOTEC-%i' % mjd
+        hour = (mjd - int(mjd)) * 24
+        cacheName = 'TEC-GLOTEC-%i-%i' % (mjd, hour)
         
         ## Download helper
         downloader = _download_glotec
@@ -1381,9 +1382,9 @@ def _load_map(mjd, type='IGS'):
             daily_tec = []
             daily_rms = []
             
-            idt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+            idt = dt.replace(minute=0, second=0, microsecond=0)
             idt -= timedelta(seconds=5*60)
-            for i in range(-5, 24*60+10, 10):
+            for i in range(-5, 1*60+10, 10):
                 ## Get the YMDHMS string
                 imjd, impm = datetime_to_mjdmpm(idt)
                 imjd = imjd + impm/1000./86400
