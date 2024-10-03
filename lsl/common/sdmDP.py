@@ -257,11 +257,12 @@ class SDM(object):
         """
         
         updatedAntennas = []
-        for ant in antennas:
+        for ant in enumerate(antennas):
             updatedAntennas.append(ant)
             
-            index = self.ant_status.index(ant.id)
-            updatedAntennas[-1].status = self.ant_status[index]
+            index0 = ant.stand.id - 1
+            index1 = ant.pol
+            updatedAntennas[-1].status = self.ant_status[index0][index1]
             
         return updatedAntennas
 
