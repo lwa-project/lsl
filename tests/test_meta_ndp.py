@@ -17,7 +17,7 @@ except ImportError:
     pass
 
 
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(os.path.dirname(__file__), 'data', 'metadata.tgz')
@@ -113,6 +113,13 @@ class metabundle_tests_ndp(unittest.TestCase):
         """Test the station dynamic MIB utilties."""
         
         sm = metabundle.get_sdm(mdbFileNDP)
+        
+    def test_sdm_dynamic_update(self):
+        """Test applying a station dynamic MIB to a LWAStation object."""
+        
+        station = stations.lwana
+        sm = metabundle.get_sdm(mdbFileNDP)
+        newAnts = sm.update_antennas(station.antennas)
         
     def test_metadata(self):
         """Test the observation metadata utility."""
