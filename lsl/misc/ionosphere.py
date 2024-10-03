@@ -1255,7 +1255,7 @@ def _parse_glotec_map(filename_or_fh):
             lats[-1].append(lat)
             lngs[-1].append(lng)
             data[-1].append(tec)
-            rdata[-1].append(rms)
+            rdata[-1].append(abs(rms))
             
     finally:
         if do_close:
