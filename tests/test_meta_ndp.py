@@ -6,7 +6,7 @@ import os
 import unittest
 
 from lsl.common.mcsNDP import CommandID, ObservingMode
-from lsl.common import metabundle, metabundleNDP
+from lsl.common import metabundle, metabundleNDP, stations
 from lsl.common.paths import DATA_BUILD
 
 run_gdbm_tests = False

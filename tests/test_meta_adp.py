@@ -6,7 +6,7 @@ import os
 import unittest
 
 from lsl.common.mcsADP import CommandID, ObservingMode
-from lsl.common import metabundle, metabundleADP
+from lsl.common import metabundle, metabundleADP, stations
 
 run_gdbm_tests = False
 try:
