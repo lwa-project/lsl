@@ -1230,10 +1230,10 @@ def _parse_glotec_map(filename_or_fh):
     
     # Open the TEC file for reading
     try:
-        fh = open(filename_or_fh, 'r')
+        fh = gzip.GzipFile(filename_or_fh, 'rb')
         do_close = True
     except TypeError:
-        fh = filename_or_fh
+        fh = gzip.GzipFile(fileobj=filename_or_fh, mode='rb')
         do_close = False
         
     try:
@@ -1392,11 +1392,19 @@ def _load_map(mjd, type='IGS'):
                 
                 ## Figure out the filename
                 filename = filenameTemplate % (dateStr)
+                filenameComp = filename+'.gz'
                 
                 ## Is the primary file in the disk cache?
-                if filename not in _CACHE_DIR:
+                if filenameComp not in _CACHE_DIR:
                     ### Can we download it?
                     status = downloader(imjd)
+                    
+                    ### Compress it
+                    with _CACHE_DIR.open(filename, 'rb') as fh:
+                        with _CACHE_DIR.open(filenameComp, 'wb') as gh:
+                            with gzip.GzipFile(fileobj=gh, mode='wb') as gh:
+                                gh.write(fh.read())
+                    _CACHE_DIR.remove(filename)
                     
                 else:
                     ## Good we have the primary file
@@ -1404,7 +1412,7 @@ def _load_map(mjd, type='IGS'):
                     
                 ## Parse it and add it to the list
                 daily_mjds.append(imjd)
-                with _CACHE_DIR.open(filename, 'rb') as fh:
+                with _CACHE_DIR.open(filenameComp, 'rb') as fh:
                     daily_lats, daily_lngs, tec, rms = _parse_glotec_map(fh)
                 daily_tec.append(tec)
                 daily_rms.append(rms)
