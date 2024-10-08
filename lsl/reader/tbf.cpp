@@ -48,7 +48,7 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data;
     int i, nstand;
-    unsigned char *raw_data;
+    unsigned char raw_data[6144];
     TBFFrame cFrame;
     
     if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
@@ -88,7 +88,6 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
       }
     }
     tbf_dsize = Py_BuildValue("i", 12*nstand*2*1);
-    raw_data = (unsigned char*) malloc(12*nstand*2*1);
     
     // Read from the file - data
     buffer = PyObject_CallMethodObjArgs(ph, tbf_method, tbf_dsize, NULL);
@@ -106,7 +105,7 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
         free(raw_data);
         return NULL;
     }
-    memcpy(raw_data, PyBytes_AS_STRING(buffer), 12*nstand*2*1);
+    memcpy(&raw_data, PyBytes_AS_STRING(buffer), 12*nstand*2*1);
     Py_XDECREF(buffer);
     
     // Create the output data array
@@ -158,7 +157,6 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
         Py_XDECREF(buffer);
         Py_XDECREF(data);
-        free(raw_data);
         return NULL;
     }
     
@@ -203,7 +201,6 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     Py_XDECREF(fHeader);
     Py_XDECREF(fPayload);
     Py_XDECREF(data);
-    free(raw_data);
     
     return output;
 }
