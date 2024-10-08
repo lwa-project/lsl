@@ -97,12 +97,10 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
         } else {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
         }
-        free(raw_data);
         return NULL;
     } else if( PyBytes_GET_SIZE(buffer) != 12*nstand*2*1 ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(buffer);
-        free(raw_data);
         return NULL;
     }
     memcpy(&raw_data, PyBytes_AS_STRING(buffer), 12*nstand*2*1);
