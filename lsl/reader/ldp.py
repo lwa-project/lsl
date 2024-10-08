@@ -1935,7 +1935,8 @@ class TBFFile(LDPFileBase):
         else:
             data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=np.complex64)
             data_view = data.view(np.float64)
-            
+
+        nSkip = 0
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -1945,14 +1946,23 @@ class TBFFile(LDPFileBase):
                 try:
                     cFrame = tbf_rf(self.fh, verbose=False)
                     if not cFrame.is_tbf:
+                        nSkip += 1
                         continue
                     cFrames.append( cFrame )
+                    nSkip = 0
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
                     cFrames = []
                     break
                 except errors.SyncError:
+                    nSkip += 1
+                    if nSkip > 40000:
+                        eofFound = True
+                        self.buffer.append(cFrames)
+                        cFrames = []
+                        break
+                    self.fh.seek(drx.FRAME_SIZE, 1)
                     continue
                     
             self.buffer.append(cFrames)
