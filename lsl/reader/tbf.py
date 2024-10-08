@@ -41,6 +41,7 @@ from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
 from lsl.reader.utils import FilePositionSaver
+from lsl.reader.drx import FRAME_SIZE as DRX_FRAME_SIZE
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -79,7 +80,7 @@ class FrameHeader(FrameHeaderBase):
         data is TBF, false otherwise.
         """
         
-        if self.adp_id == 0x01 or self.adp_id == 0x04:
+        if self.adp_id == 0x01 or self.adp_id == 0x05:
             return True
         else:
             return False
@@ -226,7 +227,9 @@ def get_frame_size(filehandle):
         for i in range(2500):
             try:
                 cPos = filehandle.tell()
-                read_frame(filehandle)
+                cFrame = read_frame(filehandle)
+                if not cFrame.is_tbf:
+                    continue
                 nPos = filehandle.tell()
                 break
             except EOFError:
@@ -255,6 +258,7 @@ def get_frames_per_obs(filehandle):
             except EOFError:
                 break
             except SyncError:
+                filehandle.seek(DRX_FRAME_SIZE, 1)
                 continue
                 
             chan = cFrame.header.first_chan
@@ -278,6 +282,8 @@ def get_first_frame_count(filehandle):
         freqs = []
         while len(freqs) < nFrames:
             cFrame = read_frame(filehandle)
+            if not cFrame.is_tbf:
+                continue
             freq = cFrame.header.first_chan
             
             if freq not in freqs:
@@ -321,6 +327,8 @@ def get_first_channel(filehandle, frequency=False, all_frames=False):
         freqs = []
         while len(freqs) < nFrames:
             cFrame = read_frame(filehandle)
+            if not cFrame.is_tbf:
+                continue
             if frequency:
                 freq = cFrame.channel_freqs[0]
             else:
