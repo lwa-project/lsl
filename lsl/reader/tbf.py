@@ -79,7 +79,7 @@ class FrameHeader(FrameHeaderBase):
         data is TBF, false otherwise.
         """
         
-        if self.adp_id & 0x01 or self.adp_id == 0x04:
+        if self.adp_id == 0x01 or self.adp_id == 0x04:
             return True
         else:
             return False
