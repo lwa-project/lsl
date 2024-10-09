@@ -6,7 +6,7 @@ import os
 import unittest
 
 from lsl.common.mcs import CommandID, ObservingMode
-from lsl.common import metabundle, metabundleDP
+from lsl.common import metabundle, metabundleDP, stations
 
 run_gdbm_tests = False
 try:
@@ -16,7 +16,7 @@ except ImportError:
     pass
 
 
-__version__  = "0.6"
+__version__  = "0.7"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(os.path.dirname(__file__), 'data', 'metadata.tgz')
@@ -111,6 +111,13 @@ class metabundle_dp_tests(unittest.TestCase):
         """Test the station dynamic MIB utilties."""
         
         sm = metabundle.get_sdm(mdbFile)
+        
+    def test_sdm_dynamic_update(self):
+        """Test applying a station dynamic MIB to a LWAStation object."""
+        
+        station = stations.lwa1
+        sm = metabundle.get_sdm(mdbFile)
+        newAnts = sm.update_antennas(station.antennas)
         
     def test_metadata(self):
         """Test the observation metadata utility."""

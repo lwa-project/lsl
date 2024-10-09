@@ -82,7 +82,7 @@ class FrameHeader(FrameHeaderBase):
         data is COR, false otherwise.
         """
         
-        if self.adp_id & 0x02:
+        if self.adp_id == 0x02 or self.adp_id == 0x06:
             return True
         else:
             return False

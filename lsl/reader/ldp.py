@@ -750,10 +750,10 @@ class TBNFile(LDPFileBase):
         count = [0 for i in range(self.description['nantenna'])]
         if return_ci8:
             data = np.zeros((self.description['nantenna'], frame_count*512), dtype=CI8)
-            data_view = data.view(np.int8)
+            data_view = data.view(np.int16)
         else:
             data = np.zeros((self.description['nantenna'], frame_count*512), dtype=np.complex64)
-            data_view = data.view(np.float32)
+            data_view = data.view(np.float64)
             
         while True:
             if eofFound or nFrameSets == frame_count:
@@ -798,7 +798,7 @@ class TBNFile(LDPFileBase):
                     else:
                         setTime = cFrame.time
                         
-                data_view[aStand,  count[aStand]*1024:(count[aStand]+1)*1024] = cFrame.payload.data.view(data_view.dtype)
+                data_view[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data.view(data_view.dtype)
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -825,7 +825,7 @@ class TBNFile(LDPFileBase):
                         else:
                             setTime = cFrame.time
                         
-                    data_view[aStand,  count[aStand]*1024:(count[aStand]+1)*1024] = cFrame.payload.data.view(data_view.dtype)
+                    data_view[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data.view(data_view.dtype)
                     count[aStand] += 1
                 nFrameSets += 1
                 
@@ -1152,10 +1152,10 @@ class DRXFile(LDPFileBase):
         setTime = None
         if return_ci8:
             data = np.zeros((4,frame_count*4096), dtype=CI8)
-            data_view = data.view(np.int8)
+            data_view = data.view(np.int16)
         else:
             data = np.zeros((4,frame_count*4096), dtype=np.complex64)
-            data_view = data.view(np.float32)
+            data_view = data.view(np.float64)
             
         # Go!
         nFrameSets = 0
@@ -1223,7 +1223,7 @@ class DRXFile(LDPFileBase):
                     else:
                         setTime = cFrame.time
                         
-                data_view[aStand, count[aStand]*8192:(count[aStand]+1)*8192] = cFrame.payload.data.view(data_view.dtype)
+                data_view[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data.view(data_view.dtype)
                 count[aStand] +=  1
                 self._timetag[aStand] = cTimetag
             nFrameSets += 1
@@ -1251,7 +1251,7 @@ class DRXFile(LDPFileBase):
                         else:
                             setTime = cFrame.time
                             
-                    data_view[aStand, count[aStand]*8192:(count[aStand]+1)*8192] = cFrame.payload.data.view(data_view.dtype)
+                    data_view[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data.view(data_view.dtype)
                     count[aStand] +=  1
                     self._timetag[aStand] = cTimetag
                 nFrameSets += 1
@@ -1935,7 +1935,8 @@ class TBFFile(LDPFileBase):
         else:
             data = np.zeros((self.description['nantenna'], self.description['nchan'], frame_count), dtype=np.complex64)
             data_view = data.view(np.float64)
-            
+
+        nSkip = 0
         while True:
             if eofFound or nFrameSets == frame_count:
                 break
@@ -1945,14 +1946,23 @@ class TBFFile(LDPFileBase):
                 try:
                     cFrame = tbf_rf(self.fh, verbose=False)
                     if not cFrame.is_tbf:
+                        nSkip += 1
                         continue
                     cFrames.append( cFrame )
+                    nSkip = 0
                 except errors.EOFError:
                     eofFound = True
                     self.buffer.append(cFrames)
                     cFrames = []
                     break
                 except errors.SyncError:
+                    nSkip += 1
+                    if nSkip > 40000:
+                        eofFound = True
+                        self.buffer.append(cFrames)
+                        cFrames = []
+                        break
+                    self.fh.seek(drx.FRAME_SIZE, 1)
                     continue
                     
             self.buffer.append(cFrames)

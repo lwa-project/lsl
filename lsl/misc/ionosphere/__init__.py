@@ -420,7 +420,8 @@ def _load_map(mjd, type='IGS'):
         
     elif type.upper() == 'GLOTEC':
         # Cache entry name
-        cacheName = 'TEC-GLOTEC-%i' % mjd
+        hour = (mjd - int(mjd)) * 24
+        cacheName = 'TEC-GLOTEC-%i-%i' % (mjd, hour)
         
         ## Loading helper
         loader = _glotec.load_mjd

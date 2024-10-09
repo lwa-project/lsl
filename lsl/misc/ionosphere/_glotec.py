@@ -58,10 +58,10 @@ def _parse_glotec_map(filename_or_fh):
     
     # Open the TEC file for reading
     try:
-        fh = open(filename_or_fh, 'r')
+        fh = gzip.GzipFile(filename_or_fh, 'rb')
         do_close = True
     except TypeError:
-        fh = filename_or_fh
+        fh = gzip.GzipFile(fileobj=filename_or_fh, mode='rb')
         do_close = False
         
     try:
@@ -121,9 +121,9 @@ def load_mjd(mjd):
     daily_tec = []
     daily_rms = []
     
-    idt = dt.replace(hour=0, minute=0, second=0, microsecond=0)
+    idt = dt.replace(hminute=0, second=0, microsecond=0)
     idt -= timedelta(seconds=5*60)
-    for i in range(-5, 24*60+10, 10):
+    for i in range(-5, 1*60+10, 10):
         ## Get the YMDHMS string
         imjd, impm = datetime_to_mjdmpm(idt)
         imjd = imjd + impm/1000./86400
@@ -131,11 +131,19 @@ def load_mjd(mjd):
         
         ## Figure out the filename
         filename = FILENAME_TEMPLATE % (dateStr)
+        filenameComp = filename+'.gz'
         
         ## Is the primary file in the disk cache?
         if filename not in _CACHE_DIR:
             ### Can we download it?
             status = _download(imjd)
+            
+            ### Compress it
+            with _CACHE_DIR.open(filename, 'rb') as fh:
+                with _CACHE_DIR.open(filenameComp, 'wb') as gh:
+                    with gzip.GzipFile(fileobj=gh, mode='wb') as gh:
+                        gh.write(fh.read())
+            _CACHE_DIR.remove(filename)
             
         else:
             ## Good we have the primary file
@@ -143,7 +151,7 @@ def load_mjd(mjd):
             
         ## Parse it and add it to the list
         daily_mjds.append(imjd)
-        with _CACHE_DIR.open(filename, 'rb') as fh:
+        with _CACHE_DIR.open(filenameComp, 'rb') as fh:
             daily_lats, daily_lngs, tec, rms = _parse_glotec_map(fh)
         daily_tec.append(tec)
         daily_rms.append(rms)

@@ -1,3 +1,10 @@
+3.0.3
+ * Fixed a problem with applying station dynamic metadata to a LWAStation object
+ * Make the GloTEC model downloads more granular to help with data transfer sizes
+ * Compress the GloTEC model after download to reduce disk usage
+ * Fixed a problem separating TBF from DRX data in the era of multiple TBF flavors
+ * Fixed a problem identifying COR data in the era of multiple COR flavors
+
 3.0.2
  * Enabled caching in lsl.sim.beam to reduce the number of times a model is loaded
  * Updated lsl.common.data_access to request file be gzip compressed when downloaded
