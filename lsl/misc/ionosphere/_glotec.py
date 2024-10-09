@@ -121,7 +121,7 @@ def load_mjd(mjd):
     daily_tec = []
     daily_rms = []
     
-    idt = dt.replace(hminute=0, second=0, microsecond=0)
+    idt = dt.replace(minute=0, second=0, microsecond=0)
     idt -= timedelta(seconds=5*60)
     for i in range(-5, 1*60+10, 10):
         ## Get the YMDHMS string
