@@ -1,4 +1,5 @@
 import json
+import gzip
 import numpy as np
 from datetime import timedelta
 
