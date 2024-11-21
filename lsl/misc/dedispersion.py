@@ -8,6 +8,8 @@ import numpy as np
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Dict, Optional, Sequence, Tuple, Union
+
 
 __version__ = '0.6'
 __all__ = ['delay', 'incoherent', 'get_coherent_sample_size', 'coherent']
@@ -18,10 +20,10 @@ _D = 4.148808e3
 
 
 # Coherent dedispersion N and chirp cache
-_coherentCache = {}
+_coherentCache: Dict[Tuple[float,float,float,bool,np.dtype],Tuple[int,np.ndarray]] = {}
 
 
-def delay(freq, dm):
+def delay(freq: Union[float,Sequence,np.ndarray], dm:float) -> Union[float,np.ndarray]:
     """
     Calculate the relative delay due to dispersion over a given frequency
     range in Hz for a particular dispersion measure in pc cm^-3.  Return 
@@ -34,9 +36,7 @@ def delay(freq, dm):
     
     # Validate in input frequencies
     ## Right Type?
-    try:
-        freq.size
-    except AttributeError:
+    if not isinstance(freq, np.ndarray):
         freq = np.array(freq, ndmin=1)
     ## Right size?
     singleFreq = False
@@ -54,7 +54,7 @@ def delay(freq, dm):
     return tDelay
 
 
-def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=np.nan):
+def incoherent(freq: np.ndarray, waterfall: np.ndarray, tInt: float, dm: float, boundary: str='wrap', fill_value: float=np.nan) -> np.ndarray:
     """
     Given a list of frequencies in Hz, a 2-D array of spectra as a function of
     time (time by frequency), and an integration time in seconds, perform 
@@ -92,7 +92,7 @@ def incoherent(freq, waterfall, tInt, dm, boundary='wrap', fill_value=np.nan):
     return ddWaterfall
 
 
-def get_coherent_sample_size(central_freq, sample_rate, dm):
+def get_coherent_sample_size(central_freq: float, sample_rate: float, dm: float) -> int:
     """
     Estimate the number of samples needed to successfully apply coherent 
     dedispersion to a data stream.
@@ -112,7 +112,7 @@ def get_coherent_sample_size(central_freq, sample_rate, dm):
     return int(samples)
 
 
-def _taper(freq):
+def _taper(freq: np.ndarray) -> np.ndarray:
     """
     Taper function based Equation (1) of "Pulsar Coherent De-dispersion 
     Experiment at Urumqi Observatory" CJA&A, 2006, S2, 53.
@@ -128,7 +128,7 @@ def _taper(freq):
     return taper
 
 
-def _chirp(freq, dm, taper=False):
+def _chirp(freq: np.ndarray, dm: float, taper: bool=False) -> np.ndarray:
     """
     Chip function for coherent dedispersion for a given set of frequencies (in Hz).  
     Based on Equation (6) of "Pulsar Observations II -- Coherent Dedispersion, 
@@ -146,7 +146,7 @@ def _chirp(freq, dm, taper=False):
     return chirp
 
 
-def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous_time=None, previous_data=None, next_time=None, next_data=None, enable_caching=True):
+def coherent(t: np.ndarray, timeseries: np.ndarray, central_freq: float, sample_rate: float, dm: float, taper: bool=False, previous_time: Optional[np.ndarray]=None, previous_data: Optional[np.ndarray]=None, next_time: Optional[np.ndarray]=None, next_data: Optional[np.ndarray]=None, enable_caching: bool=True) -> Tuple[np.ndarray,np.ndarray]:
     """
     Simple coherent dedispersion of complex-valued time-series data at a given central
     frequency and sample rate.  A tapering function can also be applied to the chirp of 
@@ -161,6 +161,10 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
         At the large fractional bandwidths of LWA, the window size needed for coherent 
         dedispersion can be prohibitive.  For example, at 74 MHz with 19.6 MS/s and a
         DM or 10 pc / cm^3 this function uses a window size of about 268 million points.
+        
+    .. note::
+        Both previous_time and previous_data need to be provided for them to be
+        used in the function call.  The same is true for next_time and next_data.
         
     .. versionchanged:: 1.0.1
         Added a cache for storing the chrip function between subsequent calls
@@ -206,7 +210,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
             timeIn = np.zeros(N, dtype=t.dtype)
             dataIn = np.zeros(N, dtype=timeseries.dtype)
             
-            if previous_data is not None:
+            if previous_time is not None and previous_data is not None:
                 try:
                     timeIn[:-start] = previous_time[start:]
                     dataIn[:-start] = previous_data[start:]
@@ -220,7 +224,7 @@ def coherent(t, timeseries, central_freq, sample_rate, dm, taper=False, previous
             timeIn = np.zeros(N, dtype=t.dtype)
             dataIn = np.zeros(N, dtype=timeseries.dtype)
             
-            if next_data is not None:
+            if next_time is not None and next_data is not None:
                 try:
                     timeIn[timeseries.size-start:] = next_time[:(dataIn.size-(timeseries.size-start))]
                     dataIn[timeseries.size-start:] = next_data[:(dataIn.size-(timeseries.size-start))]
