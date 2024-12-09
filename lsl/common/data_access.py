@@ -242,7 +242,7 @@ class _DataAccess(object):
         from the base LSL installation or download it.
         """
         
-        verbose = not filename.endwith('-ssmif.txt')
+        verbose = not filename.endswith('-ssmif.txt')
         
         if filename not in self._data_cache:
             # No file, go get one.
