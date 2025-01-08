@@ -27,13 +27,13 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '2.5'
-__all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX', 'LSLInterface', 
-           'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv',  'get_all_stations', 'get_full_stations',
-           'get_mini_stations',]
+__version__ = '2.6'
+__all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX',
+           'LSLInterface', 'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv', 'ovrolwa', 'lwaov',
+           'get_all_stations', 'get_full_stations', 'get_mini_stations',]
 
 
-_id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV'}
+_id2name = {'VL': 'LWA1', 'NA': 'LWANA', 'SV': 'LWASV', 'OV': 'OVROLWA'}
 
 
 speedOfLight = speedOfLight.to('m/s').value
@@ -234,7 +234,10 @@ class LWAStation(ephem.Observer, LWAStationBase):
                                                             'antennas', 'interface')]
         for i,(key,value) in enumerate(a):
             if key in ('antennas',):
-                a[i] = (key, '[...]')
+                if len(self.antennas):
+                    a[i] = (key, '[...]')
+                else:
+                    a[i] = (key, '[]')
             elif key in ('interface',):
                 value = repr(value).replace(',\n    ', ', ')
                 a[i] = (key, value)
@@ -1985,6 +1988,15 @@ with DataAccess.open('lwana-ssmif.txt', 'r') as fh:
 #: LWASV
 with DataAccess.open('lwasv-ssmif.txt', 'r') as fh:
     lwasv = parse_ssmif(fh)
+
+#: OVROLWA
+ovrolwa = LWAStation('OVRO-LWA', 37.23977727, -118.2816667, 1183.48, id='OV',
+                     interface=LSLInterface(backend='lsl.common.ndp',
+                                            mcs='lsl.common.mcsNDP',
+                                            sdf='lsl.common.sdfNDP'))
+
+#: OVROLWA would also be LWAOV
+lwaov = ovrolwa
 
 
 def get_full_stations():

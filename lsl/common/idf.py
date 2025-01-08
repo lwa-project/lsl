@@ -48,7 +48,7 @@ from lsl.common.color import colorfy
 
 from lsl.common.mcsADP import datetime_to_mjdmpm, mjdmpm_to_datetime
 from lsl.common.adp import freq_to_word, word_to_freq
-from lsl.common.stations import LWAStation, get_all_stations, lwa1
+from lsl.common.stations import LWAStation, get_all_stations, lwa1, ovrolwa
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common.sdf import UCF_USERNAME_RE, Observer
@@ -1363,13 +1363,15 @@ def parse_idf(filename, verbose=False):
             if keyword == 'RUN_STATIONS':
                 use_stations = []
                 possible = get_all_stations()
+                possible_plus = copy.deepcopy(possible) # all + OVRO-LWA
+                possible_plus.append(ovrolwa)
                 for field in value.split(','):
                     field = field.strip().rstrip()
                     if field.lower() == 'all':
                         use_stations = copy.deepcopy(possible)
                         break
                     else:
-                        for station in possible:
+                        for station in possible_plus:
                             if station.id == field:
                                 use_stations.append(station)
                                 break
