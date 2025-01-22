@@ -24,7 +24,7 @@ __version__ = '0.2'
 __all__ = ['download_file', 'DataAccess']
 
 
-def download_file(url, filename_or_fh, byte_range=None):
+def download_file(url, filename_or_fh, byte_range=None, verbose=True):
     """
     Given a URL and either a filename or open file handle, download the URL and
     write the data.  Returns a three-element tuple:
@@ -74,7 +74,8 @@ def download_file(url, filename_or_fh, byte_range=None):
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
                 mtime = calendar.timegm(mtime.timetuple())
             else:
-                warnings.warn(f"Cannot find a 'Last-Modified' time for {url}, modification time will be set to zero")
+                if verbose:
+                    warnings.warn(f"Cannot find a 'Last-Modified' time for {url}, modification time will be set to zero")
                 mtime = 0.0
                 
             pbar = DownloadBar(max=remote_size)
@@ -98,7 +99,8 @@ def download_file(url, filename_or_fh, byte_range=None):
                 sys.stdout.write(pbar.show()+'\n')
                 sys.stdout.flush()
     except IOError as e:
-        warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
+        if verbose:
+            warnings.warn(colorfy("{{%%yellow Error downloading file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         received = 0
     except (socket.timeout, TimeoutError):
         received = 0
@@ -131,7 +133,7 @@ class _DataAccess(object):
             self._data_cache = MemoryCache(max_size=0)
             warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)
             
-    def _local_copy_mtime(self, relative_url):
+    def _local_copy_mtime(self, relative_url, verbose=True):
         local_path = os.path.join(DATA_PATH, relative_url)
         
         mtime = 0
@@ -140,7 +142,7 @@ class _DataAccess(object):
             
         return mtime
         
-    def _local_copy_worker(self, relative_url, filename):
+    def _local_copy_worker(self, relative_url, filename, verbose=True):
         """
         Look for a local copy of the file in lsl.common.paths.DATA and save it to a
         file.
@@ -178,7 +180,7 @@ class _DataAccess(object):
             
         return True
         
-    def _download_mtime(self, relative_url, use_backup=False):
+    def _download_mtime(self, relative_url, use_backup=False, verbose=True):
         url = self._BASE_URL+'/'+relative_url
         if use_backup:
             url = self._BACKUP_URL+'/'+relative_url
@@ -191,7 +193,8 @@ class _DataAccess(object):
                 mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
                 mtime = calendar.timegm(mtime.timetuple())
         except IOError as e:
-            warnings.warn(colorfy("{{%%yellow Error finding modification time of file from %s: %s}}" % (url, str(e))), RuntimeWarning)
+            if verbose:
+                warnings.warn(colorfy("{{%%yellow Error finding modification time of file from %s: %s}}" % (url, str(e))), RuntimeWarning)
         except (socket.timeout, TimeoutError):
             pass
         except HTTPError:
@@ -199,7 +202,7 @@ class _DataAccess(object):
             
         return mtime
         
-    def _download_worker(self, relative_url, filename, use_backup=False):
+    def _download_worker(self, relative_url, filename, use_backup=False, verbose=True):
         """
         Download the URL and save it to a file.
         """
@@ -215,7 +218,7 @@ class _DataAccess(object):
             
         mtime = 0
         with self._data_cache.open(filename, 'wb') as fh:
-            remote_size, received, mtime = download_file(url, fh)
+            remote_size, received, mtime = download_file(url, fh, verbose=verbose)
             
         with self._data_cache.open(metaname, 'w') as fh:
             fh.write(f"created: {time.time():.0f}\n")
@@ -239,13 +242,15 @@ class _DataAccess(object):
         from the base LSL installation or download it.
         """
         
+        verbose = not filename.endswith('-ssmif.txt')
+        
         if filename not in self._data_cache:
             # No file, go get one.
-            status = self._local_copy_worker(filename, filename)
+            status = self._local_copy_worker(filename, filename, verbose=verbose)
             if not status:
-                status = self._download_worker(filename, filename, use_backup=False)
+                status = self._download_worker(filename, filename, use_backup=False, verbose=verbose)
             if not status:
-                status = self._download_worker(filename, filename, use_backup=True)
+                status = self._download_worker(filename, filename, use_backup=True, verbose=verbose)
             if not status:
                 raise RuntimeError(f"Failed to download '{filename}'")
                 
@@ -256,10 +261,10 @@ class _DataAccess(object):
             if time.time() - cache_mtime > DOWN_CONFIG.get('refresh_age')*86400:
                 ## Yep, looks like it could be in need of a refresh.  See
                 ## what our options are.
-                local_mtime = self._local_copy_mtime(filename)
-                remote_mtime = self._download_mtime(filename, use_backup=False)
+                local_mtime = self._local_copy_mtime(filename, verbose=verbose)
+                remote_mtime = self._download_mtime(filename, use_backup=False, verbose=verbose)
                 if remote_mtime == 0:
-                    remote_mtime = self._download_mtime(filename, use_backup=True)
+                    remote_mtime = self._download_mtime(filename, use_backup=True, verbose=verbose)
                     
                 if max([local_mtime, remote_mtime]) > cache_mtime:
                     ## Found something newer.  Delete the current version and

@@ -1343,7 +1343,7 @@ class ImgWPlus(aipy.img.ImgW):
         im_res = 360/np.pi * np.arcsin(1/self.size/2)
         return im_res * np.pi/180
         
-    def _gen_img(self, data, center=(0,0), weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+    def _gen_img(self, data, center=(0,0), weighting='natural', robust=0.0, taper=(0.0, 0.0)):
         """
         Return the inverse FFT of the provided data, with the 0,0 point 
         moved to 'center'.  In the images return north is up and east is 
@@ -1353,8 +1353,6 @@ class ImgWPlus(aipy.img.ImgW):
         There are:
           * weighting - The weighting scheme ('natural', 'uniform', or 
                         'briggs') used on the data;
-          * local_fraction - The fraction of the uv grid that is consider 
-                            "local" for the 'uniform' and 'briggs' methods;
           * robust - The value for the weighting robustness under the 
                      'briggs' method; and
           * taper - The size of u and v Gaussian tapers at the 30% level.
@@ -1364,42 +1362,25 @@ class ImgWPlus(aipy.img.ImgW):
         if weighting not in ('natural', 'uniform', 'briggs'):
             raise ValueError(f"Unknown weighting scheme '{weighting}'")
             
-        # Make sure that we have a valid local_fraction value
-        if local_fraction <= 0 or local_fraction > 1:
-            raise ValueError("Invalid local_fraction value")
-            
         # Apply the weighting
         if weighting == 'natural':
             ## Natural weighting - we already have it
             pass
         
         elif weighting == 'uniform':
-            ## Uniform weighting - we need to calculate it
-            dens = np.abs(self.bm[0])
-            size = dens.shape[0]
-            
-            from scipy.ndimage import uniform_filter
-            dens = uniform_filter(dens, size=size*local_fraction)
-            dens /= dens.max()
-            dens[np.where( dens < 1e-8 )] = 0
-            
-            data = data/dens
-            data[np.where(dens == 0)] = 0.0
+            ## Uniform weighting
+            wgt = self.bm[0].real
+            data *= 1.0/wgt
+            data[np.where(wgt == 0)] = 0.0
             
         elif weighting == 'briggs':
             ## Robust weighting - we need to calculate it
-            dens = np.abs(self.bm[0])
-            size = dens.shape[0]
-            
-            from scipy.ndimage import uniform_filter
-            dens = uniform_filter(dens, size=size*local_fraction)
-            dens /= dens.max()
-            dens[np.where( dens < 1e-8 )] = 0
-            
-            f2 = (5*10**-robust)**2 / (dens**2).mean()
-            dens = 1.0 / (1.0 + f2/dens)
-            data = data/dens*dens.max()
-            data[np.where(dens == 0)] = 0.0
+            wgt = self.bm[0].real
+            wavg = wgt.sum()
+            w2avg = (wgt**2).sum()
+            S2 = 25 * 10**(-2*robust) / (w2avg / wavg)
+            data *= 1.0 / (1.0 + wgt*S2)
+            data[np.where(wgt == 0)] = 0.0
             
         # Make sure that we have the right type to taper with
         try:
@@ -1427,7 +1408,7 @@ class ImgWPlus(aipy.img.ImgW):
             
         return aipy.img.recenter(ifft2Function(data).real.astype(np.float32)/self.kern_corr, center)
         
-    def image(self, center=(0,0), weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+    def image(self, center=(0,0), weighting='natural', robust=0.0, taper=(0.0, 0.0)):
         """Return the inverse FFT of the UV matrix, with the 0,0 point moved
         to 'center'.  In the images return north is up and east is 
         to the left.
@@ -1436,16 +1417,14 @@ class ImgWPlus(aipy.img.ImgW):
         There are:
           * weighting - The weighting scheme ('natural', 'uniform', or 
                         'briggs') used on the data;
-          * local_fraction - The fraction of the uv grid that is consider 
-                            "local" for the 'uniform' and 'briggs' methods;
           * robust - The value for the weighting robustness under the 
                      'briggs' method; and
           * taper - The size of u and v Gaussian tapers at the 30% level.
         """
         
-        return self._gen_img(self.uv, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper)
+        return self._gen_img(self.uv, center=center, weighting=weighting, robust=robust, taper=taper)
         
-    def bm_image(self, center=(0,0), term=None, weighting='natural', local_fraction=0.5, robust=0.0, taper=(0.0, 0.0)):
+    def bm_image(self, center=(0,0), term=None, weighting='natural', robust=0.0, taper=(0.0, 0.0)):
         """Return the inverse FFT of the sample weightings (for all mf_order
         terms, or the specified term if supplied), with the 0,0 point
         moved to 'center'.  In the images return north is up and east is 
@@ -1455,17 +1434,15 @@ class ImgWPlus(aipy.img.ImgW):
         There are:
           * weighting - The weighting scheme ('natural', 'uniform', or 
                        'briggs') used on the data;
-          * local_fraction - The fraction of the uv grid that is consider 
-                            "local" for the 'uniform' and 'briggs' methods;
           * robust - The value for the weighting robustness under the 
                      'briggs' method; and
           * taper - The size of u and v Gaussian tapers at the 30% level.
         """
         
         if not term is None:
-            return self._gen_img(self.bm[term], center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper)
+            return self._gen_img(self.bm[term], center=center, weighting=weighting, robust=robust, taper=taper)
         else:
-            return [self._gen_img(b, center=center, weighting=weighting, local_fraction=local_fraction, robust=robust, taper=taper) for b in self.bm]
+            return [self._gen_img(b, center=center, weighting=weighting, robust=robust, taper=taper) for b in self.bm]
             
     @property
     def mjd(self):

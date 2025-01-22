@@ -1,3 +1,8 @@
+3.0.4:
+ * Added support for OVRO-LWA in IDFs
+ * Reduced the number of "Cannot download file ..." warning when importing lsl
+ * Cleaned up uniform and Briggs weighting in the lsl.imaging.utils.ImgWPlus class
+
 3.0.3
  * Fixed a problem with applying station dynamic metadata to a LWAStation object
  * Make the GloTEC model downloads more granular to help with data transfer sizes
