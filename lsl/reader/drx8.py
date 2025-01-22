@@ -84,7 +84,16 @@ class FrameHeader(FrameHeaderBase):
         self.decimation = decimation
         self.time_offset = time_offset
         FrameHeaderBase.__init__(self)
-    
+        
+    @property
+    def is_drx8(self):
+        """
+        Function to check if the data is really DRX8 and not DRX by examining
+        the drx_id field.  Returns True if the data is DRX8, false otherwise.
+        """
+        
+        return (self.drx_id>>6)&1 == 1
+        
     @property
     def id(self):
         """
@@ -154,6 +163,14 @@ class Frame(FrameBase):
     _payload_class = FramePayload
     gain = None
 
+    @property
+    def is_drx8(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.is_drx8 property.
+        """
+        
+        return self.header.is_drx8
+        
     @property
     def id(self):
         """
