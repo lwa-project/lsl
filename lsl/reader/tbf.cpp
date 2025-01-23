@@ -46,6 +46,7 @@ PyObject *tbf_dsize  = NULL;
 template<typename T, NPY_TYPES N>
 PyObject *read_tbf(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output;
+    Py_buffer view;
     PyArrayObject *data;
     int i, nstand;
     const uint8_t *raw_data;
@@ -103,7 +104,7 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
         Py_XDECREF(buffer);
         return NULL;
     }
-    Py_buffer view;
+    
     if (PyObject_GetBuffer(buffer, &view, PyBUF_SIMPLE) == -1) {
         PyErr_Format(PyExc_RuntimeError, "Cannot create buffer from read return value");
         Py_XDECREF(data);
@@ -122,6 +123,8 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     data = (PyArrayObject*) PyArray_ZEROS(3, dims, N, 0);
     if(data == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
+        PyBuffer_Release(&view);
+        Py_XDECREF(buffer);
         Py_XDECREF(data);
         return NULL;
     }
@@ -145,13 +148,12 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     
     Py_END_ALLOW_THREADS
     
-    PyBuffer_Release(&view);
-    Py_XDECREF(buffer);
-    
     // Validate
     if( !validSync5C(cFrame.header.syncWord) ) {
         buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(cFrame)-12*nstand*2*1, 1);
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
+        PyBuffer_Release(&view);
+        Py_XDECREF(buffer);
         Py_XDECREF(data);
         return NULL;
     }
@@ -159,6 +161,8 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     // Save the data to a tuple
     output = Py_BuildValue("(BIIHHKO)", cFrame.header.adp_id, cFrame.header.frame_count, cFrame.header.second_count, cFrame.header.first_chan, nstand, cFrame.payload.timetag, PyArray_Return(data));
     
+    PyBuffer_Release(&view);
+    Py_XDECREF(buffer);
     Py_XDECREF(data);
     
     return output;

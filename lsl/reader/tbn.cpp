@@ -109,7 +109,7 @@ PyObject *read_tbn(PyObject *self, PyObject *args) {
     T *a;
     a = (T *) PyArray_DATA(data);
     for(i=0; i<512*2; ) {   // 8+8 bit
-        *a++ = (T) cFrame.payload.bytes[i++];
+        *a++ = cFrame.payload.bytes[i++];
     }
     
     Py_END_ALLOW_THREADS

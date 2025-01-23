@@ -57,6 +57,7 @@ PyObject *drx_size   = NULL;
 template<typename T, NPY_TYPES N>
 PyObject *read_drx(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output;
+    Py_buffer view;
     PyArrayObject *data;
     int i;
     DRXFrame *cFrame;
@@ -80,7 +81,7 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
     // Read from the file
     if( drx_method == NULL ) {
         drx_method = Py_BuildValue("s", "read");
-        drx_size = Py_BuildValue("i", sizeof(cFrame));
+        drx_size = Py_BuildValue("i", sizeof(DRXFrame));
     }
     buffer = PyObject_CallMethodObjArgs(ph, drx_method, drx_size, NULL);
     if( buffer == NULL ) {
@@ -91,14 +92,13 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
         }
         Py_XDECREF(data);
         return NULL;
-    } else if( PyBytes_GET_SIZE(buffer) != sizeof(cFrame) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != sizeof(DRXFrame) ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(data);
         Py_XDECREF(buffer);
         return NULL;
     }
-    Py_buffer view;
-    if (PyObject_GetBuffer(buffer, &view, PyBUF_SIMPLE) == -1) {
+    if (PyObject_GetBuffer(buffer, &view, PyBUF_SIMPLE | PyBUF_C_CONTIGUOUS) == -1) {
         PyErr_Format(PyExc_RuntimeError, "Cannot create buffer from read return value");
         Py_XDECREF(data);
         Py_XDECREF(buffer);
@@ -128,12 +128,11 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
     
     Py_END_ALLOW_THREADS
     
-    PyBuffer_Release(&view);
-    Py_XDECREF(buffer);
-    
     // Validate
     if( !validSync5C(cFrame->header.sync_word) ) {
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
+        PyBuffer_Release(&view);
+        Py_XDECREF(buffer);
         Py_XDECREF(data);
         return NULL;
     }
@@ -141,6 +140,8 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
     // Save the data to a tuple
     output = Py_BuildValue("(IBIHHKIIO)", cFrame->header.frame_count, cFrame->header.id, cFrame->header.second_count, cFrame->header.decimation, cFrame->header.time_offset, cFrame->payload.timetag, cFrame->payload.tuning_word, cFrame->payload.flags, PyArray_Return(data));
     
+    PyBuffer_Release(&view);
+    Py_XDECREF(buffer);
     Py_XDECREF(data);
     
     return output;
