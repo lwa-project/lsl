@@ -221,32 +221,31 @@ class ionosphere_tests(unittest.TestCase):
             self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
             self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
             
-        @unittest.skip("GloTEC access flaky")
-        with self.subTest(service='GloTEC'):
-            """
-            $ less glotec_icao_20240927T092500Z.geojson
-            ...
-            {
-                "type": "Feature",
-                "geometry": {
-                    "type": "Point",
-                    "coordinates": [
-                        -107.5,
-                        33.75
-                    ]
-                },
-                "properties": {
-                    "tec": 15.556710199197358,
-                    "anomaly": -2.8757901895049898,
-                    "quality_flag": 5
-                }
-            },
-            ...
-            """
-            
-            tec, rms = ionosphere.get_tec_value(60580.39236111111, lat=33.75, lng=-107.5, include_rms=True, type='GloTEC')
-            self.assertAlmostEqual(tec[0][0], 15.5567102, 6)
-            self.assertAlmostEqual(rms[0][0],  2.8757901, 6)
+        # with self.subTest(service='GloTEC'):
+        #     """
+        #     $ less glotec_icao_20240927T092500Z.geojson
+        #     ...
+        #     {
+        #         "type": "Feature",
+        #         "geometry": {
+        #             "type": "Point",
+        #             "coordinates": [
+        #                 -107.5,
+        #                 33.75
+        #             ]
+        #         },
+        #         "properties": {
+        #             "tec": 15.556710199197358,
+        #             "anomaly": -2.8757901895049898,
+        #             "quality_flag": 5
+        #         }
+        #     },
+        #     ...
+        #     """
+        # 
+        #     tec, rms = ionosphere.get_tec_value(60580.39236111111, lat=33.75, lng=-107.5, include_rms=True, type='GloTEC')
+        #     self.assertAlmostEqual(tec[0][0], 15.5567102, 6)
+        #     self.assertAlmostEqual(rms[0][0],  2.8757901, 6)
             
     def test_tec_value_lpn(self):
         """Test retrieving the TEC value at a particular location in the era of long product names"""
