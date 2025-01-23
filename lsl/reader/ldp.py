@@ -3005,7 +3005,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             is_splitfile = True
             
     # Read a bit of data to try to find the right type
-    for mode in (drx, drx8, tbf, cor, drspec):
+    for mode in (drx, tbf, cor, drspec):
         ## Set if we find a valid frame marker
         foundMatch = False
         ## Set if we can read more than one valid successfully
@@ -3064,7 +3064,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
     # There is an ambiguity that can arise for TBF data such that it *looks* 
     # like DRX.  If the identified mode is DRX/DRX8, skip halfway into the file and 
     # verify that it is still DRX/DRX8.
-    if mode in (drx, drx8, tbn):
+    if mode in (drx, tbn):
         ## Sort out the frame size
         omfs = mode.FRAME_SIZE
         
@@ -3076,7 +3076,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
-        for mode in (drx, drx8, tbf):
+        for mode in (drx, tbf):
             ### Set if we find a valid frame marker
             foundMatch = False
             ### Set if we can read more than one valid successfully
@@ -3135,10 +3135,6 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         ldpInstance = DRXFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
-    elif mode == drx8:
-        ldpInstance = DRX8File(filename=filename, fh=fh,
-                               ignore_timetag_errors=ignore_timetag_errors,
-                               buffering=buffering)
     elif mode == tbf:
         ldpInstance = TBFFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
@@ -3197,7 +3193,7 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
             
     # Failed?
     if not found:
-        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 or LWA-SV data file")
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1, LWA-SV, or LWA-NA data file")
         
     return ldpInstance
 
