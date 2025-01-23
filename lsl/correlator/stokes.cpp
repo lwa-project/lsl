@@ -50,16 +50,16 @@ void compute_stokes_real(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan                          
-    LSL_fft_rtype *inP, *inX, *inY;                          
-    LSL_fft_ctype *outP, *outX, *outY;
-    inP = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
-    outP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
-    LSL_fft_plan p;
+    real_t *inP, *inX, *inY;                          
+    complex_t *outP, *outX, *outY;
+    inP = (real_t*) FFTW_MALLOC(sizeof(real_t) * 2*nChan*nTap);
+    outP = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * (nChan+1)*nTap);
+    fftw_plan_t p;
     int n[] = {2*nChan,};
-    p = LSL_fft_plan_many_dft_r2c(1, n, nTap, \
-                                  inP, NULL, 1, 2*nChan, \
-                                  reinterpret_cast<LSL_fft_complex*>(outP), NULL, 1, nChan+1, \
-                                  FFTW_ESTIMATE);
+    p = FFTW_PLAN_MANY_DFT_R2C(1, n, nTap, \
+                               inP, NULL, 1, 2*nChan, \
+                               reinterpret_cast<fftw_complex_t*>(outP), NULL, 1, nChan+1, \
+                               FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -72,10 +72,10 @@ void compute_stokes_real(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, l, secStart, cleanFactor, nActFFT)
     #endif
     {
-        inX = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
-        inY = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
-        outX = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
-        outY = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
+        inX = (real_t*) FFTW_MALLOC(sizeof(real_t) * 2*nChan*nTap);
+        inY = (real_t*) FFTW_MALLOC(sizeof(real_t) * 2*nChan*nTap);
+        outX = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * (nChan+1)*nTap);
+        outY = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * (nChan+1)*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -92,15 +92,15 @@ void compute_stokes_real(long nStand,
                         inX[k] = 0.0;
                         inY[k] = 0.0;
                     } else {
-                        inX[k] = (LSL_fft_rtype) *(dataX + secStart - 2*nChan*(nTap-1) + k);
-                        inY[k] = (LSL_fft_rtype) *(dataY + secStart - 2*nChan*(nTap-1) + k);
+                        inX[k] = (real_t) *(dataX + secStart - 2*nChan*(nTap-1) + k);
+                        inY[k] = (real_t) *(dataY + secStart - 2*nChan*(nTap-1) + k);
                     }
                     if( secStart - 2*nChan*(nTap-1) + k + 1 < nSamps*i ) {
                         inX[k+1] = 0.0;
                         inY[k+1] = 0.0;
                     } else {
-                        inX[k+1] = (LSL_fft_rtype) *(dataX + secStart - 2*nChan*(nTap-1) + k + 1);
-                        inY[k+1] = (LSL_fft_rtype) *(dataY + secStart - 2*nChan*(nTap-1) + k + 1);
+                        inX[k+1] = (real_t) *(dataX + secStart - 2*nChan*(nTap-1) + k + 1);
+                        inY[k+1] = (real_t) *(dataY + secStart - 2*nChan*(nTap-1) + k + 1);
                     }
                     
                     if( Clip && (   abs(inX[k]) >= Clip || abs(inY[k]) >= Clip \
@@ -116,12 +116,12 @@ void compute_stokes_real(long nStand,
                     }
                 }
                 
-                LSL_fft_execute_dft_r2c(p, \
-                                        inX, \
-                                        reinterpret_cast<LSL_fft_complex*>(outX));
-                LSL_fft_execute_dft_r2c(p, \
-                                        inY, \
-                                        reinterpret_cast<LSL_fft_complex*>(outY));
+                FFTW_EXECUTE_DFT_R2C(p, \
+                                     inX, \
+                                     reinterpret_cast<fftw_complex_t*>(outX));
+                FFTW_EXECUTE_DFT_R2C(p, \
+                                     inY, \
+                                     reinterpret_cast<fftw_complex_t*>(outY));
                 
                 for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
@@ -157,14 +157,14 @@ void compute_stokes_real(long nStand,
             }
         }
         
-        LSL_fft_free(inX);
-        LSL_fft_free(inY);
-        LSL_fft_free(outX);
-        LSL_fft_free(outY);
+        FFTW_FREE(inX);
+        FFTW_FREE(inY);
+        FFTW_FREE(outX);
+        FFTW_FREE(outY);
     }
-    LSL_fft_destroy_plan(p);
-    LSL_fft_free(inP);
-    LSL_fft_free(outP);
+    FFTW_DESTROY_PLAN(p);
+    FFTW_FREE(inP);
+    FFTW_FREE(outP);
     
     Py_END_ALLOW_THREADS
 }
@@ -188,14 +188,14 @@ void compute_stokes_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    LSL_fft_ctype *inP, *inX, *inY;
-    inP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
-    LSL_fft_plan p;
+    complex_t *inP, *inX, *inY;
+    inP = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * nChan*nTap);
+    fftw_plan_t p;
     int n[] = {nChan,};
-    p = LSL_fft_plan_many_dft(1, n, nTap, \
-                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
-                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
-                              FFTW_FORWARD, FFTW_ESTIMATE);
+    p = FFTW_PLAN_MANY_DFT(1, n, nTap, \
+                           reinterpret_cast<fftw_complex_t*>(inP), NULL, 1, nChan, \
+                           reinterpret_cast<fftw_complex_t*>(inP), NULL, 1, nChan, \
+                           FFTW_FORWARD, FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -209,8 +209,8 @@ void compute_stokes_complex(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, i, j, k, l, secStart, cleanFactor, nActFFT, temp2)
     #endif
     {
-        inX = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
-        inY = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
+        inX = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * nChan*nTap);
+        inY = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * nChan*nTap);
         temp2 = (double*) aligned64_malloc(sizeof(double) * (nChan/2+nChan%2));
         
         #ifdef _OPENMP
@@ -228,10 +228,10 @@ void compute_stokes_complex(long nStand,
                         inX[k] = 0.0;
                         inY[k] = 0.0;
                     } else {
-                        inX[k] = LSL_fft_ctype(*(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
-                                               *(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
-                        inY[k] = LSL_fft_ctype(*(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
-                                               *(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
+                        inX[k] = complex_t(*(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
+                                           *(dataX + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
+                        inY[k] = complex_t(*(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
+                                           *(dataY + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
                     }
                     
                     if( Clip && ( abs(inX[k]) >= Clip || abs(inY[k]) >= Clip ) ) {
@@ -244,12 +244,12 @@ void compute_stokes_complex(long nStand,
                     }
                 }
                 
-                LSL_fft_execute_dft(p, \
-                                    reinterpret_cast<LSL_fft_complex*>(inX), \
-                                    reinterpret_cast<LSL_fft_complex*>(inX));
-                LSL_fft_execute_dft(p,  \
-                                    reinterpret_cast<LSL_fft_complex*>(inY), \
-                                    reinterpret_cast<LSL_fft_complex*>(inY));
+                FFTW_EXECUTE_DFT(p, \
+                                 reinterpret_cast<fftw_complex_t*>(inX), \
+                                 reinterpret_cast<fftw_complex_t*>(inX));
+                FFTW_EXECUTE_DFT(p,  \
+                                 reinterpret_cast<fftw_complex_t*>(inY), \
+                                 reinterpret_cast<fftw_complex_t*>(inY));
                 
                 for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
@@ -290,12 +290,12 @@ void compute_stokes_complex(long nStand,
             }
         }
         
-        LSL_fft_free(inX);
-        LSL_fft_free(inY);
+        FFTW_FREE(inX);
+        FFTW_FREE(inY);
         aligned64_free(temp2);
     }
-    LSL_fft_destroy_plan(p);
-    LSL_fft_free(inP);
+    FFTW_DESTROY_PLAN(p);
+    FFTW_FREE(inP);
     
     Py_END_ALLOW_THREADS
 }
@@ -327,11 +327,11 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Bring the data into C and make it usable
     dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, 
-                                                        PyArray_TYPE((PyArrayObject *) signalsX), 
-                                                        2, 3);
+                                                           PyArray_TYPE((PyArrayObject *) signalsX), 
+                                                           2, 3);
     dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, 
-                                                        PyArray_TYPE((PyArrayObject *) signalsX), 
-                                                        2, 3);
+                                                           PyArray_TYPE((PyArrayObject *) signalsX), 
+                                                           2, 3);
     if( dataX == NULL ) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX as a 2-D array");
         goto fail;
@@ -483,11 +483,11 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Bring the data into C and make it usable
     dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, 
-                                                        PyArray_TYPE((PyArrayObject *) signalsX), 
-                                                        2, 3);
+                                                           PyArray_TYPE((PyArrayObject *) signalsX), 
+                                                           2, 3);
     dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, 
-                                                        PyArray_TYPE((PyArrayObject *) signalsX), 
-                                                        2, 3);
+                                                           PyArray_TYPE((PyArrayObject *) signalsX), 
+                                                           2, 3);
     if( dataX == NULL ) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signalsX as a 2-D array");
         goto fail;

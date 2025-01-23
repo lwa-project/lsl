@@ -31,53 +31,51 @@ inline void aligned64_free(void* ptr) {
 */
 
 #if defined(USE_FFTW_DOUBLE) && USE_FFTW_DOUBLE
-#define LSL_fft_plan fftw_plan
-#define LSL_fft_rtype double
-#define LSL_fft_ctype std::complex<double>
-#define LSL_fft_complex fftw_complex
-#define LSL_fft_np_rtype NPY_DOUBLE
-#define LSL_fft_np_ctype NPY_COMPLEX128
+    typedef double real_t;
+    typedef std::complex<double> complex_t;
+    typedef fftw_plan fftw_plan_t;
+    typedef fftw_complex fftw_complex_t;
+    #define NPY_REAL_T NPY_DOUBLE
+    #define NPY_COMPLEX_T NPY_COMPLEX128
 
-#define LSL_fft_malloc fftw_malloc
-#define LSL_fft_free fftw_free
-#define LSL_fft_plan_many_dft_r2c fftw_plan_many_dft_r2c
-#define LSL_fft_plan_many_dft fftw_plan_many_dft
-#define LSL_fft_plan_dft_1d fftw_plan_dft_1d
-#define LSL_fft_plan_dft_2d fftw_plan_dft_2d
-#define LSL_fft_plan_dft_r2c_1d fftw_plan_dft_r2c_1d
-#define LSL_fft_plan_r2r_1d fftw_plan_r2r_1d
-#define LSL_fft_execute fftw_execute
-#define LSL_fft_execute_dft_r2c fftw_execute_dft_r2c
-#define LSL_fft_execute_dft fftw_execute_dft
-#define LSL_fft_destroy_plan fftw_destroy_plan
-#define LSL_fft_import_system_wisdom fftw_import_system_wisdom
-#define LSL_fft_import_wisdom_from_file fftw_import_wisdom_from_file
-#define LSL_fft_export_wisdom_to_file fftw_export_wisdom_to_file
-
+    #define FFTW_MALLOC fftw_malloc
+    #define FFTW_FREE fftw_free
+    #define FFTW_PLAN_MANY_DFT_R2C fftw_plan_many_dft_r2c
+    #define FFTW_PLAN_MANY_DFT fftw_plan_many_dft
+    #define FFTW_PLAN_DFT_1D fftw_plan_dft_1d
+    #define FFTW_PLAN_DFT_2D fftw_plan_dft_2d
+    #define FFTW_PLAN_DFT_R2C_1D fftw_plan_dft_r2c_1d
+    #define FFTW_PLAN_R2R_1D fftw_plan_r2r_1d
+    #define FFTW_EXECUTE fftw_execute
+    #define FFTW_EXECUTE_DFT_R2C fftw_execute_dft_r2c
+    #define FFTW_EXECUTE_DFT fftw_execute_dft
+    #define FFTW_DESTROY_PLAN fftw_destroy_plan
+    #define FFTW_IMPORT_SYSTEM_WISDOM fftw_import_system_wisdom
+    #define FFTW_IMPORT_WISDOM_FROM_FILE fftw_import_wisdom_from_file
+    #define FFTW_EXPORT_WISDOM_TO_FILE fftw_export_wisdom_to_file
 #else
-#define LSL_fft_plan fftwf_plan
-#define LSL_fft_rtype float
-#define LSL_fft_ctype std::complex<float>
-#define LSL_fft_complex fftwf_complex
-#define LSL_fft_np_rtype NPY_FLOAT
-#define LSL_fft_np_ctype NPY_COMPLEX64
+    typedef float real_t;
+    typedef std::complex<float> complex_t;
+    typedef fftwf_plan fftw_plan_t;
+    typedef fftwf_complex fftw_complex_t;
+    #define NPY_REAL_T NPY_FLOAT
+    #define NPY_COMPLEX_T NPY_COMPLEX64
 
-#define LSL_fft_malloc fftwf_malloc
-#define LSL_fft_free fftwf_free
-#define LSL_fft_plan_many_dft_r2c fftwf_plan_many_dft_r2c
-#define LSL_fft_plan_many_dft fftwf_plan_many_dft
-#define LSL_fft_plan_dft_1d fftwf_plan_dft_1d
-#define LSL_fft_plan_dft_2d fftwf_plan_dft_2d
-#define LSL_fft_plan_dft_r2c_1d fftwf_plan_dft_r2c_1d
-#define LSL_fft_plan_r2r_1d fftwf_plan_r2r_1d
-#define LSL_fft_execute fftwf_execute
-#define LSL_fft_execute_dft_r2c fftwf_execute_dft_r2c
-#define LSL_fft_execute_dft fftwf_execute_dft
-#define LSL_fft_destroy_plan fftwf_destroy_plan
-#define LSL_fft_import_system_wisdom fftwf_import_system_wisdom
-#define LSL_fft_import_wisdom_from_file fftwf_import_wisdom_from_file
-#define LSL_fft_export_wisdom_to_file fftwf_export_wisdom_to_file
-
+    #define FFTW_MALLOC fftwf_malloc
+    #define FFTW_FREE fftwf_free
+    #define FFTW_PLAN_MANY_DFT_R2C fftwf_plan_many_dft_r2c
+    #define FFTW_PLAN_MANY_DFT fftwf_plan_many_dft
+    #define FFTW_PLAN_DFT_1D fftwf_plan_dft_1d
+    #define FFTW_PLAN_DFT_2D fftwf_plan_dft_2d
+    #define FFTW_PLAN_DFT_R2C_1D fftwf_plan_dft_r2c_1d
+    #define FFTW_PLAN_R2R_1D fftwf_plan_r2r_1d
+    #define FFTW_EXECUTE fftwf_execute
+    #define FFTW_EXECUTE_DFT_R2C fftwf_execute_dft_r2c
+    #define FFTW_EXECUTE_DFT fftwf_execute_dft
+    #define FFTW_DESTROY_PLAN fftwf_destroy_plan
+    #define FFTW_IMPORT_SYSTEM_WISDOM fftwf_import_system_wisdom
+    #define FFTW_IMPORT_WISDOM_FROM_FILE fftwf_import_wisdom_from_file
+    #define FFTW_EXPORT_WISDOM_TO_FILE fftwf_export_wisdom_to_file
 #endif
 
 
@@ -91,7 +89,7 @@ inline void read_wisdom(char *filename, PyObject *m) {
     
     wisdomfile = fopen(filename, "r");
     if( wisdomfile != NULL ) {
-        status = LSL_fft_import_wisdom_from_file(wisdomfile);
+        status = FFTW_IMPORT_WISDOM_FROM_FILE(wisdomfile);
         fclose(wisdomfile);
     }
     PyModule_AddObject(m, "useWisdom", PyBool_FromLong(status));

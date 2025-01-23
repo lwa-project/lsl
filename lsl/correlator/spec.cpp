@@ -49,16 +49,16 @@ void compute_spec_real(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan                          
-    LSL_fft_rtype *inP, *in;                          
-    LSL_fft_ctype *outP, *out;
-    inP = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
-    outP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
-    LSL_fft_plan p;
+    real_t *inP, *in;                          
+    complex_t *outP, *out;
+    inP = (real_t*) FFTW_MALLOC(sizeof(real_t) * 2*nChan*nTap);
+    outP = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * (nChan+1)*nTap);
+    fftw_plan_t p;
     int n[] = {2*nChan,};
-    p = LSL_fft_plan_many_dft_r2c(1, n, nTap, \
-                                  inP, NULL, 1, 2*nChan, \
-                                  reinterpret_cast<LSL_fft_complex*>(outP), NULL, 1, nChan+1, \
-                                  FFTW_ESTIMATE);
+    p = FFTW_PLAN_MANY_DFT_R2C(1, n, nTap, \
+                               inP, NULL, 1, 2*nChan, \
+                               reinterpret_cast<fftw_complex_t*>(outP), NULL, 1, nChan+1, \
+                               FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -71,8 +71,8 @@ void compute_spec_real(long nStand,
         #pragma omp parallel default(shared) private(in, out, i, j, k, l, secStart, cleanFactor, nActFFT)
     #endif
     {
-        in = (LSL_fft_rtype*) LSL_fft_malloc(sizeof(LSL_fft_rtype) * 2*nChan*nTap);
-        out = (LSL_fft_ctype*) fftwf_malloc(sizeof(LSL_fft_ctype) * (nChan+1)*nTap);
+        in = (real_t*) FFTW_MALLOC(sizeof(real_t) * 2*nChan*nTap);
+        out = (complex_t*) fftwf_malloc(sizeof(complex_t) * (nChan+1)*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -88,12 +88,12 @@ void compute_spec_real(long nStand,
                     if( secStart - 2*nChan*(nTap-1) + k < nSamps*i ) {
                         in[k] = 0.0;
                     } else {
-                        in[k] = (LSL_fft_rtype) *(data + secStart - 2*nChan*(nTap-1) + k);
+                        in[k] = (real_t) *(data + secStart - 2*nChan*(nTap-1) + k);
                     }
                     if( secStart - 2*nChan*(nTap-1) + k + 1 < nSamps*i ) {
                         in[k+1] = 0.0;
                     } else {
-                        in[k+1] = (LSL_fft_rtype) *(data + secStart - 2*nChan*(nTap-1) + k + 1);
+                        in[k+1] = (real_t) *(data + secStart - 2*nChan*(nTap-1) + k + 1);
                     }
                     
                     if( Clip && (abs(in[k]) >= Clip || abs(in[k+1]) >= Clip) ) {
@@ -106,9 +106,9 @@ void compute_spec_real(long nStand,
                     }
                 }
                 
-                LSL_fft_execute_dft_r2c(p, \
-                                        in, \
-                                        reinterpret_cast<LSL_fft_complex*>(out));
+                FFTW_EXECUTE_DFT_R2C(p, \
+                                     in, \
+                                     reinterpret_cast<fftw_complex_t*>(out));
                 
                 for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
@@ -127,12 +127,12 @@ void compute_spec_real(long nStand,
             blas_scal(nChan, 1.0/(2*nChan*nActFFT), (psd + i*nChan), 1);
         }
         
-        LSL_fft_free(in);
-        LSL_fft_free(out);
+        FFTW_FREE(in);
+        FFTW_FREE(out);
     }
-    LSL_fft_destroy_plan(p);
-    LSL_fft_free(inP);
-    LSL_fft_free(outP);
+    FFTW_DESTROY_PLAN(p);
+    FFTW_FREE(inP);
+    FFTW_FREE(outP);
     
     Py_END_ALLOW_THREADS
 }
@@ -155,14 +155,14 @@ void compute_spec_complex(long nStand,
     Py_BEGIN_ALLOW_THREADS
     
     // Create the FFTW plan
-    LSL_fft_ctype *inP, *in;
-    inP = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
-    LSL_fft_plan p;
+    complex_t *inP, *in;
+    inP = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * nChan*nTap);
+    fftw_plan_t p;
     int n[] = {nChan,};
-    p = LSL_fft_plan_many_dft(1, n, nTap, \
-                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
-                              reinterpret_cast<LSL_fft_complex*>(inP), NULL, 1, nChan, \
-                              FFTW_FORWARD, FFTW_ESTIMATE);
+    p = FFTW_PLAN_MANY_DFT(1, n, nTap, \
+                           reinterpret_cast<fftw_complex_t*>(inP), NULL, 1, nChan, \
+                           reinterpret_cast<fftw_complex_t*>(inP), NULL, 1, nChan, \
+                           FFTW_FORWARD, FFTW_ESTIMATE);
     
     // Data indexing and access
     long secStart;
@@ -175,7 +175,7 @@ void compute_spec_complex(long nStand,
         #pragma omp parallel default(shared) private(in, i, j, k, l, secStart, cleanFactor, nActFFT, temp2)
     #endif
     {
-        in = (LSL_fft_ctype*) LSL_fft_malloc(sizeof(LSL_fft_ctype) * nChan*nTap);
+        in = (complex_t*) FFTW_MALLOC(sizeof(complex_t) * nChan*nTap);
         temp2 = (double*) aligned64_malloc(sizeof(double) * (nChan/2+nChan%2));
         
         #ifdef _OPENMP
@@ -192,8 +192,8 @@ void compute_spec_complex(long nStand,
                     if( secStart - nChan*(nTap-1) + k < nSamps*i ) {
                         in[k] = 0.0;
                     } else {
-                        in[k] = LSL_fft_ctype(*(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
-                                              *(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
+                        in[k] = complex_t(*(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 0), \
+                                          *(data + 2*secStart - 2*nChan*(nTap-1) + 2*k + 1));
                     }
                     
                     if( Clip && abs(in[k]) >= Clip ) {
@@ -205,9 +205,9 @@ void compute_spec_complex(long nStand,
                     }
                 }
                 
-                LSL_fft_execute_dft(p, \
-                                    reinterpret_cast<LSL_fft_complex*>(in), \
-                                    reinterpret_cast<LSL_fft_complex*>(in));
+                FFTW_EXECUTE_DFT(p, \
+                                 reinterpret_cast<fftw_complex_t*>(in), \
+                                 reinterpret_cast<fftw_complex_t*>(in));
                 
                 for(l=1; l<nTap; l++) {
                     for(k=0; k<nChan; k++) {
@@ -231,11 +231,11 @@ void compute_spec_complex(long nStand,
             blas_scal(nChan, 1.0/(nActFFT*nChan), (psd + i*nChan), 1);
         }
         
-        LSL_fft_free(in);
+        FFTW_FREE(in);
         aligned64_free(temp2);
     }
-    LSL_fft_destroy_plan(p);
-    LSL_fft_free(inP);
+    FFTW_DESTROY_PLAN(p);
+    FFTW_FREE(inP);
     
     Py_END_ALLOW_THREADS
 }
@@ -267,8 +267,8 @@ static PyObject *FPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Bring the data into C and make it usable
     data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, 
-                                                        PyArray_TYPE((PyArrayObject *) signals), 
-                                                        2, 3);
+                                                          PyArray_TYPE((PyArrayObject *) signals), 
+                                                          2, 3);
     if( data == NULL ) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signals as a 2-D array");
         goto fail;
@@ -395,8 +395,8 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Bring the data into C and make it usable
     data = (PyArrayObject *) PyArray_ContiguousFromObject(signals, 
-                                                        PyArray_TYPE((PyArrayObject *) signals), 
-                                                        2, 3);
+                                                          PyArray_TYPE((PyArrayObject *) signals), 
+                                                          2, 3);
     if( data == NULL ) {
         PyErr_Format(PyExc_RuntimeError, "Cannot cast input array signals as a 2-D array");
         goto fail;
