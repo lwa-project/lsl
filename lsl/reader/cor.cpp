@@ -19,7 +19,7 @@ typedef struct __attribute__((packed)) {
     union {
         struct {
             uint32_t frame_count:24;
-            unsigned char adp_id:8;
+            uint8_t adp_id:8;
         };
         uint32_t frame_count_word;
     };
