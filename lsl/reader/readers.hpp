@@ -20,7 +20,7 @@
   Minimum function for two values
 */
 
-#define min(a,b) (((a) < (b)) ? (a) : (b))
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
 
 
 /*

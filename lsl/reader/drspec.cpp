@@ -71,7 +71,7 @@ inline uint8_t pol_count(uint8_t p) {
 
 template<PolProds P>
 static void parse_linear_single(DRSpecHeader *header, float *data, float *S0, float *S1) {
-    unsigned int i;
+    uint32_t i;
     float norm0, norm1;
     
     // Spectra normalization factors
@@ -85,8 +85,8 @@ static void parse_linear_single(DRSpecHeader *header, float *data, float *S0, fl
         norm1 = header->nFreqs * header->fills[3];
     } else {
         // real(XY*) or imag(XY*)
-        norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
-        norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
+        norm0 = header->nFreqs * MIN(header->fills[0], header->fills[1]);
+        norm1 = header->nFreqs * MIN(header->fills[2], header->fills[3]);
     }
     
     // Sort out the data
@@ -99,7 +99,7 @@ static void parse_linear_single(DRSpecHeader *header, float *data, float *S0, fl
 
 
 static void parse_linear_half(DRSpecHeader *header, float *data, float *XX0, float *XX1, float *YY0, float *YY1) {
-    unsigned int i;
+    uint32_t i;
     float normXX0, normXX1, normYY0, normYY1;
     
     // Spectra normalization factors
@@ -122,12 +122,12 @@ static void parse_linear_half(DRSpecHeader *header, float *data, float *XX0, flo
 
 
 static void parse_linear_other_half(DRSpecHeader *header, float *data, float *CR0, float *CR1, float *CI0, float *CI1) {
-    unsigned int i;
+    uint32_t i;
     float normCH0, normCH1;
     
     // Spectra normalization factors
-    normCH0 = header->nFreqs * min(header->fills[0], header->fills[1]);
-    normCH1 = header->nFreqs * min(header->fills[2], header->fills[3]);
+    normCH0 = header->nFreqs * MIN(header->fills[0], header->fills[1]);
+    normCH1 = header->nFreqs * MIN(header->fills[2], header->fills[3]);
     
     // Sort out the data
     for(i=0; i<header->nFreqs; i++) {
@@ -143,14 +143,14 @@ static void parse_linear_other_half(DRSpecHeader *header, float *data, float *CR
 
 
 static void parse_linear_full(DRSpecHeader *header, float *data, float *XX0, float *XX1, float *CR0, float *CR1, float *CI0, float *CI1, float *YY0, float *YY1) {
-    unsigned int i;
+    uint32_t i;
     float normXX0, normXX1, normCH0, normCH1, normYY0, normYY1;
     
     // Spectra normalization factors
     normXX0 = header->nFreqs * header->fills[0];
     normXX1 = header->nFreqs * header->fills[2];
-    normCH0 = header->nFreqs * min(header->fills[0], header->fills[1]);
-    normCH1 = header->nFreqs * min(header->fills[2], header->fills[3]);
+    normCH0 = header->nFreqs * MIN(header->fills[0], header->fills[1]);
+    normCH1 = header->nFreqs * MIN(header->fills[2], header->fills[3]);
     normYY0 = header->nFreqs * header->fills[1];
     normYY1 = header->nFreqs * header->fills[3];
 
@@ -176,12 +176,12 @@ static void parse_linear_full(DRSpecHeader *header, float *data, float *XX0, flo
 
 
 static void parse_stokes_single(DRSpecHeader *header, float *data, float *S0, float *S1) {
-    unsigned int i;
+    uint32_t i;
     float norm0, norm1;
     
     // Spectra normalization factors
-    norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
-    norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
+    norm0 = header->nFreqs * MIN(header->fills[0], header->fills[1]);
+    norm1 = header->nFreqs * MIN(header->fills[2], header->fills[3]);
     
     // Sort out the data
     for(i=0; i<header->nFreqs; i++) {
@@ -193,12 +193,12 @@ static void parse_stokes_single(DRSpecHeader *header, float *data, float *S0, fl
 
 
 static void parse_stokes_half(DRSpecHeader *header, float *data, float *I0, float *I1, float *V0, float *V1) {
-    unsigned int i;
+    uint32_t i;
     float norm0, norm1;
     
     // Spectra normalization factors
-    norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
-    norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
+    norm0 = header->nFreqs * MIN(header->fills[0], header->fills[1]);
+    norm1 = header->nFreqs * MIN(header->fills[2], header->fills[3]);
     
     // Sort out the data
     for(i=0; i<header->nFreqs; i++) {
@@ -214,12 +214,12 @@ static void parse_stokes_half(DRSpecHeader *header, float *data, float *I0, floa
 
 
 static void parse_stokes_full(DRSpecHeader *header, float *data, float *I0, float *I1, float *Q0, float *Q1, float *U0, float *U1, float *V0, float *V1) {
-    unsigned int i;
+    uint32_t i;
     float norm0, norm1;
     
     // Spectra normalization factors
-    norm0 = header->nFreqs * min(header->fills[0], header->fills[1]);
-    norm1 = header->nFreqs * min(header->fills[2], header->fills[3]);
+    norm0 = header->nFreqs * MIN(header->fills[0], header->fills[1]);
+    norm1 = header->nFreqs * MIN(header->fills[2], header->fills[3]);
     
     // Sort out the data
     for(i=0; i<header->nFreqs; i++) {
