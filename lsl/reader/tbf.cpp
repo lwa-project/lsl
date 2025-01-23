@@ -45,13 +45,13 @@ PyObject *tbf_dsize  = NULL;
 
 template<typename T, NPY_TYPES N>
 PyObject *read_tbf(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
+    PyObject *ph, *buffer, *output;
     PyArrayObject *data;
     int i, nstand;
-    unsigned char raw_data[6144];
+    const uint8_t *raw_data;
     TBFFrame cFrame;
     
-    if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
+    if(!PyArg_ParseTuple(args, "O", &ph)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         return NULL;
     }
@@ -103,8 +103,14 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
         Py_XDECREF(buffer);
         return NULL;
     }
-    memcpy(&raw_data, PyBytes_AS_STRING(buffer), 12*nstand*2*1);
-    Py_XDECREF(buffer);
+    Py_buffer view;
+    if (PyObject_GetBuffer(buffer, &view, PyBUF_SIMPLE) == -1) {
+        PyErr_Format(PyExc_RuntimeError, "Cannot create buffer from read return value");
+        Py_XDECREF(data);
+        Py_XDECREF(buffer);
+        return NULL;
+    }
+    raw_data = (const uint8_t*) view.buf;
     
     // Create the output data array
     npy_intp dims[3];
@@ -132,72 +138,27 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     const int8_t *fp;
     T *a;
     a = (T *) PyArray_DATA(data);
-    for(i=0; i<12*nstand*2*1; i+=4) {
-        fp = tbfLUT[ raw_data[i] ];
-        *(a + 2*i + 0) = fp[0];
-        *(a + 2*i + 1) = fp[1];
-        fp = tbfLUT[ raw_data[i+1] ];
-        *(a + 2*i + 2) = fp[0];
-        *(a + 2*i + 3) = fp[1];
-        fp = tbfLUT[ raw_data[i+2] ];
-        *(a + 2*i + 4) = fp[0];
-        *(a + 2*i + 5) = fp[1];
-        fp = tbfLUT[ raw_data[i+3] ];
-        *(a + 2*i + 6) = fp[0];
-        *(a + 2*i + 7) = fp[1];
+    for(i=0; i<12*nstand*2*1; ) {   // Sets of 12 channels for nstand stands @ 4+4 bit
+        fp = tbfLUT[ raw_data[i++] ];
+        *a++ = fp[0]; *a++ = fp[1];
     }
     
     Py_END_ALLOW_THREADS
+    
+    PyBuffer_Release(&view);
+    Py_XDECREF(buffer);
     
     // Validate
     if( !validSync5C(cFrame.header.syncWord) ) {
         buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(cFrame)-12*nstand*2*1, 1);
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
-        Py_XDECREF(buffer);
         Py_XDECREF(data);
         return NULL;
     }
     
-    // Save the data to the frame object
-    // 1.  Header
-    fHeader = PyObject_GetAttrString(frame, "header");
+    // Save the data to a tuple
+    output = Py_BuildValue("(BIIHHKO)", cFrame.header.adp_id, cFrame.header.frame_count, cFrame.header.second_count, cFrame.header.first_chan, nstand, cFrame.payload.timetag, PyArray_Return(data));
     
-    temp = Py_BuildValue("B", cFrame.header.adp_id);
-    PyObject_SetAttrString(fHeader, "adp_id", temp);
-    Py_XDECREF(temp);
-    
-    temp = PyLong_FromUnsignedLong(cFrame.header.frame_count);
-    PyObject_SetAttrString(fHeader, "frame_count", temp);
-    Py_XDECREF(temp);
-    
-    temp = PyLong_FromUnsignedLong(cFrame.header.second_count);
-    PyObject_SetAttrString(fHeader, "second_count", temp);
-    Py_XDECREF(temp);
-    
-    temp = Py_BuildValue("h", cFrame.header.first_chan);
-    PyObject_SetAttrString(fHeader, "first_chan", temp);
-    Py_XDECREF(temp);
-    
-    temp = Py_BuildValue("h", nstand);
-    PyObject_SetAttrString(fHeader, "nstand", temp);
-    Py_XDECREF(temp);
-    
-    // 2. Data
-    fPayload = PyObject_GetAttrString(frame, "payload");
-    
-    temp = PyLong_FromLongLong(cFrame.payload.timetag);
-    PyObject_SetAttrString(fPayload, "timetag", temp);
-    Py_XDECREF(temp);
-    
-    PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data));
-    
-    // 3. Frame
-    PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "payload", fPayload);
-    output = Py_BuildValue("O", frame);
-    
-    Py_XDECREF(fHeader);
-    Py_XDECREF(fPayload);
     Py_XDECREF(data);
     
     return output;

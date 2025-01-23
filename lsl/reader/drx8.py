@@ -225,12 +225,15 @@ def read_frame(filehandle, gain=None, verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = read_drx8(filehandle, Frame())
+        fcount, drx_id, scount, decim, toffset, tt, tword, flags, iq = read_drx8(filehandle)
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
+        
+    newFrame = Frame(FrameHeader(fcount, drx_id, scount, decim, toffset),
+                     FramePayload(tt, tword, flags, iq))
     
     if gain is not None:
         newFrame.gain = gain
@@ -247,13 +250,15 @@ def read_frame_ci8(filehandle, gain=None, verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = read_drx8_ci8(filehandle, Frame())
-        newFrame.payload._data = newFrame.payload.data.view(CI8)
+        fcount, drx_id, scount, decim, toffset, tt, tword, flags, iq = read_drx8_ci8(filehandle)
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
+        
+    newFrame = Frame(FrameHeader(fcount, drx_id, scount, decim, toffset),
+                     FramePayload(tt, tword, flags, iq.view(CI8)))
     
     if gain is not None:
         newFrame.gain = gain

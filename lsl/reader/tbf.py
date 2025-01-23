@@ -63,7 +63,7 @@ class FrameHeader(FrameHeaderBase):
     well as the original binary header data.
     """
     
-    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'nstand', 'first_chan']
+    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'first_chan', 'nstand']
     
     def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None):
         self.adp_id = adp_id
@@ -180,13 +180,16 @@ def read_frame(filehandle, verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = read_tbf(filehandle, Frame())
+        adp_id, fcount, scount, fchan, nstand, tt, fdomain = read_tbf(filehandle)
     except gSyncError:
         mark = filehandle.tell()
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
         
+    newFrame = Frame(FrameHeader(adp_id, fcount, scount, fchan, nstand),
+                     FramePayload(tt, fdomain))
+    
     return newFrame
 
 
@@ -206,14 +209,16 @@ def read_frame_ci8(filehandle, verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = read_tbf_ci8(filehandle, Frame())
-        newFrame.payload._data = newFrame.payload.data.view(CI8)
+        adp_id, fcount, scount, fchan, nstand, tt, fdomain = read_tbf_ci8(filehandle)
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
         
+    newFrame = Frame(FrameHeader(adp_id, fcount, scount, fchan, nstand),
+                     FramePayload(tt, fdomain.view(CI8)))
+    
     return newFrame
 
 

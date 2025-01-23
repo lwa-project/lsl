@@ -56,12 +56,12 @@ PyObject *drx_size   = NULL;
 
 template<typename T, NPY_TYPES N>
 PyObject *read_drx(PyObject *self, PyObject *args) {
-    PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
+    PyObject *ph, *buffer, *output;
     PyArrayObject *data;
     int i;
-    DRXFrame cFrame;
+    DRXFrame *cFrame;
     
-    if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
+    if(!PyArg_ParseTuple(args, "O", &ph)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         return NULL;
     }
@@ -97,96 +97,50 @@ PyObject *read_drx(PyObject *self, PyObject *args) {
         Py_XDECREF(buffer);
         return NULL;
     }
-    memcpy(&cFrame, PyBytes_AS_STRING(buffer), sizeof(cFrame));
-    Py_XDECREF(buffer);
-        
+    Py_buffer view;
+    if (PyObject_GetBuffer(buffer, &view, PyBUF_SIMPLE) == -1) {
+        PyErr_Format(PyExc_RuntimeError, "Cannot create buffer from read return value");
+        Py_XDECREF(data);
+        Py_XDECREF(buffer);
+        return NULL;
+    }
+    cFrame = (DRXFrame*) view.buf;
+       
     Py_BEGIN_ALLOW_THREADS
     
     // Swap the bits around
-    cFrame.header.frame_count_word = __bswap_32(cFrame.header.frame_count_word);
-    cFrame.header.second_count = __bswap_32(cFrame.header.second_count);
-    cFrame.header.decimation = __bswap_16(cFrame.header.decimation);
-    cFrame.header.time_offset = __bswap_16(cFrame.header.time_offset);
-    cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
-    cFrame.payload.tuning_word = __bswap_32(cFrame.payload.tuning_word);
-    cFrame.payload.flags = __bswap_32(cFrame.payload.flags);
+    cFrame->header.frame_count_word = __bswap_32(cFrame->header.frame_count_word);
+    cFrame->header.second_count = __bswap_32(cFrame->header.second_count);
+    cFrame->header.decimation = __bswap_16(cFrame->header.decimation);
+    cFrame->header.time_offset = __bswap_16(cFrame->header.time_offset);
+    cFrame->payload.timetag = __bswap_64(cFrame->payload.timetag);
+    cFrame->payload.tuning_word = __bswap_32(cFrame->payload.tuning_word);
+    cFrame->payload.flags = __bswap_32(cFrame->payload.flags);
     
     // Fill the data array
     const int8_t *fp;
     T *a;
     a = (T *) PyArray_DATA(data);
-    for(i=0; i<4096; i+=4) {
-        fp = drxLUT[ cFrame.payload.bytes[i] ];
-        *(a + 2*i + 0) = fp[0];
-        *(a + 2*i + 1) = fp[1];
-        fp = drxLUT[ cFrame.payload.bytes[i+1] ];
-        *(a + 2*i + 2) = fp[0];
-        *(a + 2*i + 3) = fp[1];
-        fp = drxLUT[ cFrame.payload.bytes[i+2] ];
-        *(a + 2*i + 4) = fp[0];
-        *(a + 2*i + 5) = fp[1];
-        fp = drxLUT[ cFrame.payload.bytes[i+3] ];
-        *(a + 2*i + 6) = fp[0];
-        *(a + 2*i + 7) = fp[1];
+    for(i=0; i<4096; ) {
+        fp = drxLUT[ cFrame->payload.bytes[i++] ];
+        *a++ = fp[0]; *a++ = fp[1];
     }
     
     Py_END_ALLOW_THREADS
     
+    PyBuffer_Release(&view);
+    Py_XDECREF(buffer);
+    
     // Validate
-    if( !validSync5C(cFrame.header.sync_word) ) {
+    if( !validSync5C(cFrame->header.sync_word) ) {
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
         Py_XDECREF(data);
         return NULL;
     }
     
-    // Save the data to the frame object
-    // 1. Header
-    fHeader = PyObject_GetAttrString(frame, "header");
+    // Save the data to a tuple
+    output = Py_BuildValue("(IBIHHKIIO)", cFrame->header.frame_count, cFrame->header.id, cFrame->header.second_count, cFrame->header.decimation, cFrame->header.time_offset, cFrame->payload.timetag, cFrame->payload.tuning_word, cFrame->payload.flags, PyArray_Return(data));
     
-    temp = PyLong_FromUnsignedLong(cFrame.header.frame_count);
-    PyObject_SetAttrString(fHeader, "frame_count", temp);
-    Py_XDECREF(temp);
-    
-    temp = Py_BuildValue("B", cFrame.header.id);
-    PyObject_SetAttrString(fHeader, "drx_id", temp);
-    Py_XDECREF(temp);
-    
-    temp = PyLong_FromUnsignedLong(cFrame.header.second_count);
-    PyObject_SetAttrString(fHeader, "second_count", temp);
-    Py_XDECREF(temp);
-    
-    temp = Py_BuildValue("H", cFrame.header.decimation);
-    PyObject_SetAttrString(fHeader, "decimation", temp);
-    Py_XDECREF(temp);
-    
-    temp = Py_BuildValue("H", cFrame.header.time_offset);
-    PyObject_SetAttrString(fHeader, "time_offset", temp);
-    Py_XDECREF(temp);
-    
-    // 2. Data
-    fPayload = PyObject_GetAttrString(frame, "payload");
-    
-    temp = PyLong_FromUnsignedLongLong(cFrame.payload.timetag);
-    PyObject_SetAttrString(fPayload, "timetag", temp);
-    Py_XDECREF(temp);
-    
-    temp = PyLong_FromUnsignedLong(cFrame.payload.tuning_word);
-    PyObject_SetAttrString(fPayload, "tuning_word", temp);
-    Py_XDECREF(temp);
-    
-    temp = PyLong_FromUnsignedLong(cFrame.payload.flags);
-    PyObject_SetAttrString(fPayload, "flags", temp);
-    Py_XDECREF(temp);
-    
-    PyObject_SetAttrString(fPayload, "_data", PyArray_Return(data));
-    
-    // 3. Frame
-    PyObject_SetAttrString(frame, "header", fHeader);
-    PyObject_SetAttrString(frame, "payload", fPayload);
-    output = Py_BuildValue("O", frame);
-    
-    Py_XDECREF(fHeader);
-    Py_XDECREF(fPayload);
     Py_XDECREF(data);
     
     return output;
