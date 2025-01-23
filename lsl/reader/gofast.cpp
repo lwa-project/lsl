@@ -37,8 +37,6 @@ int validSync5C(uint32_t syncWord) {
   Look-up Tables
 */
 int16_t tbw4LUT[256][2];
-int8_t  tbnLUT[256];
-int8_t  drx8LUT[256];
 int8_t  drxLUT[256][2];
 int8_t  tbfLUT[256][2];
 
@@ -57,15 +55,6 @@ static void initLWALUTs(void) {
             tbw4LUT[i][j] = t;
             tbw4LUT[i][j] -= ((t&8)<<1);
         }
-    }
-    
-    // TBN & DRX8
-    for(i=0; i<256; i++) {
-        tbnLUT[i] = i;
-        tbnLUT[i] -= ((i&128)<<1);
-        
-        drx8LUT[i] = i;
-        drx8LUT[i] -= ((i&128)<<1);
     }
     
     // DRX & TBF

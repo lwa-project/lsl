@@ -36,7 +36,7 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     uint64_t timetag;
-    uint8_t  bytes[1024];
+    int8_t  bytes[1024];
 } TBNPayload;
 
 
@@ -108,9 +108,8 @@ PyObject *read_tbn(PyObject *self, PyObject *args) {
     // Fill the data array
     T *a;
     a = (T *) PyArray_DATA(data);
-    for(i=0; i<512; i++) {
-        *(a + 2*i + 0) = tbnLUT[ cFrame.payload.bytes[2*i+0] ];
-        *(a + 2*i + 1) = tbnLUT[ cFrame.payload.bytes[2*i+1] ];
+    for(i=0; i<512*2; ) {   // 8+8 bit
+        *a++ = (T) cFrame.payload.bytes[i++];
     }
     
     Py_END_ALLOW_THREADS

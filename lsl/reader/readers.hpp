@@ -38,8 +38,6 @@ extern PyObject *EOFError;
 
 // gofast.cpp
 extern int16_t tbw4LUT[256][2];
-extern int8_t  tbnLUT[256];
-extern int8_t  drx8LUT[256];
 extern int8_t  drxLUT[256][2];
 extern int8_t  tbfLUT[256][2];
 
