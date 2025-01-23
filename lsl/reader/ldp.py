@@ -3110,7 +3110,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                     for i in range(4):
                         junkFrame = mode.read_frame(fh)
                     foundMode = True
-                except errors.SyncError:
+                except (errors.SyncError, errors.EOFError):
                     #### Reset for the next mode...
                     fh.seek(nFrames//2*omfs)
             else:
