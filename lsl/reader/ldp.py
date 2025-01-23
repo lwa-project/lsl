@@ -35,7 +35,7 @@ from collections import deque, defaultdict
 from lsl.common.dp import fS
 from lsl.common.adp import fC
 from lsl.common.ndp import fC as ndp_fC
-from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
+from lsl.reader import tbw, tbn, drx, drx8, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp, CI8
