@@ -40,7 +40,7 @@ typedef struct __attribute__((packed)) {
     uint64_t timetag;
     uint32_t tuning_word;
     uint32_t flags;
-    uint8_t  bytes[8192];
+    int8_t  bytes[8192];
 } DRX8Payload;
 
 
@@ -120,7 +120,9 @@ PyObject *read_drx8(PyObject *self, PyObject *args) {
     const int8_t *fp;
     T *a;
     a = (T *) PyArray_DATA(data);
-    memcpy(a, cFrame->payload.bytes, 8192);
+    for(i=0; i<4096*2; ) {   // 8+8 bit
+        *a++ = (T) cFrame->payload.bytes[i++];
+    }
     
     Py_END_ALLOW_THREADS
     
