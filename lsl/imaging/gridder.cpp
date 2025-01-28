@@ -18,6 +18,8 @@
 #include "numpy/npy_math.h"
 
 #include "../correlator/common.hpp"
+#include "../correlator/cache.hpp"
+#include "../correlator/pool.hpp"
 
 
 // Maximum number of w-planes to project
@@ -26,6 +28,20 @@
 // Gridding convolution size on a side and oversampling factor
 #define GRID_KERNEL_SIZE 7    // should be an odd number
 #define GRID_KERNEL_OVERSAMPLE 64
+
+
+/*
+  FFTW memory pools and plan caches
+*/
+
+static FFTWBufferPool& mpool = get_fftw_buffer_pool("gridder");
+static FFTWPlanCache& pcache = get_fftw_plan_cache("gridder");
+
+/*
+   64-bit aligned memory pool
+*/
+
+static Aligned64BufferPool& apool = get_aligned64_buffer_pool("gridder");
 
 
 double signed_sqrt(double data) {
@@ -134,7 +150,7 @@ void compute_kernel_correction(long nPixSide,
     long i, j;
     OutType temp, temp2;
     float *corr_full;
-    corr_full = (float*) aligned64_malloc(nPixSide*GRID_KERNEL_OVERSAMPLE * sizeof(float));
+    corr_full = (float*) mpool.acquire<float>(nPixSide*GRID_KERNEL_OVERSAMPLE);
     memset(corr_full, 0, sizeof(float)*nPixSide*GRID_KERNEL_OVERSAMPLE);
     
     // Copy the kernel over
@@ -148,11 +164,11 @@ void compute_kernel_correction(long nPixSide,
     
     // Inverse transform
     fftwf_plan pB;
-    pB = fftwf_plan_r2r_1d(nPixSide*GRID_KERNEL_OVERSAMPLE/2,
-                           corr_full, corr_full,
-                           FFTW_REDFT01, FFTW_ESTIMATE);
+    pB = pcache.plan_r2r_1d(nPixSide*GRID_KERNEL_OVERSAMPLE/2,
+                            corr_full, corr_full,
+                            FFTW_REDFT01, FFTW_MEASURE);
     fftwf_execute(pB);
-    fftwf_destroy_plan(pB);
+//     fftwf_destroy_plan(pB);
     
     // Select what to keep
     for(i=0; i<nPixSide; i++) {
@@ -174,7 +190,7 @@ void compute_kernel_correction(long nPixSide,
     }
     
     // Cleanup
-    aligned64_free(corr_full);
+//     aligned64_free(corr_full);
 }
 
 
@@ -199,13 +215,13 @@ void compute_gridding(long nVis,
     // Figure out the w-planes to use
     int nPlanes = 0;
     long *planeStart, *planeStop;
-    planeStart = (long *) malloc(MAX_W_PLANES*sizeof(long));
-    planeStop = (long *) malloc(MAX_W_PLANES*sizeof(long));
+    planeStart = (long *) apool.acquire<long>(MAX_W_PLANES);
+    planeStop = (long *) apool.acquire<long>(MAX_W_PLANES);
     nPlanes = compute_planes(nVis, wRes, w, planeStart, planeStop);
     
     // Fill in the 1-D gridding kernel
     double *kernel1D;
-    kernel1D = (double *) aligned64_malloc((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1)*sizeof(double));
+    kernel1D = (double *) apool.acquire<double>((GRID_KERNEL_SIZE*GRID_KERNEL_OVERSAMPLE/2+1));
     kaiser_bessel_1d_kernel_filler(kernel1D);
     
     long secStart, secStop;
@@ -216,16 +232,16 @@ void compute_gridding(long nVis,
     
     // FFT setup
     Complex32* inP;
-    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
+    inP = (Complex32*) mpool.acquire<Complex32>(nPixSide*nPixSide);
     fftwf_plan pF, pR;
-    pF = fftwf_plan_dft_2d(nPixSide, nPixSide, \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           FFTW_FORWARD, FFTW_ESTIMATE);
-    pR = fftwf_plan_dft_2d(nPixSide, nPixSide, \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           reinterpret_cast<fftwf_complex*>(inP), \
-                           FFTW_BACKWARD, FFTW_ESTIMATE);
+    pF = pcache.plan_dft_2d(nPixSide, nPixSide, \
+                            reinterpret_cast<fftwf_complex*>(inP), \
+                            reinterpret_cast<fftwf_complex*>(inP), \
+                            FFTW_FORWARD, FFTW_MEASURE);
+    pR = pcache.plan_dft_2d(nPixSide, nPixSide, \
+                            reinterpret_cast<fftwf_complex*>(inP), \
+                            reinterpret_cast<fftwf_complex*>(inP), \
+                            FFTW_BACKWARD, FFTW_MEASURE);
     
     // Go!
     #ifdef _OPENMP
@@ -233,9 +249,9 @@ void compute_gridding(long nVis,
     #endif
     {
         // Initialize the sub-grids and the w projection kernel
-        suv  = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
-        sbm  = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
-        kern = (Complex32*) fftwf_malloc(sizeof(Complex32) * nPixSide*nPixSide);
+        suv  = (Complex32*) mpool.acquire<Complex32>(nPixSide*nPixSide);
+        sbm  = (Complex32*) mpool.acquire<Complex32>(nPixSide*nPixSide);
+        kern = (Complex32*) mpool.acquire<Complex32>(nPixSide*nPixSide);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -333,23 +349,23 @@ void compute_gridding(long nVis,
             }
         }
         
-        fftwf_free(suv);
-        fftwf_free(sbm);
-        fftwf_free(kern);
+//         fftwf_free(suv);
+//         fftwf_free(sbm);
+//         fftwf_free(kern);
     }
     
     // Correct for the kernel
     compute_kernel_correction(nPixSide, kernel1D, corr);
     
     // Cleanup
-    fftwf_destroy_plan(pF);
-    fftwf_destroy_plan(pR);
-    fftwf_free(inP);
+//     fftwf_destroy_plan(pF);
+//     fftwf_destroy_plan(pR);
+//     fftwf_free(inP);
     
-    aligned64_free(kernel1D);
+//     aligned64_free(kernel1D);
     
-    free(planeStart);
-    free(planeStop);
+//     free(planeStart);
+//     free(planeStop);
     
     Py_END_ALLOW_THREADS
 }

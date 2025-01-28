@@ -17,6 +17,14 @@
 #include "numpy/npy_math.h"
 
 #include "../correlator/common.hpp"
+#include "../correlator/pool.hpp"
+
+
+/*
+   64-bit aligned memory pool
+*/
+
+static Aligned64BufferPool& apool = get_aligned64_buffer_pool("simfast");
 
 
 template<typename FluxType, typename OutType>
@@ -60,7 +68,7 @@ void compute_visibility(long nBL,
         #pragma omp parallel default(shared) private(a1, a2, blx, bly, blz, tempHA, tempDec, tempA0, tempA1, tempTheta, tempX, tempVis, x, y, z, u, v, w, i, j, k)
     #endif
     {
-        tempVis = (Complex64 *) aligned64_malloc(nChan*sizeof(Complex64));
+        tempVis = (Complex64 *) apool.acquire<Complex64>(nChan);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -140,7 +148,7 @@ void compute_visibility(long nBL,
             }
         }
         
-        aligned64_free(tempVis);
+//         aligned64_free(tempVis);
     }
     
     Py_END_ALLOW_THREADS

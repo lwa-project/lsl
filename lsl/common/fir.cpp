@@ -1,21 +1,30 @@
 #include "Python.h"
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
 #include <limits>
-#include <complex.h>
+#include <complex>
 #include <fftw3.h>
-#include <stdlib.h>
+#include <cstdlib>
 
 #ifdef _OPENMP
     #include <omp.h>
     
     // OpenMP scheduling method
     #ifndef OMP_SCHEDULER
-    #define OMP_SCHEDULER dynamic
+    #define OMP_SCHEDULER guided
     #endif
 #endif
 
 #include "numpy/arrayobject.h"
+#include "numpy/npy_math.h"
+
+#include "../correlator/common.hpp"
+#include "../correlator/pool.hpp"
+
+/*
+   64-bit aligned memory pool
+*/
+
+static Aligned64BufferPool& apool = get_aligned64_buffer_pool("fir");
 
 
 /*
@@ -384,10 +393,10 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
                 * tX -> temporary beam for X pol.
                 * tY -> temporary beam for Y pol.
             */
-            t1 = (float *) malloc(sizeof(float)*nSamps);
-            t2 = (float *) malloc(sizeof(float)*nSamps);
-            tX = (float *) malloc(sizeof(float)*nSamps);
-            tY = (float *) malloc(sizeof(float)*nSamps);
+            t1 = (float *) apool.acquire<float>(nSamps);
+            t2 = (float *) apool.acquire<float>(nSamps);
+            tX = (float *) apool.acquire<float>(nSamps);
+            tY = (float *) apool.acquire<float>(nSamps);
             
             /*
             Delay + FIR
@@ -421,10 +430,10 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
             /*
             Cleanup
             */
-            free(t1);
-            free(t2);
-            free(tX);
-            free(tY);
+//             free(t1);
+//             free(t2);
+//             free(tX);
+//             free(tY);
         }
     }
     

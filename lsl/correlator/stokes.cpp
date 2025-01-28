@@ -18,6 +18,8 @@
 
 #include "common.hpp"
 #include "blas.hpp"
+#include "cache.hpp"
+#include "pool.hpp"
 
 
 /*
@@ -26,6 +28,19 @@
 
 static PyObject *windowFunc = NULL;
 
+
+/*
+  FFTW memory pools and plan caches
+*/
+
+static FFTWBufferPool& mpool = get_fftw_buffer_pool("stokes");
+static FFTWPlanCache& pcache = get_fftw_plan_cache("stokes");
+
+/*
+   64-bit aligned memory pool
+*/
+
+static Aligned64BufferPool& apool = get_aligned64_buffer_pool("stokes");
 
 /*
   FFT Functions
@@ -52,14 +67,14 @@ void compute_stokes_real(long nStand,
     // Create the FFTW plan                          
     float *inP, *inX, *inY;                          
     Complex32 *outP, *outX, *outY;
-    inP = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-    outP = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
+    inP = (float*) mpool.acquire<float>(2*nChan*nTap);
+    outP = (Complex32*) mpool.acquire<Complex32>((nChan+1)*nTap);
     fftwf_plan p;
     int n[] = {2*nChan,};
-    p = fftwf_plan_many_dft_r2c(1, n, nTap, \
-                                inP, NULL, 1, 2*nChan, \
-                                reinterpret_cast<fftwf_complex*>(outP), NULL, 1, nChan+1, \
-                                FFTW_ESTIMATE);
+    p = pcache.plan_many_dft_r2c(1, n, nTap, \
+                                 inP, NULL, 1, 2*nChan, \
+                                 reinterpret_cast<fftwf_complex*>(outP), NULL, 1, nChan+1,  \
+                                 FFTW_MEASURE);
     
     // Data indexing and access
     long secStart;
@@ -72,10 +87,10 @@ void compute_stokes_real(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, outX, outY, i, j, k, l, secStart, cleanFactor, nActFFT)
     #endif
     {
-        inX = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-        inY = (float*) fftwf_malloc(sizeof(float) * 2*nChan*nTap);
-        outX = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
-        outY = (Complex32*) fftwf_malloc(sizeof(Complex32) * (nChan+1)*nTap);
+        inX = (float*) mpool.acquire<float>(2*nChan*nTap);
+        inY = (float*) mpool.acquire<float>(2*nChan*nTap);
+        outX = (Complex32*) mpool.acquire<Complex32>((nChan+1)*nTap);
+        outY = (Complex32*) mpool.acquire<Complex32>((nChan+1)*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -157,14 +172,14 @@ void compute_stokes_real(long nStand,
             }
         }
         
-        fftwf_free(inX);
-        fftwf_free(inY);
-        fftwf_free(outX);
-        fftwf_free(outY);
+//         fftwf_free(inX);
+//         fftwf_free(inY);
+//         fftwf_free(outX);
+//         fftwf_free(outY);
     }
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
-    fftwf_free(outP);
+//     fftwf_destroy_plan(p);
+//     fftwf_free(inP);
+//     fftwf_free(outP);
     
     Py_END_ALLOW_THREADS
 }
@@ -189,13 +204,13 @@ void compute_stokes_complex(long nStand,
     
     // Create the FFTW plan
     Complex32 *inP, *inX, *inY;
-    inP = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
+    inP = (Complex32*) mpool.acquire<Complex32>(nChan*nTap);
     fftwf_plan p;
     int n[] = {nChan,};
-    p = fftwf_plan_many_dft(1, n, nTap, \
-                            reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
-                            reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
-                            FFTW_FORWARD, FFTW_ESTIMATE);
+    p = pcache.plan_many_dft(1, n, nTap, \
+                             reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
+                             reinterpret_cast<fftwf_complex*>(inP), NULL, 1, nChan, \
+                             FFTW_FORWARD, FFTW_MEASURE);
     
     // Data indexing and access
     long secStart;
@@ -209,9 +224,9 @@ void compute_stokes_complex(long nStand,
         #pragma omp parallel default(shared) private(inX, inY, i, j, k, l, secStart, cleanFactor, nActFFT, temp2)
     #endif
     {
-        inX = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
-        inY = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
-        temp2 = (double*) aligned64_malloc(sizeof(double) * (nChan/2+nChan%2));
+        inX = (Complex32*) mpool.acquire<Complex32>(nChan*nTap);
+        inY = (Complex32*) mpool.acquire<Complex32>(nChan*nTap);
+        temp2 = (double*) apool.acquire<double>((nChan/2+nChan%2));
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -290,12 +305,12 @@ void compute_stokes_complex(long nStand,
             }
         }
         
-        fftwf_free(inX);
-        fftwf_free(inY);
-        aligned64_free(temp2);
+//         fftwf_free(inX);
+//         fftwf_free(inY);
+//         aligned64_free(temp2);
     }
-    fftwf_destroy_plan(p);
-    fftwf_free(inP);
+//     fftwf_destroy_plan(p);
+//     fftwf_free(inP);
     
     Py_END_ALLOW_THREADS
 }
