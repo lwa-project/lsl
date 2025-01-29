@@ -354,7 +354,7 @@ class lsl_build_ext(build_ext):
             pass
 
 
-coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION']
+coreExtraFlags = ['-DNPY_NO_DEPRECATED_API=NPY_1_7_API_VERSION', '--std=c++14']
 coreExtraLibs = []
 
 
