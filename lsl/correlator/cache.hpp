@@ -5,6 +5,7 @@
 #include <memory>
 #include <string>
 #include <functional>
+#include <algorithm>
 #include <unordered_map>
 #include <fftw3.h>
 
