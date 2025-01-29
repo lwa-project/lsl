@@ -172,14 +172,14 @@ void compute_stokes_real(long nStand,
             }
         }
         
-//         fftwf_free(inX);
-//         fftwf_free(inY);
-//         fftwf_free(outX);
-//         fftwf_free(outY);
+        mpool.release(inX);
+        mpool.release(inY);
+        mpool.release(outX);
+        mpool.release(outY);
     }
-//     fftwf_destroy_plan(p);
-//     fftwf_free(inP);
-//     fftwf_free(outP);
+    pcache.release_plan(p);
+    mpool.release(inP);
+    mpool.release(outP);
     
     Py_END_ALLOW_THREADS
 }
@@ -305,12 +305,12 @@ void compute_stokes_complex(long nStand,
             }
         }
         
-//         fftwf_free(inX);
-//         fftwf_free(inY);
-//         aligned64_free(temp2);
+        mpool.release(inX);
+        mpool.release(inY);
+        apool.release(temp2);
     }
-//     fftwf_destroy_plan(p);
-//     fftwf_free(inP);
+    pcache.release_plan(p);
+    mpool.release(inP);
     
     Py_END_ALLOW_THREADS
 }
@@ -536,7 +536,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     }
     
     // Calculate the windowing function for the PFB
-    pfb = (double*) aligned64_malloc(sizeof(double) * (1+isReal)*nChan*nTap);
+    pfb = (double*) apool.acquire<double>((1+isReal)*nChan*nTap);
     for(int i=0; i<(1+isReal)*nChan*nTap; i++) {
         *(pfb + i) = sinc((i - (1+isReal)*nChan*nTap/2.0 + 0.5)/((1+isReal)*nChan));
         *(pfb + i) *= hamming(2*NPY_PI*i/((1+isReal)*nChan*nTap));
@@ -583,7 +583,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
 #undef LAUNCH_PFB_REAL
 #undef LAUNCH_PFB_COMPLEX
     
-    aligned64_free(pfb);
+    apool.release(pfb);
     
     signalsF = Py_BuildValue("O", PyArray_Return(dataF));
     
@@ -595,7 +595,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     
 fail:
     if( pfb != NULL ) {
-        aligned64_free(pfb);
+        apool.release(pfb);
     }
     Py_XDECREF(dataX);
     Py_XDECREF(dataY);

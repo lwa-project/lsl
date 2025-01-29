@@ -430,10 +430,10 @@ static PyObject *integerBeamformer(PyObject *self, PyObject *args, PyObject *kwd
             /*
             Cleanup
             */
-//             free(t1);
-//             free(t2);
-//             free(tX);
-//             free(tY);
+            apool.release(t1);
+            apool.release(t2);
+            apool.release(tX);
+            apool.release(tY);
         }
     }
     

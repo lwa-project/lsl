@@ -148,7 +148,7 @@ void compute_visibility(long nBL,
             }
         }
         
-//         aligned64_free(tempVis);
+        apool.release(tempVis);
     }
     
     Py_END_ALLOW_THREADS

@@ -75,7 +75,7 @@ public:
                 return;
             }
         }
-        throw std::runtime_error("Attempted to release unmanaged aligned buffer");
+        throw std::runtime_error("Attempted to release unmanaged aligned64 buffer");
     }
 
     std::tuple<size_t, size_t> get_stats() {
@@ -163,7 +163,7 @@ public:
                 return;
             }
         }
-        throw std::runtime_error("Attempted to release unmanaged buffer");
+        throw std::runtime_error("Attempted to release unmanaged fftw buffer");
     }
 
     std::tuple<size_t, size_t> get_stats() {

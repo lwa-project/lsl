@@ -227,14 +227,14 @@ void compute_fengine_real(long nStand,
             *(valid + nFFT*i + j) = (unsigned char) cleanFactor;
         }
         
-//         fftwf_free(in);
-//         fftwf_free(out);
+        mpool.release(in);
+        mpool.release(out);
     }
-//     aligned64_free(rot);
+    apool.release(rot);
     
-//     fftwf_destroy_plan(p);
-//     fftwf_free(inP);
-//     fftwf_free(outP);
+    pcache.release_plan(p);
+    mpool.release(inP);
+    mpool.release(outP);
     
     Py_END_ALLOW_THREADS
     
@@ -286,7 +286,7 @@ void compute_fengine_complex(long nStand,
         #pragma omp parallel default(shared) private(in, i, j, k, l, secStart, cleanFactor)
     #endif
     {
-        in = (Complex32*) fftwf_malloc(sizeof(Complex32) * nChan*nTap);
+        in = (Complex32*) mpool.acquire<Complex32>(nChan*nTap);
         
         #ifdef _OPENMP
             #pragma omp for schedule(OMP_SCHEDULER)
@@ -337,12 +337,12 @@ void compute_fengine_complex(long nStand,
             *(valid + nFFT*i + j) = (unsigned char) cleanFactor;
         }
         
-//         fftwf_free(in);
+        mpool.release(in);
     }
-//     aligned64_free(rot);
+    apool.release(rot);
     
-//     fftwf_destroy_plan(p);
-//     fftwf_free(inP);
+    pcache.release_plan(p);
+    mpool.release(inP);
     
     Py_END_ALLOW_THREADS
 }
@@ -446,8 +446,8 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
     if(dataF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-//         aligned64_free(fifo);
-//         aligned64_free(frac);
+        apool.release(fifo);
+        apool.release(frac);
         goto fail;
     }
     
@@ -458,8 +458,8 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
     if(validF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-//         aligned64_free(fifo);
-//         aligned64_free(frac);
+        apool.release(fifo);
+        apool.release(frac);
         goto fail;
     }
     
@@ -496,8 +496,8 @@ static PyObject *FEngine(PyObject *self, PyObject *args, PyObject *kwds) {
 #undef LAUNCH_FENGINE_REAL
 #undef LAUNCH_FENGINE_COMPLEX
     
-//     aligned64_free(frac);
-//     aligned64_free(fifo);
+    apool.release(frac);
+    apool.release(fifo);
     
     signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
     
@@ -648,8 +648,8 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     dataF = (PyArrayObject*) PyArray_ZEROS(3, dims, NPY_COMPLEX64, 0);
     if(dataF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
-//         aligned64_free(fifo);
-//         aligned64_free(frac);
+        apool.release(fifo);
+        apool.release(frac);
         goto fail;
     }
     
@@ -660,8 +660,8 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     validF = (PyArrayObject*) PyArray_ZEROS(2, dimsV, NPY_UINT8, 0);
     if(validF == NULL) {
         PyErr_Format(PyExc_MemoryError, "Cannot create valid index array");
-//         aligned64_free(fifo);
-//         aligned64_free(frac);
+        apool.release(fifo);
+        apool.release(frac);
         goto fail;
     }
     
@@ -698,9 +698,9 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
 #undef LAUNCH_PFBENGINE_REAL
 #undef LAUNCH_PFBENGINE_COMPLEX
     
-//     aligned64_free(frac);
-//     aligned64_free(fifo);
-//     aligned64_free(pfb);
+    apool.release(frac);
+    apool.release(fifo);
+    apool.release(pfb);
     
     signalsF = Py_BuildValue("(OO)", PyArray_Return(dataF), PyArray_Return(validF));
     
@@ -714,7 +714,7 @@ static PyObject *PFBEngine(PyObject *self, PyObject *args, PyObject *kwds) {
     
 fail:
     if( pfb != NULL ) {
-//         aligned64_free(pfb);
+        apool.release(pfb);
     }
     Py_XDECREF(data);
     Py_XDECREF(freq);

@@ -164,11 +164,13 @@ void compute_kernel_correction(long nPixSide,
     
     // Inverse transform
     fftwf_plan pB;
+    float *inP = mpool.acquire<float>(nPixSide*GRID_KERNEL_OVERSAMPLE);
     pB = pcache.plan_r2r_1d(nPixSide*GRID_KERNEL_OVERSAMPLE/2,
-                            corr_full, corr_full,
+                            inP, inP,
                             FFTW_REDFT01, FFTW_MEASURE);
-    fftwf_execute(pB);
-//     fftwf_destroy_plan(pB);
+    fftwf_execute_r2r(pB, corr_full, corr_full);
+    pcache.release_plan(pB);
+    mpool.release(inP);
     
     // Select what to keep
     for(i=0; i<nPixSide; i++) {
@@ -190,7 +192,7 @@ void compute_kernel_correction(long nPixSide,
     }
     
     // Cleanup
-//     aligned64_free(corr_full);
+    mpool.release(corr_full);
 }
 
 
@@ -349,23 +351,23 @@ void compute_gridding(long nVis,
             }
         }
         
-//         fftwf_free(suv);
-//         fftwf_free(sbm);
-//         fftwf_free(kern);
+        mpool.release(suv);
+        mpool.release(sbm);
+        mpool.release(kern);
     }
     
     // Correct for the kernel
     compute_kernel_correction(nPixSide, kernel1D, corr);
     
     // Cleanup
-//     fftwf_destroy_plan(pF);
-//     fftwf_destroy_plan(pR);
-//     fftwf_free(inP);
+    pcache.release_plan(pF);
+    pcache.release_plan(pR);
+    mpool.release(inP);
     
-//     aligned64_free(kernel1D);
+    apool.release(kernel1D);
     
-//     free(planeStart);
-//     free(planeStop);
+    apool.release(planeStart);
+    apool.release(planeStop);
     
     Py_END_ALLOW_THREADS
 }

@@ -143,12 +143,12 @@ void compute_spec_real(long nStand,
             blas_scal(nChan, 1.0/(2*nChan*nActFFT), (psd + i*nChan), 1);
         }
         
-//         fftwf_free(in);
-//         fftwf_free(out);
+        mpool.release(in);
+        mpool.release(out);
     }
-//     fftwf_destroy_plan(p);
-//     fftwf_free(inP);
-//     fftwf_free(outP);
+    pcache.release_plan(p);
+    mpool.release(inP);
+    mpool.release(outP);
     
     Py_END_ALLOW_THREADS
 }
@@ -246,11 +246,11 @@ void compute_spec_complex(long nStand,
             blas_scal(nChan, 1.0/(nActFFT*nChan), (psd + i*nChan), 1);
         }
         
-//         fftwf_free(in);
-//         aligned64_free(temp2);
+        mpool.release(in);
+        apool.release(temp2);
     }
-//     fftwf_destroy_plan(p);
-//     fftwf_free(inP);
+    pcache.release_plan(p);
+    mpool.release(inP);
     
     Py_END_ALLOW_THREADS
 }
@@ -471,7 +471,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
 #undef LAUNCH_PFB_REAL
 #undef LAUNCH_PFB_COMPLEX
     
-//     aligned64_free(pfb);
+    apool.release(pfb);
     
     signalsF = Py_BuildValue("O", PyArray_Return(dataF));
     
@@ -482,7 +482,7 @@ static PyObject *PFBPSD(PyObject *self, PyObject *args, PyObject *kwds) {
     
 fail:
     if( pfb != NULL ) {
-//         aligned64_free(pfb);
+        apool.release(pfb);
     }
     Py_XDECREF(data);
     Py_XDECREF(dataF);
