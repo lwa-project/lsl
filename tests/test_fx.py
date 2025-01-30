@@ -14,7 +14,7 @@ from astropy.coordinates import SkyCoord, AltAz
 
 from lsl.common.data_access import DataAccess
 from lsl.common import stations
-from lsl.correlator import fx
+from lsl.correlator import fx, _core
 from lsl.reader.base import CI8
 import lsl.testing
 
@@ -1009,6 +1009,51 @@ class FXStokes_tests(unittest.TestCase):
                 self.run_correlator_test_complex(dtype, nchan=259, window=wndw2)
 
 
+class _XEngine_tests(unittest.TestCase):
+    """A unittest.TestCase collection of unit tests for the lsl.correlator._core.XEngine2 and 3 functions on CI8 data."""
+    
+    nAnt = 8
+    
+    def setUp(self):
+        """Turn off all numpy and python warnings."""
+        
+        np.seterr(all='ignore')
+        warnings.simplefilter('ignore')
+        np.random.seed(1234)
+        
+    def test_xengine_2(self, nchan=256):
+        """Test that _core.XEngine2 works with CI8 data"""
+        
+        fakeData = 10.0*np.random.rand(self.nAnt,nchan,16) + 3.0
+        fakeData = np.round(fakeData).astype(np.float32)
+        fakeDataCI8 = fakeData.astype(np.int8).view(CI8)
+        fakeDataCF32 = fakeData.view(np.complex64)
+        fakeValid = np.ones((self.nAnt,8), dtype=np.uint8)
+        
+        if fakeDataCI8.dtype == CI8:
+            fakeDataCI8 = fakeDataCI8.view(np.int8)
+            fakeDataCI8 = fakeDataCI8.reshape(fakeDataCI8.shape[:-1]+(-1,2))
+        cps = _core.XEngine2(fakeDataCI8, fakeDataCI8, fakeValid, fakeValid)
+        cps2 = _core.XEngine2(fakeDataCF32, fakeDataCF32, fakeValid, fakeValid)
+        lsl.testing.assert_allclose(cps, cps2)
+        
+    def test_xengine_3(self, nchan=256):
+        """Test that _core.XEngine3 works with CI8 data"""
+        
+        fakeData = 10.0*np.random.rand(self.nAnt,nchan,16) + 3.0
+        fakeData = np.round(fakeData).astype(np.float32)
+        fakeDataCI8 = fakeData.astype(np.int8).view(CI8)
+        fakeDataCF32 = fakeData.view(np.complex64)
+        fakeValid = np.ones((self.nAnt,8), dtype=np.uint8)
+        
+        if fakeDataCI8.dtype == CI8:
+            fakeDataCI8 = fakeDataCI8.view(np.int8)
+            fakeDataCI8 = fakeDataCI8.reshape(fakeDataCI8.shape[:-1]+(-1,2))
+        cps = _core.XEngine3(fakeDataCI8, fakeDataCI8, fakeValid, fakeValid)
+        cps2 = _core.XEngine3(fakeDataCF32, fakeDataCF32, fakeValid, fakeValid)
+        lsl.testing.assert_allclose(cps, cps2)
+
+
 class fx_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.correlator.fx
     units tests."""
@@ -1021,6 +1066,7 @@ class fx_test_suite(unittest.TestSuite):
         self.addTests(loader.loadTestsFromTestCase(StokesMaster_tests))
         self.addTests(loader.loadTestsFromTestCase(FXMaster_tests))
         self.addTests(loader.loadTestsFromTestCase(FXStokes_tests))
+        self.addTests(loader.loadTestsFromTestCase(_XEngine_tests))
 
 
 if __name__ == '__main__':
