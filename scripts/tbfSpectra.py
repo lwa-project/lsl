@@ -105,13 +105,13 @@ def main(args):
         print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
-            readT, t, data = idf.read()
+            readT, t, data = idf.read(return_ci8=True)
         except Exception as e:
             print(f"Error: {str(e)}")
             continue
             
         # Detect power and integrate
-        data = np.abs(data)**2
+        data = data['re']**2 + data['im']**2
         spec = data.mean(axis=2)
         
     # Apply the cable loss corrections, if requested

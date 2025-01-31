@@ -118,7 +118,7 @@ def main(args):
         print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
-            readT, t, data = idf.read(args.average/nChunks)
+            readT, t, data = idf.read(args.average/nChunks, return_ci8=True)
         except Exception as e:
             print(f"Error: {str(e)}")
             continue

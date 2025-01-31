@@ -14,6 +14,7 @@ import argparse
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
+from lsl.reader.base import CI8
 from lsl.reader.ldp import LWADataFile, TBFFile
 from lsl.common import stations, metabundle
 from lsl.correlator import uvutils
@@ -82,7 +83,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
     wallTime = time.time()
     for s in range(chunk_size):
         try:
-            readT, t, data = idf.read(int_time)
+            readT, t, data = idf.read(int_time, return_ci8=(freq_decim==1))
         except Exception as e:
             print(f"Error: {str(e)}")
             continue
@@ -95,26 +96,17 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             data = data.reshape(data.shape[0], -1, freq_decim, data.shape[2])
             data = data.mean(axis=2)
             
+        ## CI8 data handling
+        if data.dtype == CI8:
+            data = data.view(np.int8)
+            data = data.reshape(data.shape[:-1]+(-1,2))
+            
         ## Split the polarizations
         antennasX, antennasY = [a for i,a in enumerate(antennas) if a.pol == 0 and i in toKeep], [a for i,a in enumerate(antennas) if a.pol == 1 and i in toKeep]
-        dataX, dataY = data[0::2,:,:], data[1::2,:,:]
+        dataX, dataY = data[0::2,...], data[1::2,...]
         validX = np.ones((dataX.shape[0],dataX.shape[2]), dtype=np.uint8)
         validY = np.ones((dataY.shape[0],dataY.shape[2]), dtype=np.uint8)
         
-        ## Apply the cable delays as phase rotations
-        for i in range(dataX.shape[0]):
-            gain = np.sqrt( antennasX[i].cable.gain(freq_flat) )
-            phaseRot = np.exp(2j*np.pi*freq_flat*(antennasX[i].cable.delay(freq_flat) \
-                                                   -antennasX[i].stand.z/speedOfLight))
-            for j in range(dataX.shape[2]):
-                dataX[i,:,j] *= phaseRot / gain
-        for i in range(dataY.shape[0]):
-            gain = np.sqrt( antennasY[i].cable.gain(freq_flat) )
-            phaseRot = np.exp(2j*np.pi*freq_flat*(antennasY[i].cable.delay(freq_flat)\
-                                                   -antennasY[i].stand.z/speedOfLight))
-            for j in range(dataY.shape[2]):
-                dataY[i,:,j] *= phaseRot / gain
-                
         setTime = t
         if s == 0:
             ref_time = setTime
@@ -140,7 +132,18 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             
             ## Run the cross multiply and accumulate
             vis = XEngine2(d1, d2, v1, v2)
+            print(vis.shape,baselines[0])
             
+            ## Apply the cable delays as phase rotations
+            for k,(ant1,ant2) in enumerate(baselines):
+                gain1 = np.sqrt( ant1.cable.gain(freq_flat) )
+                phaseRot1 = np.exp(2j*np.pi*freq_flat*(ant1.cable.delay(freq_flat) \
+                                                       -ant1.stand.z/speedOfLight))
+                gain2 = np.sqrt( ant2.cable.gain(freq_flat) )
+                phaseRot2 = np.exp(2j*np.pi*freq_flat*(ant2.cable.delay(freq_flat) \
+                                                       -ant2.stand.z/speedOfLight))
+                vis[k,:] *= phaseRot2.conj()*phaseRot1 / gain2 / gain1
+                
             # If we are in the first polarazation product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
