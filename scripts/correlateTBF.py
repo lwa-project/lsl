@@ -132,7 +132,6 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             
             ## Run the cross multiply and accumulate
             vis = XEngine2(d1, d2, v1, v2)
-            print(vis.shape,baselines[0])
             
             ## Apply the cable delays as phase rotations
             for k,(ant1,ant2) in enumerate(baselines):
