@@ -1,7 +1,6 @@
 #include "Python.h"
 #include <cmath>
 #include <cstdint>
-#include <iostream>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
@@ -56,24 +55,18 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     TBFFrame cFrame;
     
     static constexpr int frameSize = sizeof(TBFHeader)+8+12*NSTAND*2*1;
-    std::cout << "Starting with NSTAND=" << NSTAND << std::endl;
     
     if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         return NULL;
     }
-    std::cout << "Parsed" << std::endl;
     
     // Read from the file - header + timestamp + NSTAND-sized buffer
     if( tbf_method == NULL ) {
-        std::cout << "Set tbf_method to 'read'...";
         tbf_method = Py_BuildValue("s", "read");
-        std::cout << "done" << std::endl;
     }
     if( tbf_size == NULL ) {
-        std::cout << "Set tbf_size to " << frameSize << "...";
         tbf_size = Py_BuildValue("i", frameSize);
-        std::cout << "done" << std::endl;
     }
     buffer = PyObject_CallMethodObjArgs(ph, tbf_method, tbf_size, NULL);
     if( buffer == NULL ) {
@@ -88,7 +81,6 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
         Py_XDECREF(buffer);
         return NULL;
     }
-    std::cout << "Going to copy " << frameSize << " into " << sizeof(cFrame) << std::endl;
     memcpy(&cFrame, PyBytes_AS_STRING(buffer), frameSize);
     Py_XDECREF(buffer);
     
@@ -105,12 +97,11 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     
     // If nstand is not what we expect, update the cache and retry with correct size
     if( nstand != NSTAND ) {
-        std::cout << nstand << " != " << NSTAND << std::endl;
         cached_nstand = nstand; // Update for next time
         Py_XDECREF(tbf_size);   // Update for next time
+        tbf_size = null;        // Force NULL since Py_XDECREF isn't guaranteed to change tbf_size
         PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         
-        std::cout << "Going for a new call..." << std::endl;
         switch(nstand) {
             case 64:  
                 return read_tbf_impl<64, T, N>(self, args);
