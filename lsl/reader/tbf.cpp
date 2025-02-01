@@ -99,7 +99,7 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     if( nstand != NSTAND ) {
         cached_nstand = nstand; // Update for next time
         Py_XDECREF(tbf_size);   // Update for next time
-        tbf_size = null;        // Force NULL since Py_XDECREF isn't guaranteed to change tbf_size
+        tbf_size = NULL;        // Force NULL since Py_XDECREF isn't guaranteed to change tbf_size
         PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         
         switch(nstand) {
