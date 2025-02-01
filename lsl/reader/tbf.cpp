@@ -51,7 +51,6 @@ PyObject *tbf_size = NULL;
 template<int NSTAND, typename T, NPY_TYPES N>
 PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
-    PyObject *tbf_size;
     PyArrayObject *data;
     int i, nstand;
     TBFFrame cFrame;
@@ -109,7 +108,6 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
         std::cout << nstand << " != " << NSTAND << std::endl;
         cached_nstand = nstand; // Update for next time
         Py_XDECREF(tbf_size);   // Update for next time
-        tbf_size = NULL;
         PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         
         std::cout << "Going for a new call..." << std::endl;
