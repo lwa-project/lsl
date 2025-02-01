@@ -46,6 +46,7 @@ typedef struct __attribute__((packed)) {
 static int cached_nstand = 256;
 
 PyObject *tbf_method = NULL;
+PyObject *tbf_size = NULL;
 
 template<int NSTAND, typename T, NPY_TYPES N>
 PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
@@ -70,9 +71,11 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
         tbf_method = Py_BuildValue("s", "read");
         std::cout << "done" << std::endl;
     }
-    std::cout << "Set tbf_size to " << frameSize << "...";
-    tbf_size = Py_BuildValue("i", frameSize);
-    std::cout << "done" << std::endl;
+    if( tbf_size == NULL ) {
+        std::cout << "Set tbf_size to " << frameSize << "...";
+        tbf_size = Py_BuildValue("i", frameSize);
+        std::cout << "done" << std::endl;
+    }
     buffer = PyObject_CallMethodObjArgs(ph, tbf_method, tbf_size, NULL);
     if( buffer == NULL ) {
         if( PyObject_HasAttrString(ph, "read") ) {
@@ -80,18 +83,15 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
         } else {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
         }
-        Py_XDECREF(tbf_size);
         return NULL;
     } else if( PyBytes_GET_SIZE(buffer) != frameSize ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(buffer);
-        Py_XDECREF(tbf_size);
         return NULL;
     }
     std::cout << "Going to copy " << frameSize << " into " << sizeof(cFrame) << std::endl;
     memcpy(&cFrame, PyBytes_AS_STRING(buffer), frameSize);
     Py_XDECREF(buffer);
-    Py_XDECREF(tbf_size);
     
     // Determine the number of stands in the frame - default to 256 for
     // legacy LWA-SV data
@@ -108,7 +108,8 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     if( nstand != NSTAND ) {
         std::cout << nstand << " != " << NSTAND << std::endl;
         cached_nstand = nstand; // Update for next time
-        //Py_XDECREF(tbf_size);   // Update for next time
+        Py_XDECREF(tbf_size);   // Update for next time
+        tbf_size = NULL;
         PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         
         std::cout << "Going for a new call..." << std::endl;
