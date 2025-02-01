@@ -1,6 +1,7 @@
 #include "Python.h"
 #include <cmath>
 #include <cstdint>
+#include <iostream>
 
 #define NO_IMPORT_ARRAY
 #define PY_ARRAY_UNIQUE_SYMBOL gofast_ARRAY_API
@@ -55,7 +56,8 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     int i, nstand;
     TBFFrame cFrame;
     
-    constexpr int frameSize = sizeof(TBFHeader)+8+12*NSTAND*2*1;
+    static constexpr int frameSize = sizeof(TBFHeader)+8+12*NSTAND*2*1;
+    std::cout << "Starting with NSTAND=" << NSTAND << std::endl;
     
     if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
@@ -64,9 +66,11 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     
     // Read from the file - header + timestamp + NSTAND-sized buffer
     if( tbf_method == NULL ) {
+        std::cout << "Set tbf_method to 'read'" << std::endl;
         tbf_method = Py_BuildValue("s", "read");
     }
     if( tbf_size == NULL ) {
+        std::cout << "Set tbf_size to " << frameSize << std::endl;
         tbf_size = Py_BuildValue("i", frameSize);
     }
     buffer = PyObject_CallMethodObjArgs(ph, tbf_method, tbf_size, NULL);
@@ -82,6 +86,7 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
         Py_XDECREF(buffer);
         return NULL;
     }
+    std::cout << "Going to copy " << frameSize << " into " << sizeof(cFrame) << std::endl;
     memcpy(&cFrame, PyBytes_AS_STRING(buffer), frameSize);
     Py_XDECREF(buffer);
     
@@ -98,10 +103,12 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     
     // If nstand is not what we expect, update the cache and retry with correct size
     if( nstand != NSTAND ) {
+        std::cout << nstand << " != " << NSTAND << std::endl;
         cached_nstand = nstand; // Update for next time
         Py_XDECREF(tbf_size);   // Update for next time
         PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         
+        std::cout << "Going for a new call..." << std::endl;
         switch(nstand) {
             case 64:  
                 return read_tbf_impl<64, T, N>(self, args);
@@ -139,7 +146,7 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     const int8_t *fp;
     T *a;
     a = (T *) PyArray_DATA(data);
-    for(i=0; i<12*nstand*2*1; i+=4) {
+    for(i=0; i<12*NSTAND*2*1; i+=4) {
         fp = tbfLUT[ cFrame.payload.bytes[i] ];
         *(a + 2*i + 0) = fp[0];
         *(a + 2*i + 1) = fp[1];
