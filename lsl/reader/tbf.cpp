@@ -63,15 +63,18 @@ PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         return NULL;
     }
+    std::cout << "Parsed" << std::endl;
     
     // Read from the file - header + timestamp + NSTAND-sized buffer
     if( tbf_method == NULL ) {
-        std::cout << "Set tbf_method to 'read'" << std::endl;
+        std::cout << "Set tbf_method to 'read'...";
         tbf_method = Py_BuildValue("s", "read");
+        std::cout << "done" << std::endl;
     }
     if( tbf_size == NULL ) {
-        std::cout << "Set tbf_size to " << frameSize << std::endl;
+        std::cout << "Set tbf_size to " << frameSize << "...";
         tbf_size = Py_BuildValue("i", frameSize);
+        std::cout << "done" << std::endl;
     }
     buffer = PyObject_CallMethodObjArgs(ph, tbf_method, tbf_size, NULL);
     if( buffer == NULL ) {
