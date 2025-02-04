@@ -3062,8 +3062,8 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             break
             
     # There is an ambiguity that can arise for TBF data such that it *looks* 
-    # like DRX.  If the identified mode is DRX/DRX8, skip halfway into the file and 
-    # verify that it is still DRX/DRX8.
+    # like DRX.  If the identified mode is DRX, skip halfway into the file and 
+    # verify that it is still DRX.
     if mode in (drx, tbn):
         ## Sort out the frame size
         omfs = mode.FRAME_SIZE
