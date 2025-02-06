@@ -702,7 +702,7 @@ class Observation(object):
         
     def get_beam_type(self):
         """Return a valid value for beam type based on whether high dynamic range
-        beam forming has been requested."""
+        DRX output has been requested."""
         
         if self.high_dr:
             return 'HIGH_DR'
@@ -1013,7 +1013,7 @@ class DRX(Observation):
      * integer filter code
     
     Optional Keywords:
-     * high_dr - specifies if high dynamic range beam forming is to be used
+     * high_dr - specifies if high dynamic range DRX output is to be used
                  (default = False)
      * comments - comments about the observation
     """
@@ -1197,7 +1197,7 @@ class Solar(DRX):
      * integer filter code
     
     Optional Keywords:
-     * high_dr - specifies if high dynamic range beam forming is to be used
+     * high_dr - specifies if high dynamic range DRX output is to be used
                  (default = False)
      * comments - comments about the observation
     """
@@ -1228,7 +1228,7 @@ class Jovian(DRX):
      * integer filter code
     
     Optional Keywords:
-     * high_dr - specifies if high dynamic range beam forming is to be used
+     * high_dr - specifies if high dynamic range DRX output is to be used
                  (default = False)
      * comments - comments about the observation
     """
@@ -1259,7 +1259,7 @@ class Lunar(DRX):
      * integer filter code
     
     Optional Keywords:
-     * high_dr - specifies if high dynamic range beam forming is to be used
+     * high_dr - specifies if high dynamic range DRX output is to be used
                  (default = False)
      * comments - comments about the observation
     """
@@ -1525,7 +1525,7 @@ class BeamStep(object):
     
     Optional Keywords:
      * is_radec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
-     * high_dr - specifies if high dynamic range beam forming is to be used
+     * high_dr - specifies if high dynamic range DRX output is to be used
                  (default = False)
      * spec_delays - 520 list of delays to apply for each antenna
      * spec_gains - 260 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
@@ -1697,7 +1697,7 @@ class BeamStep(object):
         
     def get_beam_type(self):
         """Return a valid value for beam type based on whether high dynamic range
-        beam forming has been requested."""
+        DRX output has been requested."""
         
         if self.delays is not None and self.gains is not None:
             return 'SPEC_DELAYS_GAINS'
