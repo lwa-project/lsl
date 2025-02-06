@@ -3005,6 +3005,10 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             is_splitfile = True
             
     # Read a bit of data to try to find the right type
+    ## Set if we find a valid frame marker
+    foundMatch = False
+    ## Set if we can read more than one valid successfully
+    foundMode = False
     for mode in (drx, drx8, tbf, cor, drspec):
         ## Set if we find a valid frame marker
         foundMatch = False
@@ -3133,6 +3137,10 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         ldpInstance = DRXFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
+    elif mode == drx8:
+        ldpInstance = DRX8File(filename=filename, fh=fh,
+                               ignore_timetag_errors=ignore_timetag_errors,
+                               buffering=buffering)
     elif mode == tbf:
         ldpInstance = TBFFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
