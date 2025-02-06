@@ -3005,7 +3005,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             is_splitfile = True
             
     # Read a bit of data to try to find the right type
-    for mode in (drx, tbf, cor, drspec):
+    for mode in (drx, drx8, tbf, cor, drspec):
         ## Set if we find a valid frame marker
         foundMatch = False
         ## Set if we can read more than one valid successfully
@@ -3048,9 +3048,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                 for i in range(2):
                     junkFrame = mode.read_frame(fh)
                 foundMode = True
-            except errors.EOFError:
-                break
-            except errors.SyncError:
+            except (errors.EOFError, errors.SyncError):
                 ### Reset for the next mode...
                 fh.seek(0)
         else:
@@ -3062,9 +3060,9 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             break
             
     # There is an ambiguity that can arise for TBF data such that it *looks* 
-    # like DRX.  If the identified mode is DRX, skip halfway into the file and 
-    # verify that it is still DRX.
-    if mode in (drx, tbn):
+    # like DRX/DRX8.  If the identified mode is DRX/DRX8, skip halfway into
+    # the file and verify that it is still DRX/DRX8.
+    if mode in (drx, drx8, tbn):
         ## Sort out the frame size
         omfs = mode.FRAME_SIZE
         
@@ -3076,7 +3074,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
-        for mode in (drx, tbf):
+        for mode in (drx, drx8, tbf):
             ### Set if we find a valid frame marker
             foundMatch = False
             ### Set if we can read more than one valid successfully
