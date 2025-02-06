@@ -126,7 +126,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test SDF (ADP) member type control."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdfADP.Session('Test Session', 1, observations=[targ,])
         sess.drx_beam = 1
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
@@ -142,7 +142,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test string representations of SDF (ADP) objects."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdfADP.Session('Test Session', 1, observations=[targ,])
         sess.drx_beam = 1
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
@@ -158,7 +158,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test single session/observations SDFs (ADP)."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.drx_beam = 1
         proj = sdfADP.Project(obs, 'Test Project', 'COMTST', sessions=sess)
@@ -168,7 +168,7 @@ class sdf_adp_tests(unittest.TestCase):
         """Test setting the UCF username for auto-copy support (ADP)."""
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ)
         sess.drx_beam = 1
         sess.data_return_method = 'UCF'
@@ -178,7 +178,7 @@ class sdf_adp_tests(unittest.TestCase):
         self.assertTrue(out.find('ucfuser:test') >= 0)
         
         obs = sdfADP.Observer('Test Observer', 99)
-        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdfADP.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdfADP.Session('Test Session', 1, observations=targ, comments='This is a comment')
         sess.drx_beam = 1
         sess.data_return_method = 'UCF'
