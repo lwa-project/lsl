@@ -87,6 +87,7 @@ def main(args):
     print(f"Beam: {beam}")
     print(f"Tune/Pols: {beampols}")
     print(f"Sample Rate: {srate} Hz")
+    print(f"Bit depth: {'8' if isinstance(idf, DRXFile) else '16'}")
     print(f"Tuning Frequency: {central_freq1:.3f} Hz (1); {central_freq2:.3f} Hz (2)")
     print(f"Frames: {nFramesFile} ({nFramesFile/beampols*4096/srate:.3f} s)")
     print("---")
