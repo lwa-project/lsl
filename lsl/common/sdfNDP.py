@@ -602,13 +602,13 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     if mode == 'TBF':
         obsOut = TBF(obs_temp['name'], obs_temp['target'], utcString, f1, f2, obs_temp['filter'], obs_temp['tbfSamples'], comments=obs_temp['comments'])
     elif mode == 'TRK_RADEC':
-        obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
-        obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
-        obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_LUN':
-        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             pid_print(f"-> found {len(beam_temps)} steps")
@@ -632,7 +632,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
                 if len(beam_temp['gains']) > LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of gains for custom beamforming")
                     
-            obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
+            obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['HighDR'], beam_temp['delays'], beam_temp['gains']) )
     else:
         raise RuntimeError(f"Invalid mode encountered: {mode}")
         
@@ -678,12 +678,12 @@ def parse_sdf(filename, verbose=False):
     project.project_office.observations = [[],]
     
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
-                'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
+                'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'HighDR': False, 'comments': None, 
                 'stpRADec': True, 'tbwBits': 12, 'tbfSamples': 0, 'gain': -1, 
                 'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
                 'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
                 'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}
-    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'HighDR': False, 'delays': None, 'gains': None}
     beam_temps = []
     
     # Loop over the file
@@ -821,7 +821,7 @@ def parse_sdf(filename, verbose=False):
             if keyword == 'OBS_ID':
                 if obs_temp['id'] != 0:
                     project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
-                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'HighDR': False, 'delays': None, 'gains': None}
                     beam_temps = []
                 obs_temp['id'] = int(value)
                 project.project_office.observations[0].append( None )
@@ -870,7 +870,7 @@ def parse_sdf(filename, verbose=False):
                 continue
             if keyword == 'OBS_B':
                 if value != 'SIMPLE':
-                    obs_temp['MaxSNR'] = True
+                    obs_temp['HighDR'] = True
                 continue
             if keyword == 'OBS_FREQ1':
                 obs_temp['freq1'] = int(value)
@@ -953,8 +953,8 @@ def parse_sdf(filename, verbose=False):
                     beam_temps.append( copy.deepcopy(beam_temp) )
                     beam_temps[-1]['id'] = ids[0]
                 
-                    if value in ('MAX_SNR', '2'):
-                        beam_temps[-1]['MaxSNR'] = True
+                    if value in ('HIGH_DR', '2'):
+                        beam_temps[-1]['HighDR'] = True
                     
                     elif value in ('SPEC_DELAYS_GAINS', '3'):
                         beam_temps[-1]['delays'] = []
@@ -965,14 +965,14 @@ def parse_sdf(filename, verbose=False):
                                 beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                     else:
-                        beam_temps[-1]['MaxSNR'] = False
+                        beam_temps[-1]['HighDR'] = False
                 else:
                     if beam_temps[-1]['id'] != ids[0]:
                         beam_temps.append( copy.deepcopy(beam_temps[-1]) )
                         beam_temps[-1]['id'] = ids[0]
                     
-                    if value in ('MAX_SNR', '2'):
-                        beam_temps[-1]['MaxSNR'] = True
+                    if value in ('HIGH_DR', '2'):
+                        beam_temps[-1]['HighDR'] = True
                     
                     elif value in ('SPEC_DELAYS_GAINS', '3'):
                         beam_temps[-1]['delays'] = []
@@ -983,7 +983,7 @@ def parse_sdf(filename, verbose=False):
                                 beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                     else:
-                        beam_temps[-1]['MaxSNR'] = False
+                        beam_temps[-1]['HighDR'] = False
                 continue
             
             if keyword == 'OBS_BEAM_DELAY':

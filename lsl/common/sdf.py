@@ -545,7 +545,7 @@ class Observation(object):
     id = 1
     dur = 0
     
-    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
         self.name = name
         self.target = target
         self.ra = ra
@@ -557,7 +557,7 @@ class Observation(object):
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
         self.filter = int(filter)
-        self.max_snr = bool(max_snr)
+        self.high_dr = bool(high_dr)
         self.comments = comments
         
         self.beam = None
@@ -701,11 +701,11 @@ class Observation(object):
         self.freq2 = freq_to_word(float(value))
         
     def get_beam_type(self):
-        """Return a valid value for beam type based on whether maximum S/N beam 
-        forming has been requested."""
+        """Return a valid value for beam type based on whether high dynamic range
+        beam forming has been requested."""
         
-        if self.max_snr:
-            return 'MAX_SNR'
+        if self.high_dr:
+            return 'HIGH_DR'
         else:
             return 'SIMPLE'
     
@@ -1013,15 +1013,15 @@ class DRX(Observation):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if high dynamic range beam forming is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
     filter_codes = DRXFilters
     
-    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X'):
         """Convert the current observation to a 'beam-dipole mode' 
@@ -1197,13 +1197,13 @@ class Solar(DRX):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if high dynamic range beam forming is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     @property
     def fixed_body(self):
@@ -1228,13 +1228,13 @@ class Jovian(DRX):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if high dynamic range beam forming is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     @property
     def fixed_body(self):
@@ -1259,13 +1259,13 @@ class Lunar(DRX):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if high dynamic range beam forming is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_LUN', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_LUN', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     @property
     def fixed_body(self):
@@ -1302,7 +1302,7 @@ class Stepped(Observation):
                 self.steps.extend(steps)
             else:
                 self.steps.append(steps)
-        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
+        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, high_dr=False, comments=comments)
         
     def update(self):
         """Update the computed parameters from the string values."""
@@ -1525,21 +1525,21 @@ class BeamStep(object):
     
     Optional Keywords:
      * is_radec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if high dynamic range beam forming is to be used
                  (default = False)
      * spec_delays - 520 list of delays to apply for each antenna
      * spec_gains - 260 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
     
     .. note::
         If `spec_delays` is specified, `spec_gains` must also be specified.
-        Specifying both `spec_delays` and `spec_gains` overrides the `max_snr` keyword.
+        Specifying both `spec_delays` and `spec_gains` overrides the `high_dr` keyword.
     
     .. versionchanged:: 1.0.0
         Added support for azimuth/altitude and RA/dec values as ephem.hours/ephem.degrees 
         instances
     """
     
-    def __init__(self, c1, c2, duration, frequency1, frequency2, is_radec=True, max_snr=False, spec_delays=None, spec_gains=None):
+    def __init__(self, c1, c2, duration, frequency1, frequency2, is_radec=True, high_dr=False, spec_delays=None, spec_gains=None):
         self.is_radec = bool(is_radec)
         if self.is_radec:
             convFactor = 12.0/math.pi
@@ -1554,7 +1554,7 @@ class BeamStep(object):
         self.duration = duration
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
-        self.max_snr = bool(max_snr)
+        self.high_dr = bool(high_dr)
         self.delays = spec_delays
         self.gains = spec_gains
         
@@ -1696,14 +1696,14 @@ class BeamStep(object):
         self.beam = self.get_beam_type()
         
     def get_beam_type(self):
-        """Return a valid value for beam type based on whether maximum S/N beam 
-        forming has been requested."""
+        """Return a valid value for beam type based on whether high dynamic range
+        beam forming has been requested."""
         
         if self.delays is not None and self.gains is not None:
             return 'SPEC_DELAYS_GAINS'
         else:
-            if self.max_snr:
-                return 'MAX_SNR'
+            if self.high_dr:
+                return 'HIGH_DR'
             else:
                 return 'SIMPLE'
                 
@@ -2123,13 +2123,13 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     elif mode == 'TBN':
         obsOut = TBN(obs_temp['name'], obs_temp['target'], utcString, durString, f1, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
     elif mode == 'TRK_RADEC':
-        obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
-        obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
-        obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_LUN':
-        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
             pid_print(f"-> found {len(beam_temps)} steps")
@@ -2153,7 +2153,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
                 if len(beam_temp['gains']) != LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of gains for custom beamforming")
                     
-            obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
+            obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['HighDR'], beam_temp['delays'], beam_temp['gains']) )
     else:
         raise RuntimeError(f"Invalid mode encountered: {mode}")
         
@@ -2199,12 +2199,12 @@ def parse_sdf(filename, verbose=False):
     project.project_office.observations = [[],]
     
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
-                'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
+                'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'HighDR': False, 'comments': None, 
                 'stpRADec': True, 'tbwBits': 12, 'tbwSamples': 0, 'gain': -1, 
                 'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
                 'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
                 'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}
-    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'HighDR': False, 'delays': None, 'gains': None}
     beam_temps = []
     
     # Loop over the file
@@ -2342,7 +2342,7 @@ def parse_sdf(filename, verbose=False):
             if keyword == 'OBS_ID':
                 if obs_temp['id'] != 0:
                     project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
-                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'HighDR': False, 'delays': None, 'gains': None}
                     beam_temps = []
                 obs_temp['id'] = int(value)
                 project.project_office.observations[0].append( None )
@@ -2391,7 +2391,7 @@ def parse_sdf(filename, verbose=False):
                 continue
             if keyword == 'OBS_B':
                 if value != 'SIMPLE':
-                    obs_temp['MaxSNR'] = True
+                    obs_temp['HighDR'] = True
                 continue
             if keyword == 'OBS_FREQ1':
                 obs_temp['freq1'] = int(value)
@@ -2474,8 +2474,8 @@ def parse_sdf(filename, verbose=False):
                     beam_temps.append( copy.deepcopy(beam_temp) )
                     beam_temps[-1]['id'] = ids[0]
                 
-                    if value in ('MAX_SNR', '2'):
-                        beam_temps[-1]['MaxSNR'] = True
+                    if value in ('HIGH_DR', '2'):
+                        beam_temps[-1]['HighDR'] = True
                     
                     elif value in ('SPEC_DELAYS_GAINS', '3'):
                         beam_temps[-1]['delays'] = []
@@ -2486,14 +2486,14 @@ def parse_sdf(filename, verbose=False):
                                 beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                     else:
-                        beam_temps[-1]['MaxSNR'] = False
+                        beam_temps[-1]['HighDR'] = False
                 else:
                     if beam_temps[-1]['id'] != ids[0]:
                         beam_temps.append( copy.deepcopy(beam_temps[-1]) )
                         beam_temps[-1]['id'] = ids[0]
                     
-                    if value in ('MAX_SNR', '2'):
-                        beam_temps[-1]['MaxSNR'] = True
+                    if value in ('HIGH_DR', '2'):
+                        beam_temps[-1]['HighDR'] = True
                     
                     elif value in ('SPEC_DELAYS_GAINS', '3'):
                         beam_temps[-1]['delays'] = []
@@ -2504,7 +2504,7 @@ def parse_sdf(filename, verbose=False):
                                 beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                     else:
-                        beam_temps[-1]['MaxSNR'] = False
+                        beam_temps[-1]['HighDR'] = False
                 continue
             
             if keyword == 'OBS_BEAM_DELAY':
