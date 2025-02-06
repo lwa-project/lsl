@@ -11,7 +11,7 @@ import numpy as np
 import argparse
 
 import lsl.correlator.fx as fxc
-from lsl.reader.ldp import LWADataFile, DRXFile
+from lsl.reader.ldp import LWADataFile, DRXFile, DRX8File
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
@@ -51,7 +51,7 @@ def main(args):
     LFFT = args.fft_length
     
     idf = LWADataFile(args.filename)
-    if not isinstance(idf, DRXFile):
+    if not isinstance(idf, (DRXFile, DRX8File)):
         raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid DRX file")
         
     nFramesFile = idf.get_info('nframe')
