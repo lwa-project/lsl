@@ -11,7 +11,7 @@ import numpy as np
 import argparse
 
 import lsl.correlator.fx as fxc
-from lsl.reader.ldp import LWADataFile, DRXFile
+from lsl.reader.ldp import LWADataFile, DRXFile, DRX8File
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
@@ -51,7 +51,7 @@ def main(args):
     LFFT = args.fft_length
     
     idf = LWADataFile(args.filename)
-    if not isinstance(idf, DRXFile):
+    if not isinstance(idf, (DRXFile, DRX8File)):
         raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid DRX file")
         
     nFramesFile = idf.get_info('nframe')
@@ -87,6 +87,7 @@ def main(args):
     print(f"Beam: {beam}")
     print(f"Tune/Pols: {beampols}")
     print(f"Sample Rate: {srate} Hz")
+    print(f"Bit depth: {'8' if isinstance(idf, DRXFile) else '16'}")
     print(f"Tuning Frequency: {central_freq1:.3f} Hz (1); {central_freq2:.3f} Hz (2)")
     print(f"Frames: {nFramesFile} ({nFramesFile/beampols*4096/srate:.3f} s)")
     print("---")

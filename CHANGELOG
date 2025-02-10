@@ -1,3 +1,8 @@
+3.0.5:
+ * Fixed DRX8 CI8 support
+ * Re-enabled DRX8 file detection for lsl.reader.ldp.LWANADataFile
+ * Updated drxSpectra.py to work with DRX8 files as well
+
 3.0.4:
  * Added support for OVRO-LWA in IDFs
  * Reduced the number of "Cannot download file ..." warning when importing lsl
