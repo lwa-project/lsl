@@ -1,3 +1,6 @@
+3.0.6:
+ * Updated to IGRF14
+
 3.0.5:
  * Fixed DRX8 CI8 support
  * Re-enabled DRX8 file detection for lsl.reader.ldp.LWANADataFile
