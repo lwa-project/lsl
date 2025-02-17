@@ -288,7 +288,7 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     try:
         coeffs = _ONLINE_CACHE['IGRF']
     except KeyError:
-        with DataAccess.open('geo/igrf13coeffs.txt', 'r') as fh:
+        with DataAccess.open('geo/igrf14coeffs.txt', 'r') as fh:
             _ONLINE_CACHE['IGRF'] = _load_igrf(fh)
             
         coeffs = _ONLINE_CACHE['IGRF']
