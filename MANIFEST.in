@@ -9,5 +9,5 @@ recursive-include tests *
 prune tests/data/extended
 exclude tests/.coverage tests/coverage.xml
 recursive-include scripts *
-global-exclude *~ *.bak *.pyc *.o *.a *.d *.so *.dylib
+global-exclude *~ *.bak *.py[cod] __pycache__ *.o *.a *.d *.so *.dylib
 
