@@ -14,7 +14,7 @@ from lsl.reader.utils import SplitFileWrapper
 from lsl.common.data_access import download_file
 
 
-__version__  = "0.1"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 
@@ -27,9 +27,9 @@ _TBN_URL = 'https://lda10g.alliance.unm.edu/tutorial/Meteors/056761_000099453'
 _DRX_URL = 'https://lda10g.alliance.unm.edu/tutorial/UnknownPulsar/056227_000024985_DRX.dat'
 _SPC_URL = 'https://lda10g.alliance.unm.edu/tutorial/B0329+54/056770_000044687'
 
-tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-extended.dat')
-drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-extended.dat')
-drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-extended.dat')
+tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'extended', 'tbn-extended.dat')
+drxFile = os.path.join(os.path.dirname(__file__), 'data', 'extended', 'drx-extended.dat')
+drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'extended', 'drspec-extended.dat')
 
 
 @unittest.skipUnless(run_extended_tests, "requires appropriate environment variable to be set")
@@ -42,6 +42,7 @@ class extended_ldp_tests(unittest.TestCase):
         
         for filename,url in zip((tbnFile, drxFile, drspecFile), (_TBN_URL,_DRX_URL,_SPC_URL)):
             if not os.path.exists(filename):
+                os.makedirs(os.path.dirname(filename), exist_ok=True)
                 download_file(url, filename, byte_range=[0, 250*1024*1024])
                 
     def test_tbn_estimate(self):

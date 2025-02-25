@@ -6,6 +6,8 @@ include setup.cfg
 recursive-include lsl *
 recursive-include docs *
 recursive-include tests *
+prune tests/data/extended
+exclude tests/.coverage tests/coverage.xml
 recursive-include scripts *
 global-exclude *~ *.bak *.pyc *.o *.d
 
