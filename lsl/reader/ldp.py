@@ -939,6 +939,25 @@ class DRXFile(LDPFileBase):
                 
         self.fh.seek(-drx.FRAME_SIZE, 1)
         
+        # Sometimes we get a file that has a large gap at the beginning for
+        # reasons unknown.  If this seems to have happened jump over the gap
+        # and issue a warning to the user.
+        for checkpoint_size in (1, 2, 4, 8, 16):
+            if os.path.getsize(self.filename) > checkpoint_size*1024**2:
+                foffset = 0
+                toffset = 0
+                with FilePositionSaver(self.fh):
+                    self.fh.seek(((checkpoint_size*1024**2-1)//drx.FRAME_SIZE+1)*drx.FRAME_SIZE, 1)
+                    newFrame = drx.read_frame(self.fh)
+                    toffset = newFrame.time - junkFrame.time
+                    if toffset > 300:
+                        foffset = self.fh.tell() - drx.FRAME_SIZE
+                        
+                if foffset > 0:
+                    warnings.warn(colorfy("{{%%yellow Large (%.1f hr) gap at the beginning, skipping in %i B}}" % (toffset/3600, foffset)), RuntimeWarning)
+                    self.fh.seek(foffset, 0)
+                    break
+                    
         # Line up the time tags for the various tunings/polarizations
         ids = []
         timetags = []
@@ -1034,7 +1053,8 @@ class DRXFile(LDPFileBase):
         
         # Iterate on the offsets until we reach the right point in the file.  This
         # is needed to deal with files that start with only one tuning and/or a 
-        # different sample rate.  
+        # different sample rate.
+        nattempt = 0
         diffs_used = deque([], 25)
         while True:
             junkFrame = drx.read_frame(self.fh)
@@ -1063,7 +1083,9 @@ class DRXFile(LDPFileBase):
                 break
             try:
                 self.fh.seek(cOffset*drx.FRAME_SIZE, 1)
+                nattempt += 1
                 assert(len(set(diffs_used)) > len(diffs_used)//4)
+                assert(nattempt < 1000)
             except (IOError, AssertionError):
                 warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
 
@@ -1371,6 +1393,25 @@ class DRX8File(LDPFileBase):
                 
         self.fh.seek(-drx8.FRAME_SIZE, 1)
         
+        # Sometimes we get a file that has a large gap at the beginning for
+        # reasons unknown.  If this seems to have happened jump over the gap
+        # and issue a warning to the user.
+        for checkpoint_size in (1, 2, 4, 8, 16):
+            if os.path.getsize(self.filename) > checkpoint_size*1024**2:
+                foffset = 0
+                toffset = 0
+                with FilePositionSaver(self.fh):
+                    self.fh.seek(((checkpoint_size*1024**2-1)//drx8.FRAME_SIZE+1)*drx8.FRAME_SIZE, 1)
+                    newFrame = drx8.read_frame(self.fh)
+                    toffset = newFrame.time - junkFrame.time
+                    if toffset > 300:
+                        foffset = self.fh.tell() - drx8.FRAME_SIZE
+                        
+                if foffset > 0:
+                    warnings.warn(colorfy("{{%%yellow Large (%.1f hr) gap at the beginning, skipping in %i B}}" % (toffset/3600, foffset)), RuntimeWarning)
+                    self.fh.seek(foffset, 0)
+                    break
+                    
         # Line up the time tags for the various tunings/polarizations
         ids = []
         timetags = []
@@ -1466,7 +1507,8 @@ class DRX8File(LDPFileBase):
         
         # Iterate on the offsets until we reach the right point in the file.  This
         # is needed to deal with files that start with only one tuning and/or a 
-        # different sample rate.  
+        # different sample rate. 
+        nattempt = 0
         diffs_used = deque([], 25)
         while True:
             junkFrame = drx8.read_frame(self.fh)
@@ -1495,7 +1537,9 @@ class DRX8File(LDPFileBase):
                 break
             try:
                 self.fh.seek(cOffset*drx8.FRAME_SIZE, 1)
+                nattempt += 1
                 assert(len(set(diffs_used)) > len(diffs_used)//4)
+                assert(nattempt < 1000)
             except (IOError, AssertionError):
                 warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
 
