@@ -943,7 +943,12 @@ class DRXFile(LDPFileBase):
         # reasons unknown.  If this seems to have happened jump over the gap
         # and issue a warning to the user.
         for checkpoint_size in (1, 2, 4, 8, 16):
-            if os.path.getsize(self.filename) > checkpoint_size*1024**2:
+            try:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+                
+            if filesize > checkpoint_size*1024**2:
                 foffset = 0
                 toffset = 0
                 with FilePositionSaver(self.fh):
@@ -1397,7 +1402,12 @@ class DRX8File(LDPFileBase):
         # reasons unknown.  If this seems to have happened jump over the gap
         # and issue a warning to the user.
         for checkpoint_size in (1, 2, 4, 8, 16):
-            if os.path.getsize(self.filename) > checkpoint_size*1024**2:
+            try:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+                
+            if filesize > checkpoint_size*1024**2:
                 foffset = 0
                 toffset = 0
                 with FilePositionSaver(self.fh):
