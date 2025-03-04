@@ -1284,6 +1284,72 @@ def convert_to_linear(data_set):
         
     return new_data_set
 
+def convert_to_circular(data_set):
+    """
+    Given a :class:`lsl.imaging.data.VisibilityDataSet` object that contains
+    Stokes parameters, convert to circular polarization products and return a
+    new :class:`lsl.imaging.data.VisibilityDataSet` containing them.
+    """
+    
+    # Catch VisibilityData objects before we go any further so we can iterate 
+    # over them
+    if isinstance(data_set, VisibilityData):
+        new_data = VisibilityData()
+        for ds in data_set:
+            new_data_set = convert_to_circular(ds)
+            new_data.append(new_data_set)
+        return new_data
+        
+    if 'RR' in data_set.pols or 'RL' in data_set.pols or 'LR' in data_set.pols or 'LL' in data_set.pols:
+        raise RuntimeError("Data already appear to be represented as linear polarization products")
+        
+    pairs = 0
+    if 'I' in data_set.pols and 'V' in data_set.pols:
+        pairs += 1
+    if 'Q' in data_set.pols and 'U' in data_set.pols:
+        pairs += 1
+    if pairs == 0:
+        raise RuntimeError("Too few Stokes parameters to form any linear polarization products")
+        
+    try:
+        I = data_set.I
+        V = data_set.V
+        
+        RRd = (I.data + V.data)
+        RRw = (I.weight + V.weight)/2.0
+        RRm = I.mask | V.mask
+        
+        LLd = (I.data - V.data)
+        LLw = (I.weight + V.weight)/2.0
+        LLm = I.mask | V.mask
+    except AttributeError:
+        RRd = RRw = RRm = None
+        LLd = LLw = LLm = None
+    
+    try:
+        Q = data_set.Q
+        U = data_set.U
+        
+        RLd = (Q.data + 1j*U.data)
+        RLw = (Q.weight + U.weight)/2.0
+        RLm = Q.mask | U.mask
+        
+        LRd = (Q.data - 1j*U.data)
+        LRw = (Q.weight + U.weight)/2.0
+        LRm = Q.mask | U.mask
+    except AttributeError:
+        RLd = RLw = RLm = None
+        LRd = LRw = LRm = None
+        
+    new_data_set = data_set.copy(include_pols=False)
+    for p,d,w,m in zip(('RR','LL','RL','LR'), (RRd,LLd,RLd,LRd), (RRw,LLw,RLw,LRw), (RRm,LLm,RLm,LRm)):
+        if d is None:
+            continue
+            
+        pol = PolarizationDataSet(p, data=d, weight=w, mask=m)
+        new_data_set.append(pol)
+        
+    return new_data_set
 
 class ImgWPlus(aipy.img.ImgW):
     """
