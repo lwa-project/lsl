@@ -1301,7 +1301,7 @@ def convert_to_circular(data_set):
         return new_data
         
     if 'RR' in data_set.pols or 'RL' in data_set.pols or 'LR' in data_set.pols or 'LL' in data_set.pols:
-        raise RuntimeError("Data already appear to be represented as linear polarization products")
+        raise RuntimeError("Data already appear to be represented as circular polarization products")
         
     pairs = 0
     if 'I' in data_set.pols and 'V' in data_set.pols:
@@ -1309,7 +1309,7 @@ def convert_to_circular(data_set):
     if 'Q' in data_set.pols and 'U' in data_set.pols:
         pairs += 1
     if pairs == 0:
-        raise RuntimeError("Too few Stokes parameters to form any linear polarization products")
+        raise RuntimeError("Too few Stokes parameters to form any circular polarization products")
         
     try:
         I = data_set.I
