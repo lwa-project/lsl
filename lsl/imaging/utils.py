@@ -74,7 +74,7 @@ telemetry.track_module()
 
 __version__ = '1.0'
 __all__ = ['CorrelatedData', 'CorrelatedDataIDI', 'CorrelatedDataUV', 'CorrelatedDataMS',
-           'convert_to_stokes', 'convert_to_linear', 'ImgWPlus', 'build_gridded_image',
+           'convert_to_stokes', 'convert_to_linear', 'convert_to_circular', 'ImgWPlus', 'build_gridded_image',
            'plot_gridded_image', 'get_image_radec', 'get_image_azalt']
 
 
