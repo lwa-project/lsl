@@ -601,7 +601,55 @@ class imaging_tests(unittest.TestCase):
         ds3 = utils.convert_to_linear(ds2)
         
         idi.close()
+
+    def test_convert_to_circular(self):
+        """Test the utils.convert_to_circular function."""
         
+        # Open the file
+        idi = utils.CorrelatedData(idiFile)
+        
+        # Get some data to sort
+        ds = idi.get_data_set(1)
+        new_pol = PolarizationDataSet('YY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('XY', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        new_pol = PolarizationDataSet('YX', ds.XX.data, ds.XX.weight, ds.XX.mask)
+        ds.append(new_pol)
+        
+        # Convert to Stokes
+        ds2 = utils.convert_to_stokes(ds)
+
+        # Convert to Circular
+        ds3 = utils.convert_to_circular(ds2)
+        
+        # Check
+        self.assertTrue(getattr(ds3, 'RR', None) is not None)
+        self.assertTrue(getattr(ds3, 'RL', None) is not None)
+        self.assertTrue(getattr(ds3, 'LR', None) is not None)
+        self.assertTrue(getattr(ds3, 'LL', None) is not None)
+        
+        np.testing.assert_allclose(ds2.I.data, ds3.RR.data)
+        np.testing.assert_allclose(ds2.I.data, ds3.RL.data/(1j))
+        np.testing.assert_allclose(ds2.I.data, ds3.LR.data/(-1j))
+        np.testing.assert_allclose(ds2.I.data, ds3.LL.data)
+        
+        #
+        # VisibilityData test
+        #
+        
+        ds2 = VisibilityData()
+        ds2.append( ds )
+        ds = ds2
+        
+        # Convert
+        ds2 = utils.convert_to_stokes(ds)
+
+        # Convert to Circular
+        ds3 = utils.convert_to_circular(ds2)
+
+        idi.close()
+    
     def test_gridding(self):
         """Test building a image from a visibility data set."""
         
