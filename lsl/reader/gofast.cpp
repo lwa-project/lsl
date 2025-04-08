@@ -155,6 +155,7 @@ static int gofast_exec(PyObject *module) {
     PyList_Append(all, PyUnicode_FromString("read_drx8_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_drspec"));
     PyList_Append(all, PyUnicode_FromString("read_vdif"));
+    PyList_Append(all, PyUnicode_FromString("read_vdif_i8"));
     PyList_Append(all, PyUnicode_FromString("read_tbf"));
     PyList_Append(all, PyUnicode_FromString("read_tbf_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_cor"));

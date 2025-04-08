@@ -1,0 +1,9 @@
+import numpy as np
+
+from typing import Callable, Optional
+
+def FPSD(signalsX: np.ndarray, signalsY: np.ndarray, LFFT: int=64, overlap: int=1, clip_level: int=0, window: Optional[int]=None) -> np.ndarray: ...
+
+def PFBPSD(signalsX: np.ndarray, signalsY: np.ndarray, LFFT: int=64, overlap: int=1, clip_level: int=0, window: Optional[int]=None) -> np.ndarray: ...
+
+def XEngine3(signalsX: np.ndarray, signalsY: np.ndarray, validX: np.ndarray, validY: np.ndarray) -> np.ndarray: ...

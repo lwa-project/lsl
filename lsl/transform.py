@@ -4,9 +4,9 @@ Time and position transform objects.
 
 from collections.abc import Sequence as SequenceABC
 import copy
-import datetime
 import math
 import abc
+from datetime import datetime
 from functools import total_ordering
 
 from astropy.time import Time as AstroTime
@@ -16,6 +16,8 @@ from lsl.common.dp import fS
 
 from lsl.misc import telemetry
 telemetry.track_module()
+
+from typing import Any, Tuple, Union
 
 
 __version__ = '0.4'
@@ -77,7 +79,7 @@ class Time(object):
         
         return klass(astro.get_julian_from_sys(), klass.FORMAT_JD, klass.TIMESYS_UTC)
     
-    def __init__(self, value, format = FORMAT_MJD, timesys = TIMESYS_UTC):
+    def __init__(self, value: Any, format: str=FORMAT_MJD, timesys: str=TIMESYS_UTC):
         """
         Create a Time instance, using 'value' as the initial time.
         
@@ -193,7 +195,7 @@ class Time(object):
         return self.utc_str
         
     @property
-    def utc_jd(self):
+    def utc_jd(self) -> float:
         """
         Time value formatted as UTC standard julian day (float).
         """
@@ -201,7 +203,7 @@ class Time(object):
         return self._time.utc.jd
         
     @utc_jd.setter
-    def utc_jd(self, value):
+    def utc_jd(self, value: Union[int,float]):
 
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
@@ -209,7 +211,7 @@ class Time(object):
         self._time = AstroTime(value, format='jd', scale='utc')
         
     @property
-    def utc_mjd(self):
+    def utc_mjd(self) -> float:
         """
         Time value formatted as UTC modified julian day (float).
         """
@@ -217,32 +219,32 @@ class Time(object):
         return self._time.utc.mjd
         
     @utc_mjd.setter
-    def utc_mjd(self, value):
+    def utc_mjd(self, value: Union[int,float]):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
         self._time = AstroTime(value, format='mjd', scale='utc')
         
     @property
-    def utc_dp(self):
+    def utc_dp(self) -> int:
         return int(self._time.utc.unix * fS)
         
     @utc_dp.setter
-    def utc_dp(self, value):
+    def utc_dp(self, value: int):
         if not isinstance(value, int):
             raise TypeError("value must be type int")
             
         self._time = AstroTime(value // fS, value % fS, format='unix', scale='utc')
         
     @property
-    def utc_mcs(self):
+    def utc_mcs(self) -> Tuple[int,int]:
         mjd = int(self.utc_mjd)
         mpm = int(round((self.utc_mjd - mjd) * 86400 * 1000))
         return (mjd, mpm)
         
     @utc_mcs.setter
-    def utc_mcs(self, value):
-        if isinstance(value, (tuple, list)):
+    def utc_mcs(self, value: SequenceABC):
+        if isinstance(value, SequenceABC):
             if len(value) != 2:
                 raise ValueError("value must be a two-element tuple or list")
             if not isinstance(value[0], (int, float)):
@@ -255,7 +257,7 @@ class Time(object):
         self._time = AstroTime(float(mjd) + float(mpm)/86400/1000, format='mjd', scale='utc')
         
     @property
-    def utc_py_date(self):
+    def utc_py_date(self) -> datetime:
         """
         Time value formatted as UTC calendar datetime.datetime object.
         """
@@ -263,19 +265,19 @@ class Time(object):
         return self._time.utc.datetime
         lnDate = astro.get_date(self._time)
         (usec, sec) = math.modf(lnDate.seconds)
-        pyDate = datetime.datetime(lnDate.years, lnDate.months, lnDate.days,
+        pyDate = datetime(lnDate.years, lnDate.months, lnDate.days,
             lnDate.hours, lnDate.minutes, int(sec), int(usec * 1e6))
         return pyDate
         
     @utc_py_date.setter
-    def utc_py_date(self, value):
-        if not isinstance(value, datetime.datetime):
+    def utc_py_date(self, value: datetime):
+        if not isinstance(value, datetime):
             raise ValueError("value must be type datetime.datetime")
             
         self._time = AstroTime(value, format='datetime', scale='utc')
         
     @property
-    def utc_str(self):
+    def utc_str(self) -> str:
         """
         Time value formatted as UTC ISO 8601 calendar string.
         """
@@ -283,14 +285,14 @@ class Time(object):
         return self._time.utc.iso
         
     @utc_str.setter
-    def utc_str(self, value):
+    def utc_str(self, value: str):
         if not isinstance(value, str):
             raise TypeError("value must be type str")
             
         self._time = AstroTime(value, format='iso', scale='utc')
     
     @property
-    def tai_jd(self):
+    def tai_jd(self) -> float:
         """
         Time value formatted as TAI standard julian day (float).
         """
@@ -298,14 +300,14 @@ class Time(object):
         return self._time.tai.jd
         
     @tai_jd.setter
-    def tai_jd(self, value):
+    def tai_jd(self, value: Union[int,float]):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
         self._time = AstroTime(value, format='jd', scale='tai')
         
     @property
-    def tai_mjd(self):
+    def tai_mjd(self) -> float:
         """
         Time value formatted as TAI modified julian day (float).
         """
@@ -313,14 +315,14 @@ class Time(object):
         return self._time.tai.mjd
         
     @tai_mjd.setter
-    def tai_mjd(self, value):
+    def tai_mjd(self, value: Union[int,float]):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
         self._time = AstroTime(value, format='mjd', scale='tai')
         
     @property
-    def utc_timet(self):
+    def utc_timet(self) -> float:
         """
         Time value formatted as UTC UNIX timet seconds.
         """
@@ -328,14 +330,14 @@ class Time(object):
         return self._time.utc.unix
         
     @utc_timet.setter
-    def utc_timet(self, value):
+    def utc_timet(self, value: Union[int,float]):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
         self._time = AstroTime(value, format='unix', scale='utc')
         
     @property
-    def tai_timet(self):
+    def tai_timet(self) -> float:
         """
         Time value formatted as TAI UNIX timet seconds.
         """
@@ -343,14 +345,14 @@ class Time(object):
         return self._time.tai.unix_tai
         
     @tai_timet.setter
-    def tai_timet(self, value):
+    def tai_timet(self, value: Union[int,float]):
         if not isinstance(value, (int, float)):
             raise TypeError("value must be type int or float")
             
         self._time = AstroTime(value, format='unix_tai', scale='tai')
         
     @property
-    def astropy(self):
+    def astropy(self) -> AstroTime:
         """
         Time value as a astropy.time.Time instance.
         """
@@ -358,7 +360,7 @@ class Time(object):
         return self._time
         
     @astropy.setter
-    def astropy(self, value):
+    def astropy(self, value: AstroTime):
         if not isinstance(value, AstroTime):
             raise TypeError("value must be type astropy.time.Time")
             
@@ -373,7 +375,7 @@ class SkyPosition(object):
     __metaclass__ = abc.ABCMeta
     
     @abc.abstractmethod
-    def apparent_equ(self, time_):
+    def apparent_equ(self, time_: Time) -> astro.equ_posn:
         """
         Return position formatted as apparent equatorial coordinates.
         The 'time_' parameter should be set to a Time instance providing
@@ -381,10 +383,10 @@ class SkyPosition(object):
         Return value is object of type astro.equ_posn.
         """
         
-        raise NotImplementedError()
+        raise NotImplementedError
         
     @abc.abstractmethod
-    def apparent_ecl(self, time_):
+    def apparent_ecl(self, time_: Time) -> astro.ecl_posn:
         """
         Return position formatted as apparent ecliptic coordinates.
         The 'time_' parameter should be set to a Time instance providing
@@ -392,7 +394,7 @@ class SkyPosition(object):
         Return alue is object of type astro.ecl_posn.
         """
         
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class CelestialPosition(SkyPosition):
@@ -429,7 +431,7 @@ class CelestialPosition(SkyPosition):
     
     known_epochs = (EPOCH_J2000, EPOCH_B1950)
     
-    def __init__(self, value, format = FORMAT_EQU, epoch = EPOCH_J2000, name = ''):
+    def __init__(self, value: Any, format: str=FORMAT_EQU, epoch: str=EPOCH_J2000, name: str=''):
         """
         Create a CelestialPosition object, using 'value' as the initial coordinates. 
         
@@ -488,7 +490,7 @@ class CelestialPosition(SkyPosition):
         return "%s.%s(%s, name=%s)" % (type(self).__module__, type(self).__name__, repr(self._posn), repr(self.name))
         
     @property
-    def j2000_equ(self):
+    def j2000_equ(self) -> astro.equ_posn:
         """
         Position formatted as J2000 equatorial coordinates.
         Value is object of type astro.equ_posn.
@@ -497,7 +499,7 @@ class CelestialPosition(SkyPosition):
         return self._posn
         
     @j2000_equ.setter
-    def j2000_equ(self, value):
+    def j2000_equ(self, value: Union[astro.equ_posn,SequenceABC]):
         if not isinstance(value, (astro.equ_posn, SequenceABC)):
             raise TypeError("value must be type astro.equ_posn or sequence of length 2")
         if isinstance(value, SequenceABC):
@@ -507,7 +509,7 @@ class CelestialPosition(SkyPosition):
             
         self._posn = copy.copy(value)
         
-    def apparent_equ(self, time_):
+    def apparent_equ(self, time_: Time) -> astro.equ_posn:
         """
         Return position formatted as apparent equatorial coordinates.
         The 'time_' parameter should be set to a Time instance providing
@@ -521,7 +523,7 @@ class CelestialPosition(SkyPosition):
         return astro.get_apparent_posn(self._posn, time_.utc_jd)
         
     @property
-    def b1950_equ(self):
+    def b1950_equ(self) -> astro.equ_posn:
         """
         Position formatted as B1950 equatorial coordinates.
         Value is object of type astro.equ_posn.
@@ -530,7 +532,7 @@ class CelestialPosition(SkyPosition):
         return astro.J2000_to_B1950(self._posn)
         
     @b1950_equ.setter
-    def b1950_equ(self, value):
+    def b1950_equ(self, value: Union[astro.equ_posn,SequenceABC]):
         if not isinstance(value, (astro.equ_posn, SequenceABC)):
             raise TypeError("value must be type astro.equ_posn or sequence of length 2")
         if isinstance(value, SequenceABC):
@@ -541,7 +543,7 @@ class CelestialPosition(SkyPosition):
         self._posn = astro.B1950_to_J2000(value)
         
     @property
-    def j2000_ecl(self):
+    def j2000_ecl(self) -> astro.ecl_posn:
         """
         Position formatted as J2000 ecliptic coordinates.
         Value is object of type astro.ecl_posn.
@@ -550,7 +552,7 @@ class CelestialPosition(SkyPosition):
         return astro.get_ecl_from_equ(self._posn, astro.J2000_UTC_JD)
         
     @j2000_ecl.setter
-    def j2000_ecl(self, value):
+    def j2000_ecl(self, value: Union[astro.ecl_posn,SequenceABC]):
         if not isinstance(value, (astro.ecl_posn, SequenceABC)):
             raise TypeError("value must be type astro.ecl_posn or sequence of length 2")
         if isinstance(value, SequenceABC):
@@ -560,7 +562,7 @@ class CelestialPosition(SkyPosition):
             
         self._posn = astro.get_equ_from_ecl(value, astro.J2000_UTC_JD)
         
-    def apparent_ecl(self, time_):
+    def apparent_ecl(self, time_: Time) -> astro.ecl_posn:
         """
         Return position formatted as apparent ecliptic coordinates.
         The 'time_' parameter should be set to a Time instance providing
@@ -575,7 +577,7 @@ class CelestialPosition(SkyPosition):
         return astro.get_ecl_from_equ(equ, time_.utc_jd)
         
     @property
-    def j2000_gal(self):
+    def j2000_gal(self) -> astro.gal_posn:
         """
         Position formatted as J2000 galactic coordinates.
         Value is object of type astro.gal_posn.
@@ -584,7 +586,7 @@ class CelestialPosition(SkyPosition):
         return astro.get_gal_from_equ(self._posn)
         
     @j2000_gal.setter
-    def j2000_gal(self, value):
+    def j2000_gal(self, value: Union[astro.gal_posn,SequenceABC]):
         if not isinstance(value, (astro.gal_posn, SequenceABC)):
             raise TypeError("value must be type astro.gal_posn or sequence of length 2")
         if isinstance(value, SequenceABC):
@@ -615,7 +617,7 @@ class PlanetaryPosition(SkyPosition):
     
     known_names = (NAME_SUN, NAME_MOON, NAME_VENUS, NAME_MARS, NAME_JUPITER, NAME_SATURN)
     
-    def __init__(self, name):
+    def __init__(self, name: str):
         """
         Create a PlanetaryPosition instance.
         """
@@ -643,7 +645,7 @@ class PlanetaryPosition(SkyPosition):
     def __repr__(self):
         return "%s.%s(%s)" % (type(self).__module__, type(self).__name__, repr(self.name))
         
-    def apparent_equ(self, time_):
+    def apparent_equ(self, time_: Time) -> astro.equ_posn:
         """
         Position formatted as apparent equatorial coordinates.
         The 'time_' parameter should be set to a Time instance providing
@@ -656,7 +658,7 @@ class PlanetaryPosition(SkyPosition):
         
         return self._posn_func(time_.utc_jd)
         
-    def apparent_ecl(self, time_):
+    def apparent_ecl(self, time_: Time) -> astro.ecl_posn:
         """
         Position formatted as apparent ecliptic coordinates.
         The 'time_' parameter should be set to a Time instance providing
@@ -691,14 +693,14 @@ class GeographicalPosition(object):
     
     known_formats = (FORMAT_GEO, FORMAT_ECEF)
     
-    def __init__(self, value, format = FORMAT_GEO, name = ''):
+    def __init__(self, value: Any, format: str=FORMAT_GEO, name: str=''):
         """
         Create a new GeographicalPosition instance, using 'value' as the
         initial coordinates.
         
         'format' describes the type of 'value':
-        * GeographicalPoistion.FORMAT_GEO   - longitude,latitude, and elevation
-        * GeographicalPoistion.FORMAT_ECEF  - ECEF rectangular geodetic
+        * GeographicalPosition.FORMAT_GEO   - longitude,latitude, and elevation
+        * GeographicalPosition.FORMAT_ECEF  - ECEF rectangular geodetic
         """
         
         # check parameters
@@ -719,7 +721,7 @@ class GeographicalPosition(object):
         return "%s.%s(%s, name=%s)" % (type(self).__module__, type(self).__name__, repr(self._posn), repr(self.name))
         
     @property
-    def geo(self):
+    def geo(self) -> astro.geo_posn:
         """
         Position formatted as geodedic longitude, latitude, elevation.
         Value is object of type astro.geo_posn.
@@ -728,7 +730,7 @@ class GeographicalPosition(object):
         return self._posn
         
     @geo.setter
-    def geo(self, value):
+    def geo(self, value: Union[astro.geo_posn,SequenceABC]):
         if not isinstance(value, (astro.geo_posn, SequenceABC)):
             raise TypeError("value must be type astro.geo_posn or sequence of length 2/3")
         if isinstance(value, SequenceABC):
@@ -739,7 +741,7 @@ class GeographicalPosition(object):
         self._posn = copy.copy(value)
         
     @property
-    def ecef(self):
+    def ecef(self) -> astro.rect_posn:
         """
         Position formatted as ECEF rectagular coordinates.
         Value is object of type astro.rect_posn.
@@ -748,7 +750,7 @@ class GeographicalPosition(object):
         return astro.get_rect_from_geo(self._posn)
         
     @ecef.setter
-    def ecef(self, value):
+    def ecef(self, value: Union[astro.rect_posn,SequenceABC]):
         if not isinstance(value, (astro.rect_posn, SequenceABC)):
             raise TypeError("value must be type astro.rect_posn or sequence of length 3")
         if isinstance(value, SequenceABC):
@@ -758,7 +760,7 @@ class GeographicalPosition(object):
             
         self._posn = astro.get_geo_from_rect(value)
         
-    def sidereal(self, time_):
+    def sidereal(self, time_: Time) -> float:
         """
         Return the apparent sidereal time for this location.
         The 'time_' parameter should be set to a Time instance providing
@@ -788,7 +790,7 @@ class PointingDirection(object):
     the rise, set, and transit ephemeris times.
     """
     
-    def __init__(self, source, site):
+    def __init__(self, source: SkyPosition, site: GeographicalPosition):
         """
         Create a new pointing direction instance.
         
@@ -805,7 +807,7 @@ class PointingDirection(object):
     def __repr__(self):
         return "%s.%s(source=%s, site=%s)" % (type(self).__module__, type(self).__name__, repr(self.source), repr(self.site))
         
-    def __setattr__(self, name, value):
+    def __setattr__(self, name: str, value: Any):
         # make surce 'source' and 'site' member are correct type
         
         if (name == 'source') and (not isinstance(value, SkyPosition)):
@@ -816,7 +818,7 @@ class PointingDirection(object):
             
         object.__setattr__(self, name, value)
         
-    def hrz(self, time_):
+    def hrz(self, time_: Time) -> astro.hrz_posn:
         """
         Return the pointing direction in horizontal coordinates as type 
         astro.hrz_posn.
@@ -830,7 +832,7 @@ class PointingDirection(object):
         return astro.get_hrz_from_equ(self.source.apparent_equ(time_), 
             self.site.geo, time_.utc_jd)
             
-    def dir_cos(self, time_):
+    def dir_cos(self, time_: Time) -> Tuple[float,float,float]:
         """
         Return the pointing direction as three direction cosine components.
         The 'time_' parameter should be set to a Time instance providing
@@ -839,7 +841,7 @@ class PointingDirection(object):
         """
         return astro.dir_cos(self.hrz(time_))
         
-    def rst(self, time_):
+    def rst(self, time_: Time) -> Union[astro.rst_time,None]:
         """
         Return the rise, set, and transit ephemeris times.
         The 'time_' parameter should be set to a Time instance providing

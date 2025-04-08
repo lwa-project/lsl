@@ -17,8 +17,12 @@ import numpy as np
 from scipy.signal import freqz
 from scipy.interpolate import interp1d
 
+from lsl.common.data_access import DataAccess
+
 from lsl.misc import telemetry
 telemetry.track_module()
+
+from typing import Callable
 
 
 __version__ = '0.1'
@@ -46,20 +50,22 @@ DRX_TUNING_WORD_MAX = 1928352663       # Tuning word
 #: Maximum number of beams
 DRX_BEAMS_MAX = 4
 
-# FIR Filters
-## DRX
-_DRX_FIR = [ 0.0111580, -0.0074330,  0.0085684, -0.0085984,  0.0070656, -0.0035905, 
-            -0.0020837,  0.0099858, -0.0199800,  0.0316360, -0.0443470,  0.0573270, 
-            -0.0696630,  0.0804420, -0.0888320,  0.0941650,  0.9040000,  0.0941650, 
-            -0.0888320,  0.0804420, -0.0696630,  0.0573270, -0.0443470,  0.0316360, 
-            -0.0199800,  0.0099858, -0.0020837, -0.0035905,  0.0070656, -0.0085984,  
-             0.0085684, -0.0074330,  0.0111580]
-
-
+with DataAccess.open('digital/ndp_coeffs.npz', 'rb') as fh:
+    dataDict = np.load(fh)
+    
+    # FIR Filters
+    ## DRX
+    _DRX_FIR = dataDict['DRX_FIR'][...]
+    
+    try:
+        dataDict.close()
+    except AttributeError:
+        pass
+        
 _N_PTS = 1000 # Number of points to use in calculating the bandpasses
 
 
-def freq_to_word(freq):
+def freq_to_word(freq: float) -> int:
     """
     Given a frequency in Hz, convert it to the closest DP tuning word.
     """
@@ -67,7 +73,7 @@ def freq_to_word(freq):
     return int(round(freq*2**32 / fS))
 
 
-def word_to_freq(word):
+def word_to_freq(word: int) -> float:
     """
     Given a DP tuning word, convert it to a frequncy in Hz.
     """
@@ -75,7 +81,7 @@ def word_to_freq(word):
     return word*fS / 2**32
 
 
-def delay_to_dpd(delay):
+def delay_to_dpd(delay: float) -> int:
     """
     Given a delay in ns, convert it to a course and fine portion and into the 
     final format expected by NDP (big endian 16.12 unsigned integer)
@@ -96,7 +102,7 @@ def delay_to_dpd(delay):
     return combined
 
 
-def dpd_to_delay(combined):
+def dpd_to_delay(combined: int) -> float:
     """
     Given a delay value in the final format expect by NDP, return the delay in ns.
     """
@@ -114,7 +120,7 @@ def dpd_to_delay(combined):
     return delay
 
 
-def gain_to_dpg(gain):
+def gain_to_dpg(gain: float) -> int:
     """
     Given a gain (between 0 and 1), convert it to a gain in the final form 
     expected by NDP (big endian 16.1 signed integer).
@@ -129,7 +135,7 @@ def gain_to_dpg(gain):
     return combined
 
 
-def dpg_to_gain(combined):
+def dpg_to_gain(combined: int) -> float:
     """
     Given a gain value in the final format expected by NDP, return the gain
     as a decimal value (0 to 1).
@@ -144,7 +150,7 @@ def dpg_to_gain(combined):
     return gain
 
 
-def drx_filter(sample_rate=19.6e6, npts=_N_PTS):
+def drx_filter(sample_rate: float=19.6e6, npts: int=_N_PTS) -> Callable:
     """
     Return a function that will generate the shape of a DRX filter for a given sample
     rate.

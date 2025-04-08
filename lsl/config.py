@@ -12,6 +12,8 @@ from textwrap import fill as tw_fill
 from lsl.version import full_version as lsl_version
 from lsl.misc.file_lock import FileLock
 
+from typing import Any, Dict, Optional
+
 # Create the .lsl directory and set the config filename
 try:
     if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
@@ -34,7 +36,7 @@ __all__ = ['LSL_CONFIG',]
 
 # Default values
 ## lsl.common.sdf/sdfADP/idf
-DEFAULTS_OBS = OrderedDict()
+DEFAULTS_OBS: Dict[str,Dict] = OrderedDict()
 DEFAULTS_OBS['observer_name'] = {'value': None,
                                  'help':  'Observer name for auto-filling Observer classes'}
 DEFAULTS_OBS['observer_id'] = {'value': None,
@@ -45,7 +47,7 @@ DEFAULTS_OBS['project_id'] = {'value': None,
                               'help':  'Project ID for auto-filling Project classes'}               
 
 ## lsl.reader.ldp
-DEFAULTS_LDP = OrderedDict()
+DEFAULTS_LDP: Dict[str,Dict] = OrderedDict()
 DEFAULTS_LDP['tbn_buffer_size'] = {'value': 20,
                                    'help':  'TBN ring buffer size in timestamps'}
 DEFAULTS_LDP['drx_buffer_size'] = {'value': 20,
@@ -58,12 +60,12 @@ DEFAULTS_LDP['cor_buffer_size'] = {'value': 5,
                                    'help':  'COR ring buffer size in timestamps'}
 
 ## lsl.astro
-DEFAULTS_ASTRO = OrderedDict()
+DEFAULTS_ASTRO: Dict[str,Dict[str,Any]] = OrderedDict()
 DEFAULTS_ASTRO['leapsec_url'] = {'value': 'https://hpiers.obspm.fr/iers/bul/bulc/Leap_Second.dat',
                                  'help':'URL for accessing leap second information'}
 
 ## lsl.misc.ionosphere
-DEFAULTS_IONO = OrderedDict()
+DEFAULTS_IONO: Dict[str,Dict] = OrderedDict()
 DEFAULTS_IONO['igs_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/products/ionex/',
                             'help':  'primary URL for accessing the IGS data products'}
 DEFAULTS_IONO['igs_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
@@ -96,7 +98,7 @@ DEFAULTS_IONO['max_cache_size'] = {'value': -1,
                                    'help':  'maximum cache size in MB; <= 0 disables cache size limiting'}
 
 ## lsl.misc.telemetry
-DEFAULTS_TELEMETRY = OrderedDict()
+DEFAULTS_TELEMETRY: Dict[str,Dict] = OrderedDict()
 DEFAULTS_TELEMETRY['enabled'] = {'value': True,
                                  'help': 'whether or not LSL telemetry reporting is enabled'}
 DEFAULTS_TELEMETRY['max_entries'] = {'value': 100,
@@ -105,7 +107,7 @@ DEFAULTS_TELEMETRY['timeout'] = {'value': 30,
                                  'help':  'upload timeout in seconds'}
 
 ## Download parameters
-DEFAULTS_DOWNLOAD = OrderedDict()
+DEFAULTS_DOWNLOAD: Dict[str,Dict] = OrderedDict()
 DEFAULTS_DOWNLOAD['block_size'] = {'value': 8192,
                                    'help':  'download block size in bytes'}
 DEFAULTS_DOWNLOAD['timeout'] = {'value': 120,
@@ -114,7 +116,7 @@ DEFAULTS_DOWNLOAD['refresh_age'] = {'value': 14,
                                     'help':  'data cache refresh age in days'}
 
 ## Everything
-DEFAULTS_ALL = OrderedDict()
+DEFAULTS_ALL: Dict[str,Dict] = OrderedDict()
 DEFAULTS_ALL['observing'] = DEFAULTS_OBS
 DEFAULTS_ALL['ldp'] = DEFAULTS_LDP
 DEFAULTS_ALL['astro'] = DEFAULTS_ASTRO
@@ -139,7 +141,7 @@ class LSLConfigParameter(object):
     Class that hold a single configuration parameter.
     """
     
-    def __init__(self, name, value, help=None):
+    def __init__(self, name: str, value: Any, help: Optional[str]=None):
         self.name = name
         self.value = value
         self.help = help
@@ -167,11 +169,11 @@ class LSLConfigContainer(object):
     Class for working with all LSL configuration parameters.
     """
     
-    def __init__(self, filename=_CONFIG_FILENAME):
+    def __init__(self, filename: str=_CONFIG_FILENAME):
         self.filename = filename
         self._changed = False
         
-        self._parameters = OrderedDict()
+        self._parameters: Dict[str,Any] = OrderedDict()
         self._load_config()
         
     def __repr__(self):
@@ -269,7 +271,7 @@ class LSLConfigContainer(object):
                         fh.write(str(self))
                     self._changed = False
                     
-    def view(self, section):
+    def view(self, section: str) -> "LSLConfigSubContainer":
         """
         Return a configuration sub-container that defaults to looking up 
         values in the specified section.
@@ -280,7 +282,7 @@ class LSLConfigContainer(object):
             
         return LSLConfigSubContainer(self, section)
         
-    def get(self, name):
+    def get(self, name: str) -> Any:
         """
         Return the value of a parameter.
         """
@@ -291,7 +293,7 @@ class LSLConfigContainer(object):
             raise ValueError(f"Unknown parameter '{name}'")
         return value
         
-    def set(self, name, value):
+    def set(self, name: str, value: Any):
         """
         Set the value of a parameter.
         """
@@ -310,7 +312,7 @@ class LSLConfigContainer(object):
             raise ValueError(f"Unknown parameter '{name}'")
             
     @contextlib.contextmanager
-    def set_temp(self, name, value):
+    def set_temp(self, name: str, value: Any):
         """
         Temporarily set the value of a parameter.  This value will not persist
         across Python sessions.
@@ -333,7 +335,7 @@ class LSLConfigContainer(object):
 
 
 class LSLConfigSubContainer(object):
-    def __init__(self, container, section):
+    def __init__(self, container: LSLConfigContainer, section: str):
         self.container = container
         self.section = section
         
@@ -342,7 +344,7 @@ class LSLConfigSubContainer(object):
         a = [(attr,getattr(self, attr, None)) for attr in ('container', 'section',)]
         return tw_fill(_build_repr(n,a), subsequent_indent='    ')
         
-    def get(self, name):
+    def get(self, name: str) -> Any:
         """
         Return the value of a parameter.
         """
@@ -353,7 +355,7 @@ class LSLConfigSubContainer(object):
             value = self.container.get(name)
         return value
         
-    def set(self, name, value):
+    def set(self, name: str, value: Any):
         """
         Set the value of a parameter.
         """
@@ -363,7 +365,7 @@ class LSLConfigSubContainer(object):
         except KeyError:
             self.container.set(name, value)
         
-    def set_temp(self, name, value):
+    def set_temp(self, name: str, value: Any):
         """
         Temporarily set the value of a parameter.  This value will not persist
         across Python sessions.

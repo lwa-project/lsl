@@ -47,7 +47,7 @@ import numpy as np
 import ctypes
 import struct
 from functools import reduce
-from datetime import datetime
+from datetime import datetime, tzinfo
 
 from astropy import units as astrounits
 from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
@@ -56,6 +56,8 @@ from lsl.common import dp as dpCommon
 
 from lsl.misc import telemetry
 telemetry.track_module()
+
+from typing import Dict, List, Optional, Tuple
 
 
 __version__ = '0.3'
@@ -330,7 +332,7 @@ OSF2_STRUCT = """
 _cDecRE = re.compile(r'(?P<type>[a-z][a-z \t]+)[ \t]+(?P<name>[a-zA-Z_0-9]+)(\[(?P<d1>[\*\+A-Z_\d]+)\])?(\[(?P<d2>[\*\+A-Z_\d]+)\])?(\[(?P<d3>[\*\+A-Z_\d]+)\])?(\[(?P<d4>[\*\+A-Z_\d]+)\])?;')
 
 
-def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None):
+def parse_c_struct(cStruct: str, char_mode: str='str', endianness: str='native', overrides: Optional[Dict]=None) -> ctypes.Structure:
     """
     Function to take a C structure declaration and build a ctypes.Structure out 
     of it with the appropriate alignment, character interpretation*, and endianness
@@ -357,17 +359,16 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     if char_mode not in ('str', 'int'):
         raise RuntimeError(f"Unknown character mode: '{char_mode}'")
     if char_mode == 'str':
-        baseCharType = ctypes.c_char
+        baseCharType = ctypes.c_char    # type: ignore
     else:
-        baseCharType = ctypes.c_byte
+        baseCharType = ctypes.c_byte    # type: ignore
     
     # Hold the basic fields and dimensions
     fields = []
-    dims2 = {}
+    dims2: Dict[str,List] = {}
     
     # Split into lines and go!
-    cStruct = cStruct.split('\n')
-    for line in cStruct:
+    for line in cStruct.split('\n'):
         ## Skip structure declaration, blank lines, comments, and lines too short to hold a 
         ## declaration
         line = line.strip().rstrip()
@@ -406,31 +407,31 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         
         ## Basic data types
         if dec in ('signed int', 'int'):
-            typ = ctypes.c_int
+            typ = ctypes.c_int  # type: ignore
         elif dec == 'unsigned int':
-            typ = ctypes.c_uint
+            typ = ctypes.c_uint  # type: ignore
         elif dec in ('signed short int', 'signed short', 'short int', 'short'):
-            typ = ctypes.c_short
+            typ = ctypes.c_short  # type: ignore
         elif dec in ('unsigned short int', 'unsigned short'):
-            typ = ctypes.c_ushort
+            typ = ctypes.c_ushort  # type: ignore
         elif dec in ('signed long int', 'signed long', 'long int', 'long'):
-            typ = ctypes.c_long
+            typ = ctypes.c_long  # type: ignore
         elif dec in ('unsigned long int', 'unsigned long'):
-            typ = ctypes.c_ulong
+            typ = ctypes.c_ulong  # type: ignore
         elif dec in ('signed long long', 'long long'):
-            typ = ctypes.c_longlong
+            typ = ctypes.c_longlong  # type: ignore
         elif dec == 'unsigned long long':
-            typ = ctypes.c_uint64
+            typ = ctypes.c_uint64  # type: ignore
         elif dec == 'float':
-            typ = ctypes.c_float
+            typ = ctypes.c_float  # type: ignore
         elif dec == 'double':
-            typ = ctypes.c_double
+            typ = ctypes.c_double  # type: ignore
         elif dec == 'char':
-            typ = baseCharType
+            typ = baseCharType  # type: ignore
         elif dec == 'signed char':
-            typ = ctypes.c_byte
+            typ = ctypes.c_byte  # type: ignore
         elif dec == 'unsigned char':
-            typ = ctypes.c_ubyte
+            typ = ctypes.c_ubyte  # type: ignore
         else:
             raise RuntimeError(f"Unparseable line: '{line}' -> type: {dec}, name: {name}, dims: {d1}, {d2}, {d3}, {d4}")
         
@@ -460,17 +461,16 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     if endianness not in ('little', 'big', 'network', 'native'):
         raise RuntimeError(f"Unknown endianness: '{endianness}'")
     
+    ct_endianness = ctypes.Structure
     if endianness == 'little':
-        endianness = ctypes.LittleEndianStructure
+        ct_endianness = ctypes.LittleEndianStructure
     elif endianness == 'big':
-        endianness = ctypes.BigEndianStructure
+        ct_endianness = ctypes.BigEndianStructure
     elif endianness == 'network':
-        endianness = ctypes.BigEndianStructure
-    else:
-        endianness = ctypes.Structure
-    
+        ct_endianness = ctypes.BigEndianStructure
+        
     # ctypes creation - actual
-    class MyStruct(endianness):
+    class MyStruct(ct_endianness):  # type: ignore
         """
         ctypes.Structure of the correct endianness for the provided
         C structure.  
@@ -501,14 +501,14 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
                 out += f"{f} ({d}): "+str(getattr(self, f))+'\n'
             return out
             
-        def sizeof(self):
+        def sizeof(self) -> int:
             """
             Return the size, in bytes, of the structure.
             """
             
             return ctypes.sizeof(self)
             
-        def as_dict(self):
+        def as_dict(self) -> Dict:
             """
             Return the structure as a simple Python dictionary keyed off the
             structure elements.
@@ -527,7 +527,7 @@ def _two_byte_swap(value):
     return ((value & 0xFF) << 8) | ((value >> 8) & 0xFF)
 
 
-def delay_to_mcsd(delay):
+def delay_to_mcsd(delay: float) -> int:
     """
     Given a delay in ns, convert it to a course and fine portion and into 
     the form expected by MCS in a custom beamforming SDF (little endian 
@@ -539,7 +539,7 @@ def delay_to_mcsd(delay):
     return _two_byte_swap( dpCommon.delay_to_dpd(delay) )
 
 
-def mcsd_to_delay(delay):
+def mcsd_to_delay(delay: int) -> float:
     """
     Given delay value from an OBS_BEAM_DELAY field in a custom beamforming 
     SDF, return the delay in ns.
@@ -550,7 +550,7 @@ def mcsd_to_delay(delay):
     return dpCommon.dpd_to_delay( _two_byte_swap(delay) )
 
 
-def gain_to_mcsg(gain):
+def gain_to_mcsg(gain: float) -> int:
     """
     Given a gain (between 0 and 1), convert it to a gain in the form 
     expected by MCS in a custom beamforming SDF (little endian 16.1 
@@ -562,7 +562,7 @@ def gain_to_mcsg(gain):
     return _two_byte_swap( dpCommon.gain_to_dpg(gain) )
 
 
-def mcsg_to_gain(gain):
+def mcsg_to_gain(gain: int) -> float:
     """
     Given a gain value from an OBS_BEAM_GAIN field in a custom beamforming
     SDF, return the decimal equivalent.
@@ -573,7 +573,7 @@ def mcsg_to_gain(gain):
     return dpCommon.dpg_to_gain( _two_byte_swap(gain) )
 
 
-def mjdmpm_to_datetime(mjd, mpm, tz=None):
+def mjdmpm_to_datetime(mjd: int, mpm: int, tz: Optional[tzinfo]=None) -> datetime:
     """
     Convert a MJD, MPM pair to a naive datetime instance.  If `tz` is not None
     the value is converted to a time zone-aware instance in the specified time
@@ -593,7 +593,7 @@ def mjdmpm_to_datetime(mjd, mpm, tz=None):
     return dt
 
 
-def datetime_to_mjdmpm(dt):
+def datetime_to_mjdmpm(dt: datetime) -> Tuple[int,int]:
     """
     Convert a UTC datetime instance to a MJD, MPM pair (returned as a 
     two-element tuple).
@@ -771,7 +771,7 @@ class ObservingMode(enum.Enum):
     TRK_LUN   = 9
 
 
-def flat_to_multi(inputList, *shape):
+def flat_to_multi(inputList: List, *shape: int) -> List:
     """
     Convert a 1-D list into a multi-dimension list of shape 'shape'.
     
@@ -813,7 +813,7 @@ def _get_rotation_matrix(theta, phi, psi, degrees=True):
     return rot
 
 
-def apply_pointing_correction(az, el, theta, phi, psi, lat=34.070, degrees=True):
+def apply_pointing_correction(az: float, el: float, theta: float, phi: float, psi: float, lat: float=34.070, degrees: bool=True) -> Tuple[float,float]:
     """
     Given a azimuth and elevation pair, and an axis to rotate about, 
     perform the rotation.
@@ -883,7 +883,7 @@ class MIB(object):
         except KeyError:
             return self.entries[self.invMapper[key]]
             
-    def keys(self, name=False):
+    def keys(self, name: bool=False) -> List[str]:
         """
         Return a list of entry indicies (or names if the 'name' keyword is set 
         to True) for the MIB.
@@ -902,7 +902,7 @@ class MIB(object):
             # Index
             return self.entries.keys()
             
-    def parse_init_file(self, filename):
+    def parse_init_file(self, filename: str) -> bool:
         """
         Given a MCS MIB initialization file, i.e., ASP_MIB_init.dat, create a 
         dictionary that maps indicies to human-readable names that can be used
@@ -931,7 +931,7 @@ class MIB(object):
         return True
         
     @classmethod
-    def from_file(klass, filename, init_filename=None):
+    def from_file(klass, filename: str, init_filename: Optional[str]=None):
         """
         Given the name of a GDBM database file, initialize the MIB.  
         Optionally, use the name of the MCS MIB initialization file to
@@ -950,7 +950,7 @@ class MIB(object):
         # Open the database
         with dbm.open(filename, 'ru') as db:
             # Go!
-            entry = db.firstkey()
+            entry = db.firstkey()   # type: ignore
             while entry is not None:
                 value = db[entry]
                 
@@ -961,7 +961,7 @@ class MIB(object):
                 except ValueError:
                     pass
                     
-                entry = db.nextkey(entry)
+                entry = db.nextkey(entry)   # type: ignore
                 
         # Done
         return mib
@@ -1088,7 +1088,7 @@ class MIBEntry(object):
             raise ValueError(f"Unknown data type '{dataType}'")
             
     @classmethod
-    def from_entry(klass, value):
+    def from_entry(klass, value: bytes):
         """
         Given an MIB entry straight out of a GDBM database, populate the 
         MIBEntry instance.

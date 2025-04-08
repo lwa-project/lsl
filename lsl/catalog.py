@@ -19,6 +19,7 @@ from lsl.common.data_access import DataAccess
 from lsl.misc import telemetry
 telemetry.track_module()
 
+from typing import Dict, List, Union
 
 __version__   = '0.2'
 __all__ = ['CatalogEntry', 'Catalog', 'LWA_Catalog', 'PSR_Catalog', 'PKS_Catalog', 
@@ -43,14 +44,14 @@ class CatalogEntry(object):
     # limit the class attributes
     __slots__ = ('name', 'position', 'alias_list')
     
-    def __init__(self, name, position):
+    def __init__(self, name: str, position: transform.CelestialPosition):
         """
         Create a catalog entry.
         """
         
         self.name = name
         self.position = position
-        self.alias_list = []
+        self.alias_list: List[str] = []
         
     def __repr__(self):
         """
@@ -74,15 +75,15 @@ class Catalog(Mapping):
     
     __metaclass__ = abc.ABCMeta
     
-    def __init__(self, name):
+    def __init__(self, name: str):
         """
         Create a source catalog.
         """
         
         # initialize catalog data structures
         self.name = name
-        self.source_map = {}
-        self.alias_map = {}
+        self.source_map: Dict[str,CatalogEntry] = {}
+        self.alias_map: Dict[str,CatalogEntry] = {}
         
         # parse_file() is an abstract method which must be defined in
         # a concrete implementation for a particular catalog  
@@ -95,10 +96,10 @@ class Catalog(Mapping):
         structures.
         """
         
-        pass
+        raise NotImplementedError
         
     @staticmethod
-    def get_directory():
+    def get_directory() -> str:
         """
         Returns the path to the catalog data file directory.
         """
@@ -119,7 +120,7 @@ class Catalog(Mapping):
         
         return len(self.source_map)
         
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> CatalogEntry:
         """
         Access source by subscript name.  Raises KeyError if the source
         is not in the catalog.
@@ -137,7 +138,7 @@ class Catalog(Mapping):
         
         return iter(self.source_map.keys())
         
-    def lookup(self, name):
+    def lookup(self, name: str) -> Union[CatalogEntry,None]:
         """
         Lookup a source in the catalog.
         
@@ -592,7 +593,7 @@ class Fermi_LAT_Catalog(Catalog):
     Base definition for the Fermi LAT point source catalogs.
     """
     
-    def __init__(self, name, filename):
+    def __init__(self, name: str, filename: str):
         """
         Create a Fermi LAT catalog instance.
         """
@@ -694,10 +695,10 @@ class CatalogFactory(object):
                     }
                     
     # a mapping of catalog names to instances
-    catalog_instance_map = {}
+    catalog_instance_map: Dict[str,Catalog] = {}
     
     @classmethod
-    def get_catalog(klass, name):
+    def get_catalog(klass, name: str) -> Catalog:
         """
         Returns a Catalog object representing the catalog
         given by name.
@@ -714,13 +715,13 @@ class CatalogFactory(object):
             catalog = klass.catalog_instance_map[name]
         except KeyError:
             catalogClass = klass.catalog_class_map[name]
-            catalog = catalogClass()
+            catalog = catalogClass()    # type: ignore
             klass.catalog_instance_map[name] = catalog
             
         return catalog
         
     @classmethod
-    def get_names(klass):
+    def get_names(klass) -> List[str]:
         """
         Return a list of known catalog names.
         """
