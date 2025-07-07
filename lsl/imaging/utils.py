@@ -858,10 +858,17 @@ try:
                 # LASI generate compressed tarballs that contain the MS.  Deal with 
                 # those in a transparent manner by automatically unpacking them
                 tempdir = tempfile.mkdtemp(prefix='CorrelatedMS-')
-                tf = tarfile.open(self.filename, mode='r:*')
-                tf.extractall(tempdir)
-                tf.close()
-                
+                with tarfile.open(self.filename, mode='r:*') as tf:
+                    for member in tf.getmembers():
+                        mname = os.path.abspath(os.path.normpath(os.path.join(tempdir, member.name)))
+                        try:
+                            if os.path.commonpath([tempdir, mname]) != tempdir:
+                                continue
+                        except ValueError:
+                            continue
+                            
+                        tf.extract(member, tempdir)
+                        
                 # Find the first directory that could be a MS
                 self.filename = None
                 for path in os.listdir(tempdir):
