@@ -847,9 +847,16 @@ static int stokes_exec(PyObject *module) {
     if( pModule != NULL ) {
         PyObject* pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
-            char filename[256];
-            sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
-            read_wisdom(filename, module);
+            char* pathname = PyString_AsString(pDataPath);
+            char* filename = (char*) malloc(strlen(pathname)+strlen("/fftwf_wisdom.txt")+1);
+            if( filename != NULL ) {
+                strcpy(filename, pathname);
+                strcat(filename, "/fftwf_wisdom.txt");
+                
+                read_wisdom(filename, module);
+                
+                free(filename);
+            }
         }
         Py_XDECREF(pDataPath);
     } else {
