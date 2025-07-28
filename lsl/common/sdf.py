@@ -67,7 +67,6 @@ from lsl.common.dp import freq_to_word, word_to_freq
 from lsl.common.stations import lwa1
 from lsl.reader.tbn import FILTER_CODES as TBNFilters
 from lsl.reader.drx import FILTER_CODES as DRXFilters
-from lsl.reader.tbw import FRAME_SIZE as TBWSize
 from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
@@ -874,7 +873,7 @@ class TBW(Observation):
         if self.bits == 4:
             SamplesPerFrame = 1200
         nFrames = self.samples / SamplesPerFrame
-        nBytes = nFrames * TBWSize * LWA_MAX_NSTD
+        nBytes = nFrames * 0 * LWA_MAX_NSTD
         return nBytes
         
     def validate(self, verbose=False):
