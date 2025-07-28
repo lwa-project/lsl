@@ -61,7 +61,7 @@ class FrameHeader(FrameHeaderBase):
     _header_attrs = ['frame_id', 'frame_count', 'second_count', 'nstand', 'nchan', 'first_chan']
     
     def __init__(self, frame_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None, nchan=None):
-        self.frame_id = frame_id`
+        self.frame_id = frame_id
         self.frame_count = frame_count
         self.second_count = second_count
         self.first_chan = first_chan
