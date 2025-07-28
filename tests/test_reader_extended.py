@@ -7,7 +7,6 @@ import glob
 import unittest
 import subprocess
 
-from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
 from lsl.reader import vdif

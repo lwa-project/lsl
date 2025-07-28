@@ -7,7 +7,6 @@ import numpy as np
 import unittest
 from datetime import timedelta
 
-from lsl.reader import tbw
 from lsl.reader import tbn
 from lsl.reader import drx
 from lsl.reader import vdif
@@ -20,7 +19,6 @@ __version__  = "0.9"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
 tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
 vdifFile = os.path.join(os.path.dirname(__file__), 'data', 'vdif-test.dat')
@@ -188,111 +186,6 @@ class reader_tests(unittest.TestCase):
         v = f"{t0:d}"
         self.assertEqual(int(v), int(t0.unix))
         
-    ### TBW ###
-    
-    def test_tbw_read(self):
-        """Test reading in a frame from a TBW file."""
-        
-        fh = open(tbwFile, 'rb')
-        # First frame is really TBW and stores the correct stand ID
-        frame1 = tbw.read_frame(fh)
-        self.assertTrue(frame1.header.is_tbw)
-        self.assertEqual(frame1.id, 2)
-        # Second frame
-        frame2 = tbw.read_frame(fh)
-        self.assertTrue(frame2.header.is_tbw)
-        self.assertEqual(frame2.id, 1)
-        fh.close()
-        
-    def test_tbw_bits(self):
-        """Test getting the data bits from a TBW file."""
-        
-        fh = open(tbwFile, 'rb')
-        # File contains 12-bit data, two ways
-        self.assertEqual(tbw.get_data_bits(fh), 12)
-        frame1 = tbw.read_frame(fh)
-        self.assertEqual(frame1.data_bits, 12)
-        fh.close()
-        
-    def test_tbw_errors(self):
-        """Test reading errors."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 8
-        for i in range(1,9):
-            frame = tbw.read_frame(fh)
-            
-        # Last frame should be an error (errors.EOFError)
-        self.assertRaises(errors.EOFError, tbw.read_frame, fh)
-        fh.close()
-        
-        # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.SyncError).
-        fh = open(tbwFile, 'rb')
-        fh.seek(1)
-        self.assertRaises(errors.SyncError, tbw.read_frame, fh)
-        fh.close()
-        
-    def test_tbw_comps(self):
-        """Test the TBW frame comparison operators (>, <, etc.) for time tags."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 3
-        frames = []
-        for i in range(1,4):
-            frames.append(tbw.read_frame(fh))
-        fh.close()
-        
-        self.assertTrue(0 < frames[0])
-        self.assertFalse(0 > frames[0])
-        self.assertTrue(frames[-1] >= frames[0])
-        self.assertFalse(frames[-1] <= frames[0])
-        self.assertTrue(frames[0] == frames[0])
-        self.assertFalse(frames[0] == frames[-1])
-        self.assertFalse(frames[0] != frames[0])
-        
-    def test_tbw_sort(self):
-        """Test sorting TBW frames by time tags."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 3
-        frames = []
-        for i in range(1,4):
-            frames.append(tbw.read_frame(fh))
-        fh.close()
-        
-        frames.sort()
-        frames = frames[::-1]
-        
-        for i in range(1,len(frames)):
-            self.assertTrue( frames[i-1] >= frames[i] )
-            
-    def test_tbw_math(self):
-        """Test mathematical operations on TBW frame data via frames."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 3
-        frames = []
-        for i in range(1,4):
-            frames.append(tbw.read_frame(fh))
-        fh.close()
-        
-        # Multiplication
-        frameT = frames[0] * 2.0
-        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data)
-        frameT *= 2.0
-        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data)
-        frameT = frames[0] * frames[1]
-        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data)
-        
-        # Addition
-        frameA = frames[0] + 2.0
-        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data)
-        frameA += 2.0
-        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data)
-        frameA = frames[0] + frames[1]
-        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data)
-        
     ### TBN ###
     
     def test_tbn_read(self):
@@ -432,21 +325,6 @@ class reader_tests(unittest.TestCase):
         np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] + frames[1]
         np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
-            
-    ### TBW/TBN Mix-up ###
-    
-    def test_tbw_tbn_catch(self):
-        """Test that tbw will not read tbn files and vice versa."""
-        
-        fh = open(tbnFile, 'rb')
-        frame1 = tbw.read_frame(fh)
-        self.assertFalse(frame1.header.is_tbw)
-        fh.close()
-        
-        fh = open(tbwFile, 'rb')
-        frame1 = tbn.read_frame(fh)
-        self.assertFalse(frame1.header.is_tbn)
-        fh.close()
         
     ### DRX ###
     

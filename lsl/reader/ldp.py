@@ -4,7 +4,6 @@ new analysis software easier.  These functions wrap the nitty gritty of the
 file reading and unpacking behind Python objects.
 
 Data format objects included are:
-  * TBWFile
   * TBNFile
   * DRXFile
   * DRX8File
@@ -35,7 +34,7 @@ from collections import deque, defaultdict
 from lsl.common.dp import fS
 from lsl.common.adp import fC
 from lsl.common.ndp import fC as ndp_fC
-from lsl.reader import tbw, tbn, drx, drx8, drspec, tbf, cor, errors
+from lsl.reader import tbn, drx, drx8, drspec, tbf, cor, errors
 from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, DRX8FrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp, CI8
@@ -48,8 +47,8 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.6'
-__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRX8File', 'DRSpecFile', 'TBFFile',
+__version__ = '0.7'
+__all__ = ['TBNFile', 'DRXFile', 'DRX8File', 'DRSpecFile', 'TBFFile',
            'LWA1DataFile', 'LWASVDataFile', 'LWANADataFile', 'LWADataFile']
 
 
@@ -300,233 +299,6 @@ class LDPFileBase(object):
         
         raise NotImplementedError
 
-
-class TBWFile(LDPFileBase):
-    """
-    Class to make it easy to interface with a TBW file.  TBW data consist of a
-    time series of real valued data sampled at f\ :sub:`S` (196 MHz) from all
-    antennas in the array.  The stand numbering is based on the input into the
-    digital system rather than the stand number in the array.
-    
-    Methods defined for this class are:
-     * get_info - Get information about the file's contents
-     * get_remaining_frame_count - Get the number of frames remaining in the file
-     * read_frame - Read and return a single `lsl.reader.tbw.Frame` instance
-     * read - Read in the capture and return it as a numpy array
-    """
-    
-    def _ready_file(self):
-        """
-        Find the start of valid TBW data.  This function:
-         1) Aligns on the first valid Mark 5C frame and
-         2) Skips over any TBN frames at the beginning of the file.
-        """
-        
-        # Align on the start of a Mark5C packet
-        while True:
-            try:
-                junkFrame = tbw.read_frame(self.fh)
-                break
-            except errors.SyncError:
-                self.fh.seek(-tbw.FRAME_SIZE+1, 1)
-                
-        # Jump over any TBN data in the file
-        while not junkFrame.header.is_tbw:
-            try:
-                junkFrame = tbw.read_frame(self.fh)
-            except errors.SyncError:
-                ## If we reached this then we are probably in an old TBW file that has
-                ## a bunch of TBN frames at the beginning.  We need to seek backwards,
-                ## realign on the sync word, and read forwards again.
-                
-                ## Jump back a TBW frame
-                self.fh.seek(-tbw.FRAME_SIZE, 1)
-                
-                ## Find the sync word again
-                while True:
-                    try:
-                        tbn.read_frame(self.fh)
-                        break
-                    except errors.SyncError:
-                        self.fh.seek(-tbn.FRAME_SIZE+1, 1)
-                        
-                ## Find the end of the TBN data
-                while True:
-                    try:
-                        tbn.read_frame(self.fh)
-                    except errors.SyncError:
-                        break
-                self.fh.seek(-2*tbn.FRAME_SIZE, 1)
-                junkFrame = tbw.read_frame(self.fh)
-        self.fh.seek(-tbw.FRAME_SIZE, 1)
-        
-        return True
-        
-    def _describe_file(self):
-        """
-        Describe the TBW file.
-        """
-        
-        with FilePositionSaver(self.fh):
-            junkFrame = self.read_frame()
-            self.fh.seek(-tbw.FRAME_SIZE, 1)
-            
-            # Basic file information
-            try:
-                filesize = os.fstat(self.fh.fileno()).st_size
-            except AttributeError:
-                filesize = self.fh.size
-            nFramesFile = (filesize - self.fh.tell()) // tbw.FRAME_SIZE
-            srate = 196e6
-            bits = junkFrame.data_bits
-            
-            # Trick to figure out how many antennas are in a file and the "real" 
-            # start time.  For details of why this needs to be done, see the read()
-            # function below.
-            idsFound = []
-            timesFound = []
-            filePosRef = self.fh.tell()
-            while True:
-                try:
-                    for i in range(26):
-                        frame = tbw.read_frame(self.fh)
-                        while not frame.header.is_tbw:
-                            frame = tbw.read_frame(self.fh)
-                        stand = frame.id
-                        if stand not in idsFound:
-                            idsFound.append(stand)
-                        if frame.header.frame_count < 1000:
-                            timesFound.append( (frame.header.frame_count-1, frame.payload.timetag) )
-                    self.fh.seek(tbw.FRAME_SIZE*(30000-26), 1)
-                except:
-                    break
-                    
-        # What is that start time again?
-        startTimeTag = None
-        for fc,tt in timesFound:
-            tt = tt - fc*(1200 if bits == 4 else 400)
-            if startTimeTag is None or tt < startTimeTag:
-                startTimeTag = tt
-        start = startTimeTag / fS
-        startRaw = startTimeTag
-        
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbw.FRAME_SIZE,
-                            'sample_rate': srate, 'data_bits': bits, 'nantenna': 2*len(idsFound), 
-                            'start_time': start, 'start_time_samples': startRaw}
-                        
-    def read_frame(self):
-        """
-        Read and return a single `lsl.reader.tbw.Frame` instance.
-        """
-        
-        frame = tbw.read_frame(self.fh)
-        while not frame.header.is_tbw:
-            frame = tbw.read_frame(self.fh)
-            
-        return frame
-        
-    def read(self, duration=None, time_in_samples=False):
-        """
-        Read and return the entire TBW capture.  This function returns 
-        a three-element tuple with elements of:
-         0) the actual duration of data read in, 
-         1) the time tag for the first sample, and
-         2) a 2-D Numpy array of data.
-        
-        The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
-        `time_in_samples' keyword is set.
-        
-        The sorting order of the output data array is by 
-        digitizer number - 1.
-        
-        .. note::
-            Setting the 'duration' keyword has no effect on the read 
-            process because the entire capture is always read in.
-        """
-        
-        # Make sure there is file left to read
-        try:
-            curr_size = os.fstat(self.fh.fileno()).st_size
-        except AttributeError:
-            curr_size = self.fh.size
-        if self.fh.tell() == curr_size:
-            try:
-                if self.buffer.is_empty():
-                    raise errors.EOFError()
-            except AttributeError:
-                raise errors.EOFError()
-                
-        # Get the data frame size
-        dataSize = 400
-        if self.description['data_bits'] == 4:
-            dataSize = 1200
-            
-        # Find out how many frames to work with at a time
-        nFrames = int(30000)
-        
-        # Initialize the time variables
-        # Explination:
-        #   This is needed to work out what the "real" start time is of the 
-        #   capture due to buffering in the data recorder.  What can happen 
-        #   is that the last ~4 MB of a previous capture could be stuck in 
-        #   the data recoder's buffer and that the buffer won't get dumped 
-        #   until the next capture is launch.  Thus, you can end up in a 
-        #   situation where the first few valid TBW frames in a file are from 
-        #   the previous capture.
-        #   
-        #   To get around this we use the frame count-correction time tag of 
-        #   the lowest frame number found.  This skips over the trailing edge of 
-        #   the previous capture (which should have a high frame count) while
-        #   allowing the code to deal with files that may be missing the first
-        #   frame from the first board to send a frame.
-        setTime = None
-        setTimeRef = 1000
-        
-        # Initialize the output data array
-        data = np.zeros((self.description['nantenna'], nFrames*dataSize), dtype=np.int16)
-        
-        # Read in the next frame and anticipate any problems that could occur
-        i = 0
-        while i < ((self.description['nantenna']//2)*nFrames):
-            try:
-                cFrame = tbw.read_frame(self.fh)
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                continue
-                
-            if not cFrame.header.is_tbw:
-                continue
-                
-            stand = cFrame.header.id
-            aStandX = 2*(stand-1) + 0
-            aStandY = 2*(stand-1) + 1
-            
-            if cFrame.header.frame_count < setTimeRef:
-                newSetTime = cFrame.payload.timetag - (cFrame.header.frame_count-1)*dataSize
-                if setTime is None or cFrame.payload.timetag < setTime:
-                    setTime = newSetTime
-                    setTimeRef = cFrame.header.frame_count
-                    
-            try:
-                cnt = cFrame.header.frame_count - 1
-                data[aStandX, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.data[0,:]
-                data[aStandY, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.data[1,:]
-                
-                i += 1
-            except ValueError:
-                pass
-                
-        # Deal with the time if we don't want it in samples
-        if not time_in_samples:
-            setTime = setTime / fS
-            
-        # Calculate the duration
-        duration = data.shape[1]/self.description['sample_rate']
-        
-        return duration, setTime, data
 
 
 class TBNFile(LDPFileBase):
@@ -2060,7 +1832,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=
             is_splitfile = True
             
     # Read a bit of data to try to find the right type
-    for mode in (drx, tbn, tbw, drspec):
+    for mode in (drx, tbn, drspec):
         ## Set if we find a valid frame marker
         foundMatch = False
         ## Set if we can read more than one valid successfully
@@ -2127,7 +1899,7 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
-        for mode in (tbn, tbw, drx):
+        for mode in (tbn, drx):
             ### Set if we find a valid frame marker
             foundMatch = False
             ### Set if we can read more than one valid successfully
@@ -2185,10 +1957,6 @@ def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=
                               buffering=buffering)
     elif mode == tbn:
         ldpInstance = TBNFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == tbw:
-        ldpInstance = TBWFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
     else:

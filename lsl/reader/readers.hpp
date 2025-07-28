@@ -37,7 +37,6 @@ extern PyObject *EOFError;
 */
 
 // gofast.cpp
-extern int16_t tbw4LUT[256][2];
 extern int8_t  tbnLUT[256];
 extern int8_t  drx8LUT[256];
 extern int8_t  drxLUT[256][2];
@@ -72,9 +71,6 @@ extern void initVDIFLUTs(void);
   Reader Functions and Documentation
 */
 
-// tbw.cpp
-extern PyObject *read_tbw(PyObject*, PyObject*);
-extern char read_tbw_doc[];
 // tbn.cpp
 extern PyObject *read_tbn_cf32(PyObject*, PyObject*);
 extern char read_tbn_cf32_doc[];

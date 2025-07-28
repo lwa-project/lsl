@@ -15,7 +15,6 @@ __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
 tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
 drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
@@ -155,11 +154,6 @@ class ldp_ndp_tests(unittest.TestCase):
         
     ### File Type Discovery ###
     
-    def test_ldp_discover_tbw(self):
-        """Test the LDP LWA1DataFile function of TBW."""
-        # TBW
-        self.assertRaises(RuntimeError, ldp.LWANADataFile, tbwFile)
-        
     def test_ldp_discover_tbn(self):
         """Test the LDP LWANADataFile function of TBN."""
         # TBN
@@ -188,12 +182,6 @@ class ldp_ndp_tests(unittest.TestCase):
         # TBF
         f = ldp.LWANADataFile(corFile)
         self.assertEqual(type(f), ldp.CORFile)
-        
-    def test_ldp_discover_all_tbw(self):
-        """Test the LDP LWADataFile function of TBW."""
-        # TBW
-        f = ldp.LWADataFile(tbwFile)
-        self.assertEqual(type(f), ldp.TBWFile)
         
     def test_ldp_discover_all_tbn(self):
         """Test the LDP LWADataFile function of TBN."""

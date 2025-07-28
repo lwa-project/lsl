@@ -9,14 +9,13 @@ import tempfile
 import shutil
 import numpy as np
 
-from lsl.reader import tbw, tbn, vdif as vrdr, errors
+from lsl.reader import tbn, vdif as vrdr, errors
 from lsl.writer import vdif
 
 
 __version__  = "0.2"
 __author__    = "Jayce Dowell"
 
-tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
 tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
 
 
@@ -29,18 +28,7 @@ class vdif_tests(unittest.TestCase):
 
         np.seterr(all='ignore')
         self.testPath = tempfile.mkdtemp(prefix='test-vdif-', suffix='.tmp')
-
-    def _get_tbw(self):
-        """Private function to load in the test TBW data and get the frames."""
-
-        with open(tbwFile, 'rb') as fh:
-            # Frames 1 through 8
-            frames = []
-            for i in range(1,9):
-                frames.append(tbw.read_frame(fh))
-                
-        return frames
-
+        
     def _get_tbn(self):
         """Private function to load in the test TBN data and get the frames.  If 
         the keyword 'vanilla' is set to True, gain, sample rate, and frequency meta-
@@ -57,29 +45,7 @@ class vdif_tests(unittest.TestCase):
                 frames[-1].payload.timetag *= 19600000
                 
         return frames
-
-    def test_vdif_real(self):
-        """Test writing real data to VDIF format."""
-
-        # Setup the file names
-        testFile = os.path.join(self.testPath, 'tbw-test-W.fits')
-
-        # Get some data
-        frames = self._get_tbw()
-
-        # Write the data
-        with open(testFile, 'wb') as fh:
-            for frame in frames:
-                vFrame = vdif.Frame(frame.id, frame.time, bits=8, data=frame.payload.data[0,:].astype(np.int8), sample_rate=196e6)
-                vFrame.write_raw_frame(fh)
-                
-        # Read it back in
-        with open(testFile, 'rb') as fh:
-            for tFrame in frames:
-                vFrame = vrdr.read_frame(fh, sample_rate=196e6)
-                self.assertAlmostEqual(vFrame.time, tFrame.time, 6)
-                np.testing.assert_allclose((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(np.int8), atol=1e-6)
-                
+        
     def test_vdif_complex(self):
         """Test writing complex data to VIDF format."""
 
