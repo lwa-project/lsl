@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from lsl.common.mcs import mjdmpm_to_datetime
 from lsl.common import metabundle
-from lsl.reader import tbw, tbn, drx, errors
+from lsl.reader import tbn, drx, errors
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -83,12 +83,7 @@ def main(args):
         print(f"Seeking {oMode} observation of {oDur:.3f} seconds at {oStart}")
 
         ## Get the correct reader to use
-        if oMode == 'TBW':
-            reader = tbw
-            bwKey = None
-            bwMult = 520.0 / 400
-            fCount = 400
-        elif oMode == 'TBN':
+        if oMode == 'TBN':
             reader = tbn
             bwKey = tbn.FILTER_CODES
             bwMult = 520.0 / 512
@@ -210,10 +205,7 @@ def main(args):
             oMode = oDetails[i]['m'].name
 
             ## Get the correct reader to use
-            if oMode == 'TBW':
-                reader = tbw
-
-            elif oMode == 'TBN':
+            if oMode == 'TBN':
                 reader = tbn
             else:
                 reader = drx
