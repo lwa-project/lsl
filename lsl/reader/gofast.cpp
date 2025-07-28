@@ -25,6 +25,7 @@ int8_t  tbnLUT[256];
 int8_t  drx8LUT[256];
 int8_t  drxLUT[256][2];
 int8_t  tbfLUT[256][2];
+int8_t  tbxLUT[256][2];
 
 static int luts_loaded = 0;
 
@@ -61,6 +62,9 @@ static void initLWALUTs(void) {
             
             tbfLUT[i][j] = t;
             tbfLUT[i][j] -= ((t&8)<<1);
+            
+            tbxLUT[i][j] = t;
+            tbxLUT[i][j] -= ((t&8)<<1);
         }
     }
 }
@@ -83,7 +87,9 @@ static PyMethodDef gofast_methods[] = {
     {"read_vdif_i8",  (PyCFunction) read_vdif_i8,   METH_VARARGS|METH_KEYWORDS, read_vdif_i8_doc  }, 
     {"read_tbf",      (PyCFunction) read_tbf_cf32,  METH_VARARGS,               read_tbf_cf32_doc }, 
     {"read_tbf_ci8",  (PyCFunction) read_tbf_ci8,   METH_VARARGS,               read_tbf_ci8_doc  }, 
-    {"read_cor",      (PyCFunction) read_cor,       METH_VARARGS,               read_cor_doc      }, 
+    {"read_cor",      (PyCFunction) read_cor,       METH_VARARGS,               read_cor_doc      },
+    {"read_tbx",      (PyCFunction) read_tbx_cf32,  METH_VARARGS,               read_tbx_cf32_doc }, 
+    {"read_tbx_ci8",  (PyCFunction) read_tbx_ci8,   METH_VARARGS,               read_tbx_ci8_doc  }, 
     {NULL,            NULL,                         0,                          NULL              }
 };
 

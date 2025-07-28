@@ -42,6 +42,7 @@ extern int8_t  tbnLUT[256];
 extern int8_t  drx8LUT[256];
 extern int8_t  drxLUT[256][2];
 extern int8_t  tbfLUT[256][2];
+extern int8_t  tbxLUT[256][2];
 
 
 /* 
@@ -107,3 +108,9 @@ extern char read_tbf_ci8_doc[];
 // cor.cpp
 extern PyObject *read_cor(PyObject*, PyObject*);
 extern char read_cor_doc[];
+
+// tbx.cpp
+extern PyObject *read_tbx_cf32(PyObject*, PyObject*);
+extern char read_tbx_cf32_doc[];
+extern PyObject *read_tbx_ci8(PyObject*, PyObject*);
+extern char read_tbx_ci8_doc[];
