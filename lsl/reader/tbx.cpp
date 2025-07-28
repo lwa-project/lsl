@@ -202,8 +202,8 @@ PyObject *read_tbx_impl(PyObject *self, PyObject *args) {
     // 1.  Header
     fHeader = PyObject_GetAttrString(frame, "header");
     
-    temp = Py_BuildValue("B", cFrame.header.adp_id);
-    PyObject_SetAttrString(fHeader, "adp_id", temp);
+    temp = Py_BuildValue("B", cFrame.header.frame_id);
+    PyObject_SetAttrString(fHeader, "frame_id", temp);
     Py_XDECREF(temp);
     
     temp = PyLong_FromUnsignedLong(cFrame.header.frame_count);
