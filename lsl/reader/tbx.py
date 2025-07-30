@@ -32,7 +32,7 @@ import numpy as np
 from lsl.common import adp as adp_common
 from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_tbx, read_tbx_ci8
+from lsl.reader._gofast import read_tbf, read_tbf_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
@@ -58,10 +58,9 @@ class FrameHeader(FrameHeaderBase):
     well as the original binary header data.
     """
     
-    _header_attrs = ['frame_id', 'frame_count', 'second_count', 'nstand', 'nchan', 'first_chan']
+    _header_attrs = ['frame_count', 'second_count', 'nstand', 'nchan', 'first_chan']
     
-    def __init__(self, frame_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None, nchan=None):
-        self.frame_id = frame_id`
+    def __init__(self, frame_count=None, second_count=None, first_chan=None, nstand=None, nchan=None):
         self.frame_count = frame_count
         self.second_count = second_count
         self.first_chan = first_chan
@@ -69,18 +68,6 @@ class FrameHeader(FrameHeaderBase):
         self.nchan = nchan
         FrameHeaderBase.__init__(self)
         
-    @property
-    def is_tbx(self):
-        """
-        Function to check if the data is really TBX.  Returns True if the 
-        data is TBX, false otherwise.
-        """
-        
-        if self.frame_id == 0x08:
-            return True
-        else:
-            return False
-            
     @property
     def channel_freqs(self):
         """
@@ -124,22 +111,6 @@ class Frame(FrameBase):
     _header_class = FrameHeader
     _payload_class = FramePayload
     
-    @property
-    def frame_id(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.frame_id property.
-        """
-        
-        return self.header.frame_id
-        
-    @property
-    def is_tbx(self):
-        """
-        Convenience wrapper for the Frame.FrameHeader.is_tbx property.
-        """
-        
-        return self.header.is_tbx
-        
     @property
     def nstand(self):
         """
@@ -198,7 +169,7 @@ def read_frame_ci8(filehandle, verbose=False):
     
     .. note::
         This function differs from `read_frame` in that it returns a
-        `lsl.reader.tbx.FramePayload` that contains a 4-D numpy.int8 array
+        `lsl.reader.tbf.FramePayload` that contains a 4-D numpy.int8 array
         (channels by stands by polarizations by by real/complex) rather than a
         3-D numpy.complex64 array.
     
@@ -230,7 +201,7 @@ def get_frame_size(filehandle):
             try:
                 cPos = filehandle.tell()
                 cFrame = read_frame(filehandle)
-                if not cFrame.is_tbx:
+                if not cFrame.is_tbf:
                     continue
                 nPos = filehandle.tell()
                 break
@@ -258,7 +229,7 @@ def get_frames_per_obs(filehandle):
         for i in range(2500):
             try:
                 cFrame = read_frame(filehandle)
-                if not cFrame.is_tbx:
+                if not cFrame.is_tbf:
                     continue
             except EOFError:
                 break
@@ -287,8 +258,6 @@ def get_first_frame_count(filehandle):
         freqs = []
         while len(freqs) < nFrames:
             cFrame = read_frame(filehandle)
-            if not cFrame.is_tbx:
-                    continue
             freq = cFrame.header.first_chan
             
             if freq not in freqs:
@@ -332,8 +301,6 @@ def get_first_channel(filehandle, frequency=False, all_frames=False):
         freqs = []
         while len(freqs) < nFrames:
             cFrame = read_frame(filehandle)
-            if not cFrame.is_tbx:
-                    continue
             if frequency:
                 freq = cFrame.channel_freqs[0]
             else:
