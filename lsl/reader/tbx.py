@@ -44,18 +44,14 @@ telemetry.track_module()
 
 __version__ = '0.1'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
-           'FRAME_CHANNEL_COUNT', 'get_frame_size', 'get_frames_per_obs',
+           'get_frame_size', 'get_frames_per_obs',
            'get_first_frame_count', 'get_channel_count', 'get_first_channel']
-
-#: Number of frequency channels in a TBF packet
-FRAME_CHANNEL_COUNT = 12
 
 
 class FrameHeader(FrameHeaderBase):
     """
-    Class that stores the information found in the header of a TBF 
-    frame.  All three fields listed in the DP ICD version H are stored as 
-    well as the original binary header data.
+    Class that stores the information found in the header of a TBX
+    frame.
     """
     
     _header_attrs = ['frame_id', 'frame_count', 'second_count', 'nstand', 'nchan', 'first_chan']
@@ -94,8 +90,8 @@ class FrameHeader(FrameHeaderBase):
 
 class FramePayload(FramePayloadBase):
     """
-    Class that stores the information found in the data section of a TBF
-    frame.  Both fields listed in the DP ICD version H are stored.
+    Class that stores the information found in the data section of a TBX
+    frame.
     """
     
     _payload_attrs = ['timetag']
@@ -117,7 +113,7 @@ class FramePayload(FramePayloadBase):
 
 class Frame(FrameBase):
     """
-    Class that stores the information contained within a single TBF 
+    Class that stores the information contained within a single TBX
     frame.  It's properties are FrameHeader and FramePayload objects.
     """
     
@@ -175,7 +171,7 @@ class Frame(FrameBase):
 
 def read_frame(filehandle, verbose=False):
     """
-    Function to read in a single TBF frame (header+data) and store the 
+    Function to read in a single TBX frame (header+data) and store the 
     contents as a Frame object.
     """
     
@@ -248,7 +244,7 @@ def get_frame_size(filehandle):
 def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
-    first 2500 TBF records.  Return the number of frames per observation.
+    first 2500 TBX records.  Return the number of frames per observation.
     """
     
     with FilePositionSaver(filehandle):
@@ -276,7 +272,7 @@ def get_frames_per_obs(filehandle):
 
 def get_first_frame_count(filehandle):
     """
-    Find and return the lowest frame count encountered in a TBF file.
+    Find and return the lowest frame count encountered in a TBX file.
     """
     
     # Find out how many frames there are per observation
@@ -303,14 +299,30 @@ def get_first_frame_count(filehandle):
 def get_channel_count(filehandle):
     """
     Find out the total number of channels that are present by examining 
-    the first 1000 TBF records.  Return the number of channels found.
+    the first 1000 TBX records.  Return the number of channels found.
     """
     
     # Find out how many frames there are per observation
     nFrames = get_frames_per_obs(filehandle)
     
+    # Find out how many channels are in each frame
+    with FilePositionSaver(filehandle):
+        for i in range(2500):
+            try:
+                cFrame = read_frame(filehandle)
+                if not cFrame.is_tbx:
+                    continue
+            except EOFError:
+                break
+            except SyncError:
+                filehandle.seek(0, 1)
+                continue
+                
+            channel_count = cFrame.header.nchan
+            break
+            
     # Convert to channels
-    nChannels = nFrames * FRAME_CHANNEL_COUNT
+    nChannels = nFrames * channel_count
     
     # Return the number of channels
     return nChannels
@@ -318,9 +330,9 @@ def get_channel_count(filehandle):
 
 def get_first_channel(filehandle, frequency=False, all_frames=False):
     """
-    Find and return the lowest frequency channel in a TBF file.  If the 
+    Find and return the lowest frequency channel in a TBX file.  If the 
     `frequency` keyword is True the returned value is in Hz.  If `all` is
-    True then the lowest frequency in each unique TBF frame is returned as
+    True then the lowest frequency in each unique TBX frame is returned as
     a list.
     """
     
