@@ -22,9 +22,6 @@ Buffer for dealing with out-of-order/missing frames.
     
 .. versionchanged:: 3.0.2
     Added support for the DRX8 mode (again).
-    
-.. versionchange:: 3.1.0
-    Added support for TBX mode
 """
 
 import abc
@@ -36,10 +33,10 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.4'
+__version__ = '1.3'
 __all__ = ['FrameBufferBase', 'TBNFrameBuffer', 'DRXFrameBuffer',
            'DRX8FrameBuffer', 'TBFFrameBuffer', 'CORFrameBuffer',
-           'VDIFFrameBuffer', 'TBXFrameBuffer']
+           'VDIFFrameBuffer']
 
 
 def _cmp_frames(x, y):
@@ -116,15 +113,13 @@ class FrameBufferBase(object):
             * list of start channels
           * VDIF
             * list of thread IDs
-          * TBX
-            * list of start channels
         By doing this, we should be able to keep up with when the buffer 
         is full and to help figure out which stands/beam/tunings/pols. are 
         missing.
         """
         
         # Input validation
-        if mode.upper() not in ('TBN', 'DRX', 'DRX8', 'TBF', 'COR', 'VDIF', 'TBX'):
+        if mode.upper() not in ('TBN', 'DRX', 'DRX8', 'TBF', 'COR', 'VDIF'):
             raise RuntimeError(f"Invalid observing mode '{mode}'")
             
         if mode.upper() == 'TBN':
@@ -140,7 +135,7 @@ class FrameBufferBase(object):
                 if pol not in (0, 1):
                     raise RuntimeError(f"Invalid polarization '{pol}'")
                     
-        elif mode.upper() in ('TBF', 'TBX'):
+        elif mode.upper() == 'TBF':
             for chan in chans:
                 if chan not in range(4096):
                     raise RuntimeError(f"Invalid start channel '{chan}'")
@@ -405,7 +400,7 @@ class FrameBufferBase(object):
         else:
             if self.mode == 'VDIF':
                 fnc = lambda x: x.id[1]
-            elif self.mode in ('TBF', 'TBX'):
+            elif self.mode == 'TBF':
                 fnc = lambda x: x.header.first_chan
             elif self.mode == 'COR':
                 fnc = lambda x: x.id+(x.header.first_chan,)
@@ -984,94 +979,6 @@ class VDIFFrameBuffer(FrameBufferBase):
         # Zero the data for the fill packet
         fillFrame.payload._data *= 0
         
-        # Invalidate the frame
-        fillFrame.valid = False
-        
-        return fillFrame
-
-
-class TBXFrameBuffer(FrameBufferBase):
-    """
-    A sub-type of FrameBufferBase specifically for dealing with TBX frames.
-    See :class:`lsl.reader.buffer.FrameBufferBase` for a description of how the 
-    buffering is implemented.
-    
-    Keywords:
-      chans
-        list of start channel numbers to expect data for
-    
-      nsegments
-        number of ring segments to use for the buffer (default is 25)
-    
-      reorder
-        whether or not to reorder frames returned by get() or flush() by 
-        start channel (default is False)
-    
-    The number of segements in the ring can be converted to a buffer time in 
-    seconds:
-    
-    +----------+--------+
-    | Segments |  Time  |
-    +----------+--------+
-    |    10    | 0.0004 |
-    +----------+--------+
-    |    25    | 0.001  |
-    +----------+--------+
-    |    50    | 0.002  |
-    +----------+--------+
-    |   100    | 0.004  |
-    +----------+--------+
-    |   200    | 0.008  |
-    +----------+--------+
-    
-    """
-    
-    def __init__(self, chans, nsegments=25, reorder=False):
-        FrameBufferBase.__init__(self, mode='TBX', chans=chans, nsegments=nsegments, reorder=reorder)
-        
-    def get_max_frames(self):
-        """
-        Calculate the maximum number of frames that we expect from 
-        the setup of the observations and a list of tuples that describes
-        all of the possible stand/pol combination.
-        """
-        
-        nFrames = 0
-        frameList = []
-        
-        nFrames = len(self.chans)
-        for chans in self.chans:
-            frameList.append(chans)
-            
-        return (nFrames, frameList)
-        
-    def get_figure_of_merit(self, frame):
-        """
-        Figure of merit for sorting frames.  For TBF this is:
-        frame.payload.timetag
-        """
-        
-        return frame.payload.timetag
-        
-    def create_fill(self, key, frameParameters):
-        """
-        Create a 'fill' frame of zeros using an existing good
-        packet as a template.
-        """
-
-        # Get a template based on the first frame for the current buffer
-        fillFrame = copy.deepcopy(self.buffer[key][0])
-        
-        # Get out the frame parameters and fix-up the header
-        chan = frameParameters
-        fillFrame.header.first_chan = chan
-        
-        # Zero the data for the fill packet
-        try:
-            fillFrame.payload._data *= 0
-        except TypeError:
-            fillFrame.payload._data[...] = 0
-            
         # Invalidate the frame
         fillFrame.valid = False
         
