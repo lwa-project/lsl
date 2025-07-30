@@ -17,6 +17,7 @@ __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
+tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
 tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
 drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
@@ -32,6 +33,100 @@ class ldp_tests(unittest.TestCase):
         """Create the temporary file directory."""
 
         self.testPath = tempfile.mkdtemp(prefix='test-ldp-', suffix='.tmp')
+        
+    ### TBW ###
+    
+    def test_ldp_tbw(self):
+        """Test the LDP interface for a TBW file."""
+        
+        f = ldp.TBWFile(tbwFile)
+        
+        # File info
+        str(f)
+        repr(f)
+        self.assertEqual(f.get_info("sample_rate"), 196e6)
+        self.assertEqual(f.get_info("data_bits"), 12)
+        self.assertEqual(f.get_info('nframe'), 8)
+        
+        self.assertEqual(f.sample_rate, 196e6)
+        self.assertEqual(f.data_bits, 12)
+        self.assertEqual(f.nframe, 8)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read more
+        tInt, tStart, data = f.read()
+        
+        # Close it out
+        f.close()
+        
+        # Now try it with a filehandle that is already open
+        fh = open(tbwFile, 'r')
+        f = ldp.TBWFile(fh=fh, ignore_timetag_errors=True)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 196e6)
+        self.assertEqual(f.get_info("data_bits"), 12)
+        self.assertEqual(f.get_info('nframe'), 8)
+        
+        self.assertEqual(f.sample_rate, 196e6)
+        self.assertEqual(f.data_bits, 12)
+        self.assertEqual(f.nframe, 8)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read more
+        tInt, tStart, data = f.read()
+        
+        # Close it out
+        f.close()
+        fh.close()
+        
+    def test_ldp_tbw_nocheck(self):
+        """Test the LDP interface for a TBW file."""
+        
+        f = ldp.TBWFile(tbwFile, ignore_timetag_errors=True)
+        
+        # File info
+        self.assertEqual(f.get_info("sample_rate"), 196e6)
+        self.assertEqual(f.get_info("data_bits"), 12)
+        self.assertEqual(f.get_info('nframe'), 8)
+        
+        self.assertEqual(f.sample_rate, 196e6)
+        self.assertEqual(f.data_bits, 12)
+        self.assertEqual(f.nframe, 8)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read more
+        tInt, tStart, data = f.read()
+        
+        # Close it out
+        f.close()
         
     ### TBN ###
     
@@ -531,6 +626,12 @@ class ldp_tests(unittest.TestCase):
         
     ### File Type Discovery ###
     
+    def test_ldp_discover_tbw(self):
+        """Test the LDP LWA1DataFile function of TBW."""
+        # TBW
+        f = ldp.LWA1DataFile(tbwFile)
+        self.assertEqual(type(f), ldp.TBWFile)
+        
     def test_ldp_discover_tbn(self):
         """Test the LDP LWA1DataFile function of TBN."""
         # TBN
@@ -752,6 +853,47 @@ class ldp_tests(unittest.TestCase):
         
         f.close()
         w.close()
+        
+    def test_ldp_splitfilewrapper_mixed(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([tbwFile, tbnFile], sort=False)
+        f = ldp.LWA1DataFile(fh=w)
+        
+        # File info
+        self.assertTrue(isinstance(f, ldp.TBWFile))
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                if frame.is_tbw:
+                    frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 8+1)  # There is data at the end of the "file" now      
+        
+    def test_ldp_splitfilewrapper_mixed2(self):
+        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
+        
+        w = SplitFileWrapper([tbnFile, tbwFile], sort=False)
+        f = ldp.TBWFile(fh=w)
+        
+        # Read some
+        frames = []
+        while True:
+            try:
+                frame = f.read_frame()
+                if frame.is_tbw:
+                    frames.append(frame)
+            except errors.SyncError:
+                continue
+            except errors.EOFError:
+                break
+        self.assertEqual(len(frames), 8-1)  # We loose part of the first frame to TBN   
         
     def tearDown(self):
         """Cleanup"""
