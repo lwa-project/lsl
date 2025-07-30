@@ -88,7 +88,7 @@ PyObject *read_tbx_impl(PyObject *self, PyObject *args) {
     
     // Determine the number of stands and channels in the frame 
     nstand = __bswap_32(cFrame.header.nstand);
-    nchan = __bswap_32(cFrame.header.nstand);
+    nchan = __bswap_32(cFrame.header.nchan);
     
     // If nstand is not what we expect, update the cache and retry with correct size
     if( nstand != NSTAND || nchan != NCHAN ) {
@@ -98,53 +98,46 @@ PyObject *read_tbx_impl(PyObject *self, PyObject *args) {
         tbx_size = NULL;        // Force NULL since Py_XDECREF isn't guaranteed to change tbx_size
         PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         
+#define MATCH_TBX_MODE(MNSTAND,MNCHAN) \
+    case MNCHAN: \
+        return read_tbx_impl<MNSTAND, MNCHAN, T, N>(self,args);
+        
         switch(nstand) {
             case 64:
                 switch(nchan) {
-                    case 4:
-                        return read_tbx_impl<64, 4, T, N>(self, args);
-                    case 8:
-                        return read_tbx_impl<64, 8, T, N>(self, args);
-                    case 12:
-                        return read_tbx_impl<64, 12, T, N>(self, args);
-                    case 16:
-                        return read_tbx_impl<64, 16, T, N>(self, args);
+                    MATCH_TBX_MODE(64,4)
+                    MATCH_TBX_MODE(64,8)
+                    MATCH_TBX_MODE(64,12)
+                    MATCH_TBX_MODE(64,16)
                     default:
-                        PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
+                        PyErr_Format(SyncError, "Mark 5C sync word differs from expected during mode change");
                         return NULL;
                 }
             case 128:
                 switch(nchan) {
-                    case 4:
-                        return read_tbx_impl<128, 4, T, N>(self, args);
-                    case 8:
-                        return read_tbx_impl<128, 8, T, N>(self, args);
-                    case 12:
-                        return read_tbx_impl<128, 12, T, N>(self, args);
-                    case 16:
-                        return read_tbx_impl<128, 16, T, N>(self, args);
+                    MATCH_TBX_MODE(128,4)
+                    MATCH_TBX_MODE(128,8)
+                    MATCH_TBX_MODE(128,12)
+                    MATCH_TBX_MODE(128,16)
                     default:
-                        PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
+                        PyErr_Format(SyncError, "Mark 5C sync word differs from expected during mode change");
                         return NULL;
                 }
             case 256:
                 switch(nchan) {
-                    case 4:
-                        return read_tbx_impl<256, 4, T, N>(self, args);
-                    case 8:
-                        return read_tbx_impl<256, 8, T, N>(self, args);
-                    case 12:
-                        return read_tbx_impl<256, 12, T, N>(self, args);
-                    case 16:
-                        return read_tbx_impl<256, 16, T, N>(self, args);
+                    MATCH_TBX_MODE(256,4)
+                    MATCH_TBX_MODE(256,8)
+                    MATCH_TBX_MODE(256,12)
+                    MATCH_TBX_MODE(256,16)
                     default:
-                        PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
+                        PyErr_Format(SyncError, "Mark 5C sync word differs from expected during mode change");
                         return NULL;
                 }
             default:
-                PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
+                PyErr_Format(SyncError, "Mark 5C sync word differs from expected during mode change");
                 return NULL;
         }
+#undef MATCH_TBX_MODE
     }
     
     // Create the output data array
@@ -166,7 +159,7 @@ PyObject *read_tbx_impl(PyObject *self, PyObject *args) {
     // Swap the bits around
     cFrame.header.frame_count_word = __bswap_32(cFrame.header.frame_count_word);
     cFrame.header.second_count = __bswap_32(cFrame.header.second_count);
-    cFrame.header.first_chan = __bswap_16(cFrame.header.first_chan);
+    cFrame.header.first_chan = __bswap_32(cFrame.header.first_chan);
     cFrame.payload.timetag = __bswap_64(cFrame.payload.timetag);
     
     // Fill the data array
@@ -251,27 +244,25 @@ PyObject *read_tbx_impl(PyObject *self, PyObject *args) {
 template<typename T, NPY_TYPES N>
 PyObject *read_tbx(PyObject *self, PyObject *args) {
     // Try fast path first with cached nstand
+#define MATCH_TBX_MODE(NSTAND,NCHAN) \
+    case NCHAN: \
+        return read_tbx_impl<NSTAND, NCHAN, T, N>(self,args);
+        
     switch(cached_nstand) {
         case 64:
             switch(cached_nchan) {
-                case 4:
-                    return read_tbx_impl<64, 4, T, N>(self, args);
-                case 8:
-                    return read_tbx_impl<64, 8, T, N>(self, args);
-                case 12:
-                    return read_tbx_impl<64, 12, T, N>(self, args);
+                MATCH_TBX_MODE(64,4)
+                MATCH_TBX_MODE(64,8)
+                MATCH_TBX_MODE(64,12)
                 case 16:
                 default:
                     return read_tbx_impl<64, 16, T, N>(self, args);
             }
         case 128:
             switch(cached_nchan) {
-                case 4:
-                    return read_tbx_impl<128, 4, T, N>(self, args);
-                case 8:
-                    return read_tbx_impl<128, 8, T, N>(self, args);
-                case 12:
-                    return read_tbx_impl<128, 12, T, N>(self, args);
+                MATCH_TBX_MODE(128,4)
+                MATCH_TBX_MODE(128,8)
+                MATCH_TBX_MODE(128,12)
                 case 16:
                 default:
                     return read_tbx_impl<128, 16, T, N>(self, args);
@@ -279,17 +270,15 @@ PyObject *read_tbx(PyObject *self, PyObject *args) {
         case 256: 
         default:
             switch(cached_nchan) {
-                case 4:
-                    return read_tbx_impl<256, 4, T, N>(self, args);
-                case 8:
-                    return read_tbx_impl<256, 8, T, N>(self, args);
-                case 12:
-                    return read_tbx_impl<256, 12, T, N>(self, args);
+                MATCH_TBX_MODE(256,4)
+                MATCH_TBX_MODE(256,8)
+                MATCH_TBX_MODE(256,12)
                 case 16:
                 default:
                     return read_tbx_impl<256, 16, T, N>(self, args);
             }
     }
+#undef MATCH_TBX_MODE
 }
 
 
