@@ -15,7 +15,7 @@ from astropy.constants import c as speedOfLight
 from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.data_access import DataAccess
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -117,7 +117,7 @@ def calc_delay(antennas, freq=49.0e6, azimuth=0.0, altitude=90.0):
     return delays
 
 
-def int_delay_and_sum(antennas, data, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, altitude=90.0):
+def int_delay_and_sum(antennas, data, sample_rate=ndp_common.fS, freq=49e6, azimuth=0.0, altitude=90.0):
     """
     Given a list of antennas and a 2-D data stream with stands enumerated
     along the first axis and time series samples along the second axis, 
@@ -184,7 +184,7 @@ def int_delay_and_sum(antennas, data, sample_rate=dp_common.fS, freq=49e6, azimu
     return output
 
 
-def _int_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, altitude, beam_shape=1.0, sample_rate=dp_common.fS, direction=(0.0, 90.0)):
+def _int_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, altitude, beam_shape=1.0, sample_rate=ndp_common.fS, direction=(0.0, 90.0)):
     """
     Worker function for int_beam_shape that 'beep's (makes a simulated signals) and
     'sweep's (delays it appropriately).
@@ -222,7 +222,7 @@ def _int_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, altitude, beam_sha
     return sigHere
 
 
-def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, altitude=90.0, progress=False):
+def int_beam_shape(antennas, sample_rate=ndp_common.fS, freq=49e6, azimuth=0.0, altitude=90.0, progress=False):
     """
     Given a list of antennas, compute the on-sky response of the delay-and-sum
     scheme implemented in int_delay_and_sum.  A 360x90 numpy array spanning azimuth
@@ -318,7 +318,7 @@ def int_beam_shape(antennas, sample_rate=dp_common.fS, freq=49e6, azimuth=0.0, a
     return output
 
 
-def phase_and_sum(antennas, data, sample_rate=dp_common.fS, central_freq=49.0e6, azimuth=0.0, altitude=90.0):
+def phase_and_sum(antennas, data, sample_rate=ndp_common.fS, central_freq=49.0e6, azimuth=0.0, altitude=90.0):
     """
     Given a list of antennas and a data stream of the form stands x times, 
     delay and sum the data stream into one beam.  Return a 1-D numpy array 
@@ -368,7 +368,7 @@ def phase_and_sum(antennas, data, sample_rate=dp_common.fS, central_freq=49.0e6,
     return output
 
 
-def _phase_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, altitude, beam_shape=1.0, sample_rate=dp_common.fS, direction=(0.0, 90.0)):
+def _phase_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, altitude, beam_shape=1.0, sample_rate=ndp_common.fS, direction=(0.0, 90.0)):
     """
     Worker function for phase_beam_shape that 'beep's (makes a simulated signals) and
     'sweep's (phases it appropriately).
@@ -404,7 +404,7 @@ def _phase_beep_and_sweep(antennas, arrayXYZ, t, freq, azimuth, altitude, beam_s
     return sigHere
 
 
-def phase_beam_shape(antennas, sample_rate=dp_common.fS, central_freq=49.0e6, azimuth=0.0, altitude=90.0, progress=False):
+def phase_beam_shape(antennas, sample_rate=ndp_common.fS, central_freq=49.0e6, azimuth=0.0, altitude=90.0, progress=False):
     """
     Given a list of antennas, compute the on-sky response of the delay-and-sum
     scheme implemented in int_delay_and_sum.  A 360x90 numpy array spanning azimuth
