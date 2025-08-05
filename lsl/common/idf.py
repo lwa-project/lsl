@@ -46,13 +46,13 @@ from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.common._sdf_utils import *
 from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.adp import freq_to_word, word_to_freq
+from lsl.common.mcs import datetime_to_mjdmpm, mjdmpm_to_datetime
+from lsl.common.ndp import freq_to_word, word_to_freq
 from lsl.common.stations import LWAStation, get_all_stations, lwa1, ovrolwa
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common.sdf import UCF_USERNAME_RE, Observer
-from lsl.common import sdf, sdfADP, sdfNDP
+from lsl.common import sdf
 
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
