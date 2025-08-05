@@ -23,8 +23,8 @@ typedef struct __attribute__((packed)) {
     };
     uint32_t second_count;
     uint32_t first_chan;
-    uint32_t nstand;
-    uint32_t nchan;
+    uint16_t nstand;
+    uint16_t nchan;
 } TBXHeader;
 
 
@@ -87,8 +87,8 @@ PyObject *read_tbx_impl(PyObject *self, PyObject *args) {
     Py_XDECREF(buffer);
     
     // Determine the number of stands and channels in the frame 
-    nstand = __bswap_32(cFrame.header.nstand);
-    nchan = __bswap_32(cFrame.header.nchan);
+    nstand = __bswap_16(cFrame.header.nstand);
+    nchan = __bswap_16(cFrame.header.nchan);
     
     // If nstand is not what we expect, update the cache and retry with correct size
     if( nstand != NSTAND || nchan != NCHAN ) {
