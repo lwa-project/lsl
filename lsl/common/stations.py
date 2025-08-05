@@ -19,7 +19,7 @@ from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as DATA_PATH
-from lsl.common import dp, mcs as mcsDP, adp, mcsADP, ndp, mcsNDP
+from lsl.common import ndp, mcs
 from lsl.misc.mathutils import to_dB, from_dB
 from lsl.common.data_access import DataAccess
 
@@ -27,7 +27,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '2.6'
+__version__ = '2.7'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX',
            'LSLInterface', 'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv', 'ovrolwa', 'lwaov',
            'get_all_stations', 'get_full_stations', 'get_mini_stations',]
@@ -1017,18 +1017,10 @@ class LSLInterface(object):
         
         # Create a cache and preload it for the backend and mcs
         self._cache = {}
-        if backend == 'lsl.common.dp':
+        if backend == 'lsl.common.ndp':
             self._cache['backend'] = dp
-        elif backend == 'lsl.common.adp':
-            self._cache['backend'] = adp
-        elif backend == 'lsl.common.ndp':
-            self._cache['backend'] = ndp
         if mcs == 'lsl.common.mcs':
-            self._cache['mcs'] = mcsDP
-        elif mcs == 'lsl.common.mcsADP':
-            self._cache['mcs'] = mcsADP
-        elif mcs == 'lsl.common.mcsNDP':
-            self._cache['mcs'] = mcsNDP
+            self._cache['mcs'] = mcs
             
     def __str__(self):
         return f"LSL Interfaces:\n Backend: {self.backend}\n MCS: {self.mcs}\n SDF: {self.sdf}\n Metadata: {self.metabundle}\n SDM: {self.sdm}"
@@ -1387,133 +1379,56 @@ def _parse_ssmif_text(filename_or_fh):
                 
                 
             #
-            # DP 1 & 2 Data - LWA1
-            #
-            
-            if keyword == 'N_DP1':
-                nDP1 = int(value)
-                
-                dp1ID = ["UNK" for n in range(nDP1)]
-                dp1Slot = [0 for n in range(nDP1)]
-                dp1Desi = [1 for n in range(nDP1)]
-                
-                continue
-                
-            if keyword == 'N_DP1CH':
-                nChanDP1 = int(value)
-                
-                dp1Stat = [[3 for c in range(nChanDP1)] for n in range(nDP1)]
-                dp1InR = [["UNK" for c in range(nChanDP1)] for n in range(nDP1)]
-                dp1InC = [["UNK" for c in range(nChanDP1)] for n in range(nDP1)]
-                dp1Ant = [[n*nChanDP1+c+1 for c in range(nChanDP1)] for n in range(nDP1)]
-                
-                continue
-                
-            if keyword == 'DP1_ID':
-                dp1ID[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP1_SLOT':
-                dp1Slot[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP1_DESI':
-                dp1Desi[ids[0]-1] = int(value)
-                continue
-                
-            if keyword == 'DP1_STAT':
-                dp1Stat[ids[0]-1][ids[1]-1] = int(value)
-                continue
-                
-            if keyword == 'DP1_INR':
-                dp1InR[ids[0]-1][ids[1]-1] = value
-                continue
-                
-            if keyword == 'DP1_INC':
-                dp1InC[ids[0]-1][ids[1]-1] = value
-                continue
-                
-            if keyword == 'DP1_ANT':
-                dp1Ant[ids[0]-1][ids[1]-1] = int(value)
-                continue
-                
-            if keyword == 'N_DP2':
-                nDP2 = int(value)
-                
-                dp2ID = ["UNK" for n in range(nDP2)]
-                dp2Slot = ["UNK" for n in range(nDP2)]
-                dp2Stat = [3 for n in range(nDP2)]
-                dp2Desi = [1 for n in range(nDP2)]
-                
-                continue
-                
-            if keyword == 'DP2_ID':
-                dp2ID[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP2_SLOT':
-                dp2Slot[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP2_STAT':
-                dp2Stat[ids[0]-1] = int(value)
-                continue
-                
-            if keyword == 'DP2_DESI':
-                dp2Desi[ids[0]-1] = int(value)
-                continue
-                
-            #
             # ROACH & Server Data - LWA-SV
             #             and
             # SNAP & Server Data - LWA-NA
             #
             
-            if keyword in ('N_ROACH', 'N_SNAP'):
+            if keyword ==  'N_SNAP':
                 nRoach = int(value)
                 
-                roachID = ["UNK" for n in range(nRoach)]
-                roachSlot = [0 for n in range(nRoach)]
-                roachDesi = [1 for n in range(nRoach)]
+                snapID = ["UNK" for n in range(nRoach)]
+                snapSlot = [0 for n in range(nRoach)]
+                snapDesi = [1 for n in range(nRoach)]
                 
                 continue
                 
-            if keyword in ('N_ROACHCH', 'N_SNAPCH'):
+            if keyword == 'N_SNAPCH':
                 nChanRoach = int(value)
                 
-                roachStat = [[3 for c in range(nChanRoach)] for n in range(nRoach)]
-                roachInR = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
-                roachInC = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
-                roachAnt = [[n*nChanRoach+c+1 for c in range(nChanRoach)] for n in range(nRoach)]
+                snapStat = [[3 for c in range(nChanRoach)] for n in range(nRoach)]
+                snapInR = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
+                snapInC = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
+                snapAnt = [[n*nChanRoach+c+1 for c in range(nChanRoach)] for n in range(nRoach)]
                 
                 continue
                 
-            if keyword in ('ROACH_ID', 'SNAP_ID'):
-                roachID[ids[0]-1] = value
+            if keyword == 'SNAP_ID':
+                snapID[ids[0]-1] = value
                 continue
                 
-            if keyword in ('ROACH_SLOT', 'SNAP_SLOT'):
-                roachSlot[ids[0]-1] = value
+            if keyword == 'SNAP_SLOT':
+                snapSlot[ids[0]-1] = value
                 continue
                 
-            if keyword in ('ROACH_DESI', 'SNAP_DESI'):
-                roachDesi[ids[0]-1] = int(value)
+            if keyword == 'SNAP_DESI':
+                snapDesi[ids[0]-1] = int(value)
                 continue
                 
-            if keyword in ('ROACH_STAT', 'SNAP_STAT'):
-                roachStat[ids[0]-1][ids[1]-1] = int(value)
+            if keyword == 'SNAP_STAT':
+                snapStat[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
-            if keyword in ('ROACH_INR', 'SNAP_INR'):
-                roachInR[ids[0]-1][ids[1]-1] = value
+            if keyword == 'SNAP_INR':
+                snapInR[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword in ('ROACH_INC', 'SNAP_INC'):
-                roachInC[ids[0]-1][ids[1]-1] = value
+            if keyword == 'SNAP_INC':
+                snapInC[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword in ('ROACH_ANT', 'SNAP_ANT'):
-                roachAnt[ids[0]-1][ids[1]-1] = int(value)
+            if keyword == 'SNAP_ANT':
+                snapAnt[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
             if keyword == 'N_SERVER':
@@ -1611,20 +1526,8 @@ def _parse_ssmif_binary(filename_or_fh):
         version = struct.unpack('<i', version)[0]
         fh.seek(0)
         
-        overrides = {}
-        if version == 10:
-            ## NDP
-            mode = mcsNDP
-        elif version in (8,9):
-            ## ADP
-            mode = mcsADP
-            if version == 8:
-                overrides['ME_MAX_NDR'] = 3
-        else:
-            ## DP
-            mode = mcsDP
-        bssmif = mode.parse_c_struct(mode.SSMIF_STRUCT, char_mode='int', endianness='little', overrides=overrides)
-        bsettings = mode.parse_c_struct(mode.STATION_SETTINGS_STRUCT, endianness='little', overrides=overrides)
+        bssmif = mcs.parse_c_struct(mcs.SSMIF_STRUCT, char_mode='int', endianness='little', overrides=overrides)
+        bsettings = mcs.parse_c_struct(mcs.STATION_SETTINGS_STRUCT, endianness='little', overrides=overrides)
         
         fh.readinto(bssmif)
         
@@ -1697,74 +1600,28 @@ def _parse_ssmif_binary(filename_or_fh):
         arxOut   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
         arxOut   = [[''.join(i) for i in j] for j in arxOut]
         
-        try:
-            #
-            # DP 1 & 2 Data
-            #
-            dp1ID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
-            dp1ID   = [''.join([k for k in i if k != '\x00']) for i in dp1ID]
-            dp1Slot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
-            dp1Slot = [''.join([k for k in i if k != '\x00']) for i in dp1Slot]
-            dp1Desi = list(bssmif.eDP1Desi)
-            dp1Stat = list(bssmif.eDP1Stat)
-            dp1InR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
-            dp1InR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InR]
-            dp1InC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
-            dp1InC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InC]
-            dp1Ant  = mcsDP.flat_to_multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
-            
-            dp2ID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
-            dp2ID   = [''.join([k for k in i if k != '\x00']) for i in dp2ID]
-            dp2Slot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
-            dp2Slot = [''.join([k for k in i if k != '\x00']) for i in dp2Slot]
-            dp2Stat = list(bssmif.eDP2Stat)
-            dp2Desi = list(bssmif.eDP2Desi)
-        except AttributeError:
-            try:
-                #
-                # ROACH & Server Data
-                #
-                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
-                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
-                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
-                roachDesi = list(bssmif.eRoachDesi)
-                roachStat = list(bssmif.eRoachStat)
-                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
-                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
-                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-                roachAnt  = mcsDP.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
-                
-                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
-                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
-                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
-                serverStat = list(bssmif.eServerStat)
-                serverDesi = list(bssmif.eServerDesi)
-            except AttributeError:
-                #
-                # SNAP & Server Data
-                #
-                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
-                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
-                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
-                roachDesi = list(bssmif.eSnapDesi)
-                roachStat = list(bssmif.eSnapStat)
-                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
-                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
-                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-                roachAnt  = mcsDP.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
-                
-                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
-                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
-                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
-                serverStat = list(bssmif.eServerStat)
-                serverDesi = list(bssmif.eServerDesi)
-                
+        #
+        # SNAP & Server Data
+        #
+        snapID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
+        snapID   = [''.join([k for k in i if k != '\x00']) for i in snapID]
+        snapSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
+        snapSlot = [''.join([k for k in i if k != '\x00']) for i in snapSlot]
+        snapDesi = list(bssmif.eSnapDesi)
+        snapStat = list(bssmif.eSnapStat)
+        snapInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
+        snapInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInR]
+        snapInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
+        snapInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInC]
+        snapAnt  = mcsDP.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
+        
+        serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+        serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
+        serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+        serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
+        serverStat = list(bssmif.eServerStat)
+        serverDesi = list(bssmif.eServerDesi)
+        
         #
         # DR Data
         #
@@ -1847,19 +1704,9 @@ def parse_ssmif(filename_or_fh):
     arxAnt   = ssmifDataDict['arxAnt']
     arxIn    = ssmifDataDict['arxIn']
     arxOut   = ssmifDataDict['arxOut']
-    ### DP/ADP/NDP
-    try:
-        isDP = True
-        dp1Ant = ssmifDataDict['dp1Ant']
-        dp1InR = ssmifDataDict['dp1InR']
-    except KeyError:
-        isDP = False
-        try:
-            roachAnt = ssmifDataDict['roachAnt']
-            roachInR = ssmifDataDict['roachInR']
-        except KeyError:
-            roachAnt = ssmifDataDict['snapAnt']
-            roachInR = ssmifDataDict['snapInR']
+    ### NDP
+    snapAnt = ssmifDataDict['snapAnt']
+    snapInR = ssmifDataDict['snapInR']
     # Build up a list of Stand instances and load them with data
     i = 1
     stands = []
@@ -1934,7 +1781,7 @@ def parse_ssmif(filename_or_fh):
         # Associate ROACH board and digitizer numbers with Antennas.
         i = 1
         j = 1
-        for brd,inp in zip(roachAnt,roachInR):
+        for brd,inp in zip(snapAnt,snapInR):
             for ant,con in zip(brd,inp):
                 antennas[ant-1].board = i
                 antennas[ant-1].digitizer = j
@@ -1945,24 +1792,12 @@ def parse_ssmif(filename_or_fh):
     # Build a Station
     try:
         ## LSL interface support
-        if idn in ('VL',):
+        if idn in ('VL', 'SV', 'NA', 'CS', 'MC'):
             interface = LSLInterface(backend='lsl.common.dp', 
                                      mcs='lsl.common.mcs', 
                                      sdf='lsl.common.sdf', 
-                                     metabundle='lsl.common.metabundleDP', 
-                                     sdm='lsl.common.sdmDP')
-        elif idn in ('SV',):
-            interface = LSLInterface(backend='lsl.common.adp', 
-                                     mcs='lsl.common.mcsADP', 
-                                     sdf='lsl.common.sdfADP', 
-                                     metabundle='lsl.common.metabundleADP', 
-                                     sdm='lsl.common.sdmADP')
-        elif idn in ('NA',):
-            interface = LSLInterface(backend='lsl.common.ndp', 
-                                     mcs='lsl.common.mcsNDP', 
-                                     sdf='lsl.common.sdfNDP', 
-                                     metabundle='lsl.common.metabundleNDP', 
-                                     sdm='lsl.common.sdmNDP')
+                                     metabundle='lsl.common.metabundle', 
+                                     sdm='lsl.common.sdm')
         else:
             interface = None
             

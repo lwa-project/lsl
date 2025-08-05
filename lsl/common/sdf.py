@@ -13,8 +13,8 @@ is:
                    includes a variety of attributes that are used to convert human-
                    readable inputs to SDF data values.  The observation class is 
                    further subclasses into:
-                     - TBW - class for TBW observations
-                     - TBN - class for TBN observations
+                     - TBT - class for triggered transient buffer observations
+                     - TBS - class for streaming transient buffer observations
                      - DRX - class for general DRX observation, with sub-classes:
                        * Solar - class for solar tracking
                        * Jovian - class for Jovian tracking
@@ -63,12 +63,9 @@ from lsl.common._sdf_utils import *
 from lsl.common.color import colorfy
 
 from lsl.common.mcs import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.dp import freq_to_word, word_to_freq
+from lsl.common.ndp import freq_to_word, word_to_freq
 from lsl.common.stations import lwa1
-from lsl.reader.tbn import FILTER_CODES as TBNFilters
 from lsl.reader.drx import FILTER_CODES as DRXFilters
-from lsl.reader.tbw import FRAME_SIZE as TBWSize
-from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
 from lsl.config import LSL_CONFIG
@@ -78,15 +75,15 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.2'
-__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__version__ = '1.4'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBT', 'TBS', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 _UTC = pytz.utc
 _DRSUCapacityTB = 10
-# Factors for computing the time it takes to read out a TBW from the number 
+# Factors for computing the time it takes to read out a TBT from the number 
 # of samples
-_TBW_TIME_SCALE = 196000
-_TBW_TIME_GAIN = 2500
+_TBT_TIME_SCALE = 196000
+_TBT_TIME_GAIN = 150
 
 
 # UCF Username RE
@@ -372,7 +369,7 @@ class Project(object):
             output += "OBS_MODE         %s\n" % (obs.mode,)
             if obs.beamDipole is not None:
                 output += "OBS_BDM          %i %6.4f %6.4f %s\n" % (tuple(obs.beamDipole))
-            if obs.mode == 'TBN':
+            if obs.mode == 'TBS':
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
                 output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
@@ -502,14 +499,10 @@ class Project(object):
                     
                     if ats != -1:
                         output += "OBS_ASP_ATS[%i]  %i\n" % (atsID, ats)
-            ## TBW settings
-            if obs.mode == 'TBW':
-                output += "OBS_TBW_BITS     %i\n" % (obs.bits,)
-                output += "OBS_TBW_SAMPLES  %i\n" % (obs.samples,)
-            ## TBN gain
-            elif obs.mode == 'TBN':
-                if obs.gain != -1:
-                    output += "OBS_TBN_GAIN     %i\n" % (obs.gain,)
+            ## TBT settings
+            if obs.mode == 'TBT':
+
+                output += "OBS_TBT_SAMPLES  %i\n" % (obs.samples,)
             ## DRX gain
             else:
                 if obs.gain != -1:
@@ -534,7 +527,7 @@ class Project(object):
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
-    handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, TRK_LUN and Stepped
+    handles TBT, TBS, TRK_RADEC, TRK_SOL, TRK_JOV, TRK_LUN and Stepped
     
     .. versionchanged:: 1.0.0
         Added support for RA/dec values as ephem.hours/ephem.degrees instances
@@ -742,7 +735,6 @@ class Observation(object):
         station = lwa1
         if self._parent is not None:
             station = self._parent.station
-        is_dp = station.interface.backend == 'dp'
         nstand = station.interface.get_module('mcs').LWA_MAX_NSTD
                 
         failures = 0
@@ -778,7 +770,7 @@ class Observation(object):
             if is_dp and filt > 3:
                 warnings.warn(colorfy("{{%%yellow ASP filter %i is degenerate with %i for DP-based stations}}" % (filt, filt-4)), RuntimeWarning)
                 
-            if filt not in (-1, 0, 1, 2, 3, 4, 5):
+            if filt not in (-1, 0, 1, 2, 3, 4, 5, 6, 7):
                 failures += 1
                 if verbose:
                     pid_print(f"Error: Invalid ASP filter setting on stand {f} '{filt}'")
@@ -834,8 +826,8 @@ class Observation(object):
             raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
-class TBW(Observation):
-    """Sub-class of Observation specifically for TBW observations.  It features a
+class TBT(Observation):
+    """Sub-class of Observation specifically for TBT observations.  It features a
     reduced number of parameters needed to setup the observation and provides extra
     information about the number of data bits and the number of samples.
     
@@ -854,14 +846,12 @@ class TBW(Observation):
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, samples, bits=12, comments=None):
+    def __init__(self, name, target, start, samples, comments=None):
         self.samples = int(samples)
-        self.bits = int(bits)
-        assert(self.bits in (4, 12))
         
-        duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
+        duration = (self.samples / _TBT_TIME_SCALE + 1)*_TBT_TIME_GAIN
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
-        Observation.__init__(self, name, target, start, durStr, 'TBW', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
+        Observation.__init__(self, name, target, start, durStr, 'TBT', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
         
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
@@ -883,19 +873,17 @@ class TBW(Observation):
         
         self.update()
         
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
+        
         failures = 0
-        # Basic - Sample size and data bits agreement
-        if self.bits not in [4, 12]:
+        # Basic - Sample size
+        if self.samples > 5*196000000:
             if verbose:
-                pid_print(f"Error: Invalid number of data bits '{self.bits}'")
-            failures += 1
-        if self.bits == 12 and self.samples > 12000000:
-            if verbose:
-                pid_print(f"Error: Invalid number of samples for 12-bit data ({self.samples} > 12000000)")
-            failures += 1
-        if self.bits == 4 and self.samples > 36000000:
-            if verbose:
-                pid_print(f"Error: Invalid number of samples for 4-bit data ({self.samples} > 36000000)")
+                pid_print(f"Error: Invalid number of samples ({self.samples} > {5*196000000})")
             failures += 1
             
         # Advanced - Data Volume
@@ -914,8 +902,8 @@ class TBW(Observation):
             return False
 
 
-class TBN(Observation):
-    """Sub-class of Observation specifically for TBN observations.   It features a
+class TBS(Observation):
+    """Sub-class of Observation specifically for TBS observations.   It features a
     reduced number of parameters needed to setup the observation.
     
     Required Arguments:
@@ -931,23 +919,23 @@ class TBN(Observation):
      * comments - comments about the observation
     """
     
-    filter_codes = TBNFilters
+    filter_codes = {8: 200000}
     
-    def __init__(self, name, target, start, duration, frequency, filter, gain=-1, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TBN', 0.0, 0.0, frequency, 0.0, filter, gain=gain, comments=comments)
+    def __init__(self, name, target, start, duration, frequency, filter, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TBS', 0.0, 0.0, frequency, 0.0, filter, comments=comments)
         
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
-        observations.  For TBN:
+        observations.  For TBS:
         
-            bytes = duration * sample_rate / 512 * 1048 bytes * 260 stands * 2 pols.
+            bytes = duration * sample_rate / 512 * 1048 bytes * 256 stands * 2 pols.
         """
         
         try:
-            nFrames = self.dur/1000.0 * self.filter_codes[self.filter] / 512
+            nFrames = self.dur/1000.0 * ndp.fS / 8192
         except KeyError:
             nFrames = 0
-        nBytes = nFrames * TBNSize * LWA_MAX_NSTD * 2
+        nBytes = nFrames * (32 + 8 * LWA_MAX_NSTD * 2)
         return nBytes
         
     def validate(self, verbose=False):
@@ -972,11 +960,11 @@ class TBN(Observation):
             if verbose:
                 pid_print("Error: Specified a duration of length zero")
             failures += 1
-        if self.freq1 < backend.TBN_TUNING_WORD_MIN or self.freq1 > backend.TBN_TUNING_WORD_MAX:
+        if self.freq1 < backend.TBS_TUNING_WORD_MIN or self.freq1 > backend.TBS_TUNING_WORD_MAX:
             if verbose:
                 print(f"Error: Specified frequency is outside of the {be_name} tuning range")
             failures += 1
-        if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
+        if self.filter not in [8,]:
             if verbose:
                 pid_print(f"Error: Invalid filter code '{self.filter}'")
             failures += 1
@@ -1791,7 +1779,7 @@ class BeamStep(object):
 class Session(object):
     """Class to hold all of the observations in a session."""
     
-    _allowed_modes = (TBW, TBN, DRX, Stepped)
+    _allowed_modes = (TBT, TBS, DRX, Stepped)
     
     _parent = None
     
@@ -1836,10 +1824,6 @@ class Session(object):
         .. versionadded:: 1.2.0
         """
         
-        if value.interface.sdf != 'lsl.common.sdf':
-            raise ValueError("Incompatible station: expected %s, got %s" % \
-                             (value.interface.sdf, 'lsl.common.sdf'))
-            
         self._station = value
         self.update()
         
@@ -1998,7 +1982,7 @@ class Session(object):
                     pid_print(f"Error: Invalid DR spectrometer mode '{self.spcMetatag}'")
                 failures += 1
             if len(self.observations) > 0:
-                if self.observations[0].mode in ('TBW', 'TBN'):
+                if self.observations[0].mode in ('TBT', 'TBS'):
                     if verbose:
                         pid_print(f"Error: DR spectrometer incompatible with '{self.observations[0].mode}")
                     failures += 1
@@ -2113,15 +2097,10 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     if verbose:
         pid_print(f"Obs {obs_temp['id']} is mode {mode}")
         
-    if mode == 'TBW':
-        obsOut = TBW(obs_temp['name'], obs_temp['target'], utcString, 12000000, comments=obs_temp['comments'])
-        obsOut.bits = 1*obs_temp['tbwBits']
-        if obs_temp['tbwSamples'] > 0:
-            obsOut.samples = 1*obs_temp['tbwSamples']
-        else:
-            obsOut.samples = 12000000 if obsOut.bits == 12 else 36000000
-    elif mode == 'TBN':
-        obsOut = TBN(obs_temp['name'], obs_temp['target'], utcString, durString, f1, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
+    if mode == 'TBT':
+        obsOut = TBT(obs_temp['name'], obs_temp['target'], utcString, obs_temp['tbtSamples'], comments=obs_temp['comments'])
+    elif mode == 'TBS':
+        obsOut = TBS(obs_temp['name'], obs_temp['target'], utcString, durString, f1, obs_temp['filter'], comments=obs_temp['comments'])
     elif mode == 'TRK_RADEC':
         obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
@@ -2579,21 +2558,15 @@ def parse_sdf(filename, verbose=False):
                 else:
                     obs_temp['aspATS'][ids[0]-1] = int(value)
                 continue
-            if keyword == 'OBS_TBW_BITS':
-                obs_temp['tbwBits'] = int(value)
-                continue
-            if keyword == 'OBS_TBW_SAMPLES':
-                obs_temp['tbwSamples'] = int(value)
-                continue
-            if keyword == 'OBS_TBN_GAIN':
-                obs_temp['gain'] = int(value)
+            if keyword == 'OBS_TBT_SAMPLES':
+                obs_temp['tbtSamples'] = int(value)
                 continue
             if keyword == 'OBS_DRX_GAIN':
                 obs_temp['gain'] = int(value)
                 continue
             
             # Keywords that might indicate this is for ADP-based stations/actually an IDF
-            if keyword in ('OBS_TBF_SAMPLES', 'RUN_ID'):
+            if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'OBS_TBF_SAMPLES', 'OBS_TBN_GAIN', 'RUN_ID'):
                 raise RuntimeError(f"Invalid keyword encountered: {keyword}")
             
         # Create the final observation

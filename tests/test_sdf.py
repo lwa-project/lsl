@@ -27,15 +27,14 @@ __version__  = "0.4"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-sdf.txt')
-tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-sdf.txt')
+tbtFile = os.path.join(os.path.dirname(__file__), 'data', 'tbt-sdf.txt')
+tbsFile = os.path.join(os.path.dirname(__file__), 'data', 'tbs-sdf.txt')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-sdf.txt')
 solFile = os.path.join(os.path.dirname(__file__), 'data', 'sol-sdf.txt')
 jovFile = os.path.join(os.path.dirname(__file__), 'data', 'jov-sdf.txt')
 lunFile = os.path.join(os.path.dirname(__file__), 'data', 'lun-sdf.txt')
 stpFile = os.path.join(os.path.dirname(__file__), 'data', 'stp-sdf.txt')
 spcFile = os.path.join(os.path.dirname(__file__), 'data', 'spc-sdf.txt')
-tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-sdf.txt')
 idfFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-idf.txt')
 
 
@@ -204,53 +203,53 @@ class sdf_tests(unittest.TestCase):
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test/dir1') >= 0)
         
-    ### TBW ###
+    ### TBT ###
     
-    def test_tbw_parse(self):
-        """Test reading in a TBW SDF file."""
+    def test_tbt_parse(self):
+        """Test reading in a TBT SDF file."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
         self.assertEqual(len(project.sessions[0].observations), 2)
         
         # Observational setup - 1
-        self.assertEqual(project.sessions[0].observations[0].mode,  'TBW')
+        self.assertEqual(project.sessions[0].observations[0].mode,  'TBT')
         self.assertEqual(project.sessions[0].observations[0].mjd,   55616)
         self.assertEqual(project.sessions[0].observations[0].mpm,       0)
         
         # Observational setup - 2
-        self.assertEqual(project.sessions[0].observations[1].mode,  'TBW')
+        self.assertEqual(project.sessions[0].observations[1].mode,  'TBT')
         self.assertEqual(project.sessions[0].observations[1].mjd,   55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  700000)
         
-    def test_tbw_update(self):
+    def test_tbt_update(self):
         """Test updating TRK_SOL values."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:10:15"
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  615000)
         
-    def test_tbw_write(self):
-        """Test writing a TBW SDF file."""
+    def test_tbt_write(self):
+        """Test writing a TBT SDF file."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
-    def test_tbw_errors(self):
-        """Test various TBW SDF errors."""
+    def test_tbt_errors(self):
+        """Test various TBT SDF errors."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         
-        # Bad number of TBW bits
+        # Bad number of TBT bits
         project.sessions[0].observations[0].bits = 6
         self.assertFalse(project.validate())
         
-        # Bad number of TBW samples
+        # Bad number of TBT samples
         project.sessions[0].observations[0].bits = 4
         project.sessions[0].observations[0].samples = 72000000
         self.assertFalse(project.validate())
@@ -259,19 +258,19 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].observations[0].samples = 72000000
         self.assertFalse(project.validate())
         
-    ### TBN ###
+    ### TBS ###
     
-    def test_tbn_parse(self):
-        """Test reading in a TBN SDF file."""
+    def test_tbs_parse(self):
+        """Test reading in a TBS SDF file."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
         self.assertEqual(len(project.sessions[0].observations), 2)
         
         # Observational setup - 1
-        self.assertEqual(project.sessions[0].observations[0].mode, 'TBN')
+        self.assertEqual(project.sessions[0].observations[0].mode, 'TBS')
         self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[0].mpm,      0)
         self.assertEqual(project.sessions[0].observations[0].dur,  10000)
@@ -279,7 +278,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].filter,   7)
         
         # Observational setup - 2
-        self.assertEqual(project.sessions[0].observations[1].mode, 'TBN')
+        self.assertEqual(project.sessions[0].observations[1].mode, 'TBS')
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
         self.assertEqual(project.sessions[0].observations[1].dur,  10000)
@@ -301,10 +300,10 @@ class sdf_tests(unittest.TestCase):
         self.assertTrue(project.sessions[0].observations[0] != project.sessions[0].observations[1])
         self.assertFalse(project.sessions[0].observations[0] == project.sessions[0].observations[1])
         
-    def test_tbn_update(self):
-        """Test updating TBN values."""
+    def test_tbs_update(self):
+        """Test updating TBS values."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
         project.sessions[0].observations[1].duration = timedelta(seconds=15)
         project.sessions[0].observations[1].frequency1 = 75e6
@@ -330,17 +329,17 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].mpm,  16000)
         self.assertEqual(project.sessions[0].observations[1].start, 'UTC 2011/02/25 00:00:16.000000')
         
-    def test_tbn_write(self):
-        """Test writing a TBN SDF file."""
+    def test_tbs_write(self):
+        """Test writing a TBS SDF file."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
-    def test_tbn_errors(self):
-        """Test various TBN SDF errors."""
+    def test_tbs_errors(self):
+        """Test various TBS SDF errors."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         
         with lsl.testing.SilentVerbose():
             # Bad project
@@ -1202,7 +1201,7 @@ class sdf_tests(unittest.TestCase):
     def test_tbf_append(self):
         """Test appending a TBF observation to an LWA1 session."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         
         obs = other_sdf.TBF('TBF', 'TBF', '2020/4/30 01:23:45.5', 40e6, 75e6, 7, 196000)
         self.assertRaises(TypeError, project.sessions[0].append, obs)
@@ -1280,8 +1279,8 @@ class sdf_tests(unittest.TestCase):
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(sdf.is_valid(tbwFile))
-        self.assertTrue(sdf.is_valid(tbnFile))
+        self.assertTrue(sdf.is_valid(tbtFile))
+        self.assertTrue(sdf.is_valid(tbsFile))
         self.assertTrue(sdf.is_valid(drxFile))
         self.assertTrue(sdf.is_valid(solFile))
         self.assertTrue(sdf.is_valid(jovFile))

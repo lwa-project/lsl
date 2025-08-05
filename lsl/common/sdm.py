@@ -5,16 +5,16 @@ files (as defined in MCS0031, v5).
 
 from datetime import datetime
 
-from lsl.common.mcsADP import SummaryCode, parse_c_struct, flat_to_multi, \
+from lsl.common.mcs import SummaryCode, parse_c_struct, flat_to_multi, \
                         STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, \
                         ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_NRPD, ME_MAX_NSEP, ME_MAX_NARB, \
-                        ME_MAX_NROACH, ME_MAX_NSERVER, ME_MAX_NDR
+                        ME_MAX_NSNAP, ME_MAX_NSERVER, ME_MAX_NDR
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.3'
+__version__ = '0.1'
 __all__ = ['SubSystemStatus', 'SubSubSystemStatus', 'StationSettings', 'SDM', 'parse_sdm']
 
 
@@ -31,7 +31,7 @@ class SubSystemStatus(object):
         self.time = float(time)
         
     def __str__(self):
-        return "%s at %s: %s [%s = %s]" % (self.name, datetime.utcfromtimestamp(self.time), self.info, self.summary, self.summary.description)
+        return "%s at %s: %s [%i = %s]" % (self.name, datetime.utcfromtimestamp(self.time), self.info, self.summary, self.summary.description)
         
     def binary_read(self, fh):
         """
@@ -77,7 +77,7 @@ class SubSubSystemStatus(object):
             self.arb = arb
             
         if dp1 is None:
-            self.dp1 = [0 for n in range(ME_MAX_NROACH)]
+            self.dp1 = [0 for n in range(ME_MAX_NSNAP)]
         else:
             self.dp1 = dp1
         
@@ -108,7 +108,7 @@ class SubSubSystemStatus(object):
         self.rpd = list(ssssStruct.eRPDStat)
         self.sep = list(ssssStruct.eSEPStat)
         self.arb = flat_to_multi(ssssStruct.eARBStat, *ssssStruct.dims['eARBStat'])
-        self.dp1 = flat_to_multi(ssssStruct.eRoachStat, *ssssStruct.dims['eRoachStat'])
+        self.dp1 = flat_to_multi(ssssStruct.eSnapStat, *ssssStruct.dims['eSnapStat'])
         self.dp2 = list(ssssStruct.eServerStat)
         self.dr  = list(ssssStruct.eDRStat)
 
@@ -119,7 +119,7 @@ class StationSettings(object):
     """
     
     def __init__(self, report=None, update=None, fee_power=None, asp_filter=None, asp_atten_1=None, asp_atten_2=None, asp_atten_split=None, 
-                tbn_gain=-1, drx_gain=-1, tbf_gain=-1):
+                drx_gain=-1, tbf_gain=-1):
         if report is None:
             self.report = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         else:
@@ -155,7 +155,6 @@ class StationSettings(object):
         else:
             self.asp_atten_split = asp_atten_split
             
-        self.tbn_gain = tbn_gain
         self.drx_gain = drx_gain
         self.tbf_gain = tbf_gain
         
@@ -198,7 +197,6 @@ class StationSettings(object):
         self.asp_atten_2 = list(ssStruct.asp_at2)
         self.asp_atten_split = list(ssStruct.asp_ats)
         
-        self.tbn_gain = ssStruct.tbn_gain
         self.drx_gain = ssStruct.drx_gain
         self.tbf_gain = ssStruct.tbf_gain
 
@@ -283,42 +281,22 @@ def parse_sdm(filename):
         dynamic.shl.binary_read(fh)
         dynamic.asp.binary_read(fh)
         dynamic.dp.binary_read(fh)
-        mark = fh.tell()
-        try:
-            for n in range(ME_MAX_NDR):
-                dynamic.dr[n].binary_read(fh)
-                
-            # Sub-sub-system status section
-            dynamic.status.binary_read(fh)
+        for n in range(ME_MAX_NDR):
+            dynamic.dr[n].binary_read(fh)
             
-            # Antenna status and data path status
-            adpsStruct = parse_c_struct("""
-            int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
-            int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
-            """, endianness='little')
-            
-            fh.readinto(adpsStruct)
-            
-        except IOError:
-            fh.seek(mark)
-            overrides = {'ME_MAX_NDR': 3}
-            
-            for n in range(3):
-                dynamic.dr[n].binary_read(fh)
-                
-            # Sub-sub-system status section
-            dynamic.status.binary_read(fh, overrides=overrides)
-            
-            # Antenna status and data path status
-            adpsStruct = parse_c_struct("""
-            int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
-            int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
-            """, endianness='little', overrides=overrides)
-            
-            fh.readinto(adpsStruct)
-            
-        dynamic.ant_status = flat_to_multi(adpsStruct.ant_stat, *adpsStruct.dims['ant_stat'])
-        dynamic.dpo_status = flat_to_multi(adpsStruct.dpo_stat, *adpsStruct.dims['dpo_stat'])
+        # Sub-sub-system status section
+        dynamic.status.binary_read(fh)
+        
+        # Antenna status and data path status
+        ndpsStruct = parse_c_struct("""
+        int ant_stat[ME_MAX_NSTD][2]; /* corresponds to sc.Stand[i].Ant[k].iSS, but dynamically updated */
+        int dpo_stat[ME_MAX_NDR];     /* corresponds to sc.DPO[i].iStat, but dynamically updated */
+        """, endianness='little')
+        
+        fh.readinto(ndpsStruct)
+        
+        dynamic.ant_status = flat_to_multi(ndpsStruct.ant_stat, *ndpsStruct.dims['ant_stat'])
+        dynamic.dpo_status = flat_to_multi(ndpsStruct.dpo_stat, *ndpsStruct.dims['dpo_stat'])
         
         # Station settings section
         dynamic.settings.binary_read(fh)

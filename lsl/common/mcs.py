@@ -16,11 +16,11 @@ The header file values are:
  * ME_MAX_NARB - Maximum number of ARX boards
  * ME_MAX_NARBCH - Number of ARX channels per board
  * ME_MAX_ARBID_LENGTH - Number of characters in the ARX ID name
- * ME_MAX_NDP1 - Maximum number of DP1 boards
- * ME_MAX_NDP1CH - Number of channels per DP1 board
- * ME_MAX_DP1ID_LENGTH - Number of characters in the DP1 board ID name
- * ME_MAX_NDP2 - Maximum number of DP2 boards
- * ME_MAX_DP2ID_LENGTH - Number of characters in the DP2 board ID name
+ * ME_MAX_NSNAP - Maximum number of SNAP boards
+ * ME_MAX_NSNAPCH - Number of channels per SNAP board
+ * ME_MAX_SNAPID_LENGTH - Number of characters in the SNAP board ID name
+ * ME_MAX_NSERVER - Maximum number of servers
+ * ME_MAX_SERVERID_LENGTH - Number of characters in the server ID name
  * ME_MAX_NDR - Maximum number of data recorders
  * ME_MAX_DRID_LENGTH - Number of characters in the DR ID name
  * ME_MAX_NPWRPORT - Maximum number of power ports
@@ -52,17 +52,17 @@ from datetime import datetime
 from astropy import units as astrounits
 from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
 
-from lsl.common import dp as dpCommon
+from lsl.common import ndp as ndpCommon
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.3'
+__version__ = '0.4'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
-           'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NDP1', 'ME_MAX_NDP1CH', 'ME_MAX_DP1ID_LENGTH', 
-           'ME_MAX_NDP2', 'ME_MAX_DP2ID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
+           'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NSNAP', 'ME_MAX_NSNAPCH', 'ME_MAX_SNAPID_LENGTH', 
+           'ME_MAX_NSERVER', 'ME_MAX_SERVERID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
            'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
            'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
@@ -72,31 +72,31 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'ObservingMode', 'parse_c_struct', 'flat_to_multi', 'apply_pointing_correction', 'MIB', 'MIBEntry']
 
 
-ME_SSMIF_FORMAT_VERSION = 7	# SSMIF format version code
-ME_MAX_NSTD = 260			# Maximum number of stands that can be described
-ME_MAX_NFEE = 260			# Maximum number of FEEs that can be described
+ME_SSMIF_FORMAT_VERSION = 10	# SSMIF format version code
+ME_MAX_NSTD = 256			# Maximum number of stands that can be described
+ME_MAX_NFEE = 256			# Maximum number of FEEs that can be described
 ME_MAX_FEEID_LENGTH = 10		# Number of characters in FEE ID name
 ME_MAX_RACK = 6			# Maximum number of racks?
 ME_MAX_PORT = 50			# Maximum number of ports?
-ME_MAX_NRPD = 520			# Maxmimum number of RPD cables
+ME_MAX_NRPD = 512			# Maxmimum number of RPD cables
 ME_MAX_RPDID_LENGTH = 25		# Number of characters in the RPD ID name
-ME_MAX_NSEP = 520			# Maximum number of SEP cable connections
+ME_MAX_NSEP = 512			# Maximum number of SEP cable connections
 ME_MAX_SEPID_LENGTH = 25		# Number of characters in the SEP ID name
 ME_MAX_SEPCABL_LENGTH = 25	# Number of characters in the SEP cable ID name
-ME_MAX_NARB = 33			# Maximum number of ARX boards
+ME_MAX_NARB = 32			# Maximum number of ARX boards
 ME_MAX_NARBCH = 16			# Number of ARX channels per board
 ME_MAX_ARBID_LENGTH = 10		# Number of characters in the ARX ID name
-ME_MAX_NDP1 = 26			# Maximum number of DP1 boards
-ME_MAX_NDP1CH = 20			# Number of channels per DP1 board
-ME_MAX_DP1ID_LENGTH = 10		# Number of characters in the DP1 board ID name
-ME_MAX_NDP2 = 2			# Maximum number of DP2 boards
-ME_MAX_DP2ID_LENGTH = 10		# Number of characters in the DP2 board ID name
-ME_MAX_NDR = 5				# Maximum number of data recorders
+ME_MAX_NSNAP = 8			# Maximum number of SNAP boards
+ME_MAX_NSNAPCH = 64		# Number of channels per SNAP board
+ME_MAX_SNAPID_LENGTH = 10	# Number of characters in the SNAP board ID name
+ME_MAX_NSERVER = 9			# Maximum number of server
+ME_MAX_SERVERID_LENGTH = 10	# Number of characters in the server ID name
+ME_MAX_NDR = 4				# Maximum number of data recorders
 ME_MAX_DRID_LENGTH = 10		# Number of characters in the DR ID name
 ME_MAX_NPWRPORT = 50		# Maximum number of power ports
 ME_MAX_SSNAME_LENGTH = 3		# Number of characters in the power port ID names, for codes used for PWR_NAME
-LWA_MAX_NSTD = 260			# Maximum number of stands for the LWA
-TPSS_FORMAT_VERSION = 5		# MCS0030 format version code
+LWA_MAX_NSTD = 256			# Maximum number of stands for the LWA
+TPSS_FORMAT_VERSION = 6		# MCS0030 format version code
 MIB_REC_TYPE_BRANCH = 0 		# eType for MIB branch entries
 MIB_REC_TYPE_VALUE = 1 		# etype for MIB value entries
 MIB_INDEX_FIELD_LENGTH = 12	# Number of characters in a MIB index field
@@ -162,20 +162,19 @@ SSMIF_STRUCT = """
     int    iARBAnt[ME_MAX_NARB][ME_MAX_NARBCH];        /* ARB_ANT[][] */
     char   sARBIN[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_IN[][] */
     char   sARBOUT[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_OUT[][] */
-    int    nDP1;                     /* N_DP1 */
-    int    nDP1Ch;                     /* N_DP1CH */
-    char   sDP1ID[ME_MAX_NDP1][ME_MAX_DP1ID_LENGTH+1]; /* DP1_ID[] */
-    char   sDP1Slot[ME_MAX_NDP1][ME_MAX_DP1ID_LENGTH+1]; /* DP1_SLOT[] */
-    int    eDP1Desi[ME_MAX_NDP1]; /* DP1_DESI[] */
-    int    eDP1Stat[ME_MAX_NDP1][ME_MAX_NDP1CH];       /* DP1_STAT[][] */
-    char   sDP1INR[ME_MAX_NDP1][ME_MAX_NDP1CH][ME_MAX_DP1ID_LENGTH+1]; /* DP1_INR[][] */
-    char   sDP1INC[ME_MAX_NDP1][ME_MAX_NDP1CH][ME_MAX_DP1ID_LENGTH+1]; /* DP1_INC[][] */
-    int    iDP1Ant[ME_MAX_NDP1][ME_MAX_NDP1CH];        /* DP1_ANT[][] */
-    int    nDP2;                     /* N_DP2 */
-    char   sDP2ID[ME_MAX_NDP2][ME_MAX_DP2ID_LENGTH+1]; /* DP2_ID[] */
-    char   sDP2Slot[ME_MAX_NDP2][ME_MAX_DP2ID_LENGTH+1]; /* DP1_SLOT[] */
-    int    eDP2Stat[ME_MAX_NDP2];       /* DP2_STAT[] */
-    int    eDP2Desi[ME_MAX_NDP2];       /* DP2_DESI[] */
+    int    nSnapCh;                  /* N_SNAPCH */
+    char   sSnapID[ME_MAX_NSNAP][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_ID[] */
+    char   sSnapSlot[ME_MAX_NSNAP][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_SLOT[] */
+    int    eSnapDesi[ME_MAX_NSNAP]; /* SNAP_DESI[] */
+    int    eSnapStat[ME_MAX_NSNAP][ME_MAX_NSNAPCH];       /* SNAP_STAT[][] */
+    char   sSnapINR[ME_MAX_NSNAP][ME_MAX_NSNAPCH][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_INR[][] */
+    char   sSnapINC[ME_MAX_NSNAP][ME_MAX_NSNAPCH][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_INC[][] */
+    int    iSnapAnt[ME_MAX_NSNAP][ME_MAX_NSNAPCH];        /* SNAP_ANT[][] */
+    int    nServer;                  /* N_SERVER */
+    char   sServerID[ME_MAX_NSERVER][ME_MAX_SERVERID_LENGTH+1]; /* SERVER_ID[] */
+    char   sServerSlot[ME_MAX_NSERVER][ME_MAX_SERVERID_LENGTH+1]; /* SERVER_SLOT[] */
+    int    eServerStat[ME_MAX_NSERVER];       /* SERVER_STAT[] */
+    int    eServerDesi[ME_MAX_NSERVER];       /* SERVER_DESI[] */
     int    nDR;                     /* N_DR */
     int    eDRStat[ME_MAX_NDR];       /* DR_STAT[] */
     char   sDRID[ME_MAX_NDR][ME_MAX_DRID_LENGTH+1]; /* DR_ID[] */
@@ -216,7 +215,6 @@ STATION_SETTINGS_STRUCT = """
     signed short int asp_at1[LWA_MAX_NSTD]; // OBS_ASP_AT1[LWA_MAX_NSTD] // ASP_AT1[LWA_MAX_NSTD]
     signed short int asp_at2[LWA_MAX_NSTD]; // OBS_ASP_AT2[LWA_MAX_NSTD] // ASP_AT2[LWA_MAX_NSTD]
     signed short int asp_ats[LWA_MAX_NSTD]; // OBS_ASP_ATS[LWA_MAX_NSTD] // ASP_ATS[LWA_MAX_NSTD]
-    signed short int tbn_gain; // OBS_TBN_GAIN // TBN_GAIN
     signed short int drx_gain; // OBS_DRX_GAIN // DRX_GAIN
 """
 
@@ -229,13 +227,13 @@ SUBSYSTEM_STATUS_STRUCT = """
 
 
 SUBSUBSYSTEM_STATUS_STRUCT = """
-    int    eFEEStat[ME_MAX_NFEE];                /* FEE_STAT[] */
-    int    eRPDStat[ME_MAX_NRPD];                /* RPD_STAT[] */
-    int    eSEPStat[ME_MAX_NSEP];                /* SEP_STAT[] */
-    int    eARBStat[ME_MAX_NARB][ME_MAX_NARBCH]; /* ARB_STAT[][] */
-    int    eDP1Stat[ME_MAX_NDP1][ME_MAX_NDP1CH]; /* DP1_STAT[][] */
-    int    eDP2Stat[ME_MAX_NDP2];                /* DP2_STAT[] */
-    int    eDRStat[ME_MAX_NDR];                  /* DR_STAT[] */
+    int    eFEEStat[ME_MAX_NFEE];                      /* FEE_STAT[] */
+    int    eRPDStat[ME_MAX_NRPD];                      /* RPD_STAT[] */
+    int    eSEPStat[ME_MAX_NSEP];                      /* SEP_STAT[] */
+    int    eARBStat[ME_MAX_NARB][ME_MAX_NARBCH];       /* ARB_STAT[][] */
+    int    eSnapStat[ME_MAX_NSNAP][ME_MAX_NSNAPCH];    /* SNAP_STAT[][] */
+    int    eServerStat[ME_MAX_NSERVER];                /* SERVER_STAT[] */
+    int    eDRStat[ME_MAX_NDR];                        /* DR_STAT[] */
 """
 
 SSF_STRUCT = """
@@ -319,9 +317,7 @@ OSF2_STRUCT = """
     signed short int   OBS_ASP_AT1[LWA_MAX_NSTD];
     signed short int   OBS_ASP_AT2[LWA_MAX_NSTD];
     signed short int   OBS_ASP_ATS[LWA_MAX_NSTD];
-    unsigned short int OBS_TBW_BITS;
-    unsigned int       OBS_TBW_SAMPLES;
-    signed short int   OBS_TBN_GAIN;
+    unsigned int       OBS_TBT_SAMPLES;
     signed short int   OBS_DRX_GAIN;
     unsigned int       alignment;
 """
@@ -536,7 +532,7 @@ def delay_to_mcsd(delay):
     .. versionadded:: 0.6.3
     """
     
-    return _two_byte_swap( dpCommon.delay_to_dpd(delay) )
+    return _two_byte_swap( ndpCommon.delay_to_dpd(delay) )
 
 
 def mcsd_to_delay(delay):
@@ -547,7 +543,7 @@ def mcsd_to_delay(delay):
     .. versionadded:: 0.6.3
     """
     
-    return dpCommon.dpd_to_delay( _two_byte_swap(delay) )
+    return ndpCommon.dpd_to_delay( _two_byte_swap(delay) )
 
 
 def gain_to_mcsg(gain):
@@ -559,7 +555,7 @@ def gain_to_mcsg(gain):
     .. versionadded::0.6.3
     """
     
-    return _two_byte_swap( dpCommon.gain_to_dpg(gain) )
+    return _two_byte_swap( ndpCommon.gain_to_dpg(gain) )
 
 
 def mcsg_to_gain(gain):
@@ -570,7 +566,7 @@ def mcsg_to_gain(gain):
     .. versionadded:: 0.6.3
     """
     
-    return dpCommon.dpg_to_gain( _two_byte_swap(gain) )
+    return ndpCommon.dpg_to_gain( _two_byte_swap(gain) )
 
 
 def mjdmpm_to_datetime(mjd, mpm, tz=None):
