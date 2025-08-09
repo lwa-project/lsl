@@ -73,31 +73,31 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
 
 
 ME_SSMIF_FORMAT_VERSION = 10	# SSMIF format version code
-ME_MAX_NSTD = 256			# Maximum number of stands that can be described
-ME_MAX_NFEE = 256			# Maximum number of FEEs that can be described
-ME_MAX_FEEID_LENGTH = 10		# Number of characters in FEE ID name
-ME_MAX_RACK = 6			# Maximum number of racks?
-ME_MAX_PORT = 50			# Maximum number of ports?
-ME_MAX_NRPD = 512			# Maxmimum number of RPD cables
-ME_MAX_RPDID_LENGTH = 25		# Number of characters in the RPD ID name
-ME_MAX_NSEP = 512			# Maximum number of SEP cable connections
-ME_MAX_SEPID_LENGTH = 25		# Number of characters in the SEP ID name
+ME_MAX_NSTD = 256		# Maximum number of stands that can be described
+ME_MAX_NFEE = 256		# Maximum number of FEEs that can be described
+ME_MAX_FEEID_LENGTH = 10	# Number of characters in FEE ID name
+ME_MAX_RACK = 8			# Maximum number of racks?
+ME_MAX_PORT = 50		# Maximum number of ports?
+ME_MAX_NRPD = 512		# Maxmimum number of RPD cables
+ME_MAX_RPDID_LENGTH = 25	# Number of characters in the RPD ID name
+ME_MAX_NSEP = 512		# Maximum number of SEP cable connections
+ME_MAX_SEPID_LENGTH = 25	# Number of characters in the SEP ID name
 ME_MAX_SEPCABL_LENGTH = 25	# Number of characters in the SEP cable ID name
-ME_MAX_NARB = 32			# Maximum number of ARX boards
-ME_MAX_NARBCH = 16			# Number of ARX channels per board
-ME_MAX_ARBID_LENGTH = 10		# Number of characters in the ARX ID name
-ME_MAX_NSNAP = 8			# Maximum number of SNAP boards
+ME_MAX_NARB = 32		# Maximum number of ARX boards
+ME_MAX_NARBCH = 16		# Number of ARX channels per board
+ME_MAX_ARBID_LENGTH = 10	# Number of characters in the ARX ID name
+ME_MAX_NSNAP = 8		# Maximum number of SNAP boards
 ME_MAX_NSNAPCH = 64		# Number of channels per SNAP board
 ME_MAX_SNAPID_LENGTH = 10	# Number of characters in the SNAP board ID name
-ME_MAX_NSERVER = 9			# Maximum number of server
+ME_MAX_NSERVER = 9		# Maximum number of server
 ME_MAX_SERVERID_LENGTH = 10	# Number of characters in the server ID name
-ME_MAX_NDR = 4				# Maximum number of data recorders
+ME_MAX_NDR = 4			# Maximum number of data recorders
 ME_MAX_DRID_LENGTH = 10		# Number of characters in the DR ID name
 ME_MAX_NPWRPORT = 50		# Maximum number of power ports
-ME_MAX_SSNAME_LENGTH = 3		# Number of characters in the power port ID names, for codes used for PWR_NAME
-LWA_MAX_NSTD = 256			# Maximum number of stands for the LWA
+ME_MAX_SSNAME_LENGTH = 3	# Number of characters in the power port ID names, for codes used for PWR_NAME
+LWA_MAX_NSTD = 256		# Maximum number of stands for the LWA
 TPSS_FORMAT_VERSION = 6		# MCS0030 format version code
-MIB_REC_TYPE_BRANCH = 0 		# eType for MIB branch entries
+MIB_REC_TYPE_BRANCH = 0 	# eType for MIB branch entries
 MIB_REC_TYPE_VALUE = 1 		# etype for MIB value entries
 MIB_INDEX_FIELD_LENGTH = 12	# Number of characters in a MIB index field
 MIB_LABEL_FIELD_LENGTH = 32	# Number of characters in a MIB label field
@@ -202,7 +202,7 @@ STATION_SETTINGS_STRUCT = """
     signed short int mrp_shl; // SESSION_MRP_SHL // MRP_SHL
     signed short int mrp_mcs; // SESSION_MRP_MCS // MRP_MCS
     signed short int mup_asp; // SESSION_MUP_ASP // MUP_ASP
-    signed short int mup_dp;  // SESSION_MUP_DP_ // MUP_DP_
+    signed short int mup_ndp; // SESSION_MUP_DP_ // MUP_NDP
     signed short int mup_dr1; // SESSION_MUP_DR1 // MUP_DR1
     signed short int mup_dr2; // SESSION_MUP_DR2 // MUP_DR2
     signed short int mup_dr3; // SESSION_MUP_DR3 // MUP_DR3
@@ -257,7 +257,7 @@ SSF_STRUCT = """
     signed short int SESSION_MRP_SHL;
     signed short int SESSION_MRP_MCS;
     signed short int SESSION_MUP_ASP;
-    signed short int SESSION_MUP_DP_;
+    signed short int SESSION_MUP_NDP;
     signed short int SESSION_MUP_DR1;
     signed short int SESSION_MUP_DR2;
     signed short int SESSION_MUP_DR3;
