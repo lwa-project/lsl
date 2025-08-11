@@ -336,10 +336,10 @@ class Project(object):
             output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
         if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
             output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag is None else ses.spcMetatag)
-        for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
+        for component in ['ASP', 'NDP', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.recordMIB[component] != -1:
                 output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
-        for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
+        for component in ['ASP', 'NDP', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
             if ses.updateMIB[component] != -1:
                 output += "SESSION_MUP_%s  %i\n" % (component, ses.updateMIB[component])
         if ses.include_mcssch_log:
@@ -767,9 +767,6 @@ class Observation(object):
             if verbose:
                 pid_print(f"Error: Invalid number of ASP filter settings ({len(self.asp_filter)} < {nstand})")
         for f,filt in enumerate(self.asp_filter):
-            if is_dp and filt > 3:
-                warnings.warn(colorfy("{{%%yellow ASP filter %i is degenerate with %i for DP-based stations}}" % (filt, filt-4)), RuntimeWarning)
-                
             if filt not in (-1, 0, 1, 2, 3, 4, 5, 6, 7):
                 failures += 1
                 if verbose:
@@ -1039,7 +1036,7 @@ class DRX(Observation):
             ## Disable beam-dipole mode
             self.beamDipole = None
         else:
-            ## Stand -> DP Stand
+            ## Stand -> NDP Stand
             station = lwa1
             if self._parent is not None:
                 station = self._parent.station
@@ -1368,7 +1365,7 @@ class Stepped(Observation):
             ## Disable beam-dipole mode
             self.beamDipole = None
         else:
-            ## Stand -> DP Stand
+            ## Stand -> NDP Stand
             station = lwa1
             if self._parent is not None:
                 station = self._parent.station
@@ -1801,8 +1798,8 @@ class Session(object):
         self.spcSetup = [0, 0]
         self.spcMetatag = None
         
-        self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.recordMIB = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.updateMIB = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         
         self.include_mcssch_log = False
         self.include_mcsexe_log = False

@@ -33,7 +33,6 @@ handle as an input and returns a fully-filled Frame object.
 
 import numpy as np
 
-from lsl.common import adp as adp_common
 from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import NCHAN_COR
@@ -94,7 +93,7 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        fC = adp_common.fC
+        fC = ndp_common.fC
         if self.adp_id & 0x04:
             fC = ndp_common.fC
             
@@ -140,7 +139,7 @@ class FramePayload(FramePayloadBase):
         Return the integration time of the visibility in seconds.
         """
         
-        return self.navg * adp_common.T2
+        return self.navg * ndp_common.T2
 
 
 class Frame(FrameBase):

@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from lsl.common._metabundle_utils import *
 from lsl.common import stations, sdm, sdf
-from lsl.common.mcsNDP import *
+from lsl.common.mcs import *
 from lsl.common.ndp import word_to_freq, fS
 from lsl.common.color import colorfy
 

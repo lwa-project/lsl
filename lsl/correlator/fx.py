@@ -30,7 +30,7 @@ from astropy.constants import c as speedOfLight
 from astropy.coordinates import AltAz, SkyCoord
 
 from lsl.reader.base import CI8
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 from lsl.correlator import uvutils, _spec, _stokes, _core
 
 from lsl.misc import telemetry
@@ -105,7 +105,7 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     # because the real-valued signal only occupies the positive part of the 
     # frequency space.
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     # Deal with TBW and TBN data in the correct way
     if doFFTShift:
@@ -164,7 +164,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     # because the real-valued signal only occupies the positive part of the 
     # frequency space.
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     # Deal with TBW and TBN data in the correct way
     if doFFTShift:
@@ -244,7 +244,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         doFFTShift = False
         
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
         freq += central_freq
@@ -400,7 +400,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         doFFTShift = False
 
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
         freq += central_freq

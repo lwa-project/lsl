@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 
 from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
 
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 from lsl.astro import MJD_OFFSET
 
 
@@ -373,8 +373,8 @@ class FrameTimestamp(object):
         """
         
         tt = int(value) - offset
-        s = tt // int(dp_common.fS)
-        f = (tt - s*int(dp_common.fS)) / dp_common.fS
+        s = tt // int(ndp_common.fS)
+        f = (tt - s*int(ndp_common.fS)) / ndp_common.fS
         return cls(s, f)
         
     @classmethod
@@ -575,8 +575,8 @@ class FrameTimestamp(object):
         sec = int(self._time.unix)
         sec_frac = self._time - AstroTime(sec, format='unix', scale='utc')
         
-        tt = sec * int(dp_common.fS)
-        tt = tt + int(round(sec_frac.sec*dp_common.fS, 2))
+        tt = sec * int(ndp_common.fS)
+        tt = tt + int(round(sec_frac.sec*ndp_common.fS, 2))
         return tt
         
     @property

@@ -1018,7 +1018,7 @@ class LSLInterface(object):
         # Create a cache and preload it for the backend and mcs
         self._cache = {}
         if backend == 'lsl.common.ndp':
-            self._cache['backend'] = dp
+            self._cache['backend'] = ndp
         if mcs == 'lsl.common.mcs':
             self._cache['mcs'] = mcs
             
@@ -1765,35 +1765,22 @@ def parse_ssmif(filename_or_fh):
             channel = j + 1
             antennas[ant-1].arx = ARX(boardID, channel=channel, asp_channel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
             
-    if isDP:
-        # Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
-        # with DP2 boards at 1 and 15.
-        i = 1
-        j = 1
-        for brd,inp in zip(dp1Ant,dp1InR):
-            for ant,con in zip(brd,inp):
-                antennas[ant-1].board = i + 1 + (i//14)
-                antennas[ant-1].digitizer = j
-                antennas[ant-1].input = con
-                j += 1
-            i += 1
-    else:
-        # Associate ROACH board and digitizer numbers with Antennas.
-        i = 1
-        j = 1
-        for brd,inp in zip(snapAnt,snapInR):
-            for ant,con in zip(brd,inp):
-                antennas[ant-1].board = i
-                antennas[ant-1].digitizer = j
-                antennas[ant-1].input = con
-                j += 1
-            i += 1
-            
+    # Associate ROACH board and digitizer numbers with Antennas.
+    i = 1
+    j = 1
+    for brd,inp in zip(snapAnt,snapInR):
+        for ant,con in zip(brd,inp):
+            antennas[ant-1].board = i
+            antennas[ant-1].digitizer = j
+            antennas[ant-1].input = con
+            j += 1
+        i += 1
+        
     # Build a Station
     try:
         ## LSL interface support
         if idn in ('VL', 'SV', 'NA', 'CS', 'MC'):
-            interface = LSLInterface(backend='lsl.common.dp', 
+            interface = LSLInterface(backend='lsl.common.ndp', 
                                      mcs='lsl.common.mcs', 
                                      sdf='lsl.common.sdf', 
                                      metabundle='lsl.common.metabundle', 

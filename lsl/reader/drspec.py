@@ -41,7 +41,7 @@ For describing the format of data in the file, three function are provided:
 import copy
 import numpy as np
 
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader.drx import FILTER_CODES as drx_FILTER_CODES
 from lsl.reader._gofast import read_drspec
@@ -160,7 +160,7 @@ class FrameHeader(FrameHeaderBase):
         Return the sample rate of the data in samples/second.
         """
         
-        sample_rate = dp_common.fS / self.decimation
+        sample_rate = ndp_common.fS / self.decimation
         return sample_rate
         
     @property
@@ -240,7 +240,7 @@ class FramePayload(FramePayloadBase):
         Function to set the central frequency of the DRX data in Hz.
         """
         
-        return [dp_common.word_to_freq(i) for i in self.tuning_words]
+        return [ndp_common.word_to_freq(i) for i in self.tuning_words]
 
 
 class Frame(FrameBase):

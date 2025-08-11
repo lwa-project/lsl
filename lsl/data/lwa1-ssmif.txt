@@ -1,6 +1,8 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2025 Aug 8 by J. Dowell
+#  -- Notional SSMIF for the post-upgrade LWA1
 # 2022 Nov 15 by J. Dowell
 #  -- Updated for the final ARX board swaps
 #  -- Cleaned up some typos
@@ -63,12 +65,12 @@
 #
 # Search "FIXME" for things that need work
 
-FORMAT_VERSION 7
+FORMAT_VERSION 10
 STATION_ID VL
 GEO_N   +34.068894 # N Lat [deg]
 GEO_E  -107.628350 # E Lat [deg]
 GEO_EL 2133.6   # [m] above MSL
-N_STD 260
+N_STD 256
 
 # ---------------------------------------
 # --- Stand Positions  ------------------
@@ -859,18 +861,21 @@ STD_LZ[255]    +1.178
 STD_LX[256]   -46.972
 STD_LY[256]   +18.989
 STD_LZ[256]    +1.081
-STD_LX[257]   -54.721 # LEDA Outrigger #1
-STD_LY[257]  +202.545
-STD_LZ[257]    -5.687
-STD_LX[258]  +339.032 # RTA (LEDA Outrigger #4)
-STD_LY[258]   +17.589
-STD_LZ[258]    +1.670
-STD_LX[259]  +406.353 # LEDA Outrigger #3
-STD_LY[259]  +165.219
-STD_LZ[259]    -1.462
-STD_LX[260]  +169.461 # LEDA Outrigger #2
-STD_LY[260]  +294.013
-STD_LZ[260]    -5.692
+
+# FIXME
+# Removed since NDP only has 512 inputs
+# STD_LX[257]   -54.721 # LEDA Outrigger #1
+# STD_LY[257]  +202.545
+# STD_LZ[257]    -5.687
+# STD_LX[258]  +339.032 # RTA (LEDA Outrigger #4)
+# STD_LY[258]   +17.589
+# STD_LZ[258]    +1.670
+# STD_LX[259]  +406.353 # LEDA Outrigger #3
+# STD_LY[259]  +165.219
+# STD_LZ[259]    -1.462
+# STD_LX[260]  +169.461 # LEDA Outrigger #2
+# STD_LY[260]  +294.013
+# STD_LZ[260]    -5.692
 
 # ------------------------------------
 # --- Antenna # -> Stand # mapping ---
@@ -974,14 +979,6 @@ ANT_STAT[492]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[499]  2   #  95% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[503]  2   # 100% of captures - Based on 2016/6/8 TBW sequence
 ANT_STAT[504]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[513]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[514]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[515]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[516]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[517]  1   #  66% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[518]  1   #  66% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[519]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
-ANT_STAT[520]  1   # 100% of captures - Based on 2016/6/8 TBW sequence
 
 
 # -------------------------------
@@ -1011,7 +1008,7 @@ ANT_PHI[508] +15.0
 # -------------------------------------------------------
 # --- FEEs (number, status, design, nominal gain) -------
 # -------------------------------------------------------
-N_FEE 260
+N_FEE 256
 
 # This will be set to "UNK" (unknown) for any FEE #'s <= N_FEE not identified
 # *** FEE_ID[fee_id] goes here:
@@ -1568,19 +1565,11 @@ FEE_RACK[255] 1
 FEE_PORT[255] 1
 FEE_RACK[256] 1
 FEE_PORT[256] 1
-FEE_RACK[257] 1
-FEE_PORT[257] 1
-FEE_RACK[258] 1
-FEE_PORT[258] 1
-FEE_RACK[259] 1
-FEE_PORT[259] 1
-FEE_RACK[260] 1
-FEE_PORT[260] 1
 
 # ----------------------
 # --- RPD --------------
 # ----------------------
-N_RPD 520
+N_RPD 512
 
 # RPD_ID[] will be set to "UNK" (no identification) for any cables #'s <= N_RPD not identified
 # *** RPD_ID[cable#] goes here:
@@ -2103,17 +2092,20 @@ RPD_ID[509] EXK-255-057 (Gray)
 RPD_ID[510] EXK-255-057 (Black)
 RPD_ID[511] EXK-256-131 (Gray)
 RPD_ID[512] EXK-256-131 (Black)
-RPD_ID[513] 1 # (LEDA Outrigger #1)
-RPD_ID[514] 1
 
 # FIXME
-RPD_ID[515] UNK # no labels for stand 258 (RTA / LEDA Outrigger #4
-RPD_ID[516] UNK # no labels for stand 258 
-
-RPD_ID[517] 3 # (LEDA Outrigger #3)
-RPD_ID[518] 3
-RPD_ID[519] 2 # (LEDA Outrigger #2)
-RPD_ID[520] 2
+# Removed since NDP only has 512 inputs
+# RPD_ID[513] 1 # (LEDA Outrigger #1)
+# RPD_ID[514] 1
+# 
+# # FIXME
+# RPD_ID[515] UNK # no labels for stand 258 (RTA / LEDA Outrigger #4
+# RPD_ID[516] UNK # no labels for stand 258 
+# 
+# RPD_ID[517] 3 # (LEDA Outrigger #3)
+# RPD_ID[518] 3
+# RPD_ID[519] 2 # (LEDA Outrigger #2)
+# RPD_ID[520] 2
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any cable #'s <= N_RPD not identified
@@ -2126,18 +2118,20 @@ RPD_ID[520] 2
 # Stand 35 (as LEDA Outrigger #5):
 RPD_DESI[69] 2
 RPD_DESI[70] 2
-# Stand 257:
-RPD_DESI[513] 2
-RPD_DESI[514] 2
-# Stand 258: 
-RPD_DESI[515] 2 # LMR400 (with some short jumpers near shelter)
-RPD_DESI[516] 2 # LMR400 (with some short jumpers near shelter)
-# Stand 259:
-RPD_DESI[517] 2
-RPD_DESI[518] 2
-# Stand 260:
-RPD_DESI[519] 2
-RPD_DESI[520] 2
+# FIXME
+# Removed since NDP only has 512 inputs
+# # Stand 257:
+# RPD_DESI[513] 2
+# RPD_DESI[514] 2
+# # Stand 258: 
+# RPD_DESI[515] 2 # LMR400 (with some short jumpers near shelter)
+# RPD_DESI[516] 2 # LMR400 (with some short jumpers near shelter)
+# # Stand 259:
+# RPD_DESI[517] 2
+# RPD_DESI[518] 2
+# # Stand 260:
+# RPD_DESI[519] 2
+# RPD_DESI[520] 2
 
 # RPD_LENG[] will be set to 0 for any cable #'s <= N_RPD not identified
 # *** RPD_LENG[cable#] [m] goes here:
@@ -2666,43 +2660,45 @@ RPD_LENG[511] 131.00
 RPD_LENG[512] 131.00
 
 # FIXME
-# Stand 257 (LEDA Outrigger #1):
-# Measured by J. Craig on January 9, 2013 to have delays of 1.922 and 1.922 
-# ... microseconds.  See the section on the RTA cable for details of the 
-# ... length determination.
-RPD_LENG[513] 244.329  # JD's guess; see comment above
-RPD_LENG[514] 244.329  # JD's guess; see comment above
-
-# FIXME
-# Stand 258 (old RTA / LEDA Outrigger #4): 
-# SE Comments from earlier version of SSMIF: Here's how I came up with this length: 
-# ... I started by assuming RPD_VF=85 [%] and RPD_DD=2 [ns]; see those entries for 
-# ... more info.  On or about July 9, 2010, JC and I measured the one-way prop time 
-# ... to be about 1222.5 ns using the TenTec VNA.  I then assumed the M.170 model 
-# ... assuming 50 MHz center frequency, and solved for length. 
-# On December 12, 2011, JC and JD remeasured both outlier polarizations using a 
-# ... signal generator and an oscilliscope.  The round trip times were 2472 ns for 
-# ... N-S and 2503 ns for E-W.  JD used SE method described above to come up with 
-# ... the new lengths for both cables.
-# On January 9, 2013, J. Craig remeasured the round trip time to the RTA as part
-# ... of determing the cable lengths for the LEDA outriggers.  The delays were
-# ... 2.468 and 2.498 microseconds.
-RPD_LENG[515] 313.737  # JD's guess; see comment above
-RPD_LENG[516] 317.551  # JD's guess; see comment above
-
-# Stand 259 (LEDA Outrigger #3):
-# Measured by J. Craig on January 9, 2013 to have delays of 3.646 and 3.638 
-# ... microseconds.  See the section on the RTA cable for details of the 
-# ... length determination.
-RPD_LENG[517] 463.487  # JD's guess; see comment above
-RPD_LENG[518] 462.470  # JD's guess; see comment above
-
-# Stand 260 (LEDA Outrigger #2):
-# Measured by J. Craig on January 9, 2013 to have delays of 2.446 and 2.446 
-# ... microseconds.  See the section on the RTA cable for details of the 
-# ... length determination.
-RPD_LENG[519] 310.941  # JD's guess; see comment above
-RPD_LENG[520] 310.941  # JD's guess; see comment above
+# Removed since NDP only has 512 inputs
+# # FIXME
+# # Stand 257 (LEDA Outrigger #1):
+# # Measured by J. Craig on January 9, 2013 to have delays of 1.922 and 1.922 
+# # ... microseconds.  See the section on the RTA cable for details of the 
+# # ... length determination.
+# RPD_LENG[513] 244.329  # JD's guess; see comment above
+# RPD_LENG[514] 244.329  # JD's guess; see comment above
+# 
+# # FIXME
+# # Stand 258 (old RTA / LEDA Outrigger #4): 
+# # SE Comments from earlier version of SSMIF: Here's how I came up with this length: 
+# # ... I started by assuming RPD_VF=85 [%] and RPD_DD=2 [ns]; see those entries for 
+# # ... more info.  On or about July 9, 2010, JC and I measured the one-way prop time 
+# # ... to be about 1222.5 ns using the TenTec VNA.  I then assumed the M.170 model 
+# # ... assuming 50 MHz center frequency, and solved for length. 
+# # On December 12, 2011, JC and JD remeasured both outlier polarizations using a 
+# # ... signal generator and an oscilliscope.  The round trip times were 2472 ns for 
+# # ... N-S and 2503 ns for E-W.  JD used SE method described above to come up with 
+# # ... the new lengths for both cables.
+# # On January 9, 2013, J. Craig remeasured the round trip time to the RTA as part
+# # ... of determing the cable lengths for the LEDA outriggers.  The delays were
+# # ... 2.468 and 2.498 microseconds.
+# RPD_LENG[515] 313.737  # JD's guess; see comment above
+# RPD_LENG[516] 317.551  # JD's guess; see comment above
+# 
+# # Stand 259 (LEDA Outrigger #3):
+# # Measured by J. Craig on January 9, 2013 to have delays of 3.646 and 3.638 
+# # ... microseconds.  See the section on the RTA cable for details of the 
+# # ... length determination.
+# RPD_LENG[517] 463.487  # JD's guess; see comment above
+# RPD_LENG[518] 462.470  # JD's guess; see comment above
+# 
+# # Stand 260 (LEDA Outrigger #2):
+# # Measured by J. Craig on January 9, 2013 to have delays of 2.446 and 2.446 
+# # ... microseconds.  See the section on the RTA cable for details of the 
+# # ... length determination.
+# RPD_LENG[519] 310.941  # JD's guess; see comment above
+# RPD_LENG[520] 310.941  # JD's guess; see comment above
 
 # Cable stretching is set with TBN calibration results.  The assumptions that go into
 # ... this are:
@@ -3247,61 +3243,63 @@ RPD_STR[510]  1.0384
 RPD_STR[511]  1.0156
 RPD_STR[512]  1.0082
 
-# Cables to Stand 257 (LEDA Outrigger #1)
-RPD_VF[513] 85.0 # this is the known value for LMR-400
-RPD_DD[513]  2.0 # this is SE's guess; see comment below
-RPD_A0[513] 0.00185
-RPD_A1[513] 0.00000
-RPD_STR[513]  1.0005 #    Updated based on TBW self-cal. results
-RPD_VF[514] 85.0 # this is the known value for LMR-400
-RPD_DD[514]  2.0 # this is SE's guess; see comment below
-RPD_A0[514] 0.00185
-RPD_A1[514] 0.00000
-RPD_STR[514]  1.0007 #    Updated based on TBW self-cal. results
-# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
-# ... a LMR-200-like cable, but I'm not sure by how much.
-
-# Cables to Stand 258 (RTA)
-RPD_VF[515] 85.0 # this is the known value for LMR-400
-RPD_DD[515]  2.0 # this is SE's guess; see comment below 
-RPD_A0[515] 0.00185 
-RPD_A1[515] 0.00000 
-RPD_STR[515]  0.9947 #    Updated based on TBW self-cal. results
-RPD_VF[516] 85.0 # this is the known value for LMR-400
-RPD_DD[516]  2.0 # this is SE's guess; see comment below 
-RPD_A0[516] 0.00185 
-RPD_A1[516] 0.00000 
-RPD_STR[516]  0.9976 #    Updated based on TBW self-cal. results
-# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
-# ... a LMR-200-like cable, but I'm not sure by how much.  
-
-# Cables to Stand 259 (LEDA Outrigger #3)
-RPD_VF[517] 85.0 # this is the known value for LMR-400
-RPD_DD[517]  2.0 # this is SE's guess; see comment below
-RPD_A0[517] 0.00185
-RPD_A1[517] 0.00000
-RPD_STR[517]  0.9991 #    Updated based on TBW self-cal. results
-RPD_VF[518] 85.0 # this is the known value for LMR-400
-RPD_DD[518]  2.0 # this is SE's guess; see comment below
-RPD_A0[518] 0.00185
-RPD_A1[518] 0.00000
-RPD_STR[518]  0.9980 #    Updated based on TBW self-cal. results
-# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
-# ... a LMR-200-like cable, but I'm not sure by how much.
-
-# Cables to Stand 260 (LEDA Outrigger #2)
-RPD_VF[519] 85.0 # this is the known value for LMR-400
-RPD_DD[519]  2.0 # this is SE's guess; see comment below
-RPD_A0[519] 0.00185
-RPD_A1[519] 0.00000
-RPD_STR[519]  1.0002 #    Updated based on TBW self-cal. results
-RPD_VF[520] 85.0 # this is the known value for LMR-400
-RPD_DD[520]  2.0 # this is SE's guess; see comment below
-RPD_A0[520] 0.00185
-RPD_A1[520] 0.00000
-RPD_STR[520]  1.0002 #    Updated based on TBW self-cal. results
-# FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
-# ... a LMR-200-like cable, but I'm not sure by how much.
+# FIXME
+# Removed since NDP only has 512 inputs
+# # Cables to Stand 257 (LEDA Outrigger #1)
+# RPD_VF[513] 85.0 # this is the known value for LMR-400
+# RPD_DD[513]  2.0 # this is SE's guess; see comment below
+# RPD_A0[513] 0.00185
+# RPD_A1[513] 0.00000
+# RPD_STR[513]  1.0005 #    Updated based on TBW self-cal. results
+# RPD_VF[514] 85.0 # this is the known value for LMR-400
+# RPD_DD[514]  2.0 # this is SE's guess; see comment below
+# RPD_A0[514] 0.00185
+# RPD_A1[514] 0.00000
+# RPD_STR[514]  1.0007 #    Updated based on TBW self-cal. results
+# # FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# # ... a LMR-200-like cable, but I'm not sure by how much.
+# 
+# # Cables to Stand 258 (RTA)
+# RPD_VF[515] 85.0 # this is the known value for LMR-400
+# RPD_DD[515]  2.0 # this is SE's guess; see comment below 
+# RPD_A0[515] 0.00185 
+# RPD_A1[515] 0.00000 
+# RPD_STR[515]  0.9947 #    Updated based on TBW self-cal. results
+# RPD_VF[516] 85.0 # this is the known value for LMR-400
+# RPD_DD[516]  2.0 # this is SE's guess; see comment below 
+# RPD_A0[516] 0.00185 
+# RPD_A1[516] 0.00000 
+# RPD_STR[516]  0.9976 #    Updated based on TBW self-cal. results
+# # FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than 
+# # ... a LMR-200-like cable, but I'm not sure by how much.  
+# 
+# # Cables to Stand 259 (LEDA Outrigger #3)
+# RPD_VF[517] 85.0 # this is the known value for LMR-400
+# RPD_DD[517]  2.0 # this is SE's guess; see comment below
+# RPD_A0[517] 0.00185
+# RPD_A1[517] 0.00000
+# RPD_STR[517]  0.9991 #    Updated based on TBW self-cal. results
+# RPD_VF[518] 85.0 # this is the known value for LMR-400
+# RPD_DD[518]  2.0 # this is SE's guess; see comment below
+# RPD_A0[518] 0.00185
+# RPD_A1[518] 0.00000
+# RPD_STR[518]  0.9980 #    Updated based on TBW self-cal. results
+# # FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# # ... a LMR-200-like cable, but I'm not sure by how much.
+# 
+# # Cables to Stand 260 (LEDA Outrigger #2)
+# RPD_VF[519] 85.0 # this is the known value for LMR-400
+# RPD_DD[519]  2.0 # this is SE's guess; see comment below
+# RPD_A0[519] 0.00185
+# RPD_A1[519] 0.00000
+# RPD_STR[519]  1.0002 #    Updated based on TBW self-cal. results
+# RPD_VF[520] 85.0 # this is the known value for LMR-400
+# RPD_DD[520]  2.0 # this is SE's guess; see comment below
+# RPD_A0[520] 0.00185
+# RPD_A1[520] 0.00000
+# RPD_STR[520]  1.0002 #    Updated based on TBW self-cal. results
+# # FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
+# # ... a LMR-200-like cable, but I'm not sure by how much.
 
 # --- Antenna # -> cable # mapping -----
 # --------------------------------------
@@ -3314,7 +3312,7 @@ RPD_STR[520]  1.0002 #    Updated based on TBW self-cal. results
 # ----------------------
 # --- SEP --------------
 # ----------------------
-N_SEP 520
+N_SEP 512
 
 # SEP_ID[] will be set to "UNK" (no identification) for any SEP port #'s <= N_SEP not identified
 # *** SEP_ID[port#] goes here:
@@ -3844,14 +3842,17 @@ SEP_CABL[509] 255-NS
 SEP_CABL[510] 255-EW
 SEP_CABL[511] 256-NS
 SEP_CABL[512] 256-EW
-SEP_CABL[513] Outrigger 1 NS
-SEP_CABL[514] Outrigger 1 EW
-SEP_CABL[515] 258-NS
-SEP_CABL[516] 258-EW
-SEP_CABL[517] Outrigger 3 NS
-SEP_CABL[518] Outrigger 3 EW
-SEP_CABL[519] Outrigger 2 NS
-SEP_CABL[520] Outrigger 2 EW
+
+# FIXME
+# Removed since NDP only has 512 inputs
+# SEP_CABL[513] Outrigger 1 NS
+# SEP_CABL[514] Outrigger 1 EW
+# SEP_CABL[515] 258-NS
+# SEP_CABL[516] 258-EW
+# SEP_CABL[517] Outrigger 3 NS
+# SEP_CABL[518] Outrigger 3 EW
+# SEP_CABL[519] Outrigger 2 NS
+# SEP_CABL[520] Outrigger 2 EW
 
 # SEP_LENG[] will be set to 0 for any SEP port #'s <= N_SEP not identified
 # *** SEP_LENG[port#] goes here:
@@ -3876,45 +3877,44 @@ SEP_CABL[520] Outrigger 2 EW
 # --- ASP --------------
 # ----------------------
 # Maximum (not necessarily actual) number of ARX boards:
-N_ARB 33
+N_ARB 32
 # Maximum (not necessarily actual) number or channels per ARX board:
 N_ARBCH 16
 
 # ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
 # *** ARB_ID[arb#] goes here:
-ARB_ID[1] 0127
-ARB_ID[2] 0139
-ARB_ID[3] 0111
-ARB_ID[4] 0123
-ARB_ID[5] 0101
-ARB_ID[6] 0137
-ARB_ID[7] 0136
-ARB_ID[8] 0141
-ARB_ID[9] 0142
-ARB_ID[10] 0132
-ARB_ID[11] 0103
-ARB_ID[12] 0116
-ARB_ID[13] 0118
-ARB_ID[14] 0114
-ARB_ID[15] 0120
-ARB_ID[16] 0113
-ARB_ID[17] 0119
-ARB_ID[18] 0108
-ARB_ID[19] 0133
-ARB_ID[20] 0115
-ARB_ID[21] 0128
-ARB_ID[22] 0121
-ARB_ID[23] 0134
-ARB_ID[24] 0138
-ARB_ID[25] 0122
-ARB_ID[26] 0124
-ARB_ID[27] 0129
-ARB_ID[28] 0109
-ARB_ID[29] 0135
-ARB_ID[30] 0140
-ARB_ID[31] 0126
-ARB_ID[32] 0112
-ARB_ID[33] 0117
+ARB_ID[1] 0343
+ARB_ID[2] 0335
+ARB_ID[3] 0342
+ARB_ID[4] 0345
+ARB_ID[5] 0341
+ARB_ID[6] 0340
+ARB_ID[7] 0339
+ARB_ID[8] 0320
+ARB_ID[9] 0354
+ARB_ID[10] 0353
+ARB_ID[11] 0352
+ARB_ID[12] 0351
+ARB_ID[13] 0332
+ARB_ID[14] 0360
+ARB_ID[15] 0361
+ARB_ID[16] 0362
+ARB_ID[17] 0372
+ARB_ID[18] 0373
+ARB_ID[19] 0374
+ARB_ID[20] 0358
+ARB_ID[21] 0359
+ARB_ID[22] 0357
+ARB_ID[23] 0356
+ARB_ID[24] 0355
+ARB_ID[25] 0363
+ARB_ID[26] 0364
+ARB_ID[27] 0365
+ARB_ID[28] 0366
+ARB_ID[29] 0367
+ARB_ID[30] 0368
+ARB_ID[31] 0370
+ARB_ID[32] 0371
 
 # ARB_SLOT[] will be set to 0 (not known/not applicable) for any ARX board #'s <= N_ARB not identified
 # *** ARB_SLOT[arb#] goes here:
@@ -3952,43 +3952,41 @@ ARB_SLOT[29] 45
 ARB_SLOT[30] 46
 ARB_SLOT[31] 47
 ARB_SLOT[32] 48
-ARB_SLOT[33] 49
 
 # ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
 # *** ARB_DESI[arb#] goes here:
-ARB_DESI[1] 2
-ARB_DESI[2] 2
-ARB_DESI[3] 2
-ARB_DESI[4] 2
-ARB_DESI[5] 2
-ARB_DESI[6] 2
-ARB_DESI[7] 2
-ARB_DESI[8] 2
-ARB_DESI[9] 2
-ARB_DESI[10] 2
-ARB_DESI[11] 2
-ARB_DESI[12] 2
-ARB_DESI[13] 2
-ARB_DESI[14] 2
-ARB_DESI[15] 2
-ARB_DESI[16] 2
-ARB_DESI[17] 2
-ARB_DESI[18] 2
-ARB_DESI[19] 2
-ARB_DESI[20] 2
-ARB_DESI[21] 2
-ARB_DESI[22] 2
-ARB_DESI[23] 2
-ARB_DESI[24] 2
-ARB_DESI[25] 2
-ARB_DESI[26] 2
-ARB_DESI[27] 2
-ARB_DESI[28] 2
-ARB_DESI[29] 2
-ARB_DESI[30] 2
-ARB_DESI[31] 2
-ARB_DESI[32] 2
-ARB_DESI[33] 2
+ARB_DESI[1] 5
+ARB_DESI[2] 5
+ARB_DESI[3] 5
+ARB_DESI[4] 5
+ARB_DESI[5] 5
+ARB_DESI[6] 5
+ARB_DESI[7] 5
+ARB_DESI[8] 5
+ARB_DESI[9] 5
+ARB_DESI[10] 5
+ARB_DESI[11] 5
+ARB_DESI[12] 5
+ARB_DESI[13] 5
+ARB_DESI[14] 5
+ARB_DESI[15] 5
+ARB_DESI[16] 5
+ARB_DESI[17] 5
+ARB_DESI[18] 5
+ARB_DESI[19] 5
+ARB_DESI[20] 5
+ARB_DESI[21] 5
+ARB_DESI[22] 5
+ARB_DESI[23] 5
+ARB_DESI[24] 5
+ARB_DESI[25] 5
+ARB_DESI[26] 5
+ARB_DESI[27] 5
+ARB_DESI[28] 5
+ARB_DESI[29] 5
+ARB_DESI[30] 5
+ARB_DESI[31] 5
+ARB_DESI[32] 5
 
 # Format (example) "ARB_RACK[2] 3" means ARX board 2 is powered via a supply in Rack 2.
 # ARB_RACK[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
@@ -4060,8 +4058,6 @@ ARB_RACK[31] 1
 ARB_PORT[31] 2
 ARB_RACK[32] 1
 ARB_PORT[32] 2
-ARB_RACK[33] 1
-ARB_PORT[33] 2
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") for any ARX board-channels not identified
@@ -4190,11 +4186,8 @@ ARB_ANT[7][13] 393
 ARB_ANT[7][14] 394
 ARB_ANT[7][15] 33
 ARB_ANT[7][16] 34
-
-# LEDA Outrigger #3
-ARB_ANT[8][1] 517
-ARB_ANT[8][2] 518
-
+ARB_ANT[8][1] 405
+ARB_ANT[8][2] 406
 ARB_ANT[8][3] 241
 ARB_ANT[8][4] 242
 ARB_ANT[8][5] 397
@@ -4450,11 +4443,8 @@ ARB_ANT[23][11] 41
 ARB_ANT[23][12] 42
 ARB_ANT[23][13] 39
 ARB_ANT[23][14] 40
-
-# LEDA Outrigger #1
-ARB_ANT[23][15] 513
-ARB_ANT[23][16] 514
-
+ARB_ANT[23][15] 395
+ARB_ANT[23][16] 396
 ARB_ANT[24][1] 319
 ARB_ANT[24][2] 320
 ARB_ANT[24][3] 113
@@ -4600,22 +4590,6 @@ ARB_ANT[32][14] 376
 ARB_ANT[32][15] 123
 ARB_ANT[32][16] 124
 
-# LEDA Outrigger #2
-ARB_ANT[33][1] 519
-ARB_ANT[33][2] 520
-
-# Stand #198
-ARB_ANT[33][3] 395
-ARB_ANT[33][4] 396
-
-# Stand #203
-ARB_ANT[33][5] 405
-ARB_ANT[33][6] 406
-
-# RTA antenna (LEDA Outrigger #4)
-ARB_ANT[33][7] 515
-ARB_ANT[33][8] 516
-
 # ----------------------------------------------
 # --- ASP input/output labeling ----------------
 # ----------------------------------------------
@@ -4624,6 +4598,7 @@ ARB_ANT[33][8] 516
 # *** ARB_IN[][] goes here:
 # label = panel#_input#
 # panel 1 is top, input 1 is upper left
+# See mapping at https://github.com/lwa-project/lwa1-issues/issues/34
 ARB_IN[1][1] 4_1
 ARB_IN[1][2] 4_2
 ARB_IN[1][3] 4_3
@@ -5140,1713 +5115,1670 @@ ARB_IN[32][16] 1_128
 # *** ARB_OUT[][] goes here:
 # label = panel#_output#_pair#
 # panel 1 is top, output 1 is upper right
-ARB_OUT[1][1] 4_1_1
-ARB_OUT[1][2] 4_1_2
-ARB_OUT[1][3] 4_1_3
-ARB_OUT[1][4] 4_1_4
-ARB_OUT[1][5] 4_2_1
-ARB_OUT[1][6] 4_2_2
-ARB_OUT[1][7] 4_2_3
-ARB_OUT[1][8] 4_2_4
-ARB_OUT[1][9] 4_3_1
-ARB_OUT[1][10] 4_3_2
-ARB_OUT[1][11] 4_3_3
-ARB_OUT[1][12] 4_3_4
-ARB_OUT[1][13] 4_4_1
-ARB_OUT[1][14] 4_4_2
-ARB_OUT[1][15] 4_4_3
-ARB_OUT[1][16] 4_4_4
-ARB_OUT[2][1] 4_5_1
-ARB_OUT[2][2] 4_5_2
-ARB_OUT[2][3] 4_5_3
-ARB_OUT[2][4] 4_5_4
-ARB_OUT[2][5] 4_6_1
-ARB_OUT[2][6] 4_6_2
-ARB_OUT[2][7] 4_6_3
-ARB_OUT[2][8] 4_6_4
-ARB_OUT[2][9] 4_7_1
-ARB_OUT[2][10] 4_7_2
-ARB_OUT[2][11] 4_7_3
-ARB_OUT[2][12] 4_7_4
-ARB_OUT[2][13] 4_8_1
-ARB_OUT[2][14] 4_8_2
-ARB_OUT[2][15] 4_8_3
-ARB_OUT[2][16] 4_8_4
-ARB_OUT[3][1] 4_9_1
-ARB_OUT[3][2] 4_9_2
-ARB_OUT[3][3] 4_9_3
-ARB_OUT[3][4] 4_9_4
-ARB_OUT[3][5] 4_10_1
-ARB_OUT[3][6] 4_10_2
-ARB_OUT[3][7] 4_10_3
-ARB_OUT[3][8] 4_10_4
-ARB_OUT[3][9] 4_11_1
-ARB_OUT[3][10] 4_11_2
-ARB_OUT[3][11] 4_11_3
-ARB_OUT[3][12] 4_11_4
-ARB_OUT[3][13] 4_12_1
-ARB_OUT[3][14] 4_12_2
-ARB_OUT[3][15] 4_12_3
-ARB_OUT[3][16] 4_12_4
-ARB_OUT[4][1] 4_13_1
-ARB_OUT[4][2] 4_13_2
-ARB_OUT[4][3] 4_13_3
-ARB_OUT[4][4] 4_13_4
-ARB_OUT[4][5] 4_14_1
-ARB_OUT[4][6] 4_14_2
-ARB_OUT[4][7] 4_14_3
-ARB_OUT[4][8] 4_14_4
-ARB_OUT[4][9] 4_15_1
-ARB_OUT[4][10] 4_15_2
-ARB_OUT[4][11] 4_15_3
-ARB_OUT[4][12] 4_15_4
-ARB_OUT[4][13] 4_16_1
-ARB_OUT[4][14] 4_16_2
-ARB_OUT[4][15] 4_16_3
-ARB_OUT[4][16] 4_16_4
-ARB_OUT[5][1] 4_17_1
-ARB_OUT[5][2] 4_17_2
-ARB_OUT[5][3] 4_17_3
-ARB_OUT[5][4] 4_17_4
-ARB_OUT[5][5] 4_18_1
-ARB_OUT[5][6] 4_18_2
-ARB_OUT[5][7] 4_18_3
-ARB_OUT[5][8] 4_18_4
-ARB_OUT[5][9] 4_19_1
-ARB_OUT[5][10] 4_19_2
-ARB_OUT[5][11] 4_19_3
-ARB_OUT[5][12] 4_19_4
-ARB_OUT[5][13] 4_20_1
-ARB_OUT[5][14] 4_20_2
-ARB_OUT[5][15] 4_20_3
-ARB_OUT[5][16] 4_20_4
-ARB_OUT[6][1] 4_21_1
-ARB_OUT[6][2] 4_21_2
-ARB_OUT[6][3] 4_21_3
-ARB_OUT[6][4] 4_21_4
-ARB_OUT[6][5] 4_22_1
-ARB_OUT[6][6] 4_22_2
-ARB_OUT[6][7] 4_22_3
-ARB_OUT[6][8] 4_22_4
-ARB_OUT[6][9] 4_23_1
-ARB_OUT[6][10] 4_23_2
-ARB_OUT[6][11] 4_23_3
-ARB_OUT[6][12] 4_23_4
-ARB_OUT[6][13] 4_24_1
-ARB_OUT[6][14] 4_24_2
-ARB_OUT[6][15] 4_24_3
-ARB_OUT[6][16] 4_24_4
-ARB_OUT[7][1] 4_25_1
-ARB_OUT[7][2] 4_25_2
-ARB_OUT[7][3] 4_25_3
-ARB_OUT[7][4] 4_25_4
-ARB_OUT[7][5] 4_26_1
-ARB_OUT[7][6] 4_26_2
-ARB_OUT[7][7] 4_26_3
-ARB_OUT[7][8] 4_26_4
-ARB_OUT[7][9] 4_27_1
-ARB_OUT[7][10] 4_27_2
-ARB_OUT[7][11] 4_27_3
-ARB_OUT[7][12] 4_27_4
-ARB_OUT[7][13] 4_28_1
-ARB_OUT[7][14] 4_28_2
-ARB_OUT[7][15] 4_28_3
-ARB_OUT[7][16] 4_28_4
-ARB_OUT[8][1] 4_29_1
-ARB_OUT[8][2] 4_29_2
-ARB_OUT[8][3] 4_29_3
-ARB_OUT[8][4] 4_29_4
-ARB_OUT[8][5] 4_30_1
-ARB_OUT[8][6] 4_30_2
-ARB_OUT[8][7] 4_30_3
-ARB_OUT[8][8] 4_30_4
-ARB_OUT[8][9] 4_31_1
-ARB_OUT[8][10] 4_31_2
-ARB_OUT[8][11] 4_31_3
-ARB_OUT[8][12] 4_31_4
-ARB_OUT[8][13] 4_32_1
-ARB_OUT[8][14] 4_32_2
-ARB_OUT[8][15] 4_32_3
-ARB_OUT[8][16] 4_32_4
-ARB_OUT[9][1] 3_1_1
-ARB_OUT[9][2] 3_1_2
-ARB_OUT[9][3] 3_1_3
-ARB_OUT[9][4] 3_1_4
-ARB_OUT[9][5] 3_2_1
-ARB_OUT[9][6] 3_2_2
-ARB_OUT[9][7] 3_2_3
-ARB_OUT[9][8] 3_2_4
-ARB_OUT[9][9] 3_3_1
-ARB_OUT[9][10] 3_3_2
-ARB_OUT[9][11] 3_3_3
-ARB_OUT[9][12] 3_3_4
-ARB_OUT[9][13] 3_4_1
-ARB_OUT[9][14] 3_4_2
-ARB_OUT[9][15] 3_4_3
-ARB_OUT[9][16] 3_4_4
-ARB_OUT[10][1] 3_5_1
-ARB_OUT[10][2] 3_5_2
-ARB_OUT[10][3] 3_5_3
-ARB_OUT[10][4] 3_5_4
-ARB_OUT[10][5] 3_6_1
-ARB_OUT[10][6] 3_6_2
-ARB_OUT[10][7] 3_6_3
-ARB_OUT[10][8] 3_6_4
-ARB_OUT[10][9] 3_7_1
-ARB_OUT[10][10] 3_7_2
-ARB_OUT[10][11] 3_7_3
-ARB_OUT[10][12] 3_7_4
-ARB_OUT[10][13] 3_8_1
-ARB_OUT[10][14] 3_8_2
-ARB_OUT[10][15] 3_8_3
-ARB_OUT[10][16] 3_8_4
-ARB_OUT[11][1] 3_9_1
-ARB_OUT[11][2] 3_9_2
-ARB_OUT[11][3] 3_9_3
-ARB_OUT[11][4] 3_9_4
-ARB_OUT[11][5] 3_10_1
-ARB_OUT[11][6] 3_10_2
-ARB_OUT[11][7] 3_10_3
-ARB_OUT[11][8] 3_10_4
-ARB_OUT[11][9] 3_11_1
-ARB_OUT[11][10] 3_11_2
-ARB_OUT[11][11] 3_11_3
-ARB_OUT[11][12] 3_11_4
-ARB_OUT[11][13] 3_12_1
-ARB_OUT[11][14] 3_12_2
-ARB_OUT[11][15] 3_12_3
-ARB_OUT[11][16] 3_12_4
-ARB_OUT[12][1] 3_13_1
-ARB_OUT[12][2] 3_13_2
-ARB_OUT[12][3] 3_13_3
-ARB_OUT[12][4] 3_13_4
-ARB_OUT[12][5] 3_14_1
-ARB_OUT[12][6] 3_14_2
-ARB_OUT[12][7] 3_14_3
-ARB_OUT[12][8] 3_14_4
-ARB_OUT[12][9] 3_15_1
-ARB_OUT[12][10] 3_15_2
-ARB_OUT[12][11] 3_15_3
-ARB_OUT[12][12] 3_15_4
-ARB_OUT[12][13] 3_16_1
-ARB_OUT[12][14] 3_16_2
-ARB_OUT[12][15] 3_16_3
-ARB_OUT[12][16] 3_16_4
-ARB_OUT[13][1] 3_17_1
-ARB_OUT[13][2] 3_17_2
-ARB_OUT[13][3] 3_17_3
-ARB_OUT[13][4] 3_17_4
-ARB_OUT[13][5] 3_18_1
-ARB_OUT[13][6] 3_18_2
-ARB_OUT[13][7] 3_18_3
-ARB_OUT[13][8] 3_18_4
-ARB_OUT[13][9] 3_19_1
-ARB_OUT[13][10] 3_19_2
-ARB_OUT[13][11] 3_19_3
-ARB_OUT[13][12] 3_19_4
-ARB_OUT[13][13] 3_20_1
-ARB_OUT[13][14] 3_20_2
-ARB_OUT[13][15] 3_20_3
-ARB_OUT[13][16] 3_20_4
-ARB_OUT[14][1] 3_21_1
-ARB_OUT[14][2] 3_21_2
-ARB_OUT[14][3] 3_21_3
-ARB_OUT[14][4] 3_21_4
-ARB_OUT[14][5] 3_22_1
-ARB_OUT[14][6] 3_22_2
-ARB_OUT[14][7] 3_22_3
-ARB_OUT[14][8] 3_22_4
-ARB_OUT[14][9] 3_23_1
-ARB_OUT[14][10] 3_23_2
-ARB_OUT[14][11] 3_23_3
-ARB_OUT[14][12] 3_23_4
-ARB_OUT[14][13] 3_24_1
-ARB_OUT[14][14] 3_24_2
-ARB_OUT[14][15] 3_24_3
-ARB_OUT[14][16] 3_24_4
-ARB_OUT[15][1] 3_25_1
-ARB_OUT[15][2] 3_25_2
-ARB_OUT[15][3] 3_25_3
-ARB_OUT[15][4] 3_25_4
-ARB_OUT[15][5] 3_26_1
-ARB_OUT[15][6] 3_26_2
-ARB_OUT[15][7] 3_26_3
-ARB_OUT[15][8] 3_26_4
-ARB_OUT[15][9] 3_27_1
-ARB_OUT[15][10] 3_27_2
-ARB_OUT[15][11] 3_27_3
-ARB_OUT[15][12] 3_27_4
-ARB_OUT[15][13] 3_28_1
-ARB_OUT[15][14] 3_28_2
-ARB_OUT[15][15] 3_28_3
-ARB_OUT[15][16] 3_28_4
-ARB_OUT[16][1] 3_29_1
-ARB_OUT[16][2] 3_29_2
-ARB_OUT[16][3] 3_29_3
-ARB_OUT[16][4] 3_29_4
-ARB_OUT[16][5] 3_30_1
-ARB_OUT[16][6] 3_30_2
-ARB_OUT[16][7] 3_30_3
-ARB_OUT[16][8] 3_30_4
-ARB_OUT[16][9] 3_31_1
-ARB_OUT[16][10] 3_31_2
-ARB_OUT[16][11] 3_31_3
-ARB_OUT[16][12] 3_31_4
-ARB_OUT[16][13] 3_32_1
-ARB_OUT[16][14] 3_32_2
-ARB_OUT[16][15] 3_32_3
-ARB_OUT[16][16] 3_32_4
-ARB_OUT[17][1] 2_1_1
-ARB_OUT[17][2] 2_1_2
-ARB_OUT[17][3] 2_1_3
-ARB_OUT[17][4] 2_1_4
-ARB_OUT[17][5] 2_2_1
-ARB_OUT[17][6] 2_2_2
-ARB_OUT[17][7] 2_2_3
-ARB_OUT[17][8] 2_2_4
-ARB_OUT[17][9] 2_3_1
-ARB_OUT[17][10] 2_3_2
-ARB_OUT[17][11] 2_3_3
-ARB_OUT[17][12] 2_3_4
-ARB_OUT[17][13] 2_4_1
-ARB_OUT[17][14] 2_4_2
-ARB_OUT[17][15] 2_4_3
-ARB_OUT[17][16] 2_4_4
-ARB_OUT[18][1] 2_5_1
-ARB_OUT[18][2] 2_5_2
-ARB_OUT[18][3] 2_5_3
-ARB_OUT[18][4] 2_5_4
-ARB_OUT[18][5] 2_6_1
-ARB_OUT[18][6] 2_6_2
-ARB_OUT[18][7] 2_6_3
-ARB_OUT[18][8] 2_6_4
-ARB_OUT[18][9] 2_7_1
-ARB_OUT[18][10] 2_7_2
-ARB_OUT[18][11] 2_7_3
-ARB_OUT[18][12] 2_7_4
-ARB_OUT[18][13] 2_8_1
-ARB_OUT[18][14] 2_8_2
-ARB_OUT[18][15] 2_8_3
-ARB_OUT[18][16] 2_8_4
-ARB_OUT[19][1] 2_9_1
-ARB_OUT[19][2] 2_9_2
-ARB_OUT[19][3] 2_9_3
-ARB_OUT[19][4] 2_9_4
-ARB_OUT[19][5] 2_10_1
-ARB_OUT[19][6] 2_10_2
-ARB_OUT[19][7] 2_10_3
-ARB_OUT[19][8] 2_10_4
-ARB_OUT[19][9] 2_11_1
-ARB_OUT[19][10] 2_11_2
-ARB_OUT[19][11] 2_11_3
-ARB_OUT[19][12] 2_11_4
-ARB_OUT[19][13] 2_12_1
-ARB_OUT[19][14] 2_12_2
-ARB_OUT[19][15] 2_12_3
-ARB_OUT[19][16] 2_12_4
-ARB_OUT[20][1] 2_13_1
-ARB_OUT[20][2] 2_13_2
-ARB_OUT[20][3] 2_13_3
-ARB_OUT[20][4] 2_13_4
-ARB_OUT[20][5] 2_14_1
-ARB_OUT[20][6] 2_14_2
-ARB_OUT[20][7] 2_14_3
-ARB_OUT[20][8] 2_14_4
-ARB_OUT[20][9] 2_15_1
-ARB_OUT[20][10] 2_15_2
-ARB_OUT[20][11] 2_15_3
-ARB_OUT[20][12] 2_15_4
-ARB_OUT[20][13] 2_16_1
-ARB_OUT[20][14] 2_16_2
-ARB_OUT[20][15] 2_16_3
-ARB_OUT[20][16] 2_16_4
-ARB_OUT[21][1] 2_17_1
-ARB_OUT[21][2] 2_17_2
-ARB_OUT[21][3] 2_17_3
-ARB_OUT[21][4] 2_17_4
-ARB_OUT[21][5] 2_18_1
-ARB_OUT[21][6] 2_18_2
-ARB_OUT[21][7] 2_18_3
-ARB_OUT[21][8] 2_18_4
-ARB_OUT[21][9] 2_19_1
-ARB_OUT[21][10] 2_19_2
-ARB_OUT[21][11] 2_19_3
-ARB_OUT[21][12] 2_19_4
-ARB_OUT[21][13] 2_20_1
-ARB_OUT[21][14] 2_20_2
-ARB_OUT[21][15] 2_20_3
-ARB_OUT[21][16] 2_20_4
-ARB_OUT[22][1] 2_21_1
-ARB_OUT[22][2] 2_21_2
-ARB_OUT[22][3] 2_21_3
-ARB_OUT[22][4] 2_21_4
-ARB_OUT[22][5] 2_22_1
-ARB_OUT[22][6] 2_22_2
-ARB_OUT[22][7] 2_22_3
-ARB_OUT[22][8] 2_22_4
-ARB_OUT[22][9] 2_23_1
-ARB_OUT[22][10] 2_23_2
-ARB_OUT[22][11] 2_23_3
-ARB_OUT[22][12] 2_23_4
-ARB_OUT[22][13] 2_24_1
-ARB_OUT[22][14] 2_24_2
-ARB_OUT[22][15] 2_24_3
-ARB_OUT[22][16] 2_24_4
-ARB_OUT[23][1] 2_25_1
-ARB_OUT[23][2] 2_25_2
-ARB_OUT[23][3] 2_25_3
-ARB_OUT[23][4] 2_25_4
-ARB_OUT[23][5] 2_26_1
-ARB_OUT[23][6] 2_26_2
-ARB_OUT[23][7] 2_26_3
-ARB_OUT[23][8] 2_26_4
-ARB_OUT[23][9] 2_27_1
-ARB_OUT[23][10] 2_27_2
-ARB_OUT[23][11] 2_27_3
-ARB_OUT[23][12] 2_27_4
-ARB_OUT[23][13] 2_28_1
-ARB_OUT[23][14] 2_28_2
-ARB_OUT[23][15] 2_28_3
-ARB_OUT[23][16] 2_28_4
-ARB_OUT[24][1] 2_29_1
-ARB_OUT[24][2] 2_29_2
-ARB_OUT[24][3] 2_29_3
-ARB_OUT[24][4] 2_29_4
-ARB_OUT[24][5] 2_30_1
-ARB_OUT[24][6] 2_30_2
-ARB_OUT[24][7] 2_30_3
-ARB_OUT[24][8] 2_30_4
-ARB_OUT[24][9] 2_31_1
-ARB_OUT[24][10] 2_31_2
-ARB_OUT[24][11] 2_31_3
-ARB_OUT[24][12] 2_31_4
-ARB_OUT[24][13] 2_32_1
-ARB_OUT[24][14] 2_32_2
-ARB_OUT[24][15] 2_32_3
-ARB_OUT[24][16] 2_32_4
-ARB_OUT[25][1] 1_1_1
-ARB_OUT[25][2] 1_1_2
-ARB_OUT[25][3] 1_1_3
-ARB_OUT[25][4] 1_1_4
-ARB_OUT[25][5] 1_2_1
-ARB_OUT[25][6] 1_2_2
-ARB_OUT[25][7] 1_2_3
-ARB_OUT[25][8] 1_2_4
-ARB_OUT[25][9] 1_3_1
-ARB_OUT[25][10] 1_3_2
-ARB_OUT[25][11] 1_3_3
-ARB_OUT[25][12] 1_3_4
-ARB_OUT[25][13] 1_4_1
-ARB_OUT[25][14] 1_4_2
-ARB_OUT[25][15] 1_4_3
-ARB_OUT[25][16] 1_4_4
-ARB_OUT[26][1] 1_5_1
-ARB_OUT[26][2] 1_5_2
-ARB_OUT[26][3] 1_5_3
-ARB_OUT[26][4] 1_5_4
-ARB_OUT[26][5] 1_6_1
-ARB_OUT[26][6] 1_6_2
-ARB_OUT[26][7] 1_6_3
-ARB_OUT[26][8] 1_6_4
-ARB_OUT[26][9] 1_7_1
-ARB_OUT[26][10] 1_7_2
-ARB_OUT[26][11] 1_7_3
-ARB_OUT[26][12] 1_7_4
-ARB_OUT[26][13] 1_8_1
-ARB_OUT[26][14] 1_8_2
-ARB_OUT[26][15] 1_8_3
-ARB_OUT[26][16] 1_8_4
-ARB_OUT[27][1] 1_9_1
-ARB_OUT[27][2] 1_9_2
-ARB_OUT[27][3] 1_9_3
-ARB_OUT[27][4] 1_9_4
-ARB_OUT[27][5] 1_10_1
-ARB_OUT[27][6] 1_10_2
-ARB_OUT[27][7] 1_10_3
-ARB_OUT[27][8] 1_10_4
-ARB_OUT[27][9] 1_11_1
-ARB_OUT[27][10] 1_11_2
-ARB_OUT[27][11] 1_11_3
-ARB_OUT[27][12] 1_11_4
-ARB_OUT[27][13] 1_12_1
-ARB_OUT[27][14] 1_12_2
-ARB_OUT[27][15] 1_12_3
-ARB_OUT[27][16] 1_12_4
-ARB_OUT[28][1] 1_13_1
-ARB_OUT[28][2] 1_13_2
-ARB_OUT[28][3] 1_13_3
-ARB_OUT[28][4] 1_13_4
-ARB_OUT[28][5] 1_14_1
-ARB_OUT[28][6] 1_14_2
-ARB_OUT[28][7] 1_14_3
-ARB_OUT[28][8] 1_14_4
-ARB_OUT[28][9] 1_15_1
-ARB_OUT[28][10] 1_15_2
-ARB_OUT[28][11] 1_15_3
-ARB_OUT[28][12] 1_15_4
-ARB_OUT[28][13] 1_16_1
-ARB_OUT[28][14] 1_16_2
-ARB_OUT[28][15] 1_16_3
-ARB_OUT[28][16] 1_16_4
-ARB_OUT[29][1] 1_17_1
-ARB_OUT[29][2] 1_17_2
-ARB_OUT[29][3] 1_17_3
-ARB_OUT[29][4] 1_17_4
-ARB_OUT[29][5] 1_18_1
-ARB_OUT[29][6] 1_18_2
-ARB_OUT[29][7] 1_18_3
-ARB_OUT[29][8] 1_18_4
-ARB_OUT[29][9] 1_19_1
-ARB_OUT[29][10] 1_19_2
-ARB_OUT[29][11] 1_19_3
-ARB_OUT[29][12] 1_19_4
-ARB_OUT[29][13] 1_20_1
-ARB_OUT[29][14] 1_20_2
-ARB_OUT[29][15] 1_20_3
-ARB_OUT[29][16] 1_20_4
-ARB_OUT[30][1] 1_21_1
-ARB_OUT[30][2] 1_21_2
-ARB_OUT[30][3] 1_21_3
-ARB_OUT[30][4] 1_21_4
-ARB_OUT[30][5] 1_22_1
-ARB_OUT[30][6] 1_22_2
-ARB_OUT[30][7] 1_22_3
-ARB_OUT[30][8] 1_22_4
-ARB_OUT[30][9] 1_23_1
-ARB_OUT[30][10] 1_23_2
-ARB_OUT[30][11] 1_23_3
-ARB_OUT[30][12] 1_23_4
-ARB_OUT[30][13] 1_24_1
-ARB_OUT[30][14] 1_24_2
-ARB_OUT[30][15] 1_24_3
-ARB_OUT[30][16] 1_24_4
-ARB_OUT[31][1] 1_25_1
-ARB_OUT[31][2] 1_25_2
-ARB_OUT[31][3] 1_25_3
-ARB_OUT[31][4] 1_25_4
-ARB_OUT[31][5] 1_26_1
-ARB_OUT[31][6] 1_26_2
-ARB_OUT[31][7] 1_26_3
-ARB_OUT[31][8] 1_26_4
-ARB_OUT[31][9] 1_27_1
-ARB_OUT[31][10] 1_27_2
-ARB_OUT[31][11] 1_27_3
-ARB_OUT[31][12] 1_27_4
-ARB_OUT[31][13] 1_28_1
-ARB_OUT[31][14] 1_28_2
-ARB_OUT[31][15] 1_28_3
-ARB_OUT[31][16] 1_28_4
-ARB_OUT[32][1] 1_29_1
-ARB_OUT[32][2] 1_29_2
-ARB_OUT[32][3] 1_29_3
-ARB_OUT[32][4] 1_29_4
-ARB_OUT[32][5] 1_30_1
-ARB_OUT[32][6] 1_30_2
-ARB_OUT[32][7] 1_30_3
-ARB_OUT[32][8] 1_30_4
-ARB_OUT[32][9] 1_31_1
-ARB_OUT[32][10] 1_31_2
-ARB_OUT[32][11] 1_31_3
-ARB_OUT[32][12] 1_31_4
-ARB_OUT[32][13] 1_32_1
-ARB_OUT[32][14] 1_32_2
-ARB_OUT[32][15] 1_32_3
-ARB_OUT[32][16] 1_32_4
+# See mapping at https://github.com/lwa-project/lwa1-issues/issues/34
+ARB_OUT[1][1] 4_1
+ARB_OUT[1][2] 4_2
+ARB_OUT[1][3] 4_3
+ARB_OUT[1][4] 4_4
+ARB_OUT[1][5] 4_5
+ARB_OUT[1][6] 4_6
+ARB_OUT[1][7] 4_7
+ARB_OUT[1][8] 4_8
+ARB_OUT[1][9] 4_9
+ARB_OUT[1][10] 4_10
+ARB_OUT[1][11] 4_11
+ARB_OUT[1][12] 4_12
+ARB_OUT[1][13] 4_13
+ARB_OUT[1][14] 4_14
+ARB_OUT[1][15] 4_15
+ARB_OUT[1][16] 4_16
+ARB_OUT[2][1] 4_17
+ARB_OUT[2][2] 4_18
+ARB_OUT[2][3] 4_19
+ARB_OUT[2][4] 4_20
+ARB_OUT[2][5] 4_21
+ARB_OUT[2][6] 4_22
+ARB_OUT[2][7] 4_23
+ARB_OUT[2][8] 4_24
+ARB_OUT[2][9] 4_25
+ARB_OUT[2][10] 4_26
+ARB_OUT[2][11] 4_27
+ARB_OUT[2][12] 4_28
+ARB_OUT[2][13] 4_29
+ARB_OUT[2][14] 4_30
+ARB_OUT[2][15] 4_31
+ARB_OUT[2][16] 4_32
+ARB_OUT[3][1] 4_33
+ARB_OUT[3][2] 4_34
+ARB_OUT[3][3] 4_35
+ARB_OUT[3][4] 4_36
+ARB_OUT[3][5] 4_37
+ARB_OUT[3][6] 4_38
+ARB_OUT[3][7] 4_39
+ARB_OUT[3][8] 4_40
+ARB_OUT[3][9] 4_41
+ARB_OUT[3][10] 4_42
+ARB_OUT[3][11] 4_43
+ARB_OUT[3][12] 4_44
+ARB_OUT[3][13] 4_45
+ARB_OUT[3][14] 4_46
+ARB_OUT[3][15] 4_47
+ARB_OUT[3][16] 4_48
+ARB_OUT[4][1] 4_49
+ARB_OUT[4][2] 4_50
+ARB_OUT[4][3] 4_51
+ARB_OUT[4][4] 4_52
+ARB_OUT[4][5] 4_53
+ARB_OUT[4][6] 4_54
+ARB_OUT[4][7] 4_55
+ARB_OUT[4][8] 4_56
+ARB_OUT[4][9] 4_57
+ARB_OUT[4][10] 4_58
+ARB_OUT[4][11] 4_59
+ARB_OUT[4][12] 4_60
+ARB_OUT[4][13] 4_61
+ARB_OUT[4][14] 4_62
+ARB_OUT[4][15] 4_63
+ARB_OUT[4][16] 4_64
+ARB_OUT[5][1] 4_65
+ARB_OUT[5][2] 4_66
+ARB_OUT[5][3] 4_67
+ARB_OUT[5][4] 4_68
+ARB_OUT[5][5] 4_69
+ARB_OUT[5][6] 4_70
+ARB_OUT[5][7] 4_71
+ARB_OUT[5][8] 4_72
+ARB_OUT[5][9] 4_73
+ARB_OUT[5][10] 4_74
+ARB_OUT[5][11] 4_75
+ARB_OUT[5][12] 4_76
+ARB_OUT[5][13] 4_77
+ARB_OUT[5][14] 4_78
+ARB_OUT[5][15] 4_79
+ARB_OUT[5][16] 4_80
+ARB_OUT[6][1] 4_81
+ARB_OUT[6][2] 4_82
+ARB_OUT[6][3] 4_83
+ARB_OUT[6][4] 4_84
+ARB_OUT[6][5] 4_85
+ARB_OUT[6][6] 4_86
+ARB_OUT[6][7] 4_87
+ARB_OUT[6][8] 4_88
+ARB_OUT[6][9] 4_89
+ARB_OUT[6][10] 4_90
+ARB_OUT[6][11] 4_91
+ARB_OUT[6][12] 4_92
+ARB_OUT[6][13] 4_93
+ARB_OUT[6][14] 4_94
+ARB_OUT[6][15] 4_95
+ARB_OUT[6][16] 4_96
+ARB_OUT[7][1] 4_97
+ARB_OUT[7][2] 4_98
+ARB_OUT[7][3] 4_99
+ARB_OUT[7][4] 4_100
+ARB_OUT[7][5] 4_101
+ARB_OUT[7][6] 4_102
+ARB_OUT[7][7] 4_103
+ARB_OUT[7][8] 4_104
+ARB_OUT[7][9] 4_105
+ARB_OUT[7][10] 4_106
+ARB_OUT[7][11] 4_107
+ARB_OUT[7][12] 4_108
+ARB_OUT[7][13] 4_109
+ARB_OUT[7][14] 4_110
+ARB_OUT[7][15] 4_111
+ARB_OUT[7][16] 4_112
+ARB_OUT[8][1] 4_113
+ARB_OUT[8][2] 4_114
+ARB_OUT[8][3] 4_115
+ARB_OUT[8][4] 4_116
+ARB_OUT[8][5] 4_117
+ARB_OUT[8][6] 4_118
+ARB_OUT[8][7] 4_119
+ARB_OUT[8][8] 4_120
+ARB_OUT[8][9] 4_121
+ARB_OUT[8][10] 4_122
+ARB_OUT[8][11] 4_123
+ARB_OUT[8][12] 4_124
+ARB_OUT[8][13] 4_125
+ARB_OUT[8][14] 4_126
+ARB_OUT[8][15] 4_127
+ARB_OUT[8][16] 4_128
+ARB_OUT[9][1] 3_1
+ARB_OUT[9][2] 3_2
+ARB_OUT[9][3] 3_3
+ARB_OUT[9][4] 3_4
+ARB_OUT[9][5] 3_5
+ARB_OUT[9][6] 3_6
+ARB_OUT[9][7] 3_7
+ARB_OUT[9][8] 3_8
+ARB_OUT[9][9] 3_9
+ARB_OUT[9][10] 3_10
+ARB_OUT[9][11] 3_11
+ARB_OUT[9][12] 3_12
+ARB_OUT[9][13] 3_13
+ARB_OUT[9][14] 3_14
+ARB_OUT[9][15] 3_15
+ARB_OUT[9][16] 3_16
+ARB_OUT[10][1] 3_17
+ARB_OUT[10][2] 3_18
+ARB_OUT[10][3] 3_19
+ARB_OUT[10][4] 3_20
+ARB_OUT[10][5] 3_21
+ARB_OUT[10][6] 3_22
+ARB_OUT[10][7] 3_23
+ARB_OUT[10][8] 3_24
+ARB_OUT[10][9] 3_25
+ARB_OUT[10][10] 3_26
+ARB_OUT[10][11] 3_27
+ARB_OUT[10][12] 3_28
+ARB_OUT[10][13] 3_29
+ARB_OUT[10][14] 3_30
+ARB_OUT[10][15] 3_31
+ARB_OUT[10][16] 3_32
+ARB_OUT[11][1] 3_33
+ARB_OUT[11][2] 3_34
+ARB_OUT[11][3] 3_35
+ARB_OUT[11][4] 3_36
+ARB_OUT[11][5] 3_37
+ARB_OUT[11][6] 3_38
+ARB_OUT[11][7] 3_39
+ARB_OUT[11][8] 3_40
+ARB_OUT[11][9] 3_41
+ARB_OUT[11][10] 3_42
+ARB_OUT[11][11] 3_43
+ARB_OUT[11][12] 3_44
+ARB_OUT[11][13] 3_45
+ARB_OUT[11][14] 3_46
+ARB_OUT[11][15] 3_47
+ARB_OUT[11][16] 3_48
+ARB_OUT[12][1] 3_49
+ARB_OUT[12][2] 3_50
+ARB_OUT[12][3] 3_51
+ARB_OUT[12][4] 3_52
+ARB_OUT[12][5] 3_53
+ARB_OUT[12][6] 3_54
+ARB_OUT[12][7] 3_55
+ARB_OUT[12][8] 3_56
+ARB_OUT[12][9] 3_57
+ARB_OUT[12][10] 3_58
+ARB_OUT[12][11] 3_59
+ARB_OUT[12][12] 3_60
+ARB_OUT[12][13] 3_61
+ARB_OUT[12][14] 3_62
+ARB_OUT[12][15] 3_63
+ARB_OUT[12][16] 3_64
+ARB_OUT[13][1] 3_65
+ARB_OUT[13][2] 3_66
+ARB_OUT[13][3] 3_67
+ARB_OUT[13][4] 3_68
+ARB_OUT[13][5] 3_69
+ARB_OUT[13][6] 3_70
+ARB_OUT[13][7] 3_71
+ARB_OUT[13][8] 3_72
+ARB_OUT[13][9] 3_73
+ARB_OUT[13][10] 3_74
+ARB_OUT[13][11] 3_75
+ARB_OUT[13][12] 3_76
+ARB_OUT[13][13] 3_77
+ARB_OUT[13][14] 3_78
+ARB_OUT[13][15] 3_79
+ARB_OUT[13][16] 3_80
+ARB_OUT[14][1] 3_81
+ARB_OUT[14][2] 3_82
+ARB_OUT[14][3] 3_83
+ARB_OUT[14][4] 3_84
+ARB_OUT[14][5] 3_85
+ARB_OUT[14][6] 3_86
+ARB_OUT[14][7] 3_87
+ARB_OUT[14][8] 3_88
+ARB_OUT[14][9] 3_89
+ARB_OUT[14][10] 3_90
+ARB_OUT[14][11] 3_91
+ARB_OUT[14][12] 3_92
+ARB_OUT[14][13] 3_93
+ARB_OUT[14][14] 3_94
+ARB_OUT[14][15] 3_95
+ARB_OUT[14][16] 3_96
+ARB_OUT[15][1] 3_97
+ARB_OUT[15][2] 3_98
+ARB_OUT[15][3] 3_99
+ARB_OUT[15][4] 3_100
+ARB_OUT[15][5] 3_101
+ARB_OUT[15][6] 3_102
+ARB_OUT[15][7] 3_103
+ARB_OUT[15][8] 3_104
+ARB_OUT[15][9] 3_105
+ARB_OUT[15][10] 3_106
+ARB_OUT[15][11] 3_107
+ARB_OUT[15][12] 3_108
+ARB_OUT[15][13] 3_109
+ARB_OUT[15][14] 3_110
+ARB_OUT[15][15] 3_111
+ARB_OUT[15][16] 3_112
+ARB_OUT[16][1] 3_113
+ARB_OUT[16][2] 3_114
+ARB_OUT[16][3] 3_115
+ARB_OUT[16][4] 3_116
+ARB_OUT[16][5] 3_117
+ARB_OUT[16][6] 3_118
+ARB_OUT[16][7] 3_119
+ARB_OUT[16][8] 3_120
+ARB_OUT[16][9] 3_121
+ARB_OUT[16][10] 3_122
+ARB_OUT[16][11] 3_123
+ARB_OUT[16][12] 3_124
+ARB_OUT[16][13] 3_125
+ARB_OUT[16][14] 3_126
+ARB_OUT[16][15] 3_127
+ARB_OUT[16][16] 3_128
+ARB_OUT[17][1] 2_1
+ARB_OUT[17][2] 2_2
+ARB_OUT[17][3] 2_3
+ARB_OUT[17][4] 2_4
+ARB_OUT[17][5] 2_5
+ARB_OUT[17][6] 2_6
+ARB_OUT[17][7] 2_7
+ARB_OUT[17][8] 2_8
+ARB_OUT[17][9] 2_9
+ARB_OUT[17][10] 2_10
+ARB_OUT[17][11] 2_11
+ARB_OUT[17][12] 2_12
+ARB_OUT[17][13] 2_13
+ARB_OUT[17][14] 2_14
+ARB_OUT[17][15] 2_15
+ARB_OUT[17][16] 2_16
+ARB_OUT[18][1] 2_17
+ARB_OUT[18][2] 2_18
+ARB_OUT[18][3] 2_19
+ARB_OUT[18][4] 2_20
+ARB_OUT[18][5] 2_21
+ARB_OUT[18][6] 2_22
+ARB_OUT[18][7] 2_23
+ARB_OUT[18][8] 2_24
+ARB_OUT[18][9] 2_25
+ARB_OUT[18][10] 2_26
+ARB_OUT[18][11] 2_27
+ARB_OUT[18][12] 2_28
+ARB_OUT[18][13] 2_29
+ARB_OUT[18][14] 2_30
+ARB_OUT[18][15] 2_31
+ARB_OUT[18][16] 2_32
+ARB_OUT[19][1] 2_33
+ARB_OUT[19][2] 2_34
+ARB_OUT[19][3] 2_35
+ARB_OUT[19][4] 2_36
+ARB_OUT[19][5] 2_37
+ARB_OUT[19][6] 2_38
+ARB_OUT[19][7] 2_39
+ARB_OUT[19][8] 2_40
+ARB_OUT[19][9] 2_41
+ARB_OUT[19][10] 2_42
+ARB_OUT[19][11] 2_43
+ARB_OUT[19][12] 2_44
+ARB_OUT[19][13] 2_45
+ARB_OUT[19][14] 2_46
+ARB_OUT[19][15] 2_47
+ARB_OUT[19][16] 2_48
+ARB_OUT[20][1] 2_49
+ARB_OUT[20][2] 2_50
+ARB_OUT[20][3] 2_51
+ARB_OUT[20][4] 2_52
+ARB_OUT[20][5] 2_53
+ARB_OUT[20][6] 2_54
+ARB_OUT[20][7] 2_55
+ARB_OUT[20][8] 2_56
+ARB_OUT[20][9] 2_57
+ARB_OUT[20][10] 2_58
+ARB_OUT[20][11] 2_59
+ARB_OUT[20][12] 2_60
+ARB_OUT[20][13] 2_61
+ARB_OUT[20][14] 2_62
+ARB_OUT[20][15] 2_63
+ARB_OUT[20][16] 2_64
+ARB_OUT[21][1] 2_65
+ARB_OUT[21][2] 2_66
+ARB_OUT[21][3] 2_67
+ARB_OUT[21][4] 2_68
+ARB_OUT[21][5] 2_69
+ARB_OUT[21][6] 2_70
+ARB_OUT[21][7] 2_71
+ARB_OUT[21][8] 2_72
+ARB_OUT[21][9] 2_73
+ARB_OUT[21][10] 2_74
+ARB_OUT[21][11] 2_75
+ARB_OUT[21][12] 2_76
+ARB_OUT[21][13] 2_77
+ARB_OUT[21][14] 2_78
+ARB_OUT[21][15] 2_79
+ARB_OUT[21][16] 2_80
+ARB_OUT[22][1] 2_81
+ARB_OUT[22][2] 2_82
+ARB_OUT[22][3] 2_83
+ARB_OUT[22][4] 2_84
+ARB_OUT[22][5] 2_85
+ARB_OUT[22][6] 2_86
+ARB_OUT[22][7] 2_87
+ARB_OUT[22][8] 2_88
+ARB_OUT[22][9] 2_89
+ARB_OUT[22][10] 2_90
+ARB_OUT[22][11] 2_91
+ARB_OUT[22][12] 2_92
+ARB_OUT[22][13] 2_93
+ARB_OUT[22][14] 2_94
+ARB_OUT[22][15] 2_95
+ARB_OUT[22][16] 2_96
+ARB_OUT[23][1] 2_97
+ARB_OUT[23][2] 2_98
+ARB_OUT[23][3] 2_99
+ARB_OUT[23][4] 2_100
+ARB_OUT[23][5] 2_101
+ARB_OUT[23][6] 2_102
+ARB_OUT[23][7] 2_103
+ARB_OUT[23][8] 2_104
+ARB_OUT[23][9] 2_105
+ARB_OUT[23][10] 2_106
+ARB_OUT[23][11] 2_107
+ARB_OUT[23][12] 2_108
+ARB_OUT[23][13] 2_109
+ARB_OUT[23][14] 2_110
+ARB_OUT[23][15] 2_111
+ARB_OUT[23][16] 2_112
+ARB_OUT[24][1] 2_113
+ARB_OUT[24][2] 2_114
+ARB_OUT[24][3] 2_115
+ARB_OUT[24][4] 2_116
+ARB_OUT[24][5] 2_117
+ARB_OUT[24][6] 2_118
+ARB_OUT[24][7] 2_119
+ARB_OUT[24][8] 2_120
+ARB_OUT[24][9] 2_121
+ARB_OUT[24][10] 2_122
+ARB_OUT[24][11] 2_123
+ARB_OUT[24][12] 2_124
+ARB_OUT[24][13] 2_125
+ARB_OUT[24][14] 2_126
+ARB_OUT[24][15] 2_127
+ARB_OUT[24][16] 2_128
+ARB_OUT[25][1] 1_1
+ARB_OUT[25][2] 1_2
+ARB_OUT[25][3] 1_3
+ARB_OUT[25][4] 1_4
+ARB_OUT[25][5] 1_5
+ARB_OUT[25][6] 1_6
+ARB_OUT[25][7] 1_7
+ARB_OUT[25][8] 1_8
+ARB_OUT[25][9] 1_9
+ARB_OUT[25][10] 1_10
+ARB_OUT[25][11] 1_11
+ARB_OUT[25][12] 1_12
+ARB_OUT[25][13] 1_13
+ARB_OUT[25][14] 1_14
+ARB_OUT[25][15] 1_15
+ARB_OUT[25][16] 1_16
+ARB_OUT[26][1] 1_17
+ARB_OUT[26][2] 1_18
+ARB_OUT[26][3] 1_19
+ARB_OUT[26][4] 1_20
+ARB_OUT[26][5] 1_21
+ARB_OUT[26][6] 1_22
+ARB_OUT[26][7] 1_23
+ARB_OUT[26][8] 1_24
+ARB_OUT[26][9] 1_25
+ARB_OUT[26][10] 1_26
+ARB_OUT[26][11] 1_27
+ARB_OUT[26][12] 1_28
+ARB_OUT[26][13] 1_29
+ARB_OUT[26][14] 1_30
+ARB_OUT[26][15] 1_31
+ARB_OUT[26][16] 1_32
+ARB_OUT[27][1] 1_33
+ARB_OUT[27][2] 1_34
+ARB_OUT[27][3] 1_35
+ARB_OUT[27][4] 1_36
+ARB_OUT[27][5] 1_37
+ARB_OUT[27][6] 1_38
+ARB_OUT[27][7] 1_39
+ARB_OUT[27][8] 1_40
+ARB_OUT[27][9] 1_41
+ARB_OUT[27][10] 1_42
+ARB_OUT[27][11] 1_43
+ARB_OUT[27][12] 1_44
+ARB_OUT[27][13] 1_45
+ARB_OUT[27][14] 1_46
+ARB_OUT[27][15] 1_47
+ARB_OUT[27][16] 1_48
+ARB_OUT[28][1] 1_49
+ARB_OUT[28][2] 1_50
+ARB_OUT[28][3] 1_51
+ARB_OUT[28][4] 1_52
+ARB_OUT[28][5] 1_53
+ARB_OUT[28][6] 1_54
+ARB_OUT[28][7] 1_55
+ARB_OUT[28][8] 1_56
+ARB_OUT[28][9] 1_57
+ARB_OUT[28][10] 1_58
+ARB_OUT[28][11] 1_59
+ARB_OUT[28][12] 1_60
+ARB_OUT[28][13] 1_61
+ARB_OUT[28][14] 1_62
+ARB_OUT[28][15] 1_63
+ARB_OUT[28][16] 1_64
+ARB_OUT[29][1] 1_65
+ARB_OUT[29][2] 1_66
+ARB_OUT[29][3] 1_67
+ARB_OUT[29][4] 1_68
+ARB_OUT[29][5] 1_69
+ARB_OUT[29][6] 1_70
+ARB_OUT[29][7] 1_71
+ARB_OUT[29][8] 1_72
+ARB_OUT[29][9] 1_73
+ARB_OUT[29][10] 1_74
+ARB_OUT[29][11] 1_75
+ARB_OUT[29][12] 1_76
+ARB_OUT[29][13] 1_77
+ARB_OUT[29][14] 1_78
+ARB_OUT[29][15] 1_79
+ARB_OUT[29][16] 1_80
+ARB_OUT[30][1] 1_81
+ARB_OUT[30][2] 1_82
+ARB_OUT[30][3] 1_83
+ARB_OUT[30][4] 1_84
+ARB_OUT[30][5] 1_85
+ARB_OUT[30][6] 1_86
+ARB_OUT[30][7] 1_87
+ARB_OUT[30][8] 1_88
+ARB_OUT[30][9] 1_89
+ARB_OUT[30][10] 1_90
+ARB_OUT[30][11] 1_91
+ARB_OUT[30][12] 1_92
+ARB_OUT[30][13] 1_93
+ARB_OUT[30][14] 1_94
+ARB_OUT[30][15] 1_95
+ARB_OUT[30][16] 1_96
+ARB_OUT[31][1] 1_97
+ARB_OUT[31][2] 1_98
+ARB_OUT[31][3] 1_99
+ARB_OUT[31][4] 1_100
+ARB_OUT[31][5] 1_101
+ARB_OUT[31][6] 1_102
+ARB_OUT[31][7] 1_103
+ARB_OUT[31][8] 1_104
+ARB_OUT[31][9] 1_105
+ARB_OUT[31][10] 1_106
+ARB_OUT[31][11] 1_107
+ARB_OUT[31][12] 1_108
+ARB_OUT[31][13] 1_109
+ARB_OUT[31][14] 1_110
+ARB_OUT[31][15] 1_111
+ARB_OUT[31][16] 1_112
+ARB_OUT[32][1] 1_113
+ARB_OUT[32][2] 1_114
+ARB_OUT[32][3] 1_115
+ARB_OUT[32][4] 1_116
+ARB_OUT[32][5] 1_117
+ARB_OUT[32][6] 1_118
+ARB_OUT[32][7] 1_119
+ARB_OUT[32][8] 1_120
+ARB_OUT[32][9] 1_121
+ARB_OUT[32][10] 1_122
+ARB_OUT[32][11] 1_123
+ARB_OUT[32][12] 1_124
+ARB_OUT[32][13] 1_125
+ARB_OUT[32][14] 1_126
+ARB_OUT[32][15] 1_127
+ARB_OUT[32][16] 1_128
 
 # ----------------------
-# --- DP1 --------------
+# --- NDP --------------
 # ----------------------
-# Maximum number of DP1 boards:
-N_DP1 26
-# Maximum number or channels per DP1 board
-N_DP1CH 20
+# Maximum number of SNAP2/ZCU102 boards:
+N_SNAP 16
+# Maximum number or channels per SNAP2/ZCU102` board
+N_SNAPCH 32
 
-# DP1_ID[] will be set to "UNK" (no identification) for any DP1 boards not identified
-# *** DP1_ID[dp1#] goes here:
-DP1_ID[1] lwa27
-DP1_ID[2] lwa24
-DP1_ID[3] lwa23
-DP1_ID[4] lwa18
-DP1_ID[5] lwa10
-DP1_ID[6] lwa32
-DP1_ID[7] lwa11
-DP1_ID[8] lwa30
-DP1_ID[9] lwa12
-DP1_ID[10] lwa8
-DP1_ID[11] lwa13
-DP1_ID[12] lwa26
-DP1_ID[13] lwa14
-DP1_ID[14] lwa22
-DP1_ID[15] lwa20
-DP1_ID[16] lwa1
-DP1_ID[17] lwa5
-DP1_ID[18] lwa25
-DP1_ID[19] lwa35
-DP1_ID[20] lwa19
-DP1_ID[21] lwa21
-DP1_ID[22] lwa6
-DP1_ID[23] lwa7
-DP1_ID[24] lwa33
-DP1_ID[25] lwa15
-DP1_ID[26] lwa28
+# SNAP_ID[] will be set to "UNK" (no identification) for any SNAP2/ZCU102 boards not identified
+# *** SNAP_ID[snap#] goes here:
+SNAP_ID[1] 0A351D7908
+SNAP_ID[2] 0A351D790C
+SNAP_ID[3] 0A351D78FC
+SNAP_ID[4] 0A351D7314
+SNAP_ID[5] 0A351D7954
+SNAP_ID[6] 0A351D7392
+SNAP_ID[7] 0A351D7311
+SNAP_ID[8] 0A351D7389
+SNAP_ID[9] 0A351D730E
+SNAP_ID[10] 0A351D7319
+SNAP_ID[11] 0A351D78EA
+SNAP_ID[12] 0A351D72E3
+SNAP_ID[13] 0A351D730F
+SNAP_ID[14] 0A3507FE78
+SNAP_ID[15] 0A351D72FA
+SNAP_ID[16] 0A351D7305
 
-# DP1_SLOT[] will be set to 0 (not known/not applicable) for any DP1 boards not identified
-# *** DP1_SLOT[dp1#] goes here:
-# format = <chassis>-<slot from left>
-DP1_SLOT[1] 1-8
-DP1_SLOT[2] 1-6
-DP1_SLOT[3] 1-9
-DP1_SLOT[4] 1-5
-DP1_SLOT[5] 1-10
-DP1_SLOT[6] 1-4
-DP1_SLOT[7] 1-11
-DP1_SLOT[8] 1-3
-DP1_SLOT[9] 1-12
-DP1_SLOT[10] 1-2
-DP1_SLOT[11] 1-13
-DP1_SLOT[12] 1-1
-DP1_SLOT[13] 1-14
-DP1_SLOT[14] 2-8
-DP1_SLOT[15] 2-6
-DP1_SLOT[16] 2-9
-DP1_SLOT[17] 2-5
-DP1_SLOT[18] 2-10
-DP1_SLOT[19] 2-4
-DP1_SLOT[20] 2-11
-DP1_SLOT[21] 2-3
-DP1_SLOT[22] 2-12
-DP1_SLOT[23] 2-2
-DP1_SLOT[24] 2-13
-DP1_SLOT[25] 2-1
-DP1_SLOT[26] 2-14
+# SNAP_SLOT[] will be set to 0 (not known/not applicable) for any SNAP2/ZCU102 boards not identified
+# *** SNAP_SLOT[snap#] goes here:
+# Format is <chassis>-<slot-from-left>
+# Chassis 1 is bottom-most chassis in the rack
+SNAP_SLOT[1] 1-1
+SNAP_SLOT[2] 1-2
+SNAP_SLOT[3] 1-3
+SNAP_SLOT[4] 1-4
+SNAP_SLOT[5] 2-1
+SNAP_SLOT[6] 2-2
+SNAP_SLOT[7] 2-3
+SNAP_SLOT[8] 2-4
+SNAP_SLOT[9] 3-1
+SNAP_SLOT[10] 3-2
+SNAP_SLOT[11] 3-3
+SNAP_SLOT[12] 3-4
+SNAP_SLOT[13] 4-1
+SNAP_SLOT[14] 4-2
+SNAP_SLOT[15] 4-3
+SNAP_SLOT[16] 4-4
 
-# DP1_DESI[] be set to 1 for any DP1 boards not identified
-# *** DP1_DESI[dp1#] goes here:
-DP1_DESI[1] 1
-DP1_DESI[2] 1
-DP1_DESI[3] 1
-DP1_DESI[4] 1
-DP1_DESI[5] 1
-DP1_DESI[6] 1
-DP1_DESI[7] 1
-DP1_DESI[8] 1
-DP1_DESI[9] 1
-DP1_DESI[10] 1
-DP1_DESI[11] 1
-DP1_DESI[12] 1
-DP1_DESI[13] 1
-DP1_DESI[14] 1
-DP1_DESI[15] 1
-DP1_DESI[16] 1
-DP1_DESI[17] 1
-DP1_DESI[18] 1
-DP1_DESI[19] 1
-DP1_DESI[20] 1
-DP1_DESI[21] 1
-DP1_DESI[22] 1
-DP1_DESI[23] 1
-DP1_DESI[24] 1
-DP1_DESI[25] 1
-DP1_DESI[26] 1
+# SNAP_DESI[] be set to 1 for any SNAP2/ZCU102 boards not identified
+# *** SNAP_DESI[snap#] goes here:
+# 2 = SNAP2; 3 = ZCU102
+SNAP_DESI[1] 3
+SNAP_DESI[2] 3
+SNAP_DESI[3] 3
+SNAP_DESI[4] 3
+SNAP_DESI[5] 3
+SNAP_DESI[6] 3
+SNAP_DESI[7] 3
+SNAP_DESI[8] 3
+SNAP_DESI[9] 3
+SNAP_DESI[10] 3
+SNAP_DESI[11] 3
+SNAP_DESI[12] 3
+SNAP_DESI[13] 3
+SNAP_DESI[14] 3
+SNAP_DESI[15] 3
+SNAP_DESI[16] 3
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DP1 board-channels not identified
-# *** DP1_STAT[dp1#][ch#] goes here:
+# *** SNAP_STAT[snap#][ch#] goes here:
 
-# DP1_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
-# *** DP1_INR[dp1#][ch#] goes here:
+# SNAP_INR[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** SNAP_INR[snap#][ch#] goes here:
 # label = panel#_input#_pair#
 # panel 1 is top, input 1 is upper left
-DP1_INR[1][1] 4_31_1
-DP1_INR[1][2] 4_31_2
-DP1_INR[1][3] 4_31_3
-DP1_INR[1][4] 4_31_4
-DP1_INR[1][5] 4_32_1
-DP1_INR[1][6] 4_32_2
-DP1_INR[1][7] 4_32_3
-DP1_INR[1][8] 4_32_4
-DP1_INR[1][9] 4_33_1
-DP1_INR[1][10] 4_33_2
-DP1_INR[1][11] 2_33_1
-DP1_INR[1][12] 2_33_2
-DP1_INR[1][13] 3_1_1
-DP1_INR[1][14] 3_1_2
-DP1_INR[1][15] 3_1_3
-DP1_INR[1][16] 3_1_4
-DP1_INR[1][17] 3_2_1
-DP1_INR[1][18] 3_2_2
-DP1_INR[1][19] 3_2_3
-DP1_INR[1][20] 3_2_4
-DP1_INR[2][1] 3_3_1
-DP1_INR[2][2] 3_3_2
-DP1_INR[2][3] 3_3_3
-DP1_INR[2][4] 3_3_4
-DP1_INR[2][5] 3_4_1
-DP1_INR[2][6] 3_4_2
-DP1_INR[2][7] 3_4_3
-DP1_INR[2][8] 3_4_4
-DP1_INR[2][9] 3_5_1
-DP1_INR[2][10] 3_5_2
-DP1_INR[2][11] 3_5_3
-DP1_INR[2][12] 3_5_4
-DP1_INR[2][13] 3_6_1
-DP1_INR[2][14] 3_6_2
-DP1_INR[2][15] 3_6_3
-DP1_INR[2][16] 3_6_4
-DP1_INR[2][17] 3_7_1
-DP1_INR[2][18] 3_7_2
-DP1_INR[2][19] 3_7_3
-DP1_INR[2][20] 3_7_4
-DP1_INR[3][1] 4_26_1
-DP1_INR[3][2] 4_26_2
-DP1_INR[3][3] 4_26_3
-DP1_INR[3][4] 4_26_4
-DP1_INR[3][5] 4_27_1
-DP1_INR[3][6] 4_27_2
-DP1_INR[3][7] 4_27_3
-DP1_INR[3][8] 4_27_4
-DP1_INR[3][9] 4_28_1
-DP1_INR[3][10] 4_28_2
-DP1_INR[3][11] 4_28_3
-DP1_INR[3][12] 4_28_4
-DP1_INR[3][13] 4_29_1
-DP1_INR[3][14] 4_29_2
-DP1_INR[3][15] 4_29_3
-DP1_INR[3][16] 4_29_4
-DP1_INR[3][17] 4_30_1
-DP1_INR[3][18] 4_30_2
-DP1_INR[3][19] 4_30_3
-DP1_INR[3][20] 4_30_4
-DP1_INR[4][1] 3_8_1
-DP1_INR[4][2] 3_8_2
-DP1_INR[4][3] 3_8_3
-DP1_INR[4][4] 3_8_4
-DP1_INR[4][5] 3_9_1
-DP1_INR[4][6] 3_9_2
-DP1_INR[4][7] 3_9_3
-DP1_INR[4][8] 3_9_4
-DP1_INR[4][9] 3_10_1
-DP1_INR[4][10] 3_10_2
-DP1_INR[4][11] 3_10_3
-DP1_INR[4][12] 3_10_4
-DP1_INR[4][13] 3_11_1
-DP1_INR[4][14] 3_11_2
-DP1_INR[4][15] 3_11_3
-DP1_INR[4][16] 3_11_4
-DP1_INR[4][17] 3_12_1
-DP1_INR[4][18] 3_12_2
-DP1_INR[4][19] 3_12_3
-DP1_INR[4][20] 3_12_4
-DP1_INR[5][1] 4_21_1
-DP1_INR[5][2] 4_21_2
-DP1_INR[5][3] 4_21_3
-DP1_INR[5][4] 4_21_4
-DP1_INR[5][5] 4_22_1
-DP1_INR[5][6] 4_22_2
-DP1_INR[5][7] 4_22_3
-DP1_INR[5][8] 4_22_4
-DP1_INR[5][9] 4_23_1
-DP1_INR[5][10] 4_23_2
-DP1_INR[5][11] 4_23_3
-DP1_INR[5][12] 4_23_4
-DP1_INR[5][13] 4_24_1
-DP1_INR[5][14] 4_24_2
-DP1_INR[5][15] 4_24_3
-DP1_INR[5][16] 4_24_4
-DP1_INR[5][17] 4_25_1
-DP1_INR[5][18] 4_25_2
-DP1_INR[5][19] 4_25_3
-DP1_INR[5][20] 4_25_4
-DP1_INR[6][1] 3_13_1
-DP1_INR[6][2] 3_13_2
-DP1_INR[6][3] 3_13_3
-DP1_INR[6][4] 3_13_4
-DP1_INR[6][5] 3_14_1
-DP1_INR[6][6] 3_14_2
-DP1_INR[6][7] 3_14_3
-DP1_INR[6][8] 3_14_4
-DP1_INR[6][9] 3_15_1
-DP1_INR[6][10] 3_15_2
-DP1_INR[6][11] 3_15_3
-DP1_INR[6][12] 3_15_4
-DP1_INR[6][13] 3_16_1
-DP1_INR[6][14] 3_16_2
-DP1_INR[6][15] 3_16_3
-DP1_INR[6][16] 3_16_4
-DP1_INR[6][17] 3_17_1
-DP1_INR[6][18] 3_17_2
-DP1_INR[6][19] 3_17_3
-DP1_INR[6][20] 3_17_4
-DP1_INR[7][1] 4_16_1
-DP1_INR[7][2] 4_16_2
-DP1_INR[7][3] 4_16_3
-DP1_INR[7][4] 4_16_4
-DP1_INR[7][5] 4_17_1
-DP1_INR[7][6] 4_17_2
-DP1_INR[7][7] 4_17_3
-DP1_INR[7][8] 4_17_4
-DP1_INR[7][9] 4_18_1
-DP1_INR[7][10] 4_18_2
-DP1_INR[7][11] 4_18_3
-DP1_INR[7][12] 4_18_4
-DP1_INR[7][13] 4_19_1
-DP1_INR[7][14] 4_19_2
-DP1_INR[7][15] 4_19_3
-DP1_INR[7][16] 4_19_4
-DP1_INR[7][17] 4_20_1
-DP1_INR[7][18] 4_20_2
-DP1_INR[7][19] 4_20_3
-DP1_INR[7][20] 4_20_4
-DP1_INR[8][1] 3_18_1
-DP1_INR[8][2] 3_18_2
-DP1_INR[8][3] 3_18_3
-DP1_INR[8][4] 3_18_4
-DP1_INR[8][5] 3_19_1
-DP1_INR[8][6] 3_19_2
-DP1_INR[8][7] 3_19_3
-DP1_INR[8][8] 3_19_4
-DP1_INR[8][9] 3_20_1
-DP1_INR[8][10] 3_20_2
-DP1_INR[8][11] 3_20_3
-DP1_INR[8][12] 3_20_4
-DP1_INR[8][13] 3_21_1
-DP1_INR[8][14] 3_21_2
-DP1_INR[8][15] 3_21_3
-DP1_INR[8][16] 3_21_4
-DP1_INR[8][17] 3_22_1
-DP1_INR[8][18] 3_22_2
-DP1_INR[8][19] 3_22_3
-DP1_INR[8][20] 3_22_4
-DP1_INR[9][1] 4_11_1
-DP1_INR[9][2] 4_11_2
-DP1_INR[9][3] 4_11_3
-DP1_INR[9][4] 4_11_4
-DP1_INR[9][5] 4_12_1
-DP1_INR[9][6] 4_12_2
-DP1_INR[9][7] 4_12_3
-DP1_INR[9][8] 4_12_4
-DP1_INR[9][9] 4_13_1
-DP1_INR[9][10] 4_13_2
-DP1_INR[9][11] 4_13_3
-DP1_INR[9][12] 4_13_4
-DP1_INR[9][13] 4_14_1
-DP1_INR[9][14] 4_14_2
-DP1_INR[9][15] 4_14_3
-DP1_INR[9][16] 4_14_4
-DP1_INR[9][17] 4_15_1
-DP1_INR[9][18] 4_15_2
-DP1_INR[9][19] 4_15_3
-DP1_INR[9][20] 4_15_4
-DP1_INR[10][1] 3_23_1
-DP1_INR[10][2] 3_23_2
-DP1_INR[10][3] 3_23_3
-DP1_INR[10][4] 3_23_4
-DP1_INR[10][5] 3_24_1
-DP1_INR[10][6] 3_24_2
-DP1_INR[10][7] 3_24_3
-DP1_INR[10][8] 3_24_4
-DP1_INR[10][9] 3_25_1
-DP1_INR[10][10] 3_25_2
-DP1_INR[10][11] 3_25_3
-DP1_INR[10][12] 3_25_4
-DP1_INR[10][13] 3_26_1
-DP1_INR[10][14] 3_26_2
-DP1_INR[10][15] 3_26_3
-DP1_INR[10][16] 3_26_4
-DP1_INR[10][17] 3_27_1
-DP1_INR[10][18] 3_27_2
-DP1_INR[10][19] 3_27_3
-DP1_INR[10][20] 3_27_4
-DP1_INR[11][1] 4_6_1
-DP1_INR[11][2] 4_6_2
-DP1_INR[11][3] 4_6_3
-DP1_INR[11][4] 4_6_4
-DP1_INR[11][5] 4_7_1
-DP1_INR[11][6] 4_7_2
-DP1_INR[11][7] 4_7_3
-DP1_INR[11][8] 4_7_4
-DP1_INR[11][9] 4_8_1
-DP1_INR[11][10] 4_8_2
-DP1_INR[11][11] 4_8_3
-DP1_INR[11][12] 4_8_4
-DP1_INR[11][13] 4_9_1
-DP1_INR[11][14] 4_9_2
-DP1_INR[11][15] 4_9_3
-DP1_INR[11][16] 4_9_4
-DP1_INR[11][17] 4_10_1
-DP1_INR[11][18] 4_10_2
-DP1_INR[11][19] 4_10_3
-DP1_INR[11][20] 4_10_4
-DP1_INR[12][1] 3_28_1
-DP1_INR[12][2] 3_28_2
-DP1_INR[12][3] 3_28_3
-DP1_INR[12][4] 3_28_4
-DP1_INR[12][5] 3_29_1
-DP1_INR[12][6] 3_29_2
-DP1_INR[12][7] 3_29_3
-DP1_INR[12][8] 3_29_4
-DP1_INR[12][9] 3_30_1
-DP1_INR[12][10] 3_30_2
-DP1_INR[12][11] 3_30_3
-DP1_INR[12][12] 3_30_4
-DP1_INR[12][13] 3_31_1
-DP1_INR[12][14] 3_31_2
-DP1_INR[12][15] 3_31_3
-DP1_INR[12][16] 3_31_4
-DP1_INR[12][17] 3_32_1
-DP1_INR[12][18] 3_32_2
-DP1_INR[12][19] 3_32_3
-DP1_INR[12][20] 3_32_4
-DP1_INR[13][1] 4_1_1
-DP1_INR[13][2] 4_1_2
-DP1_INR[13][3] 4_1_3
-DP1_INR[13][4] 4_1_4
-DP1_INR[13][5] 4_2_1
-DP1_INR[13][6] 4_2_2
-DP1_INR[13][7] 4_2_3
-DP1_INR[13][8] 4_2_4
-DP1_INR[13][9] 4_3_1
-DP1_INR[13][10] 4_3_2
-DP1_INR[13][11] 4_3_3
-DP1_INR[13][12] 4_3_4
-DP1_INR[13][13] 4_4_1
-DP1_INR[13][14] 4_4_2
-DP1_INR[13][15] 4_4_3
-DP1_INR[13][16] 4_4_4
-DP1_INR[13][17] 4_5_1
-DP1_INR[13][18] 4_5_2
-DP1_INR[13][19] 4_5_3
-DP1_INR[13][20] 4_5_4
-DP1_INR[14][1] 2_31_1
-DP1_INR[14][2] 2_31_2
-DP1_INR[14][3] 2_31_3
-DP1_INR[14][4] 2_31_4
-DP1_INR[14][5] 2_32_1
-DP1_INR[14][6] 2_32_2
-DP1_INR[14][7] 2_32_3
-DP1_INR[14][8] 2_32_4
-DP1_INR[14][9] 2_33_3
-DP1_INR[14][10] 2_33_4
-DP1_INR[14][11] 4_33_3
-DP1_INR[14][12] 4_33_4
-DP1_INR[14][13] 1_1_1
-DP1_INR[14][14] 1_1_2
-DP1_INR[14][15] 1_1_3
-DP1_INR[14][16] 1_1_4
-DP1_INR[14][17] 1_2_1
-DP1_INR[14][18] 1_2_2
-DP1_INR[14][19] 1_2_3
-DP1_INR[14][20] 1_2_4
-DP1_INR[15][1] 1_3_1
-DP1_INR[15][2] 1_3_2
-DP1_INR[15][3] 1_3_3
-DP1_INR[15][4] 1_3_4
-DP1_INR[15][5] 1_4_1
-DP1_INR[15][6] 1_4_2
-DP1_INR[15][7] 1_4_3
-DP1_INR[15][8] 1_4_4
-DP1_INR[15][9] 1_5_3
-DP1_INR[15][10] 1_5_4
-DP1_INR[15][11] 1_5_3
-DP1_INR[15][12] 1_5_4
-DP1_INR[15][13] 1_6_1
-DP1_INR[15][14] 1_6_2
-DP1_INR[15][15] 1_6_3
-DP1_INR[15][16] 1_6_4
-DP1_INR[15][17] 1_7_1
-DP1_INR[15][18] 1_7_2
-DP1_INR[15][19] 1_7_3
-DP1_INR[15][20] 1_7_4
-DP1_INR[16][1] 2_26_1
-DP1_INR[16][2] 2_26_2
-DP1_INR[16][3] 2_26_3
-DP1_INR[16][4] 2_26_4
-DP1_INR[16][5] 2_27_1
-DP1_INR[16][6] 2_27_2
-DP1_INR[16][7] 2_27_3
-DP1_INR[16][8] 2_27_4
-DP1_INR[16][9] 2_28_1
-DP1_INR[16][10] 2_28_2
-DP1_INR[16][11] 2_28_3
-DP1_INR[16][12] 2_28_4
-DP1_INR[16][13] 2_29_1
-DP1_INR[16][14] 2_29_2
-DP1_INR[16][15] 2_29_3
-DP1_INR[16][16] 2_29_4
-DP1_INR[16][17] 2_30_1
-DP1_INR[16][18] 2_30_2
-DP1_INR[16][19] 2_30_3
-DP1_INR[16][20] 2_30_4
-DP1_INR[17][1] 1_8_1
-DP1_INR[17][2] 1_8_2
-DP1_INR[17][3] 1_8_3
-DP1_INR[17][4] 1_8_4
-DP1_INR[17][5] 1_9_1
-DP1_INR[17][6] 1_9_2
-DP1_INR[17][7] 1_9_3
-DP1_INR[17][8] 1_9_4
-DP1_INR[17][9] 1_10_1
-DP1_INR[17][10] 1_10_2
-DP1_INR[17][11] 1_10_3
-DP1_INR[17][12] 1_10_4
-DP1_INR[17][13] 1_11_1
-DP1_INR[17][14] 1_11_2
-DP1_INR[17][15] 1_11_3
-DP1_INR[17][16] 1_11_4
-DP1_INR[17][17] 1_12_1
-DP1_INR[17][18] 1_12_2
-DP1_INR[17][19] 1_12_3
-DP1_INR[17][20] 1_12_4
-DP1_INR[18][1] 2_21_1
-DP1_INR[18][2] 2_21_2
-DP1_INR[18][3] 2_21_3
-DP1_INR[18][4] 2_21_4
-DP1_INR[18][5] 2_22_1
-DP1_INR[18][6] 2_22_2
-DP1_INR[18][7] 2_22_3
-DP1_INR[18][8] 2_22_4
-DP1_INR[18][9] 2_23_1
-DP1_INR[18][10] 2_23_2
-DP1_INR[18][11] 2_23_3
-DP1_INR[18][12] 2_23_4
-DP1_INR[18][13] 2_24_1
-DP1_INR[18][14] 2_24_2
-DP1_INR[18][15] 2_24_3
-DP1_INR[18][16] 2_24_4
-DP1_INR[18][17] 2_25_1
-DP1_INR[18][18] 2_25_2
-DP1_INR[18][19] 2_25_3
-DP1_INR[18][20] 2_25_4
-DP1_INR[19][1] 1_13_1
-DP1_INR[19][2] 1_13_2
-DP1_INR[19][3] 1_13_3
-DP1_INR[19][4] 1_13_4
-DP1_INR[19][5] 1_14_1
-DP1_INR[19][6] 1_14_2
-DP1_INR[19][7] 1_14_3
-DP1_INR[19][8] 1_14_4
-DP1_INR[19][9] 1_15_1
-DP1_INR[19][10] 1_15_2
-DP1_INR[19][11] 1_15_3
-DP1_INR[19][12] 1_15_4
-DP1_INR[19][13] 1_16_1
-DP1_INR[19][14] 1_16_2
-DP1_INR[19][15] 1_16_3
-DP1_INR[19][16] 1_16_4
-DP1_INR[19][17] 1_17_1
-DP1_INR[19][18] 1_17_2
-DP1_INR[19][19] 1_17_3
-DP1_INR[19][20] 1_17_4
-DP1_INR[20][1] 2_16_1
-DP1_INR[20][2] 2_16_2
-DP1_INR[20][3] 2_16_3
-DP1_INR[20][4] 2_16_4
-DP1_INR[20][5] 2_17_1
-DP1_INR[20][6] 2_17_2
-DP1_INR[20][7] 2_17_3
-DP1_INR[20][8] 2_17_4
-DP1_INR[20][9] 2_18_1
-DP1_INR[20][10] 2_18_2
-DP1_INR[20][11] 2_18_3
-DP1_INR[20][12] 2_18_4
-DP1_INR[20][13] 2_19_1
-DP1_INR[20][14] 2_19_2
-DP1_INR[20][15] 2_19_3
-DP1_INR[20][16] 2_19_4
-DP1_INR[20][17] 2_20_1
-DP1_INR[20][18] 2_20_2
-DP1_INR[20][19] 2_20_3
-DP1_INR[20][20] 2_20_4
-DP1_INR[21][1] 1_18_1
-DP1_INR[21][2] 1_18_2
-DP1_INR[21][3] 1_18_3
-DP1_INR[21][4] 1_18_4
-DP1_INR[21][5] 1_19_1
-DP1_INR[21][6] 1_19_2
-DP1_INR[21][7] 1_19_3
-DP1_INR[21][8] 1_19_4
-DP1_INR[21][9] 1_20_1
-DP1_INR[21][10] 1_20_2
-DP1_INR[21][11] 1_20_3
-DP1_INR[21][12] 1_20_4
-DP1_INR[21][13] 1_21_1
-DP1_INR[21][14] 1_21_2
-DP1_INR[21][15] 1_21_3
-DP1_INR[21][16] 1_21_4
-DP1_INR[21][17] 1_22_1
-DP1_INR[21][18] 1_22_2
-DP1_INR[21][19] 1_22_3
-DP1_INR[21][20] 1_22_4
-DP1_INR[22][1] 2_11_1
-DP1_INR[22][2] 2_11_2
-DP1_INR[22][3] 2_11_3
-DP1_INR[22][4] 2_11_4
-DP1_INR[22][5] 2_12_1
-DP1_INR[22][6] 2_12_2
-DP1_INR[22][7] 2_12_3
-DP1_INR[22][8] 2_12_4
-DP1_INR[22][9] 2_13_1
-DP1_INR[22][10] 2_13_2
-DP1_INR[22][11] 2_13_3
-DP1_INR[22][12] 2_13_4
-DP1_INR[22][13] 2_14_1
-DP1_INR[22][14] 2_14_2
-DP1_INR[22][15] 2_14_3
-DP1_INR[22][16] 2_14_4
-DP1_INR[22][17] 2_15_1
-DP1_INR[22][18] 2_15_2
-DP1_INR[22][19] 2_15_3
-DP1_INR[22][20] 2_15_4
-DP1_INR[23][1] 1_23_1
-DP1_INR[23][2] 1_23_2
-DP1_INR[23][3] 1_23_3
-DP1_INR[23][4] 1_23_4
-DP1_INR[23][5] 1_24_1
-DP1_INR[23][6] 1_24_2
-DP1_INR[23][7] 1_24_3
-DP1_INR[23][8] 1_24_4
-DP1_INR[23][9] 1_25_1
-DP1_INR[23][10] 1_25_2
-DP1_INR[23][11] 1_25_3
-DP1_INR[23][12] 1_25_4
-DP1_INR[23][13] 1_26_1
-DP1_INR[23][14] 1_26_2
-DP1_INR[23][15] 1_26_3
-DP1_INR[23][16] 1_26_4
-DP1_INR[23][17] 1_27_1
-DP1_INR[23][18] 1_27_2
-DP1_INR[23][19] 1_27_3
-DP1_INR[23][20] 1_27_4
-DP1_INR[24][1] 2_6_1
-DP1_INR[24][2] 2_6_2
-DP1_INR[24][3] 2_6_3
-DP1_INR[24][4] 2_6_4
-DP1_INR[24][5] 2_7_1
-DP1_INR[24][6] 2_7_2
-DP1_INR[24][7] 2_7_3
-DP1_INR[24][8] 2_7_4
-DP1_INR[24][9] 2_8_1
-DP1_INR[24][10] 2_8_2
-DP1_INR[24][11] 2_8_3
-DP1_INR[24][12] 2_8_4
-DP1_INR[24][13] 2_9_1
-DP1_INR[24][14] 2_9_2
-DP1_INR[24][15] 2_9_3
-DP1_INR[24][16] 2_9_4
-DP1_INR[24][17] 2_10_1
-DP1_INR[24][18] 2_10_2
-DP1_INR[24][19] 2_10_3
-DP1_INR[24][20] 2_10_4
-DP1_INR[25][1] 1_28_1
-DP1_INR[25][2] 1_28_2
-DP1_INR[25][3] 1_28_3
-DP1_INR[25][4] 1_28_4
-DP1_INR[25][5] 1_29_1
-DP1_INR[25][6] 1_29_2
-DP1_INR[25][7] 1_29_3
-DP1_INR[25][8] 1_29_4
-DP1_INR[25][9] 1_30_1
-DP1_INR[25][10] 1_30_2
-DP1_INR[25][11] 1_30_3
-DP1_INR[25][12] 1_30_4
-DP1_INR[25][13] 1_31_1
-DP1_INR[25][14] 1_31_2
-DP1_INR[25][15] 1_31_3
-DP1_INR[25][16] 1_31_4
-DP1_INR[25][17] 1_32_1
-DP1_INR[25][18] 1_32_2
-DP1_INR[25][19] 1_32_3
-DP1_INR[25][20] 1_32_4
-DP1_INR[26][1] 2_1_1
-DP1_INR[26][2] 2_1_2
-DP1_INR[26][3] 2_1_3
-DP1_INR[26][4] 2_1_4
-DP1_INR[26][5] 2_2_1
-DP1_INR[26][6] 2_2_2
-DP1_INR[26][7] 2_2_3
-DP1_INR[26][8] 2_2_4
-DP1_INR[26][9] 2_3_1
-DP1_INR[26][10] 2_3_2
-DP1_INR[26][11] 2_3_3
-DP1_INR[26][12] 2_3_4
-DP1_INR[26][13] 2_4_1
-DP1_INR[26][14] 2_4_2
-DP1_INR[26][15] 2_4_3
-DP1_INR[26][16] 2_4_4
-DP1_INR[26][17] 2_5_1
-DP1_INR[26][18] 2_5_2
-DP1_INR[26][19] 2_5_3
-DP1_INR[26][20] 2_5_4
+# See mapping at https://github.com/lwa-project/lwa1-issues/issues/34
+SNAP_INR[1][1] 4_1
+SNAP_INR[1][2] 4_2
+SNAP_INR[1][3] 4_3
+SNAP_INR[1][4] 4_4
+SNAP_INR[1][5] 4_5
+SNAP_INR[1][6] 4_6
+SNAP_INR[1][7] 4_7
+SNAP_INR[1][8] 4_8
+SNAP_INR[1][9] 4_9
+SNAP_INR[1][10] 4_10
+SNAP_INR[1][11] 4_11
+SNAP_INR[1][12] 4_12
+SNAP_INR[1][13] 4_13
+SNAP_INR[1][14] 4_14
+SNAP_INR[1][15] 4_15
+SNAP_INR[1][16] 4_16
+SNAP_INR[1][17] 4_17
+SNAP_INR[1][18] 4_18
+SNAP_INR[1][19] 4_19
+SNAP_INR[1][20] 4_20
+SNAP_INR[1][21] 4_21
+SNAP_INR[1][22] 4_22
+SNAP_INR[1][23] 4_23
+SNAP_INR[1][24] 4_24
+SNAP_INR[1][25] 4_25
+SNAP_INR[1][26] 4_26
+SNAP_INR[1][27] 4_27
+SNAP_INR[1][28] 4_28
+SNAP_INR[1][29] 4_29
+SNAP_INR[1][30] 4_30
+SNAP_INR[1][31] 4_31
+SNAP_INR[1][32] 4_32
+SNAP_INR[2][1] 4_33
+SNAP_INR[2][2] 4_34
+SNAP_INR[2][3] 4_35
+SNAP_INR[2][4] 4_36
+SNAP_INR[2][5] 4_37
+SNAP_INR[2][6] 4_38
+SNAP_INR[2][7] 4_39
+SNAP_INR[2][8] 4_40
+SNAP_INR[2][9] 4_41
+SNAP_INR[2][10] 4_42
+SNAP_INR[2][11] 4_43
+SNAP_INR[2][12] 4_44
+SNAP_INR[2][13] 4_45
+SNAP_INR[2][14] 4_46
+SNAP_INR[2][15] 4_47
+SNAP_INR[2][16] 4_48
+SNAP_INR[2][17] 4_49
+SNAP_INR[2][18] 4_50
+SNAP_INR[2][19] 4_51
+SNAP_INR[2][20] 4_52
+SNAP_INR[2][21] 4_53
+SNAP_INR[2][22] 4_54
+SNAP_INR[2][23] 4_55
+SNAP_INR[2][24] 4_56
+SNAP_INR[2][25] 4_57
+SNAP_INR[2][26] 4_58
+SNAP_INR[2][27] 4_59
+SNAP_INR[2][28] 4_60
+SNAP_INR[2][29] 4_61
+SNAP_INR[2][30] 4_62
+SNAP_INR[2][31] 4_63
+SNAP_INR[2][32] 4_64
+SNAP_INR[3][1] 4_65
+SNAP_INR[3][2] 4_66
+SNAP_INR[3][3] 4_67
+SNAP_INR[3][4] 4_68
+SNAP_INR[3][5] 4_69
+SNAP_INR[3][6] 4_70
+SNAP_INR[3][7] 4_71
+SNAP_INR[3][8] 4_72
+SNAP_INR[3][9] 4_73
+SNAP_INR[3][10] 4_74
+SNAP_INR[3][11] 4_75
+SNAP_INR[3][12] 4_76
+SNAP_INR[3][13] 4_77
+SNAP_INR[3][14] 4_78
+SNAP_INR[3][15] 4_79
+SNAP_INR[3][16] 4_80
+SNAP_INR[3][17] 4_81
+SNAP_INR[3][18] 4_82
+SNAP_INR[3][19] 4_83
+SNAP_INR[3][20] 4_84
+SNAP_INR[3][21] 4_85
+SNAP_INR[3][22] 4_86
+SNAP_INR[3][23] 4_87
+SNAP_INR[3][24] 4_88
+SNAP_INR[3][25] 4_89
+SNAP_INR[3][26] 4_90
+SNAP_INR[3][27] 4_91
+SNAP_INR[3][28] 4_92
+SNAP_INR[3][29] 4_93
+SNAP_INR[3][30] 4_94
+SNAP_INR[3][31] 4_95
+SNAP_INR[3][32] 4_96
+SNAP_INR[4][1] 4_97
+SNAP_INR[4][2] 4_98
+SNAP_INR[4][3] 4_99
+SNAP_INR[4][4] 4_100
+SNAP_INR[4][5] 4_101
+SNAP_INR[4][6] 4_102
+SNAP_INR[4][7] 4_103
+SNAP_INR[4][8] 4_104
+SNAP_INR[4][9] 4_105
+SNAP_INR[4][10] 4_106
+SNAP_INR[4][11] 4_107
+SNAP_INR[4][12] 4_108
+SNAP_INR[4][13] 4_109
+SNAP_INR[4][14] 4_110
+SNAP_INR[4][15] 4_111
+SNAP_INR[4][16] 4_112
+SNAP_INR[4][17] 4_113
+SNAP_INR[4][18] 4_114
+SNAP_INR[4][19] 4_115
+SNAP_INR[4][20] 4_116
+SNAP_INR[4][21] 4_117
+SNAP_INR[4][22] 4_118
+SNAP_INR[4][23] 4_119
+SNAP_INR[4][24] 4_120
+SNAP_INR[4][25] 4_121
+SNAP_INR[4][26] 4_122
+SNAP_INR[4][27] 4_123
+SNAP_INR[4][28] 4_124
+SNAP_INR[4][29] 4_125
+SNAP_INR[4][30] 4_126
+SNAP_INR[4][31] 4_127
+SNAP_INR[4][32] 4_128
+SNAP_INR[5][1] 3_1
+SNAP_INR[5][2] 3_2
+SNAP_INR[5][3] 3_3
+SNAP_INR[5][4] 3_4
+SNAP_INR[5][5] 3_5
+SNAP_INR[5][6] 3_6
+SNAP_INR[5][7] 3_7
+SNAP_INR[5][8] 3_8
+SNAP_INR[5][9] 3_9
+SNAP_INR[5][10] 3_10
+SNAP_INR[5][11] 3_11
+SNAP_INR[5][12] 3_12
+SNAP_INR[5][13] 3_13
+SNAP_INR[5][14] 3_14
+SNAP_INR[5][15] 3_15
+SNAP_INR[5][16] 3_16
+SNAP_INR[5][17] 3_17
+SNAP_INR[5][18] 3_18
+SNAP_INR[5][19] 3_19
+SNAP_INR[5][20] 3_20
+SNAP_INR[5][21] 3_21
+SNAP_INR[5][22] 3_22
+SNAP_INR[5][23] 3_23
+SNAP_INR[5][24] 3_24
+SNAP_INR[5][25] 3_25
+SNAP_INR[5][26] 3_26
+SNAP_INR[5][27] 3_27
+SNAP_INR[5][28] 3_28
+SNAP_INR[5][29] 3_29
+SNAP_INR[5][30] 3_30
+SNAP_INR[5][31] 3_31
+SNAP_INR[5][32] 3_32
+SNAP_INR[6][1] 3_33
+SNAP_INR[6][2] 3_34
+SNAP_INR[6][3] 3_35
+SNAP_INR[6][4] 3_36
+SNAP_INR[6][5] 3_37
+SNAP_INR[6][6] 3_38
+SNAP_INR[6][7] 3_39
+SNAP_INR[6][8] 3_40
+SNAP_INR[6][9] 3_41
+SNAP_INR[6][10] 3_42
+SNAP_INR[6][11] 3_43
+SNAP_INR[6][12] 3_44
+SNAP_INR[6][13] 3_45
+SNAP_INR[6][14] 3_46
+SNAP_INR[6][15] 3_47
+SNAP_INR[6][16] 3_48
+SNAP_INR[6][17] 3_49
+SNAP_INR[6][18] 3_50
+SNAP_INR[6][19] 3_51
+SNAP_INR[6][20] 3_52
+SNAP_INR[6][21] 3_53
+SNAP_INR[6][22] 3_54
+SNAP_INR[6][23] 3_55
+SNAP_INR[6][24] 3_56
+SNAP_INR[6][25] 3_57
+SNAP_INR[6][26] 3_58
+SNAP_INR[6][27] 3_59
+SNAP_INR[6][28] 3_60
+SNAP_INR[6][29] 3_61
+SNAP_INR[6][30] 3_62
+SNAP_INR[6][31] 3_63
+SNAP_INR[6][32] 3_64
+SNAP_INR[7][1] 3_65
+SNAP_INR[7][2] 3_66
+SNAP_INR[7][3] 3_67
+SNAP_INR[7][4] 3_68
+SNAP_INR[7][5] 3_69
+SNAP_INR[7][6] 3_70
+SNAP_INR[7][7] 3_71
+SNAP_INR[7][8] 3_72
+SNAP_INR[7][9] 3_73
+SNAP_INR[7][10] 3_74
+SNAP_INR[7][11] 3_75
+SNAP_INR[7][12] 3_76
+SNAP_INR[7][13] 3_77
+SNAP_INR[7][14] 3_78
+SNAP_INR[7][15] 3_79
+SNAP_INR[7][16] 3_80
+SNAP_INR[7][17] 3_81
+SNAP_INR[7][18] 3_82
+SNAP_INR[7][19] 3_83
+SNAP_INR[7][20] 3_84
+SNAP_INR[7][21] 3_85
+SNAP_INR[7][22] 3_86
+SNAP_INR[7][23] 3_87
+SNAP_INR[7][24] 3_88
+SNAP_INR[7][25] 3_89
+SNAP_INR[7][26] 3_90
+SNAP_INR[7][27] 3_91
+SNAP_INR[7][28] 3_92
+SNAP_INR[7][29] 3_93
+SNAP_INR[7][30] 3_94
+SNAP_INR[7][31] 3_95
+SNAP_INR[7][32] 3_96
+SNAP_INR[8][1] 3_97
+SNAP_INR[8][2] 3_98
+SNAP_INR[8][3] 3_99
+SNAP_INR[8][4] 3_100
+SNAP_INR[8][5] 3_101
+SNAP_INR[8][6] 3_102
+SNAP_INR[8][7] 3_103
+SNAP_INR[8][8] 3_104
+SNAP_INR[8][9] 3_105
+SNAP_INR[8][10] 3_106
+SNAP_INR[8][11] 3_107
+SNAP_INR[8][12] 3_108
+SNAP_INR[8][13] 3_109
+SNAP_INR[8][14] 3_110
+SNAP_INR[8][15] 3_111
+SNAP_INR[8][16] 3_112
+SNAP_INR[8][17] 3_113
+SNAP_INR[8][18] 3_114
+SNAP_INR[8][19] 3_115
+SNAP_INR[8][20] 3_116
+SNAP_INR[8][21] 3_117
+SNAP_INR[8][22] 3_118
+SNAP_INR[8][23] 3_119
+SNAP_INR[8][24] 3_120
+SNAP_INR[8][25] 3_121
+SNAP_INR[8][26] 3_122
+SNAP_INR[8][27] 3_123
+SNAP_INR[8][28] 3_124
+SNAP_INR[8][29] 3_125
+SNAP_INR[8][30] 3_126
+SNAP_INR[8][31] 3_127
+SNAP_INR[8][32] 3_128
+SNAP_INR[9][1] 2_1
+SNAP_INR[9][2] 2_2
+SNAP_INR[9][3] 2_3
+SNAP_INR[9][4] 2_4
+SNAP_INR[9][5] 2_5
+SNAP_INR[9][6] 2_6
+SNAP_INR[9][7] 2_7
+SNAP_INR[9][8] 2_8
+SNAP_INR[9][9] 2_9
+SNAP_INR[9][10] 2_10
+SNAP_INR[9][11] 2_11
+SNAP_INR[9][12] 2_12
+SNAP_INR[9][13] 2_13
+SNAP_INR[9][14] 2_14
+SNAP_INR[9][15] 2_15
+SNAP_INR[9][16] 2_16
+SNAP_INR[9][17] 2_17
+SNAP_INR[9][18] 2_18
+SNAP_INR[9][19] 2_19
+SNAP_INR[9][20] 2_20
+SNAP_INR[9][21] 2_21
+SNAP_INR[9][22] 2_22
+SNAP_INR[9][23] 2_23
+SNAP_INR[9][24] 2_24
+SNAP_INR[9][25] 2_25
+SNAP_INR[9][26] 2_26
+SNAP_INR[9][27] 2_27
+SNAP_INR[9][28] 2_28
+SNAP_INR[9][29] 2_29
+SNAP_INR[9][30] 2_30
+SNAP_INR[9][31] 2_31
+SNAP_INR[9][32] 2_32
+SNAP_INR[10][1] 2_33
+SNAP_INR[10][2] 2_34
+SNAP_INR[10][3] 2_35
+SNAP_INR[10][4] 2_36
+SNAP_INR[10][5] 2_37
+SNAP_INR[10][6] 2_38
+SNAP_INR[10][7] 2_39
+SNAP_INR[10][8] 2_40
+SNAP_INR[10][9] 2_41
+SNAP_INR[10][10] 2_42
+SNAP_INR[10][11] 2_43
+SNAP_INR[10][12] 2_44
+SNAP_INR[10][13] 2_45
+SNAP_INR[10][14] 2_46
+SNAP_INR[10][15] 2_47
+SNAP_INR[10][16] 2_48
+SNAP_INR[10][17] 2_49
+SNAP_INR[10][18] 2_50
+SNAP_INR[10][19] 2_51
+SNAP_INR[10][20] 2_52
+SNAP_INR[10][21] 2_53
+SNAP_INR[10][22] 2_54
+SNAP_INR[10][23] 2_55
+SNAP_INR[10][24] 2_56
+SNAP_INR[10][25] 2_57
+SNAP_INR[10][26] 2_58
+SNAP_INR[10][27] 2_59
+SNAP_INR[10][28] 2_60
+SNAP_INR[10][29] 2_61
+SNAP_INR[10][30] 2_62
+SNAP_INR[10][31] 2_63
+SNAP_INR[10][32] 2_64
+SNAP_INR[11][1] 2_65
+SNAP_INR[11][2] 2_66
+SNAP_INR[11][3] 2_67
+SNAP_INR[11][4] 2_68
+SNAP_INR[11][5] 2_69
+SNAP_INR[11][6] 2_70
+SNAP_INR[11][7] 2_71
+SNAP_INR[11][8] 2_72
+SNAP_INR[11][9] 2_73
+SNAP_INR[11][10] 2_74
+SNAP_INR[11][11] 2_75
+SNAP_INR[11][12] 2_76
+SNAP_INR[11][13] 2_77
+SNAP_INR[11][14] 2_78
+SNAP_INR[11][15] 2_79
+SNAP_INR[11][16] 2_80
+SNAP_INR[11][17] 2_81
+SNAP_INR[11][18] 2_82
+SNAP_INR[11][19] 2_83
+SNAP_INR[11][20] 2_84
+SNAP_INR[11][21] 2_85
+SNAP_INR[11][22] 2_86
+SNAP_INR[11][23] 2_87
+SNAP_INR[11][24] 2_88
+SNAP_INR[11][25] 2_89
+SNAP_INR[11][26] 2_90
+SNAP_INR[11][27] 2_91
+SNAP_INR[11][28] 2_92
+SNAP_INR[11][29] 2_93
+SNAP_INR[11][30] 2_94
+SNAP_INR[11][31] 2_95
+SNAP_INR[11][32] 2_96
+SNAP_INR[12][1] 2_97
+SNAP_INR[12][2] 2_98
+SNAP_INR[12][3] 2_99
+SNAP_INR[12][4] 2_100
+SNAP_INR[12][5] 2_101
+SNAP_INR[12][6] 2_102
+SNAP_INR[12][7] 2_103
+SNAP_INR[12][8] 2_104
+SNAP_INR[12][9] 2_105
+SNAP_INR[12][10] 2_106
+SNAP_INR[12][11] 2_107
+SNAP_INR[12][12] 2_108
+SNAP_INR[12][13] 2_109
+SNAP_INR[12][14] 2_110
+SNAP_INR[12][15] 2_111
+SNAP_INR[12][16] 2_112
+SNAP_INR[12][17] 2_113
+SNAP_INR[12][18] 2_114
+SNAP_INR[12][19] 2_115
+SNAP_INR[12][20] 2_116
+SNAP_INR[12][21] 2_117
+SNAP_INR[12][22] 2_118
+SNAP_INR[12][23] 2_119
+SNAP_INR[12][24] 2_120
+SNAP_INR[12][25] 2_121
+SNAP_INR[12][26] 2_122
+SNAP_INR[12][27] 2_123
+SNAP_INR[12][28] 2_124
+SNAP_INR[12][29] 2_125
+SNAP_INR[12][30] 2_126
+SNAP_INR[12][31] 2_127
+SNAP_INR[12][32] 2_128
+SNAP_INR[13][1] 1_1
+SNAP_INR[13][2] 1_2
+SNAP_INR[13][3] 1_3
+SNAP_INR[13][4] 1_4
+SNAP_INR[13][5] 1_5
+SNAP_INR[13][6] 1_6
+SNAP_INR[13][7] 1_7
+SNAP_INR[13][8] 1_8
+SNAP_INR[13][9] 1_9
+SNAP_INR[13][10] 1_10
+SNAP_INR[13][11] 1_11
+SNAP_INR[13][12] 1_12
+SNAP_INR[13][13] 1_13
+SNAP_INR[13][14] 1_14
+SNAP_INR[13][15] 1_15
+SNAP_INR[13][16] 1_16
+SNAP_INR[13][17] 1_17
+SNAP_INR[13][18] 1_18
+SNAP_INR[13][19] 1_19
+SNAP_INR[13][20] 1_20
+SNAP_INR[13][21] 1_21
+SNAP_INR[13][22] 1_22
+SNAP_INR[13][23] 1_23
+SNAP_INR[13][24] 1_24
+SNAP_INR[13][25] 1_25
+SNAP_INR[13][26] 1_26
+SNAP_INR[13][27] 1_27
+SNAP_INR[13][28] 1_28
+SNAP_INR[13][29] 1_29
+SNAP_INR[13][30] 1_30
+SNAP_INR[13][31] 1_31
+SNAP_INR[13][32] 1_32
+SNAP_INR[14][1] 1_33
+SNAP_INR[14][2] 1_34
+SNAP_INR[14][3] 1_35
+SNAP_INR[14][4] 1_36
+SNAP_INR[14][5] 1_37
+SNAP_INR[14][6] 1_38
+SNAP_INR[14][7] 1_39
+SNAP_INR[14][8] 1_40
+SNAP_INR[14][9] 1_41
+SNAP_INR[14][10] 1_42
+SNAP_INR[14][11] 1_43
+SNAP_INR[14][12] 1_44
+SNAP_INR[14][13] 1_45
+SNAP_INR[14][14] 1_46
+SNAP_INR[14][15] 1_47
+SNAP_INR[14][16] 1_48
+SNAP_INR[14][17] 1_49
+SNAP_INR[14][18] 1_50
+SNAP_INR[14][19] 1_51
+SNAP_INR[14][20] 1_52
+SNAP_INR[14][21] 1_53
+SNAP_INR[14][22] 1_54
+SNAP_INR[14][23] 1_55
+SNAP_INR[14][24] 1_56
+SNAP_INR[14][25] 1_57
+SNAP_INR[14][26] 1_58
+SNAP_INR[14][27] 1_59
+SNAP_INR[14][28] 1_60
+SNAP_INR[14][29] 1_61
+SNAP_INR[14][30] 1_62
+SNAP_INR[14][31] 1_63
+SNAP_INR[14][32] 1_64
+SNAP_INR[15][1] 1_65
+SNAP_INR[15][2] 1_66
+SNAP_INR[15][3] 1_67
+SNAP_INR[15][4] 1_68
+SNAP_INR[15][5] 1_69
+SNAP_INR[15][6] 1_70
+SNAP_INR[15][7] 1_71
+SNAP_INR[15][8] 1_72
+SNAP_INR[15][9] 1_73
+SNAP_INR[15][10] 1_74
+SNAP_INR[15][11] 1_75
+SNAP_INR[15][12] 1_76
+SNAP_INR[15][13] 1_77
+SNAP_INR[15][14] 1_78
+SNAP_INR[15][15] 1_79
+SNAP_INR[15][16] 1_80
+SNAP_INR[15][17] 1_81
+SNAP_INR[15][18] 1_82
+SNAP_INR[15][19] 1_83
+SNAP_INR[15][20] 1_84
+SNAP_INR[15][21] 1_85
+SNAP_INR[15][22] 1_86
+SNAP_INR[15][23] 1_87
+SNAP_INR[15][24] 1_88
+SNAP_INR[15][25] 1_89
+SNAP_INR[15][26] 1_90
+SNAP_INR[15][27] 1_91
+SNAP_INR[15][28] 1_92
+SNAP_INR[15][29] 1_93
+SNAP_INR[15][30] 1_94
+SNAP_INR[15][31] 1_95
+SNAP_INR[15][32] 1_96
+SNAP_INR[16][1] 1_97
+SNAP_INR[16][2] 1_98
+SNAP_INR[16][3] 1_99
+SNAP_INR[16][4] 1_100
+SNAP_INR[16][5] 1_101
+SNAP_INR[16][6] 1_102
+SNAP_INR[16][7] 1_103
+SNAP_INR[16][8] 1_104
+SNAP_INR[16][9] 1_105
+SNAP_INR[16][10] 1_106
+SNAP_INR[16][11] 1_107
+SNAP_INR[16][12] 1_108
+SNAP_INR[16][13] 1_109
+SNAP_INR[16][14] 1_110
+SNAP_INR[16][15] 1_111
+SNAP_INR[16][16] 1_112
+SNAP_INR[16][17] 1_113
+SNAP_INR[16][18] 1_114
+SNAP_INR[16][19] 1_115
+SNAP_INR[16][20] 1_116
+SNAP_INR[16][21] 1_117
+SNAP_INR[16][22] 1_118
+SNAP_INR[16][23] 1_119
+SNAP_INR[16][24] 1_120
+SNAP_INR[16][25] 1_121
+SNAP_INR[16][26] 1_122
+SNAP_INR[16][27] 1_123
+SNAP_INR[16][28] 1_124
+SNAP_INR[16][29] 1_125
+SNAP_INR[16][30] 1_126
+SNAP_INR[16][31] 1_127
+SNAP_INR[16][32] 1_128
 
-# DP1_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
-# *** DP1_INC[dp1#][ch#] goes here:
+# SNAP_INC[][] will be set to "UNK" ("unknown") for any boards/channels not identified
+# *** SNAP_INC[snap#][ch#] goes here:
 
-# ----------------------------------------------
-# --- Antenna # -> DP1 board channel mapping ---
-# ----------------------------------------------
-# Format (example) "DP1_ANT[2][3] 4" means antenna 4 is connected to DP1 Board 2, channel 3.
-# DP1_ANT[1][1] will be set to 1, DP1_ANT[1][2] will be set to 2, etc., if not indicated otherwise
-# DP1_ANT[][] will be set to 0 (no connection, or only connected at output) for any boards/channels not identified
-# *** DP1_ANT[dp1#][ch#] goes here:
-DP1_ANT[1][1] 345
-DP1_ANT[1][2] 346
-DP1_ANT[1][3] 301
-DP1_ANT[1][4] 302
-DP1_ANT[1][5] 443
-DP1_ANT[1][6] 444
-DP1_ANT[1][7] 299
-DP1_ANT[1][8] 300
-DP1_ANT[1][9] 405
-DP1_ANT[1][10] 406
+# -------------------------------------------------------
+# --- Antenna # -> SNAP2/ZCU102 board channel mapping ---
+# -------------------------------------------------------
+# Format (example) "SNAP_ANT[2][3] 4" means antenna 4 is connected to SNAP2/ZCU102 Board 2, channel 3.
+# SNAP_ANT[1][1] will be set to 1, SNAP_ANT[1][2] will be set to 2, etc., if not indicated otherwise
+# SNAP_ANT[][] will be set to 0 (no connection, or only connected at output) for any boards/channels not identified
+# *** SNAP_ANT[snap#][ch#] goes here:
+SNAP_ANT[1][1] 365
+SNAP_ANT[1][2] 366
+SNAP_ANT[1][3] 399
+SNAP_ANT[1][4] 400
+SNAP_ANT[1][5] 377
+SNAP_ANT[1][6] 378
+SNAP_ANT[1][7] 235
+SNAP_ANT[1][8] 236
+SNAP_ANT[1][9] 411
+SNAP_ANT[1][10] 412
+SNAP_ANT[1][11] 355
+SNAP_ANT[1][12] 356
+SNAP_ANT[1][13] 459
+SNAP_ANT[1][14] 460
+SNAP_ANT[1][15] 91
+SNAP_ANT[1][16] 92
+SNAP_ANT[1][17] 361
+SNAP_ANT[1][18] 362
+SNAP_ANT[1][19] 407
+SNAP_ANT[1][20] 408
+SNAP_ANT[1][21] 373
+SNAP_ANT[1][22] 374
+SNAP_ANT[1][23] 223
+SNAP_ANT[1][24] 224
+SNAP_ANT[1][25] 245
+SNAP_ANT[1][26] 246
+SNAP_ANT[1][27] 343
+SNAP_ANT[1][28] 344
+SNAP_ANT[1][29] 427
+SNAP_ANT[1][30] 428
+SNAP_ANT[1][31] 295
+SNAP_ANT[1][32] 296
+SNAP_ANT[2][1] 415
+SNAP_ANT[2][2] 416
+SNAP_ANT[2][3] 351
+SNAP_ANT[2][4] 352
+SNAP_ANT[2][5] 423
+SNAP_ANT[2][6] 424
+SNAP_ANT[2][7] 27
+SNAP_ANT[2][8] 28
+SNAP_ANT[2][9] 249
+SNAP_ANT[2][10] 250
+SNAP_ANT[2][11] 449
+SNAP_ANT[2][12] 450
+SNAP_ANT[2][13] 419
+SNAP_ANT[2][14] 420
+SNAP_ANT[2][15] 159
+SNAP_ANT[2][16] 160
+SNAP_ANT[2][17] 313
+SNAP_ANT[2][18] 314
+SNAP_ANT[2][19] 347
+SNAP_ANT[2][20] 348
+SNAP_ANT[2][21] 455
+SNAP_ANT[2][22] 456
+SNAP_ANT[2][23] 29
+SNAP_ANT[2][24] 30
+SNAP_ANT[2][25] 253
+SNAP_ANT[2][26] 254
+SNAP_ANT[2][27] 305
+SNAP_ANT[2][28] 306
+SNAP_ANT[2][29] 403
+SNAP_ANT[2][30] 404
+SNAP_ANT[2][31] 381
+SNAP_ANT[2][32] 382
+SNAP_ANT[3][1] 101
+SNAP_ANT[3][2] 102
+SNAP_ANT[3][3] 507
+SNAP_ANT[3][4] 508
+SNAP_ANT[3][5] 175
+SNAP_ANT[3][6] 176
+SNAP_ANT[3][7] 165
+SNAP_ANT[3][8] 166
+SNAP_ANT[3][9] 451
+SNAP_ANT[3][10] 452
+SNAP_ANT[3][11] 479
+SNAP_ANT[3][12] 480
+SNAP_ANT[3][13] 107
+SNAP_ANT[3][14] 108
+SNAP_ANT[3][15] 161
+SNAP_ANT[3][16] 162
+SNAP_ANT[3][17] 357
+SNAP_ANT[3][18] 358
+SNAP_ANT[3][19] 447
+SNAP_ANT[3][20] 448
+SNAP_ANT[3][21] 239
+SNAP_ANT[3][22] 240
+SNAP_ANT[3][23] 89
+SNAP_ANT[3][24] 90
+SNAP_ANT[3][25] 37
+SNAP_ANT[3][26] 38
+SNAP_ANT[3][27] 511
+SNAP_ANT[3][28] 512
+SNAP_ANT[3][29] 487
+SNAP_ANT[3][30] 488
+SNAP_ANT[3][31] 97
+SNAP_ANT[3][32] 98
+SNAP_ANT[4][1] 349
+SNAP_ANT[4][2] 350
+SNAP_ANT[4][3] 237
+SNAP_ANT[4][4] 238
+SNAP_ANT[4][5] 483
+SNAP_ANT[4][6] 484
+SNAP_ANT[4][7] 169
+SNAP_ANT[4][8] 170
+SNAP_ANT[4][9] 409
+SNAP_ANT[4][10] 410
+SNAP_ANT[4][11] 173
+SNAP_ANT[4][12] 174
+SNAP_ANT[4][13] 393
+SNAP_ANT[4][14] 394
+SNAP_ANT[4][15] 33
+SNAP_ANT[4][16] 34
+SNAP_ANT[4][17] 405
+SNAP_ANT[4][18] 406
+SNAP_ANT[4][19] 241
+SNAP_ANT[4][20] 242
+SNAP_ANT[4][21] 397
+SNAP_ANT[4][22] 398
+SNAP_ANT[4][23] 31
+SNAP_ANT[4][24] 32
+SNAP_ANT[4][25] 345
+SNAP_ANT[4][26] 346
+SNAP_ANT[4][27] 301
+SNAP_ANT[4][28] 302
+SNAP_ANT[4][29] 443
+SNAP_ANT[4][30] 444
+SNAP_ANT[4][31] 299
+SNAP_ANT[4][32] 300
 
-# RTA antenna (LEDA Outrigger #4)
-DP1_ANT[1][11] 515
-DP1_ANT[1][12] 516
 # LEDA Outrigger #5
-DP1_ANT[1][13] 69
-DP1_ANT[1][14] 70
+SNAP_ANT[5][1] 69
+SNAP_ANT[5][2] 70
 
-DP1_ANT[1][15] 215
-DP1_ANT[1][16] 216
-DP1_ANT[1][17] 197
-DP1_ANT[1][18] 198
-DP1_ANT[1][19] 193
-DP1_ANT[1][20] 194
-DP1_ANT[2][1] 15
-DP1_ANT[2][2] 16
-DP1_ANT[2][3] 335
-DP1_ANT[2][4] 336
-DP1_ANT[2][5] 257
-DP1_ANT[2][6] 258
-DP1_ANT[2][7] 309
-DP1_ANT[2][8] 310
-DP1_ANT[2][9] 63
-DP1_ANT[2][10] 64
-DP1_ANT[2][11] 137
-DP1_ANT[2][12] 138
-DP1_ANT[2][13] 201
-DP1_ANT[2][14] 202
-DP1_ANT[2][15] 369
-DP1_ANT[2][16] 370
-DP1_ANT[2][17] 283
-DP1_ANT[2][18] 284
-DP1_ANT[2][19] 13
-DP1_ANT[2][20] 14
-DP1_ANT[3][1] 483
-DP1_ANT[3][2] 484
-DP1_ANT[3][3] 169
-DP1_ANT[3][4] 170
-DP1_ANT[3][5] 409
-DP1_ANT[3][6] 410
-DP1_ANT[3][7] 173
-DP1_ANT[3][8] 174
-DP1_ANT[3][9] 393
-DP1_ANT[3][10] 394
-DP1_ANT[3][11] 33
-DP1_ANT[3][12] 34
-
-# LEDA Outrigger #3
-DP1_ANT[3][13] 517
-DP1_ANT[3][14] 518
-
-DP1_ANT[3][15] 241
-DP1_ANT[3][16] 242
-DP1_ANT[3][17] 397
-DP1_ANT[3][18] 398
-DP1_ANT[3][19] 31
-DP1_ANT[3][20] 32
-DP1_ANT[4][1] 321
-DP1_ANT[4][2] 322
-DP1_ANT[4][3] 317
-DP1_ANT[4][4] 318
-DP1_ANT[4][5] 339
-DP1_ANT[4][6] 340
-DP1_ANT[4][7] 65
-DP1_ANT[4][8] 66
-DP1_ANT[4][9] 261
-DP1_ANT[4][10] 262
-DP1_ANT[4][11] 125
-DP1_ANT[4][12] 126
-DP1_ANT[4][13] 147
-DP1_ANT[4][14] 148
-DP1_ANT[4][15] 73
-DP1_ANT[4][16] 74
-DP1_ANT[4][17] 151
-DP1_ANT[4][18] 152
-DP1_ANT[4][19] 133
-DP1_ANT[4][20] 134
-DP1_ANT[5][1] 357
-DP1_ANT[5][2] 358
-DP1_ANT[5][3] 447
-DP1_ANT[5][4] 448
-DP1_ANT[5][5] 239
-DP1_ANT[5][6] 240
-DP1_ANT[5][7] 89
-DP1_ANT[5][8] 90
-DP1_ANT[5][9] 37
-DP1_ANT[5][10] 38
-DP1_ANT[5][11] 511
-DP1_ANT[5][12] 512
-DP1_ANT[5][13] 487
-DP1_ANT[5][14] 488
-DP1_ANT[5][15] 97
-DP1_ANT[5][16] 98
-DP1_ANT[5][17] 349
-DP1_ANT[5][18] 350
-DP1_ANT[5][19] 237
-DP1_ANT[5][20] 238
-DP1_ANT[6][1] 19
-DP1_ANT[6][2] 20
-DP1_ANT[6][3] 205
-DP1_ANT[6][4] 206
-DP1_ANT[6][5] 219
-DP1_ANT[6][6] 220
-DP1_ANT[6][7] 129
-DP1_ANT[6][8] 130
-DP1_ANT[6][9] 211
-DP1_ANT[6][10] 212
-DP1_ANT[6][11] 141
-DP1_ANT[6][12] 142
-DP1_ANT[6][13] 279
-DP1_ANT[6][14] 280
-DP1_ANT[6][15] 61
-DP1_ANT[6][16] 62
-DP1_ANT[6][17] 207
-DP1_ANT[6][18] 208
-DP1_ANT[6][19] 57
-DP1_ANT[6][20] 58
-DP1_ANT[7][1] 403
-DP1_ANT[7][2] 404
-DP1_ANT[7][3] 381
-DP1_ANT[7][4] 382
-DP1_ANT[7][5] 101
-DP1_ANT[7][6] 102
-DP1_ANT[7][7] 507
-DP1_ANT[7][8] 508
-DP1_ANT[7][9] 175
-DP1_ANT[7][10] 176
-DP1_ANT[7][11] 165
-DP1_ANT[7][12] 166
-DP1_ANT[7][13] 451
-DP1_ANT[7][14] 452
-DP1_ANT[7][15] 479
-DP1_ANT[7][16] 480
-DP1_ANT[7][17] 107
-DP1_ANT[7][18] 108
-DP1_ANT[7][19] 161
-DP1_ANT[7][20] 162
-DP1_ANT[8][1] 189
-DP1_ANT[8][2] 190
-DP1_ANT[8][3] 353
-DP1_ANT[8][4] 354
-DP1_ANT[8][5] 323
-DP1_ANT[8][6] 324
-DP1_ANT[8][7] 9
-DP1_ANT[8][8] 10
-DP1_ANT[8][9] 117
-DP1_ANT[8][10] 118
-DP1_ANT[8][11] 293
-DP1_ANT[8][12] 294
-DP1_ANT[8][13] 379
-DP1_ANT[8][14] 380
-DP1_ANT[8][15] 331
-DP1_ANT[8][16] 332
-DP1_ANT[8][17] 121
-DP1_ANT[8][18] 122
-DP1_ANT[8][19] 401
-DP1_ANT[8][20] 402
-DP1_ANT[9][1] 249
-DP1_ANT[9][2] 250
-DP1_ANT[9][3] 449
-DP1_ANT[9][4] 450
-DP1_ANT[9][5] 419
-DP1_ANT[9][6] 420
-DP1_ANT[9][7] 159
-DP1_ANT[9][8] 160
-DP1_ANT[9][9] 313
-DP1_ANT[9][10] 314
-DP1_ANT[9][11] 347
-DP1_ANT[9][12] 348
-DP1_ANT[9][13] 455
-DP1_ANT[9][14] 456
-DP1_ANT[9][15] 29
-DP1_ANT[9][16] 30
-DP1_ANT[9][17] 253
-DP1_ANT[9][18] 254
-DP1_ANT[9][19] 305
-DP1_ANT[9][20] 306
-DP1_ANT[10][1] 267
-DP1_ANT[10][2] 268
-DP1_ANT[10][3] 275
-DP1_ANT[10][4] 276
-DP1_ANT[10][5] 185
-DP1_ANT[10][6] 186
-DP1_ANT[10][7] 289
-DP1_ANT[10][8] 290
-DP1_ANT[10][9] 327
-DP1_ANT[10][10] 328
-DP1_ANT[10][11] 199
-DP1_ANT[10][12] 200
-DP1_ANT[10][13] 51
-DP1_ANT[10][14] 52
-DP1_ANT[10][15] 109
-DP1_ANT[10][16] 110
-DP1_ANT[10][17] 135
-DP1_ANT[10][18] 136
-DP1_ANT[10][19] 263
-DP1_ANT[10][20] 264
-DP1_ANT[11][1] 373
-DP1_ANT[11][2] 374
-DP1_ANT[11][3] 223
-DP1_ANT[11][4] 224
-DP1_ANT[11][5] 245
-DP1_ANT[11][6] 246
-DP1_ANT[11][7] 343
-DP1_ANT[11][8] 344
-DP1_ANT[11][9] 427
-DP1_ANT[11][10] 428
-DP1_ANT[11][11] 295
-DP1_ANT[11][12] 296
-DP1_ANT[11][13] 415
-DP1_ANT[11][14] 416
-DP1_ANT[11][15] 351
-DP1_ANT[11][16] 352
-DP1_ANT[11][17] 423
-DP1_ANT[11][18] 424
-DP1_ANT[11][19] 27
-DP1_ANT[11][20] 28
-DP1_ANT[12][1] 49
-DP1_ANT[12][2] 50
-DP1_ANT[12][3] 177
-DP1_ANT[12][4] 178
-DP1_ANT[12][5] 383
-DP1_ANT[12][6] 384
-DP1_ANT[12][7] 203
-DP1_ANT[12][8] 204
-DP1_ANT[12][9] 7
-DP1_ANT[12][10] 8
-DP1_ANT[12][11] 297
-DP1_ANT[12][12] 298
-DP1_ANT[12][13] 387
-DP1_ANT[12][14] 388
-DP1_ANT[12][15] 271
-DP1_ANT[12][16] 272
-DP1_ANT[12][17] 53
-DP1_ANT[12][18] 54
-DP1_ANT[12][19] 181
-DP1_ANT[12][20] 182
-DP1_ANT[13][1] 365
-DP1_ANT[13][2] 366
-DP1_ANT[13][3] 399
-DP1_ANT[13][4] 400
-DP1_ANT[13][5] 377
-DP1_ANT[13][6] 378
-DP1_ANT[13][7] 235
-DP1_ANT[13][8] 236
-DP1_ANT[13][9] 411
-DP1_ANT[13][10] 412
-DP1_ANT[13][11] 355
-DP1_ANT[13][12] 356
-DP1_ANT[13][13] 459
-DP1_ANT[13][14] 460
-DP1_ANT[13][15] 91
-DP1_ANT[13][16] 92
-DP1_ANT[13][17] 361
-DP1_ANT[13][18] 362
-DP1_ANT[13][19] 407
-DP1_ANT[13][20] 408
-DP1_ANT[14][1] 59
-DP1_ANT[14][2] 60
-DP1_ANT[14][3] 45
-DP1_ANT[14][4] 46
-DP1_ANT[14][5] 183
-DP1_ANT[14][6] 184
-DP1_ANT[14][7] 445
-DP1_ANT[14][8] 446
-
-# LEDA Outrigger #2
-DP1_ANT[14][9] 519
-DP1_ANT[14][10] 520
-
-DP1_ANT[14][11] 395
-DP1_ANT[14][12] 396
-DP1_ANT[14][13] 285
-DP1_ANT[14][14] 286
-DP1_ANT[14][15] 389
-DP1_ANT[14][16] 390
-DP1_ANT[14][17] 495
-DP1_ANT[14][18] 496
-DP1_ANT[14][19] 95
-DP1_ANT[14][20] 96
-DP1_ANT[15][1] 221
-DP1_ANT[15][2] 222
-DP1_ANT[15][3] 337
-DP1_ANT[15][4] 338
-DP1_ANT[15][5] 499
-DP1_ANT[15][6] 500
-DP1_ANT[15][7] 227
-DP1_ANT[15][8] 228
-DP1_ANT[15][9] 341
-DP1_ANT[15][10] 342
-DP1_ANT[15][11] 333
-DP1_ANT[15][12] 334
-DP1_ANT[15][13] 105
-DP1_ANT[15][14] 106
-DP1_ANT[15][15] 475
-DP1_ANT[15][16] 476
-DP1_ANT[15][17] 225
-DP1_ANT[15][18] 226
-DP1_ANT[15][19] 431
-DP1_ANT[15][20] 432
-DP1_ANT[16][1] 179
-DP1_ANT[16][2] 180
-DP1_ANT[16][3] 391
-DP1_ANT[16][4] 392
-DP1_ANT[16][5] 255
-DP1_ANT[16][6] 256
-DP1_ANT[16][7] 41
-DP1_ANT[16][8] 42
-DP1_ANT[16][9] 39
-DP1_ANT[16][10] 40
-
-# LEDA Outrigger #1
-DP1_ANT[16][11] 513
-DP1_ANT[16][12] 514
-
-DP1_ANT[16][13] 319
-DP1_ANT[16][14] 320
-DP1_ANT[16][15] 113
-DP1_ANT[16][16] 114
-DP1_ANT[16][17] 111
-DP1_ANT[16][18] 112
-DP1_ANT[16][19] 485
-DP1_ANT[16][20] 486
-DP1_ANT[17][1] 171
-DP1_ANT[17][2] 172
-DP1_ANT[17][3] 467
-DP1_ANT[17][4] 468
-DP1_ANT[17][5] 157
-DP1_ANT[17][6] 158
-DP1_ANT[17][7] 277
-DP1_ANT[17][8] 278
-DP1_ANT[17][9] 103
-DP1_ANT[17][10] 104
-DP1_ANT[17][11] 463
-DP1_ANT[17][12] 464
-DP1_ANT[17][13] 233
-DP1_ANT[17][14] 234
-DP1_ANT[17][15] 435
-DP1_ANT[17][16] 436
-DP1_ANT[17][17] 99
-DP1_ANT[17][18] 100
-DP1_ANT[17][19] 471
-DP1_ANT[17][20] 472
-DP1_ANT[18][1] 259
-DP1_ANT[18][2] 260
-DP1_ANT[18][3] 1
-DP1_ANT[18][4] 2
-DP1_ANT[18][5] 47
-DP1_ANT[18][6] 48
-DP1_ANT[18][7] 441
-DP1_ANT[18][8] 442
-DP1_ANT[18][9] 371
-DP1_ANT[18][10] 372
-DP1_ANT[18][11] 5
-DP1_ANT[18][12] 6
-DP1_ANT[18][13] 119
-DP1_ANT[18][14] 120
-DP1_ANT[18][15] 437
-DP1_ANT[18][16] 438
-DP1_ANT[18][17] 315
-DP1_ANT[18][18] 316
-DP1_ANT[18][19] 3
-DP1_ANT[18][20] 4
-DP1_ANT[19][1] 229
-DP1_ANT[19][2] 230
-DP1_ANT[19][3] 439
-DP1_ANT[19][4] 440
-DP1_ANT[19][5] 35
-DP1_ANT[19][6] 36
-DP1_ANT[19][7] 503
-DP1_ANT[19][8] 504
-DP1_ANT[19][9] 93
-DP1_ANT[19][10] 94
-DP1_ANT[19][11] 281
-DP1_ANT[19][12] 282
-DP1_ANT[19][13] 385
-DP1_ANT[19][14] 386
-DP1_ANT[19][15] 491
-DP1_ANT[19][16] 492
-DP1_ANT[19][17] 413
-DP1_ANT[19][18] 414
-DP1_ANT[19][19] 429
-DP1_ANT[19][20] 430
-DP1_ANT[20][1] 25
-DP1_ANT[20][2] 26
-DP1_ANT[20][3] 325
-DP1_ANT[20][4] 326
-DP1_ANT[20][5] 131
-DP1_ANT[20][6] 132
-DP1_ANT[20][7] 115
-DP1_ANT[20][8] 116
-DP1_ANT[20][9] 481
-DP1_ANT[20][10] 482
-DP1_ANT[20][11] 433
-DP1_ANT[20][12] 434
-DP1_ANT[20][13] 195
-DP1_ANT[20][14] 196
-DP1_ANT[20][15] 243
-DP1_ANT[20][16] 244
-DP1_ANT[20][17] 43
-DP1_ANT[20][18] 44
-DP1_ANT[20][19] 477
-DP1_ANT[20][20] 478
-DP1_ANT[21][1] 509
-DP1_ANT[21][2] 510
-DP1_ANT[21][3] 127
-DP1_ANT[21][4] 128
-DP1_ANT[21][5] 303
-DP1_ANT[21][6] 304
-DP1_ANT[21][7] 425
-DP1_ANT[21][8] 426
-DP1_ANT[21][9] 505
-DP1_ANT[21][10] 506
-DP1_ANT[21][11] 11
-DP1_ANT[21][12] 12
-DP1_ANT[21][13] 363
-DP1_ANT[21][14] 364
-DP1_ANT[21][15] 501
-DP1_ANT[21][16] 502
-DP1_ANT[21][17] 465
-DP1_ANT[21][18] 466
-DP1_ANT[21][19] 191
-DP1_ANT[21][20] 192
-DP1_ANT[22][1] 287
-DP1_ANT[22][2] 288
-DP1_ANT[22][3] 149
-DP1_ANT[22][4] 150
-DP1_ANT[22][5] 213
-DP1_ANT[22][6] 214
-DP1_ANT[22][7] 17
-DP1_ANT[22][8] 18
-DP1_ANT[22][9] 163
-DP1_ANT[22][10] 164
-DP1_ANT[22][11] 77
-DP1_ANT[22][12] 78
-DP1_ANT[22][13] 155
-DP1_ANT[22][14] 156
-DP1_ANT[22][15] 209
-DP1_ANT[22][16] 210
-DP1_ANT[22][17] 291
-DP1_ANT[22][18] 292
-DP1_ANT[22][19] 85
-DP1_ANT[22][20] 86
-DP1_ANT[23][1] 461
-DP1_ANT[23][2] 462
-DP1_ANT[23][3] 473
-DP1_ANT[23][4] 474
-DP1_ANT[23][5] 493
-DP1_ANT[23][6] 494
-DP1_ANT[23][7] 251
-DP1_ANT[23][8] 252
-DP1_ANT[23][9] 457
-DP1_ANT[23][10] 458
-DP1_ANT[23][11] 307
-DP1_ANT[23][12] 308
-DP1_ANT[23][13] 469
-DP1_ANT[23][14] 470
-DP1_ANT[23][15] 55
-DP1_ANT[23][16] 56
-DP1_ANT[23][17] 453
-DP1_ANT[23][18] 454
-DP1_ANT[23][19] 359
-DP1_ANT[23][20] 360
-DP1_ANT[24][1] 329
-DP1_ANT[24][2] 330
-DP1_ANT[24][3] 67
-DP1_ANT[24][4] 68
-DP1_ANT[24][5] 153
-DP1_ANT[24][6] 154
-DP1_ANT[24][7] 231
-DP1_ANT[24][8] 232
-DP1_ANT[24][9] 269
-DP1_ANT[24][10] 270
-DP1_ANT[24][11] 75
-DP1_ANT[24][12] 76
-DP1_ANT[24][13] 81
-DP1_ANT[24][14] 82
-DP1_ANT[24][15] 217
-DP1_ANT[24][16] 218
-DP1_ANT[24][17] 265
-DP1_ANT[24][18] 266
-DP1_ANT[24][19] 71
-DP1_ANT[24][20] 72
-DP1_ANT[25][1] 497
-DP1_ANT[25][2] 498
-DP1_ANT[25][3] 187
-DP1_ANT[25][4] 188
-DP1_ANT[25][5] 417
-DP1_ANT[25][6] 418
-DP1_ANT[25][7] 311
-DP1_ANT[25][8] 312
-DP1_ANT[25][9] 421
-DP1_ANT[25][10] 422
-DP1_ANT[25][11] 247
-DP1_ANT[25][12] 248
-DP1_ANT[25][13] 489
-DP1_ANT[25][14] 490
-DP1_ANT[25][15] 367
-DP1_ANT[25][16] 368
-DP1_ANT[25][17] 375
-DP1_ANT[25][18] 376
-DP1_ANT[25][19] 123
-DP1_ANT[25][20] 124
-DP1_ANT[26][1] 23
-DP1_ANT[26][2] 24
-DP1_ANT[26][3] 83
-DP1_ANT[26][4] 84
-DP1_ANT[26][5] 145
-DP1_ANT[26][6] 146
-DP1_ANT[26][7] 143
-DP1_ANT[26][8] 144
-DP1_ANT[26][9] 21
-DP1_ANT[26][10] 22
-DP1_ANT[26][11] 87
-DP1_ANT[26][12] 88
-DP1_ANT[26][13] 273
-DP1_ANT[26][14] 274
-DP1_ANT[26][15] 139
-DP1_ANT[26][16] 140
-DP1_ANT[26][17] 79
-DP1_ANT[26][18] 80
-DP1_ANT[26][19] 167
-DP1_ANT[26][20] 168
+SNAP_ANT[5][3] 215
+SNAP_ANT[5][4] 216
+SNAP_ANT[5][5] 197
+SNAP_ANT[5][6] 198
+SNAP_ANT[5][7] 193
+SNAP_ANT[5][8] 194
+SNAP_ANT[5][9] 15
+SNAP_ANT[5][10] 16
+SNAP_ANT[5][11] 335
+SNAP_ANT[5][12] 336
+SNAP_ANT[5][13] 257
+SNAP_ANT[5][14] 258
+SNAP_ANT[5][15] 309
+SNAP_ANT[5][16] 310
+SNAP_ANT[5][17] 63
+SNAP_ANT[5][18] 64
+SNAP_ANT[5][19] 137
+SNAP_ANT[5][20] 138
+SNAP_ANT[5][21] 201
+SNAP_ANT[5][22] 202
+SNAP_ANT[5][23] 369
+SNAP_ANT[5][24] 370
+SNAP_ANT[5][25] 283
+SNAP_ANT[5][26] 284
+SNAP_ANT[5][27] 13
+SNAP_ANT[5][28] 14
+SNAP_ANT[5][29] 321
+SNAP_ANT[5][30] 322
+SNAP_ANT[5][31] 317
+SNAP_ANT[5][32] 318
+SNAP_ANT[6][1] 339
+SNAP_ANT[6][2] 340
+SNAP_ANT[6][3] 65
+SNAP_ANT[6][4] 66
+SNAP_ANT[6][5] 261
+SNAP_ANT[6][6] 262
+SNAP_ANT[6][7] 125
+SNAP_ANT[6][8] 126
+SNAP_ANT[6][9] 147
+SNAP_ANT[6][10] 148
+SNAP_ANT[6][11] 73
+SNAP_ANT[6][12] 74
+SNAP_ANT[6][13] 151
+SNAP_ANT[6][14] 152
+SNAP_ANT[6][15] 133
+SNAP_ANT[6][16] 134
+SNAP_ANT[6][17] 19
+SNAP_ANT[6][18] 20
+SNAP_ANT[6][19] 205
+SNAP_ANT[6][20] 206
+SNAP_ANT[6][21] 219
+SNAP_ANT[6][22] 220
+SNAP_ANT[6][23] 129
+SNAP_ANT[6][24] 130
+SNAP_ANT[6][25] 211
+SNAP_ANT[6][26] 212
+SNAP_ANT[6][27] 141
+SNAP_ANT[6][28] 142
+SNAP_ANT[6][29] 279
+SNAP_ANT[6][30] 280
+SNAP_ANT[6][31] 61
+SNAP_ANT[6][32] 62
+SNAP_ANT[7][1] 207
+SNAP_ANT[7][2] 208
+SNAP_ANT[7][3] 57
+SNAP_ANT[7][4] 58
+SNAP_ANT[7][5] 189
+SNAP_ANT[7][6] 190
+SNAP_ANT[7][7] 353
+SNAP_ANT[7][8] 354
+SNAP_ANT[7][9] 323
+SNAP_ANT[7][10] 324
+SNAP_ANT[7][11] 9
+SNAP_ANT[7][12] 10
+SNAP_ANT[7][13] 117
+SNAP_ANT[7][14] 118
+SNAP_ANT[7][15] 293
+SNAP_ANT[7][16] 294
+SNAP_ANT[7][17] 379
+SNAP_ANT[7][18] 380
+SNAP_ANT[7][19] 331
+SNAP_ANT[7][20] 332
+SNAP_ANT[7][21] 121
+SNAP_ANT[7][22] 122
+SNAP_ANT[7][23] 401
+SNAP_ANT[7][24] 402
+SNAP_ANT[7][25] 267
+SNAP_ANT[7][26] 268
+SNAP_ANT[7][27] 275
+SNAP_ANT[7][28] 276
+SNAP_ANT[7][29] 185
+SNAP_ANT[7][30] 186
+SNAP_ANT[7][31] 289
+SNAP_ANT[7][32] 290
+SNAP_ANT[8][1] 327
+SNAP_ANT[8][2] 328
+SNAP_ANT[8][3] 199
+SNAP_ANT[8][4] 200
+SNAP_ANT[8][5] 51
+SNAP_ANT[8][6] 52
+SNAP_ANT[8][7] 109
+SNAP_ANT[8][8] 110
+SNAP_ANT[8][9] 135
+SNAP_ANT[8][10] 136
+SNAP_ANT[8][11] 263
+SNAP_ANT[8][12] 264
+SNAP_ANT[8][13] 49
+SNAP_ANT[8][14] 50
+SNAP_ANT[8][15] 177
+SNAP_ANT[8][16] 178
+SNAP_ANT[8][17] 383
+SNAP_ANT[8][18] 384
+SNAP_ANT[8][19] 203
+SNAP_ANT[8][20] 204
+SNAP_ANT[8][21] 7
+SNAP_ANT[8][22] 8
+SNAP_ANT[8][23] 297
+SNAP_ANT[8][24] 298
+SNAP_ANT[8][25] 387
+SNAP_ANT[8][26] 388
+SNAP_ANT[8][27] 271
+SNAP_ANT[8][28] 272
+SNAP_ANT[8][29] 53
+SNAP_ANT[8][30] 54
+SNAP_ANT[8][31] 181
+SNAP_ANT[8][32] 182
+SNAP_ANT[9][1] 23
+SNAP_ANT[9][2] 24
+SNAP_ANT[9][3] 83
+SNAP_ANT[9][4] 84
+SNAP_ANT[9][5] 145
+SNAP_ANT[9][6] 146
+SNAP_ANT[9][7] 143
+SNAP_ANT[9][8] 144
+SNAP_ANT[9][9] 21
+SNAP_ANT[9][10] 22
+SNAP_ANT[9][11] 87
+SNAP_ANT[9][12] 88
+SNAP_ANT[9][13] 273
+SNAP_ANT[9][14] 274
+SNAP_ANT[9][15] 139
+SNAP_ANT[9][16] 140
+SNAP_ANT[9][17] 79
+SNAP_ANT[9][18] 80
+SNAP_ANT[9][19] 167
+SNAP_ANT[9][20] 168
+SNAP_ANT[9][21] 329
+SNAP_ANT[9][22] 330
+SNAP_ANT[9][23] 67
+SNAP_ANT[9][24] 68
+SNAP_ANT[9][25] 153
+SNAP_ANT[9][26] 154
+SNAP_ANT[9][27] 231
+SNAP_ANT[9][28] 232
+SNAP_ANT[9][29] 269
+SNAP_ANT[9][30] 270
+SNAP_ANT[9][31] 75
+SNAP_ANT[9][32] 76
+SNAP_ANT[10][1] 81
+SNAP_ANT[10][2] 82
+SNAP_ANT[10][3] 217
+SNAP_ANT[10][4] 218
+SNAP_ANT[10][5] 265
+SNAP_ANT[10][6] 266
+SNAP_ANT[10][7] 71
+SNAP_ANT[10][8] 72
+SNAP_ANT[10][9] 287
+SNAP_ANT[10][10] 288
+SNAP_ANT[10][11] 149
+SNAP_ANT[10][12] 150
+SNAP_ANT[10][13] 213
+SNAP_ANT[10][14] 214
+SNAP_ANT[10][15] 17
+SNAP_ANT[10][16] 18
+SNAP_ANT[10][17] 163
+SNAP_ANT[10][18] 164
+SNAP_ANT[10][19] 77
+SNAP_ANT[10][20] 78
+SNAP_ANT[10][21] 155
+SNAP_ANT[10][22] 156
+SNAP_ANT[10][23] 209
+SNAP_ANT[10][24] 210
+SNAP_ANT[10][25] 291
+SNAP_ANT[10][26] 292
+SNAP_ANT[10][27] 85
+SNAP_ANT[10][28] 86
+SNAP_ANT[10][29] 25
+SNAP_ANT[10][30] 26
+SNAP_ANT[10][31] 325
+SNAP_ANT[10][32] 326
+SNAP_ANT[11][1] 131
+SNAP_ANT[11][2] 132
+SNAP_ANT[11][3] 115
+SNAP_ANT[11][4] 116
+SNAP_ANT[11][5] 481
+SNAP_ANT[11][6] 482
+SNAP_ANT[11][7] 433
+SNAP_ANT[11][8] 434
+SNAP_ANT[11][9] 195
+SNAP_ANT[11][10] 196
+SNAP_ANT[11][11] 243
+SNAP_ANT[11][12] 244
+SNAP_ANT[11][13] 43
+SNAP_ANT[11][14] 44
+SNAP_ANT[11][15] 477
+SNAP_ANT[11][16] 478
+SNAP_ANT[11][17] 259
+SNAP_ANT[11][18] 260
+SNAP_ANT[11][19] 1
+SNAP_ANT[11][20] 2
+SNAP_ANT[11][21] 47
+SNAP_ANT[11][22] 48
+SNAP_ANT[11][23] 441
+SNAP_ANT[11][24] 442
+SNAP_ANT[11][25] 371
+SNAP_ANT[11][26] 372
+SNAP_ANT[11][27] 5
+SNAP_ANT[11][28] 6
+SNAP_ANT[11][29] 119
+SNAP_ANT[11][30] 120
+SNAP_ANT[11][31] 437
+SNAP_ANT[11][32] 438
+SNAP_ANT[12][1] 315
+SNAP_ANT[12][2] 316
+SNAP_ANT[12][3] 3
+SNAP_ANT[12][4] 4
+SNAP_ANT[12][5] 179
+SNAP_ANT[12][6] 180
+SNAP_ANT[12][7] 391
+SNAP_ANT[12][8] 392
+SNAP_ANT[12][9] 255
+SNAP_ANT[12][10] 256
+SNAP_ANT[12][11] 41
+SNAP_ANT[12][12] 42
+SNAP_ANT[12][13] 39
+SNAP_ANT[12][14] 40
+SNAP_ANT[12][15] 395
+SNAP_ANT[12][16] 396
+SNAP_ANT[12][17] 319
+SNAP_ANT[12][18] 320
+SNAP_ANT[12][19] 113
+SNAP_ANT[12][20] 114
+SNAP_ANT[12][21] 111
+SNAP_ANT[12][22] 112
+SNAP_ANT[12][23] 485
+SNAP_ANT[12][24] 486
+SNAP_ANT[12][25] 59
+SNAP_ANT[12][26] 60
+SNAP_ANT[12][27] 45
+SNAP_ANT[12][28] 46
+SNAP_ANT[12][29] 183
+SNAP_ANT[12][30] 184
+SNAP_ANT[12][31] 445
+SNAP_ANT[12][32] 446
+SNAP_ANT[13][1] 285
+SNAP_ANT[13][2] 286
+SNAP_ANT[13][3] 389
+SNAP_ANT[13][4] 390
+SNAP_ANT[13][5] 495
+SNAP_ANT[13][6] 496
+SNAP_ANT[13][7] 95
+SNAP_ANT[13][8] 96
+SNAP_ANT[13][9] 221
+SNAP_ANT[13][10] 222
+SNAP_ANT[13][11] 337
+SNAP_ANT[13][12] 338
+SNAP_ANT[13][13] 499
+SNAP_ANT[13][14] 500
+SNAP_ANT[13][15] 227
+SNAP_ANT[13][16] 228
+SNAP_ANT[13][17] 341
+SNAP_ANT[13][18] 342
+SNAP_ANT[13][19] 333
+SNAP_ANT[13][20] 334
+SNAP_ANT[13][21] 105
+SNAP_ANT[13][22] 106
+SNAP_ANT[13][23] 475
+SNAP_ANT[13][24] 476
+SNAP_ANT[13][25] 225
+SNAP_ANT[13][26] 226
+SNAP_ANT[13][27] 431
+SNAP_ANT[13][28] 432
+SNAP_ANT[13][29] 171
+SNAP_ANT[13][30] 172
+SNAP_ANT[13][31] 467
+SNAP_ANT[13][32] 468
+SNAP_ANT[14][1] 157
+SNAP_ANT[14][2] 158
+SNAP_ANT[14][3] 277
+SNAP_ANT[14][4] 278
+SNAP_ANT[14][5] 103
+SNAP_ANT[14][6] 104
+SNAP_ANT[14][7] 463
+SNAP_ANT[14][8] 464
+SNAP_ANT[14][9] 233
+SNAP_ANT[14][10] 234
+SNAP_ANT[14][11] 435
+SNAP_ANT[14][12] 436
+SNAP_ANT[14][13] 99
+SNAP_ANT[14][14] 100
+SNAP_ANT[14][15] 471
+SNAP_ANT[14][16] 472
+SNAP_ANT[14][17] 229
+SNAP_ANT[14][18] 230
+SNAP_ANT[14][19] 439
+SNAP_ANT[14][20] 440
+SNAP_ANT[14][21] 35
+SNAP_ANT[14][22] 36
+SNAP_ANT[14][23] 503
+SNAP_ANT[14][24] 504
+SNAP_ANT[14][25] 93
+SNAP_ANT[14][26] 94
+SNAP_ANT[14][27] 281
+SNAP_ANT[14][28] 282
+SNAP_ANT[14][29] 385
+SNAP_ANT[14][30] 386
+SNAP_ANT[14][31] 491
+SNAP_ANT[14][32] 492
+SNAP_ANT[15][1] 413
+SNAP_ANT[15][2] 414
+SNAP_ANT[15][3] 429
+SNAP_ANT[15][4] 430
+SNAP_ANT[15][5] 509
+SNAP_ANT[15][6] 510
+SNAP_ANT[15][7] 127
+SNAP_ANT[15][8] 128
+SNAP_ANT[15][9] 303
+SNAP_ANT[15][10] 304
+SNAP_ANT[15][11] 425
+SNAP_ANT[15][12] 426
+SNAP_ANT[15][13] 505
+SNAP_ANT[15][14] 506
+SNAP_ANT[15][15] 11
+SNAP_ANT[15][16] 12
+SNAP_ANT[15][17] 363
+SNAP_ANT[15][18] 364
+SNAP_ANT[15][19] 501
+SNAP_ANT[15][20] 502
+SNAP_ANT[15][21] 465
+SNAP_ANT[15][22] 466
+SNAP_ANT[15][23] 191
+SNAP_ANT[15][24] 192
+SNAP_ANT[15][25] 461
+SNAP_ANT[15][26] 462
+SNAP_ANT[15][27] 473
+SNAP_ANT[15][28] 474
+SNAP_ANT[15][29] 493
+SNAP_ANT[15][30] 494
+SNAP_ANT[15][31] 251
+SNAP_ANT[15][32] 252
+SNAP_ANT[16][1] 457
+SNAP_ANT[16][2] 458
+SNAP_ANT[16][3] 307
+SNAP_ANT[16][4] 308
+SNAP_ANT[16][5] 469
+SNAP_ANT[16][6] 470
+SNAP_ANT[16][7] 55
+SNAP_ANT[16][8] 56
+SNAP_ANT[16][9] 453
+SNAP_ANT[16][10] 454
+SNAP_ANT[16][11] 359
+SNAP_ANT[16][12] 360
+SNAP_ANT[16][13] 497
+SNAP_ANT[16][14] 498
+SNAP_ANT[16][15] 187
+SNAP_ANT[16][16] 188
+SNAP_ANT[16][17] 417
+SNAP_ANT[16][18] 418
+SNAP_ANT[16][19] 311
+SNAP_ANT[16][20] 312
+SNAP_ANT[16][21] 421
+SNAP_ANT[16][22] 422
+SNAP_ANT[16][23] 247
+SNAP_ANT[16][24] 248
+SNAP_ANT[16][25] 489
+SNAP_ANT[16][26] 490
+SNAP_ANT[16][27] 367
+SNAP_ANT[16][28] 368
+SNAP_ANT[16][29] 375
+SNAP_ANT[16][30] 376
+SNAP_ANT[16][31] 123
+SNAP_ANT[16][32] 124
 
 # ----------------------
-# --- DP2 --------------
+# --- GPU Servers ------
 # ----------------------
 # Maximum number of DP2 boards:
-N_DP2 2
+N_SERVER 5
 
-# DP2_ID[] will be set to "UNK" (no identification) for any DP2 boards not identified
-# *** DP2_ID[dp2#] goes here:
-DP2_ID[1] lwa16
-DP2_ID[2] lwa34
+# SERVER_ID[] will be set to "UNK" (no identification) for any GPU servers not identified
+# *** SERVER_ID[server#] goes here:
+SERVER_ID[1] ndp
+SERVER_ID[2] ndp1
+SERVER_ID[3] ndp2
+SERVER_ID[4] ndp3
+SERVER_ID[5] ndp4
 
-# DP2_SLOT[] will be set to 0 (not known/not applicable) for any DP2 boards not identified
-# *** DP2_SLOT[dp2#] goes here:
-# format = <chassis>-<slot from left>
-DP2_SLOT[1] 1-7
-DP2_SLOT[2] 2-7
+# SERVER_SLOT[] will be set to 0 (not known/not applicable) for any GPU servers not identified
+# *** SERVER_SLOT[server#] goes here:
+# format = <slot from top>
+SERVER_SLOT[1] 1
+SERVER_SLOT[2] 2
+SERVER_SLOT[3] 3
+SERVER_SLOT[4] 4
+SERVER_SLOT[5] 5
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
-# This will be set to 3 ("OK") or any DP2 board-channels not identified
-# *** DP2_STAT[dp2#] goes here:
+# This will be set to 3 ("OK") or any GPU servers not identified
+# *** SERVER_STAT[server#] goes here:
 
-# DP2_DESI[] be set to 1 for any DP2 boards not identified
-# *** DP2_DESI[dp2#] goes here:
-DP2_DESI[1] 1
-DP2_DESI[2] 1
+# SERVER_DESI[] be set to 1 for any GPU servers not identified
+# *** SERVER_DESI[server#] goes here:
+SERVER_DESI[1]  1
+SERVER_DESI[2]  2
+SERVER_DESI[3]  2
+SERVER_DESI[4]  2
+SERVER_DESI[5]  2
 
 # ----------------------
 # --- DR ---------------
@@ -6876,20 +6808,20 @@ DR_ID[5] DR5
 
 # DR_PC[] will be set to "UNK" (not known/not applicable) for any DRs not identified
 # *** DR_PC[dr#] goes here:
-DR_PC[1] XPS435
-DR_PC[2] T1500
-DR_PC[3] T1500
-DR_PC[4] T1500
-DR_PC[5] T1500 
+DR_PC[1] X11SSW-F
+DR_PC[2] X11SSW-F
+DR_PC[3] X11SSW-F
+DR_PC[4] X11SSW-F
+DR_PC[5] X11SSW-F 
 
 # 1-4 are the beam outputs, 5 is TBW/TBN
 # DR_DP[] will be set to 0 (no connection) for any DPs not identified
 # *** DR_DP[] goes here:
-DR_DP[1] 1
-DR_DP[2] 2
-DR_DP[3] 3
-DR_DP[4] 4
-DR_DP[5] 5
+DR_NDP[1] 1
+DR_NDP[2] 2
+DR_NDP[3] 3
+DR_NDP[4] 4
+DR_NDP[5] 5
 
 # ----------------------
 # --- Power ------------
@@ -6931,7 +6863,7 @@ DR_DP[5] 5
 # ... DR5 is on UPS #1 (172.16.1.119), Port 1
 #
 
-N_PWR_RACK 6
+N_PWR_RACK 7
 
 # N_PWR_PORT[] will be set to 0 (no ports) for any rack power supplies not identified
 # *** _N_PWR_PORT[rack#] goes here:
@@ -6941,6 +6873,7 @@ N_PWR_PORT[3] 8
 N_PWR_PORT[4] 8
 N_PWR_PORT[5] 8
 N_PWR_PORT[6] 8
+N_PWR_PORT[7] 3
 
 # Format (example) "PWR_SS[2][3] SHL" means power from Rack 2 Port 3 goes to SHL.
 # Valid values are SHL, ASP, DP_, MCS, DR1, DR2, DR3, DR4, and DR5.
@@ -6948,7 +6881,7 @@ N_PWR_PORT[6] 8
 # Format (example) "PWR_NAME[2][3] MCS", assuming "PWR_SS[2][3] SHL", means power from Rack 2 Port 3 goes to SHL-MCS.
 #   For PWR SS[m][p] = SHL, valid values are MCS, others TBD
 #   For PWR SS[m][p] = ASP, valid values are MCS, FEE, ARX, FAN 
-#   For PWR SS[m][p] = DP , valid values are MCS, DC1, DC2, FAN, SYN, SWI
+#   For PWR SS[m][p] = NDP, valid values are MCS, FPG, SVR, FAN, SYN, SWI
 #   For PWR SS[m][p] = MCS, valid values are SCH, EXE, TP, CH, and GW.
 #   For PWR SS[m][p] = DR1, DR2, DR3, DR4, and DR5; valid values are PC, DS1 (DRSU 1), and DS2 (DRSU 2)
 # PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
@@ -6966,85 +6899,97 @@ PWR_NAME[1][4] FAN
 
 ###
 
-PWR_SS[2][2] DP_
-PWR_NAME[2][2] SWI
+PWR_SS[2][1] NDP
+PWR_NAME[2][1] FPG
+PWR_SS[2][2] NDP
+PWR_NAME[2][2] FPG
+PWR_SS[2][3] NDP
+PWR_NAME[2][3] FPG
 
-PWR_SS[2][3] DP_
-PWR_NAME[2][3] SYN
+PWR_SS[2][4] NDP
+PWR_NAME[2][4] SYN
 
-PWR_SS[2][8] DP_
-PWR_NAME[2][8] FAN
+PWR_SS[2][5] NDP
+PWR_NAME[2][5] FAN
+PWR_SS[2][6] NDP
+PWR_NAME[2][6] FAN
+
+PWR_SS[3][1] NDP
+PWR_NAME[3][1] MCS
+PWR_SS[3][2] NDP
+PWR_NAME[3][2] MCS
+PWR_SS[3][3] NDP
+PWR_NAME[3][3] SVR
+PWR_SS[3][4] NDP
+PWR_NAME[3][4] SVR
+PWR_SS[3][5] NDP
+PWR_NAME[3][5] SVR
+PWR_SS[3][6] NDP
+PWR_NAME[3][6] SVR
+
+PWR_SS[4][1] NDP
+PWR_NAME[4][1] SVR
+PWR_SS[4][2] NDP
+PWR_NAME[4][2] SVR
+PWR_SS[4][3] NDP
+PWR_NAME[4][3] SVR
+PWR_SS[4][4] NDP
+PWR_NAME[4][4] SVR
+PWR_SS[4][5] NDP
+PWR_NAME[4][5] SVR
+PWR_SS[4][6] NDP
+PWR_NAME[4][6] SVR
 
 ###
 
 # FIXME -- using undefined keywords below -- need to revise software to recognize them
-# Each DP chassis has 3 plugs, denoted C23 for chassis 2, plug 3; C12 for chassis 1, plug 2, etc.
-#PWR_SS[3][1] DP_
-#PWR_NAME[3][1] C21 
-#PWR_SS[3][2] DP_
-#PWR_NAME[3][2] C22
-#PWR_SS[3][3] DP_
-#PWR_NAME[3][3] C23 
-#PWR_SS[3][4] DP_
-#PWR_NAME[3][4] C11
-#PWR_SS[3][5] DP_
-#PWR_NAME[3][5] C12
-#PWR_SS[3][6] DP_
-#PWR_NAME[3][6] C13
-
-###
-
-# FIXME -- using undefined keywords below -- need to revise software to recognize them
-# 3BY: is the 3-bay rack, value is FAN
+# 2BY: is the 2-bay rack, value is FAN
 # DSU: are DRSU for multiple DRs
-# ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
+# ACC: is the 2-bay rack accessories, such as GPS, TCD, network switches, etc.
 #PWR_SS[4][1] 3BY
 #PWR_NAME[4][1] ACC # KVM monitor
 
-PWR_SS[4][2] DR2
-PWR_NAME[4][2] PC
+PWR_SS[5][2] DR2
+PWR_NAME[5][2] PC
 
-#PWR_SS[4][3] 3BY
-#PWR_NAME[4][3] ACC # KVM plus voltage monitor via a surge protector
+#PWR_SS[5][3] 3BY
+#PWR_NAME[5][3] ACC # KVM plus voltage monitor via a surge protector
 
-PWR_SS[4][5] DR3
-PWR_NAME[4][5] PC
+PWR_SS[5][5] DR3
+PWR_NAME[5][5] PC
 
-#PWR_SS[4][6] 3BY
-#PWR_NAME[4][6] FAN # On a thermostat
+#PWR_SS[5][6] 2BY
+#PWR_NAME[5][6] FAN # On a thermostat
 
-#PWR_SS[4][7] DR5
-#PWR_NAME[4][7] DSU # DR5 via a surge protector
+#PWR_SS[5][7] DR5
+#PWR_NAME[5][7] DSU # DR5 via a surge protector
 
-PWR_SS[4][8] DR4
-PWR_NAME[4][8] PC
+PWR_SS[5][8] DR4
+PWR_NAME[5][8] PC
 
 ###
 
 # FIXME -- using undefined keywords below -- need to revise software to recognize them
-# 3BY: is the 3-bay rack, value is FAN
+# 2BY: is the 2-bay rack, value is FAN
 # DSU: are DRSU for multiple DRs
-# ACC: is the 3-bay rack accessories, such as GPS, TCD, network switches, etc.
-PWR_SS[5][1] DP_
-PWR_NAME[5][1] MCS # Plus the shelter switch via a surge protector
+# ACC: is the 2-bay rack accessories, such as GPS, TCD, network switches, etc.
+PWR_SS[6][2] MCS
+PWR_NAME[6][2] EXE
 
-PWR_SS[5][2] MCS
-PWR_NAME[5][2] EXE
+PWR_SS[6][3] DR2
+PWR_NAME[6][3] PC
 
-PWR_SS[5][3] DR2
-PWR_NAME[5][3] PC
+PWR_SS[6][4] DR4
+PWR_NAME[6][4] PC
 
-PWR_SS[5][4] DR4
-PWR_NAME[5][4] PC
+PWR_SS[6][5] DR1
+PWR_NAME[6][5] PC
 
-PWR_SS[5][5] DR1
-PWR_NAME[5][5] PC
+PWR_SS[6][6] DR3
+PWR_NAME[6][6] PC
 
-PWR_SS[5][6] DR3
-PWR_NAME[5][6] PC
-
-PWR_SS[5][7] DR5
-PWR_NAME[5][7] PC
+PWR_SS[6][7] DR5
+PWR_NAME[6][7] PC
 
 MCS_CRA 1
 
@@ -7053,8 +6998,7 @@ MCS_CRA 1
 #PC_AXIS_PH 127.6 #   [deg] phi pointing for axis of rotation (0=E, 90=N)
 #PC_ROT       0.6 #   [deg] rotation (right hand rule) around axis
 
-TBN_GAIN 20  # FIXME
-DRX_GAIN 7   # FIXME
+DRX_GAIN 6
 
 # ====================
 # === STATUS CODES ===

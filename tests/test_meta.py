@@ -1,12 +1,13 @@
 """
-Unit test for the ADP portion of the lsl.common.metabundle module.
+Unit test for the NDP portion of the lsl.common.metabundle module.
 """
 
 import os
 import unittest
 
-from lsl.common.mcsADP import CommandID, ObservingMode
-from lsl.common import metabundle, metabundleADP, stations
+from lsl.common.mcs import CommandID, ObservingMode
+from lsl.common import metabundle, metabundle, stations
+from lsl.common.paths import DATA_BUILD
 
 run_gdbm_tests = False
 try:
@@ -16,7 +17,7 @@ except ImportError:
     pass
 
 
-__version__  = "0.4"
+__version__  = "0.2"
 __author__    = "Jayce Dowell"
 
 mdbFile = os.path.join(os.path.dirname(__file__), 'data', 'metadata.tgz')
@@ -28,19 +29,19 @@ mdbFileGDB = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb.tgz')
 mdbFileGDBOld0 = os.path.join(os.path.dirname(__file__), 'data', 'metadata-gdb-old-0.tgz')
 
 
-class metabundle_tests_adp(unittest.TestCase):
+class metabundle_tests_ndp(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.common.metabundle
     module."""
     
     def test_ss(self):
         """Test the session specification utilties."""
         
-        ses = metabundle.get_session_spec(mdbFileADP)
-        obs = metabundle.get_observation_spec(mdbFileADP)
+        ses = metabundle.get_session_spec(mdbFileNDP)
+        obs = metabundle.get_observation_spec(mdbFileNDP)
         
         # Check session start time
-        self.assertEqual(ses['mjd'], 57774)
-        self.assertEqual(ses['mpm'], 29970000)
+        self.assertEqual(ses['mjd'], 60180)
+        self.assertEqual(ses['mpm'], 58800000-5000)
         
         # Check the duration
         self.assertEqual(ses['dur'], obs[0]['dur'] + 10000)
@@ -51,8 +52,8 @@ class metabundle_tests_adp(unittest.TestCase):
     def test_os(self):
         """Test the observation specification utilities."""
         
-        obs1 = metabundle.get_observation_spec(mdbFileADP)
-        obs2 = metabundle.get_observation_spec(mdbFileADP, obs_id=1)
+        obs1 = metabundle.get_observation_spec(mdbFileNDP)
+        obs2 = metabundle.get_observation_spec(mdbFileNDP, obs_id=1)
         
         # Check if the right observation is returned
         self.assertEqual(obs1[0], obs2)
@@ -61,16 +62,16 @@ class metabundle_tests_adp(unittest.TestCase):
         self.assertEqual(obs2['mode'], ObservingMode.TRK_RADEC)
         
         # Check the time
-        self.assertEqual(obs2['mjd'], 57774)
-        self.assertEqual(obs2['mpm'], 29975000)
+        self.assertEqual(obs2['mjd'], 60180)
+        self.assertEqual(obs2['mpm'], 58800000)
         
     def test_cs(self):
         """Test the command script utilities."""
         
-        cmnds = metabundle.get_command_script(mdbFileADP)
+        cmnds = metabundle.get_command_script(mdbFileNDP)
         
         # Check number of command
-        self.assertEqual(len(cmnds), 50)
+        self.assertEqual(len(cmnds), 10)
         
         # Check the first and last commands
         self.assertEqual(cmnds[ 0]['command_id'], CommandID.NUL)
@@ -82,12 +83,12 @@ class metabundle_tests_adp(unittest.TestCase):
         for cmnd in cmnds:
             if cmnd['command_id'] == CommandID.BAM:
                 nBAM += 1
-        self.assertEqual(nBAM, 40)
+        self.assertEqual(nBAM, 1)
         
     def test_sm(self):
         """Test the session metadata utilties."""
         
-        sm = metabundle.get_session_metadata(mdbFileADP)
+        sm = metabundle.get_session_metadata(mdbFileNDP)
         
         # Make sure all of the observations are done
         self.assertEqual(len(sm.keys()), 1)
@@ -95,109 +96,88 @@ class metabundle_tests_adp(unittest.TestCase):
     def test_sdf(self):
         """Test building a SDF from a tarball."""
         
-        sdf = metabundle.get_sdf(mdbFileADP)
+        sdf = metabundle.get_sdf(mdbFileNDP)
         
     def test_beamformer_min_delay(self):
         """Test reading the beamformer minimum delay info."""
         
-        md = metabundle.get_beamformer_min_delay(mdbFileADP)
+        md = metabundle.get_beamformer_min_delay(mdbFileNDP)
         
     def test_station(self):
         """Test building a station from a tarball."""
         
-        station = metabundle.get_station(mdbFileADP, apply_sdm=False)
-        station = metabundle.get_station(mdbFileADP)
+        station = metabundle.get_station(mdbFileNDP, apply_sdm=False)
+        station = metabundle.get_station(mdbFileNDP)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
         
-        sm = metabundle.get_sdm(mdbFileADP)
+        sm = metabundle.get_sdm(mdbFileNDP)
         
     def test_sdm_dynamic_update(self):
         """Test applying a station dynamic MIB to a LWAStation object."""
         
-        station = stations.lwasv
-        sm = metabundle.get_sdm(mdbFileADP)
+        station = stations.lwana
+        sm = metabundle.get_sdm(mdbFileNDP)
         newAnts = sm.update_antennas(station.antennas)
         
     def test_metadata(self):
         """Test the observation metadata utility."""
         
-        fileInfo = metabundle.get_session_metadata(mdbFileADP)
+        fileInfo = metabundle.get_session_metadata(mdbFileNDP)
         self.assertEqual(len(fileInfo.keys()), 1)
         
         # File tag
-        self.assertEqual(fileInfo[1]['tag'], '057774_000770030')
+        self.assertEqual(fileInfo[1]['tag'], '060180_000031762')
         
         # DRSU barcode
-        self.assertEqual(fileInfo[1]['barcode'], 'S10TCC13S0016')
+        self.assertEqual(fileInfo[1]['barcode'], '5QHUKV0B')
         
     @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
     def test_aspconfig(self):
         """Test retrieving the ASP configuration."""
         
         # Beginning config.
-        aspConfig = metabundle.get_asp_configuration_summary(mdbFileADP, which='beginning')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFileNDP, which='beginning')
         self.assertEqual(aspConfig['asp_filter'],      0)
-        self.assertEqual(aspConfig['asp_atten_1'],     6)
-        self.assertEqual(aspConfig['asp_atten_2'],     5)
-        self.assertEqual(aspConfig['asp_atten_split'],15)
+        self.assertEqual(aspConfig['asp_atten_1'],     7)
+        self.assertEqual(aspConfig['asp_atten_2'],     7)
+        self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # End config.
-        aspConfig = metabundle.get_asp_configuration_summary(mdbFileADP, which='End')
+        aspConfig = metabundle.get_asp_configuration_summary(mdbFileNDP, which='End')
         self.assertEqual(aspConfig['asp_filter'],      0)
-        self.assertEqual(aspConfig['asp_atten_1'],     6)
-        self.assertEqual(aspConfig['asp_atten_2'],     5)
-        self.assertEqual(aspConfig['asp_atten_split'],15)
+        self.assertEqual(aspConfig['asp_atten_1'],     7)
+        self.assertEqual(aspConfig['asp_atten_2'],     7)
+        self.assertEqual(aspConfig['asp_atten_split'], 0)
         
         # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileADP, 'middle')
-        
-    @unittest.skipUnless(run_gdbm_tests, "requires the 'dbm.gnu' module")
-    def test_aspconfig_gdbm(self):
-        """Test retrieving the ASP configuration from a GDBM MIB."""
-        
-        # Beginning config.
-        aspConfig = metabundle.get_asp_configuration_summary(mdbFileGDB, which='beginning')
-        self.assertEqual(aspConfig['asp_filter'],      0)
-        self.assertEqual(aspConfig['asp_atten_1'],     6)
-        self.assertEqual(aspConfig['asp_atten_2'],     5)
-        self.assertEqual(aspConfig['asp_atten_split'],15)
-        
-        # End config.
-        aspConfig = metabundle.get_asp_configuration_summary(mdbFileGDB, which='End')
-        self.assertEqual(aspConfig['asp_filter'],      0)
-        self.assertEqual(aspConfig['asp_atten_1'],     6)
-        self.assertEqual(aspConfig['asp_atten_2'],     5)
-        self.assertEqual(aspConfig['asp_atten_split'],15)
-        
-        # Unknown code
-        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileGDB, 'middle')
+        self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFileNDP, 'middle')
         
         # Not a summary
-        aspConfig = metabundle.get_asp_configuration(mdbFileGDB, which='End')
+        aspConfig = metabundle.get_asp_configuration(mdbFileNDP, which='End')
         self.assertEqual(aspConfig['asp_filter'][0],      0)
-        self.assertEqual(aspConfig['asp_atten_1'][0],     6)
-        self.assertEqual(aspConfig['asp_atten_2'][0],     5)
-        self.assertEqual(aspConfig['asp_atten_split'][0],15)
+        self.assertEqual(aspConfig['asp_atten_1'][0],     7)
+        self.assertEqual(aspConfig['asp_atten_2'][0],     7)
+        self.assertEqual(aspConfig['asp_atten_split'][0], 0)
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(metabundleADP.is_valid(mdbFileADP))
-        self.assertTrue(metabundleADP.is_valid(mdbFileGDB))
-        self.assertTrue(metabundleADP.is_valid(mdbFileGDBOld0))
+        self.assertTrue(metabundle.is_valid(mdbFileNDP))
         
     def test_is_not_valid(self):
         """Test whether or not is_valid works on LWA1 files."""
         
-        self.assertFalse(metabundleADP.is_valid(mdbFile))
-        self.assertFalse(metabundleADP.is_valid(mdbFileNDP))
-        self.assertFalse(metabundleADP.is_valid(mdbFileOld0))
-        self.assertFalse(metabundleADP.is_valid(mdbFileOld1))
+        self.assertFalse(metabundle.is_valid(mdbFile))
+        self.assertFalse(metabundle.is_valid(mdbFileADP))
+        self.assertFalse(metabundle.is_valid(mdbFileGDB))
+        self.assertFalse(metabundle.is_valid(mdbFileGDBOld0))
+        self.assertFalse(metabundle.is_valid(mdbFileOld0))
+        self.assertFalse(metabundle.is_valid(mdbFileOld1))
 
 
-class metabundle_adp_test_suite(unittest.TestSuite):
+class metabundle_ndp_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.common.metabundle
     module unit tests."""
     
@@ -205,7 +185,7 @@ class metabundle_adp_test_suite(unittest.TestSuite):
         unittest.TestSuite.__init__(self)
         
         loader = unittest.TestLoader()
-        self.addTests(loader.loadTestsFromTestCase(metabundle_tests_adp))
+        self.addTests(loader.loadTestsFromTestCase(metabundle_tests_ndp))
         
 if __name__ == '__main__':
     unittest.main()
