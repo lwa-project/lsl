@@ -93,19 +93,19 @@ def main(args):
         if drspec == 'Yes':
             print(f" -> {project.sessions[0].spcSetup[0]} channels, {project.sessions[0].spcSetup[1]} windows/integration")
     else:
-        tbnCount = 0
-        tbwCount = 0
+        tbsCount = 0
+        tbtCount = 0
         for obs in project.sessions[0].observations:
-            if obs.mode == 'TBW':
-                tbwCount += 1
+            if obs.mode == 'TBT':
+                tbtCount += 1
             else:
-                tbnCount += 1
-        if tbwCount > 0 and tbnCount == 0:
-            print(" Transient Buffer Mode: TBW")
-        elif tbwCount == 0 and tbnCount > 0:
-            print(" Transient Buffer Mode: TBN")
+                tbsCount += 1
+        if tbtCount > 0 and tbsCount == 0:
+            print(" Transient Buffer Mode: TBT")
+        elif tbtCount == 0 and tbsCount > 0:
+            print(" Transient Buffer Mode: TBS")
         else:
-            print(" Transient Buffer Mode: both TBW and TBN")
+            print(" Transient Buffer Mode: both TBT and TBS")
     print(" ")
     print("File Information:")
     for obsID in fileInfo.keys():
@@ -147,18 +147,15 @@ def main(args):
         print(f"   Duration: {currDur}")
         
         ## DP setup
-        if project.sessions[0].observations[i].mode not in ('TBW',):
+        if project.sessions[0].observations[i].mode not in ('TBT',):
             print(f"   Tuning 1: {project.sessions[0].observations[i].frequency1/1e6:.3f} MHz")
-        if project.sessions[0].observations[i].mode not in ('TBW', 'TBN'):
+        if project.sessions[0].observations[i].mode not in ('TBT', 'TBS'):
             print(f"   Tuning 2: {project.sessions[0].observations[i].frequency2/1e6:.3f} MHz")
-        if project.sessions[0].observations[i].mode not in ('TBW',):
+        if project.sessions[0].observations[i].mode not in ('TBT',):
             print(f"   Filter code: {project.sessions[0].observations[i].filter}")
         if currObs is not None:
-            if project.sessions[0].observations[i].mode not in ('TBW',):
-                if project.sessions[0].observations[i].mode == 'TBN':
-                    print(f"   Gain setting: {currObs['tbn_gain']}")
-                else:
-                    print(f"   Gain setting: {currObs['drx_gain']}")
+            if project.sessions[0].observations[i].mode not in ('TBT', 'TBS'):
+                print(f"   Gain setting: {currObs['drx_gain']}")
         else:
             print("   WARNING: observation specification not found for this observation")
             
