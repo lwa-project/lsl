@@ -10,7 +10,7 @@ import unittest
 from datetime import datetime
 
 from lsl.common.paths import DATA_BUILD
-from lsl.common import stations, mcs, sdf, metabundle, sdm
+from lsl.common import stations, ndp, mcs, sdf, metabundle, sdm
 import lsl.testing
 
 
@@ -215,11 +215,9 @@ class stations_tests(unittest.TestCase):
         filenames = [os.path.join(DATA_BUILD, 'lwa1-ssmif.txt'),
                      os.path.join(DATA_BUILD, 'lwasv-ssmif.txt'),
                      os.path.join(DATA_BUILD, 'lwana-ssmif.txt'),
-                     os.path.join(os.path.dirname(__file__), 'data', 'ssmif.dat'),
-                     os.path.join(os.path.dirname(__file__), 'data', 'ssmif-adp.dat'),
-                     os.path.join(os.path.dirname(__file__), 'data', 'ssmif-ndp.dat')]
-        sites = ['LWA1', 'LWA-SV', 'LWA-NA', 'LWA1', 'LWA-SV', 'LWA-NA']
-        types = ['text', 'text', 'text', 'binary', 'binary', 'binary']
+                     os.path.join(os.path.dirname(__file__), 'data', 'ssmif.dat')]
+        sites = ['LWA1', 'LWA-SV', 'LWA-NA', 'LWA1']
+        types = ['text', 'text', 'text', 'binary']
         for filename,site,type in zip(filenames, sites, types):
             with self.subTest(station=site, type=type, mode='filename'):
                 out = stations.parse_ssmif(filename)

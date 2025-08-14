@@ -63,7 +63,7 @@ from lsl.common._sdf_utils import *
 from lsl.common.color import colorfy
 
 from lsl.common.mcs import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.ndp import freq_to_word, word_to_freq
+from lsl.common.ndp import freq_to_word, word_to_freq, fS
 from lsl.common.stations import lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
@@ -857,11 +857,9 @@ class TBT(Observation):
             bytes = samples / samplesPerFrame * 1224 bytes * 260 stands
         """
         
-        SamplesPerFrame = 400
-        if self.bits == 4:
-            SamplesPerFrame = 1200
+        SamplesPerFrame = 1
         nFrames = self.samples / SamplesPerFrame
-        nBytes = nFrames * TBWSize * LWA_MAX_NSTD
+        nBytes = nFrames * 16 * LWA_MAX_NSTD * 2
         return nBytes
         
     def validate(self, verbose=False):
@@ -929,7 +927,7 @@ class TBS(Observation):
         """
         
         try:
-            nFrames = self.dur/1000.0 * ndp.fS / 8192
+            nFrames = self.dur/1000.0 * fS / 8192
         except KeyError:
             nFrames = 0
         nBytes = nFrames * (32 + 8 * LWA_MAX_NSTD * 2)
@@ -2176,7 +2174,7 @@ def parse_sdf(filename, verbose=False):
     
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
                 'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
-                'stpRADec': True, 'tbwBits': 12, 'tbwSamples': 0, 'gain': -1, 
+                'stpRADec': True, 'tbtSamples': 0, 'gain': -1, 
                 'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
                 'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
                 'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}

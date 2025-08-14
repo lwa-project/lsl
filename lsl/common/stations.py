@@ -19,7 +19,7 @@ from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as DATA_PATH
-from lsl.common import ndp, mcs
+from lsl.common import ndp, mcs as mcs_mod
 from lsl.misc.mathutils import to_dB, from_dB
 from lsl.common.data_access import DataAccess
 
@@ -1020,7 +1020,7 @@ class LSLInterface(object):
         if backend == 'lsl.common.ndp':
             self._cache['backend'] = ndp
         if mcs == 'lsl.common.mcs':
-            self._cache['mcs'] = mcs
+            self._cache['mcs'] = mcs_mod
             
     def __str__(self):
         return f"LSL Interfaces:\n Backend: {self.backend}\n MCS: {self.mcs}\n SDF: {self.sdf}\n Metadata: {self.metabundle}\n SDM: {self.sdm}"
@@ -1524,8 +1524,8 @@ def _parse_ssmif_binary(filename_or_fh):
         version = struct.unpack('<i', version)[0]
         fh.seek(0)
         
-        bssmif = mcs.parse_c_struct(mcs.SSMIF_STRUCT, char_mode='int', endianness='little')
-        bsettings = mcs.parse_c_struct(mcs.STATION_SETTINGS_STRUCT, endianness='little')
+        bssmif = mcs_mod.parse_c_struct(mcs_mod.SSMIF_STRUCT, char_mode='int', endianness='little')
+        bsettings = mcs_mod.parse_c_struct(mcs_mod.STATION_SETTINGS_STRUCT, endianness='little')
         
         fh.readinto(bssmif)
         
@@ -1552,7 +1552,7 @@ def _parse_ssmif_binary(filename_or_fh):
         #
         # FEE, Cable, & SEP Data
         #
-        feeID   = mcs.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
+        feeID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
         feeID   = [''.join([k for k in i if k != '\x00']) for i in feeID]
         feeStat = list(bssmif.iFEEStat)
         feeDesi = list(bssmif.eFEEDesi)
@@ -1561,7 +1561,7 @@ def _parse_ssmif_binary(filename_or_fh):
         feeAnt1 = list(bssmif.iFEEAnt1)
         feeAnt2 = list(bssmif.iFEEAnt2)
         
-        rpdID   = mcs.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
+        rpdID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
         rpdID   = [''.join([k for k in i if k != '\x00']) for i in rpdID]
         rpdStat = list(bssmif.iRPDStat)
         rpdDesi = list(bssmif.eRPDDesi)
@@ -1574,7 +1574,7 @@ def _parse_ssmif_binary(filename_or_fh):
         rpdStr  = list(bssmif.fRPDStr)
         rpdAnt  = list(bssmif.iRPDAnt)
         
-        sepCbl  = mcs.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
+        sepCbl  = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
         sepCbl  = [''.join([k for k in i if k != '\x00']) for i in sepCbl]
         sepLeng = list(bssmif.fSEPLeng)
         sepDesi = list(bssmif.eSEPDesi)
@@ -1585,37 +1585,37 @@ def _parse_ssmif_binary(filename_or_fh):
         # ARX (ARB) Data
         #
         nChanARX = bssmif.nARBCH
-        arxID    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
+        arxID    = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
         arxID    = [''.join([k for k in i if k != '\x00']) for i in arxID]
         arxSlot  = list(bssmif.iARBSlot)
         arxDesi  = list(bssmif.eARBDesi)
         arxRack  = list(bssmif.iARBRack)
         arxPort  = list(bssmif.iARBPort)
-        arxStat  = mcs.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
-        arxAnt   = mcs.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
-        arxIn    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
+        arxStat  = mcs_mod.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
+        arxAnt   = mcs_mod.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
+        arxIn    = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
         arxIn    = [[''.join(i) for i in j] for j in arxIn]
-        arxOut   = mcs.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
+        arxOut   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
         arxOut   = [[''.join(i) for i in j] for j in arxOut]
         
         #
         # SNAP & Server Data
         #
-        snapID   = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
+        snapID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
         snapID   = [''.join([k for k in i if k != '\x00']) for i in snapID]
-        snapSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
+        snapSlot = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
         snapSlot = [''.join([k for k in i if k != '\x00']) for i in snapSlot]
         snapDesi = list(bssmif.eSnapDesi)
         snapStat = list(bssmif.eSnapStat)
-        snapInR  = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
+        snapInR  = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
         snapInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInR]
-        snapInC  = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
+        snapInC  = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
         snapInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInC]
-        snapAnt  = mcs.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
+        snapAnt  = mcs_mod.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
         
-        serverID   = mcs.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+        serverID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
         serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-        serverSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+        serverSlot = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
         serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
         serverStat = list(bssmif.eServerStat)
         serverDesi = list(bssmif.eServerDesi)
@@ -1624,12 +1624,12 @@ def _parse_ssmif_binary(filename_or_fh):
         # DR Data
         #
         drStat = list(bssmif.eDRStat)
-        drID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
+        drID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
         drID   = [''.join([k for k in i if k != '\x00']) for i in drID]
         drShlf = [0 for i in range(bssmif.nDR)]
-        drPC   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
+        drPC   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
         drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
-        drDP   = list(bssmif.iDRDP)
+        drNDP   = list(bssmif.iDRNDP)
         
         fh.readinto(bsettings)
         
@@ -1812,8 +1812,8 @@ with DataAccess.open('lwasv-ssmif.txt', 'r') as fh:
 #: OVROLWA
 ovrolwa = LWAStation('OVRO-LWA', 37.23977727, -118.2816667, 1183.48, id='OV',
                      interface=LSLInterface(backend='lsl.common.ndp',
-                                            mcs='lsl.common.mcsNDP',
-                                            sdf='lsl.common.sdfNDP'))
+                                            mcs='lsl.common.mcs',
+                                            sdf='lsl.common.sdf'))
 
 #: OVROLWA would also be LWAOV
 lwaov = ovrolwa

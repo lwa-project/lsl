@@ -18,8 +18,8 @@ except ImportError:
 
 from astropy.coordinates import Angle as AstroAngle
 
-from lsl.common import sdf, sdfADP as other_sdf
-from lsl.common.stations import lwa1, lwasv
+from lsl.common import sdf
+from lsl.common.stations import lwa1, lwasv, lwana
 import lsl.testing
 
 
@@ -245,17 +245,11 @@ class sdf_tests(unittest.TestCase):
         
         project = sdf.parse_sdf(tbtFile)
         
-        # Bad number of TBT bits
-        project.sessions[0].observations[0].bits = 6
-        self.assertFalse(project.validate())
-        
         # Bad number of TBT samples
-        project.sessions[0].observations[0].bits = 4
-        project.sessions[0].observations[0].samples = 72000000
+        project.sessions[0].observations[0].samples = 720000000
         self.assertFalse(project.validate())
         
-        project.sessions[0].observations[0].bits = 12
-        project.sessions[0].observations[0].samples = 72000000
+        project.sessions[0].observations[0].samples = 720000000
         self.assertFalse(project.validate())
         
     ### TBS ###
@@ -275,7 +269,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].mpm,      0)
         self.assertEqual(project.sessions[0].observations[0].dur,  10000)
         self.assertEqual(project.sessions[0].observations[0].freq1, 438261968)
-        self.assertEqual(project.sessions[0].observations[0].filter,   7)
+        self.assertEqual(project.sessions[0].observations[0].filter,   8)
         
         # Observational setup - 2
         self.assertEqual(project.sessions[0].observations[1].mode, 'TBS')
@@ -283,7 +277,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
         self.assertEqual(project.sessions[0].observations[1].dur,  10000)
         self.assertEqual(project.sessions[0].observations[1].freq1, 832697741)
-        self.assertEqual(project.sessions[0].observations[1].filter,   7)
+        self.assertEqual(project.sessions[0].observations[1].filter,   8)
         
         # Ordering
         self.assertFalse(project.sessions[0] > project.sessions[0])
@@ -359,12 +353,12 @@ class sdf_tests(unittest.TestCase):
             self.assertFalse(project.validate(verbose=True))
             
             # Bad frequency
-            project.sessions[0].observations[0].filter = 7
+            project.sessions[0].observations[0].filter = 8
             project.sessions[0].observations[0].frequency1 = 4.0e6
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].filter = 7
+            project.sessions[0].observations[0].filter = 8
             project.sessions[0].observations[0].frequency1 = 95.0e6
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
@@ -1191,21 +1185,6 @@ class sdf_tests(unittest.TestCase):
         self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
         self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
         
-    ### TBF ###
-    
-    def test_tbf_parse(self):
-        """Test reading in a TBF SDF file."""
-        
-        self.assertRaises(RuntimeError, sdf.parse_sdf, tbfFile)
-        
-    def test_tbf_append(self):
-        """Test appending a TBF observation to an LWA1 session."""
-        
-        project = sdf.parse_sdf(tbsFile)
-        
-        obs = other_sdf.TBF('TBF', 'TBF', '2020/4/30 01:23:45.5', 40e6, 75e6, 7, 196000)
-        self.assertRaises(TypeError, project.sessions[0].append, obs)
-        
     ### Misc. ###
     
     def test_auto_update(self):
@@ -1273,8 +1252,8 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].station = lwa1
         self.assertTrue(project.validate())
         
-        with self.assertRaises(ValueError):
-            project.sessions[0].station = lwasv
+        project.sessions[0].station = lwasv
+        self.assertTrue(project.validate())
             
     def test_is_valid(self):
         """Test whether or not is_valid works."""
@@ -1288,9 +1267,8 @@ class sdf_tests(unittest.TestCase):
         self.assertTrue(sdf.is_valid(spcFile))
         
     def test_is_not_valid(self):
-        """Test whether or not is_valid works on LWA-SV and IDF files."""
+        """Test whether or not is_valid works on IDF files."""
         
-        self.assertFalse(sdf.is_valid(tbfFile))
         self.assertFalse(sdf.is_valid(idfFile))
         
     def test_username(self):
