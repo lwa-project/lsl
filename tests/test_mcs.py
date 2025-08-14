@@ -73,17 +73,17 @@ class mcs_ndp_tests(unittest.TestCase):
     def test_cid_limits(self):
         """Test valid command ID values"""
         
-        for i in range(0, 41+1):
+        for i in range(0, 43+1):
             mcs.CommandID(i)
-        self.assertRaises(ValueError, mcs.CommandID, 42)
+        self.assertRaises(ValueError, mcs.CommandID, 44)
         
     def test_mode_limits(self):
         """Test valid observing mode values"""
         
-        for i in range(1, 9+1):
+        for i in range(1, 11+1):
             mcs.ObservingMode(i)
         self.assertRaises(ValueError, mcs.ObservingMode, 0)
-        self.assertRaises(ValueError, mcs.ObservingMode, 10)
+        self.assertRaises(ValueError, mcs.ObservingMode, 12)
         
     def test_pointing_correction(self):
         """Test the pointing correction function"""
