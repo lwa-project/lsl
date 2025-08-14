@@ -33,7 +33,7 @@ from scipy.stats import norm
 from collections import deque, defaultdict
 
 from lsl.common.ndp import fS, fC
-from lsl.reader import drx8, drspec, cor, tbx, errors
+from lsl.reader import drx, drx8, drspec, cor, tbx, errors
 from lsl.reader.buffer import DRXFrameBuffer, DRX8FrameBuffer, CORFrameBuffer, TBXFrameBuffer
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp, CI8

@@ -173,7 +173,7 @@ class StationSettings(object):
         # Parse and save
         ## Common
         self.report['ASP'] = ssStruct.mrp_asp
-        self.report['DP_'] = ssStruct.mrp_dp
+        self.report['DP_'] = ssStruct.mrp_ndp
         self.report['DR1'] = ssStruct.mrp_dr1
         self.report['DR2'] = ssStruct.mrp_dr2
         self.report['DR3'] = ssStruct.mrp_dr3
@@ -182,7 +182,7 @@ class StationSettings(object):
         self.report['MCS'] = ssStruct.mrp_mcs
         
         self.update['ASP'] = ssStruct.mup_asp
-        self.update['DP_'] = ssStruct.mup_dp
+        self.update['DP_'] = ssStruct.mup_ndp
         self.update['DR1'] = ssStruct.mup_dr1
         self.update['DR2'] = ssStruct.mup_dr2
         self.update['DR3'] = ssStruct.mup_dr3

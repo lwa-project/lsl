@@ -29,7 +29,7 @@ handle as an input and returns a fully-filled Frame object.
 
 import numpy as np
 
-from lsl.common import adp as adp_common
+from lsl.common import ndp as ndp_common
 from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_tbx, read_tbx_ci8

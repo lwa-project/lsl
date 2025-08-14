@@ -179,7 +179,7 @@ SSMIF_STRUCT = """
     int    eDRStat[ME_MAX_NDR];       /* DR_STAT[] */
     char   sDRID[ME_MAX_NDR][ME_MAX_DRID_LENGTH+1]; /* DR_ID[] */
     char   sDRPC[ME_MAX_NDR][ME_MAX_DRID_LENGTH+1]; /* DR_PC[] */
-    int    iDRDP[ME_MAX_NDR];       /* DR_DP[] */
+    int    iDRNDP[ME_MAX_NDR];       /* DR_NDP[] */
     int    nPwrRack;                /* N_PWR_RACK */
     int    nPwrPort[ME_MAX_RACK];   /* N_PWR_PORT[] */
     int    ePwrSS[ME_MAX_RACK][ME_MAX_NPWRPORT]; /* PWR_SS[][], converted to a LWA_SID_ value */
@@ -193,7 +193,7 @@ SSMIF_STRUCT = """
 
 STATION_SETTINGS_STRUCT = """
     signed short int mrp_asp; // SESSION_MRP_ASP // MRP_ASP
-    signed short int mrp_dp;  // SESSION_MRP_DP_ // MRP_DP_
+    signed short int mrp_ndp; // SESSION_MRP_NDP // MRP_NDP
     signed short int mrp_dr1; // SESSION_MRP_DR1 // MRP_DR1
     signed short int mrp_dr2; // SESSION_MRP_DR2 // MRP_DR2
     signed short int mrp_dr3; // SESSION_MRP_DR3 // MRP_DR3
@@ -248,7 +248,7 @@ SSF_STRUCT = """
     unsigned long int SESSION_DUR;
     unsigned int SESSION_NOBS;
     signed short int SESSION_MRP_ASP;
-    signed short int SESSION_MRP_DP_;
+    signed short int SESSION_MRP_NDP;
     signed short int SESSION_MRP_DR1;
     signed short int SESSION_MRP_DR2;
     signed short int SESSION_MRP_DR3;
@@ -339,15 +339,15 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
     """
     
     # Process the macro overrides dictionary
-    dp_macros = {a: globals()[a] for a in __all__}
+    ndp_macros = {a: globals()[a] for a in __all__}
     if overrides is not None:
-        dp_macros.update(overrides)
+        ndp_macros.update(overrides)
     not_int = []
-    for k in dp_macros:
-        if not isinstance(dp_macros[k], (int, np.integer)):
+    for k in ndp_macros:
+        if not isinstance(ndp_macros[k], (int, np.integer)):
             not_int.append(k)
     for k in not_int:
-        del dp_macros[k]
+        del ndp_macros[k]
         
     # Figure out how to deal with character arrays
     if char_mode not in ('str', 'int'):
@@ -387,16 +387,16 @@ def parse_c_struct(cStruct, char_mode='str', endianness='native', overrides=None
         try:
             d1 = mtch.group('d1')
             if d1 is not None:
-                d1 = eval(d1, None, dp_macros)
+                d1 = eval(d1, None, ndp_macros)
             d2 = mtch.group('d2')
             if d2 is not None:
-                d2 = eval(d2, None, dp_macros)
+                d2 = eval(d2, None, ndp_macros)
             d3 = mtch.group('d3')
             if d3 is not None:
-                d3 = eval(d3, None, dp_macros)
+                d3 = eval(d3, None, ndp_macros)
             d4 = mtch.group('d4')
             if d4 is not None:
-                d4 = eval(d4, None, dp_macros)
+                d4 = eval(d4, None, ndp_macros)
         except NameError:
             raise RuntimeError(f"Unknown value in array index: '{line}'")
         

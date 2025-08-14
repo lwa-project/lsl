@@ -44,11 +44,11 @@ def read_ses_file(filename):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
         
-    record = {'ASP': bses.SESSION_MRP_ASP, 'NDP': bses.SESSION_MRP_DP_, 'SHL': bses.SESSION_MRP_SHL, 
+    record = {'ASP': bses.SESSION_MRP_ASP, 'NDP': bses.SESSION_MRP_NDP, 'SHL': bses.SESSION_MRP_SHL, 
               'MCS': bses.SESSION_MRP_MCS, 'DR1': bses.SESSION_MRP_DR1, 'DR2': bses.SESSION_MRP_DR2,
               'DR3': bses.SESSION_MRP_DR3, 'DR4': bses.SESSION_MRP_DR4}
     
-    update = {'ASP': bses.SESSION_MUP_ASP, 'NDP': bses.SESSION_MUP_DP_, 'SHL': bses.SESSION_MUP_SHL, 
+    update = {'ASP': bses.SESSION_MUP_ASP, 'NDP': bses.SESSION_MUP_NDP, 'SHL': bses.SESSION_MUP_SHL, 
               'MCS': bses.SESSION_MUP_MCS, 'DR1': bses.SESSION_MUP_DR1, 'DR2': bses.SESSION_MUP_DR2,
               'DR3': bses.SESSION_MUP_DR3, 'DR4': bses.SESSION_MUP_DR4}
     
@@ -199,7 +199,7 @@ def get_sdm(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse the SDM file and build the SDM instance
-        dynamic = sdmNDP.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
+        dynamic = sdm.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
         
     return dynamic
 
@@ -329,7 +329,7 @@ def get_sdf(tarname):
     a SDF-representation of the session.
     
     .. note::
-        This function returns a full :class:`lsl.common.sdfNDP.Project` instance 
+        This function returns a full :class:`lsl.common.sdf.Project` instance 
         with the session in question stored under `project.sessions[0]` and the 
         observations under `project.sessions[0].observations`.
     """
@@ -344,7 +344,7 @@ def get_sdf(tarname):
         tf.extractall(path=tempDir, members=[ti,])
         
         # Parse it
-        project = sdfNDP.parse_sdf(os.path.join(tempDir, ti.name))
+        project = sdf.parse_sdf(os.path.join(tempDir, ti.name))
         
     # Return the filled-in SDF instance
     return project

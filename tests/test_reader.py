@@ -8,6 +8,7 @@ import unittest
 from datetime import timedelta
 
 from lsl.reader import drx
+from lsl.reader import drx8
 from lsl.reader import vdif
 from lsl.reader import drspec
 from lsl.reader import errors

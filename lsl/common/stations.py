@@ -408,9 +408,9 @@ class Antenna(object):
     Object to store the information about an antenna.  Stores antenna:
      * ID number (id)
      * ARX instance the antenna is attached to (arx)
-     * DP1/ROACH/SNAP board number (board)
-     * DP1/ROACH/SNAP  digitizer number (digitizer)
-     * DP/ADP/NDP rack input connector (input)
+     * SNAP2/ZCU102 board number (board)
+     * SNAP2/ZCU102  digitizer number (digitizer)
+     * SNAP2/ZCU102 rack input connector (input)
      * Stand instance the antenna is part of (stand)
      * Polarization (0 == N-S; pol)
      * Antenna vertical mis-alignment in degrees (theta)
@@ -1379,9 +1379,7 @@ def _parse_ssmif_text(filename_or_fh):
                 
                 
             #
-            # ROACH & Server Data - LWA-SV
-            #             and
-            # SNAP & Server Data - LWA-NA
+            # SNAP2/ZCU102 & Server Data
             #
             
             if keyword ==  'N_SNAP':
@@ -1526,8 +1524,8 @@ def _parse_ssmif_binary(filename_or_fh):
         version = struct.unpack('<i', version)[0]
         fh.seek(0)
         
-        bssmif = mcs.parse_c_struct(mcs.SSMIF_STRUCT, char_mode='int', endianness='little', overrides=overrides)
-        bsettings = mcs.parse_c_struct(mcs.STATION_SETTINGS_STRUCT, endianness='little', overrides=overrides)
+        bssmif = mcs.parse_c_struct(mcs.SSMIF_STRUCT, char_mode='int', endianness='little')
+        bsettings = mcs.parse_c_struct(mcs.STATION_SETTINGS_STRUCT, endianness='little')
         
         fh.readinto(bssmif)
         
@@ -1554,7 +1552,7 @@ def _parse_ssmif_binary(filename_or_fh):
         #
         # FEE, Cable, & SEP Data
         #
-        feeID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
+        feeID   = mcs.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
         feeID   = [''.join([k for k in i if k != '\x00']) for i in feeID]
         feeStat = list(bssmif.iFEEStat)
         feeDesi = list(bssmif.eFEEDesi)
@@ -1563,7 +1561,7 @@ def _parse_ssmif_binary(filename_or_fh):
         feeAnt1 = list(bssmif.iFEEAnt1)
         feeAnt2 = list(bssmif.iFEEAnt2)
         
-        rpdID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
+        rpdID   = mcs.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
         rpdID   = [''.join([k for k in i if k != '\x00']) for i in rpdID]
         rpdStat = list(bssmif.iRPDStat)
         rpdDesi = list(bssmif.eRPDDesi)
@@ -1576,7 +1574,7 @@ def _parse_ssmif_binary(filename_or_fh):
         rpdStr  = list(bssmif.fRPDStr)
         rpdAnt  = list(bssmif.iRPDAnt)
         
-        sepCbl  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
+        sepCbl  = mcs.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
         sepCbl  = [''.join([k for k in i if k != '\x00']) for i in sepCbl]
         sepLeng = list(bssmif.fSEPLeng)
         sepDesi = list(bssmif.eSEPDesi)
@@ -1587,37 +1585,37 @@ def _parse_ssmif_binary(filename_or_fh):
         # ARX (ARB) Data
         #
         nChanARX = bssmif.nARBCH
-        arxID    = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
+        arxID    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
         arxID    = [''.join([k for k in i if k != '\x00']) for i in arxID]
         arxSlot  = list(bssmif.iARBSlot)
         arxDesi  = list(bssmif.eARBDesi)
         arxRack  = list(bssmif.iARBRack)
         arxPort  = list(bssmif.iARBPort)
-        arxStat  = mcsDP.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
-        arxAnt   = mcsDP.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
-        arxIn    = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
+        arxStat  = mcs.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
+        arxAnt   = mcs.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
+        arxIn    = mcs.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
         arxIn    = [[''.join(i) for i in j] for j in arxIn]
-        arxOut   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
+        arxOut   = mcs.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
         arxOut   = [[''.join(i) for i in j] for j in arxOut]
         
         #
         # SNAP & Server Data
         #
-        snapID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
+        snapID   = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
         snapID   = [''.join([k for k in i if k != '\x00']) for i in snapID]
-        snapSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
+        snapSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
         snapSlot = [''.join([k for k in i if k != '\x00']) for i in snapSlot]
         snapDesi = list(bssmif.eSnapDesi)
         snapStat = list(bssmif.eSnapStat)
-        snapInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
+        snapInR  = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
         snapInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInR]
-        snapInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
+        snapInC  = mcs.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
         snapInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInC]
-        snapAnt  = mcsDP.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
+        snapAnt  = mcs.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
         
-        serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+        serverID   = mcs.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
         serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-        serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+        serverSlot = mcs.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
         serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
         serverStat = list(bssmif.eServerStat)
         serverDesi = list(bssmif.eServerDesi)
@@ -1626,10 +1624,10 @@ def _parse_ssmif_binary(filename_or_fh):
         # DR Data
         #
         drStat = list(bssmif.eDRStat)
-        drID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
+        drID   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
         drID   = [''.join([k for k in i if k != '\x00']) for i in drID]
         drShlf = [0 for i in range(bssmif.nDR)]
-        drPC   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
+        drPC   = mcs.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
         drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
         drDP   = list(bssmif.iDRDP)
         
@@ -1765,7 +1763,7 @@ def parse_ssmif(filename_or_fh):
             channel = j + 1
             antennas[ant-1].arx = ARX(boardID, channel=channel, asp_channel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
             
-    # Associate ROACH board and digitizer numbers with Antennas.
+    # Associate SNAP2/ZCU102 board and digitizer numbers with Antennas.
     i = 1
     j = 1
     for brd,inp in zip(snapAnt,snapInR):
