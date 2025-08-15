@@ -37,18 +37,11 @@ def main(args):
     fileInfo = metabundle.get_session_metadata(inputTGZ)
     aspConfigB = metabundle.get_asp_configuration_summary(inputTGZ, which='Beginning')
     aspConfigE = metabundle.get_asp_configuration_summary(inputTGZ, which='End')
-    mdStyle = metabundle.get_style(inputTGZ)
     site = metabundle.get_station(inputTGZ)
     if site is None:
-        if mdStyle.endswith('ADP'):
-            # Assume LWA-SV
-            site = stations.lwasv
-        elif mdStyle.endswith('NDP'):
-            # Assume LWA-NA
-            site = stations.lwana
-        else:
-            # Assume LWA1
-            site = stations.lwa1
+        hostname = metabundle.get_mcs_hostname(inputTGZ)
+        sta_name = hostname.split('-')[0]
+        site = getattr(stations, sta_name, None)
     observer = site.get_observer()
     
     nObs = len(project.sessions[0].observations)
@@ -67,7 +60,6 @@ def main(args):
     print(f"Filename: {inputTGZ}")
     print(f" Project ID: {project.id}")
     print(f" Session ID: {project.sessions[0].id}")
-    print(f" Metadata Style: {mdStyle}")
     print(f" Observations appear to start at {min(tStart).strftime(_FORMAT_STRING)}")
     print(f" -> LST at {site.name} for this date/time is {str(lst)}")
     

@@ -23,7 +23,7 @@ telemetry.track_module()
 
 __version__ = '1.3'
 __all__ = ['read_ses_file', 'read_obs_file', 'read_cs_file', 'get_sdm', 'get_beamformer_min_delay',
-           'get_station', 'get_session_metadata', 'get_session_spec', 'get_observation_spec',
+           'get_mcs_hostname', 'get_station', 'get_session_metadata', 'get_session_spec', 'get_observation_spec',
            'get_sdf', 'get_command_script', 'get_asp_configuration', 'get_asp_configuration_summary',
            'is_valid']
 
@@ -202,6 +202,32 @@ def get_sdm(tarname):
         dynamic = sdm.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
         
     return dynamic
+
+
+def get_mcs_hostname(tarname):
+    """
+    Given an MCS meta-data tarball, extract the information stored in the mcs.host 
+    file and return it as a string.
+    
+    If a mcs.host file cannot be found in the tarball, 'unknown' is returned.  
+    """
+    
+    with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
+        # Extract the SSMIF and SDM files.  If the ssmif.dat file cannot be found, None
+        # is returned via the try...except block
+        tf = _open_tarball(tarname)
+        try:
+            ti = tf.getmember('mcs.host')
+        except KeyError:
+            return 'unknown'
+        tf.extractall(path=tempDir, members=[ti,])
+        
+        # Read in the name
+        with open(os.path.join(tempDir, 'mcs.host'), 'r') as fh:
+            name = fh.read().strip()
+            
+    # Return
+    return name
 
 
 def get_station(tarname, apply_sdm=True):
