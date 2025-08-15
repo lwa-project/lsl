@@ -918,6 +918,8 @@ class ARX(object):
                 revision = 'D'
             elif self.id >= 200 and self.id <= 300:
                 revision = 'G'
+            elif self.id >= 300 and self.id <= 500:
+                revision = 'I'
             elif self.id >= 8200 and self.id <= 8300:
                 revision = 'H'
         except ValueError:
@@ -933,11 +935,11 @@ class ARX(object):
         LWA-SV, data from the production tests are used.
         
         Filter options are:
-         * 0 or 'split'
-         * 1 or 'full'
-         * 2 or 'reduced'
-         * 4 or 'split@3MHz'
-         * 5 of 'full@3MHz'
+         * 0 or 'split' (D, G)
+         * 1 or 'full' (D, G)
+         * 2 or 'reduced' (D, G)
+         * 4 or 'split@3MHz' (G)
+         * 5 of 'full@3MHz' (G)
         
         .. note:: If 'split@3MHz' or 'full@3MHz' are requested for LWA1, the
                   values for 'split' and 'full' are returned instead.
