@@ -916,9 +916,9 @@ class ARX(object):
         try:
             if self.id >= 100 and self.id < 200:
                 revision = 'D'
-            elif self.id >= 200 and self.id <= 300:
+            elif self.id >= 200 and self.id < 300:
                 revision = 'G'
-            elif self.id >= 300 and self.id <= 500:
+            elif self.id >= 300 and self.id < 500:
                 revision = 'I'
             elif self.id >= 8200 and self.id <= 8300:
                 revision = 'H'
@@ -930,19 +930,21 @@ class ARX(object):
     def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
-        the ARX response for the current board/channel from the "ARX0026" 
-        memo on the "LWA Engineering Documents" wiki.  For ARX boards at 
-        LWA-SV, data from the production tests are used.
+        the ARX response for the current board/channel from the production
+        test runs.
         
         Filter options are:
-         * 0 or 'split' (D, G)
-         * 1 or 'full' (D, G)
-         * 2 or 'reduced' (D, G)
-         * 4 or 'split@3MHz' (G)
-         * 5 of 'full@3MHz' (G)
+         * 0 or 'split' (H: narrow HPF + narrow LPF, I: HPF30 + LPF83)
+         * 1 or 'full' (H: narrow HPF + wide LPF, I HPF10 + LPF83)
+         * 2 or 'reduced' (H: same as 'split', I: HPF30 + LPF73)
+         * 3 (H: ---, I: HPF3 + LPF73)
+         * 4 or 'split@3MHz' (H: wide HPF + narrow LPF, I: HPF20 + LPF83)
+         * 5 or 'full@3MHz' (H: wide HPF + wide LPF, I: HPF3 + LPF83)
+         * 6 (H: ---, I: HPF10 + LPF73)
+         * 7 (H: ---, I: HPF20 + LPF73)
         
-        .. note:: If 'split@3MHz' or 'full@3MHz' are requested for LWA1, the
-                  values for 'split' and 'full' are returned instead.
+        .. note:: If 3, 5, 6, or 7 are requested for Rev H board an exception
+            is raised.
         
         .. versionchanged:: 1.2.1
             Switched the filter numbers over to match what ASP uses 
@@ -956,7 +958,10 @@ class ARX(object):
         
         # Find the filename to use
         filename = f"arx/ARX_board_{self.id:04d}_filters.npz"
-        
+        mapper = mapper = {0: 0, 1: 1, 2: 2, 4: 3}
+        if self.revision() == 'I':
+            mapper = {0: 3, 1: 1, 2: 7, 3: 4, 4: 2, 5: 0, 6: 5, 7: 2}
+            
         # Read in the file and convert it to a numpy array
         with DataAccess.open(filename, 'rb') as fh:
             try:
@@ -976,23 +981,21 @@ class ARX(object):
             
         # Return or raise an error
         if filter == 0 or filter == 'split':
-            return (freq, data[:,0])
+            return (freq, data[:,mapper[0]])
         elif filter == 1 or filter == 'full':
-            return (freq, data[:,1])
+            return (freq, data[:,mapper[1]])
         elif filter == 2 or filter == 'reduced':
-            return (freq, data[:,2])
+            return (freq, data[:,mapper[2]])
+        elif filter == 3:
+            return (freq, data[:,mapper[3]])
         elif filter == 4 or filter == 'split@3MHz':
-            try:
-                return (freq, data[:,3])
-            except IndexError:
-                ## Catch LWA1 boards
-                return (freq, data[:,0])
+            return (freq, data[:,mapper[4]])
         elif filter == 5 or filter == 'full@3MHz':
-            try:
-                return (freq, data[:,4])
-            except IndexError:
-                ## Catch LWA1 boards
-                return (freq, data[:,1])
+            return (freq, data[:,mapper[5]])
+        elif filter == 6:
+            return (freq, data[:,mapper[6]])
+        elif filter == 7::
+            return (freq, data[:,mapper[7]])
         else:
             raise ValueError(f"Unknown ARX filter '{filter}'")
 
