@@ -994,7 +994,7 @@ class ARX(object):
             return (freq, data[:,mapper[5]])
         elif filter == 6:
             return (freq, data[:,mapper[6]])
-        elif filter == 7::
+        elif filter == 7:
             return (freq, data[:,mapper[7]])
         else:
             raise ValueError(f"Unknown ARX filter '{filter}'")
@@ -1472,7 +1472,7 @@ def _parse_ssmif_text(filename_or_fh):
                 drID = ["UNK" for n in range(nDR)]
                 drShlf = [0 for n in range(nDR)]
                 drPC = ["UNK" for n in range(nDR)]
-                drDP = [0 for n in range(nDR)]
+                drNDP = [0 for n in range(nDR)]
                 
                 continue
                 
@@ -1492,8 +1492,8 @@ def _parse_ssmif_text(filename_or_fh):
                 drPC[ids[0]-1] = value
                 continue
                 
-            if keyword == 'DR_DP':
-                drDP[ids[0]-1] = int(value)
+            if keyword == 'DR_NDP':
+                drNDP[ids[0]-1] = int(value)
                 continue
                 
     except Exception as e:
