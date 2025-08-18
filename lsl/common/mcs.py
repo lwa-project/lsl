@@ -23,6 +23,7 @@ The header file values are:
  * ME_MAX_SERVERID_LENGTH - Number of characters in the server ID name
  * ME_MAX_NDR - Maximum number of data recorders
  * ME_MAX_DRID_LENGTH - Number of characters in the DR ID name
+ * ME_MAX_NDPOUT - Number of NDP data outputs
  * ME_MAX_NPWRPORT - Maximum number of power ports
  * ME_MAX_SSNAME_LENGTH - Number of characters in the power port ID names, for 
                           codes used for PWR_NAME
@@ -62,7 +63,7 @@ __version__ = '0.4'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NSNAP', 'ME_MAX_NSNAPCH', 'ME_MAX_SNAPID_LENGTH', 
-           'ME_MAX_NSERVER', 'ME_MAX_SERVERID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NPWRPORT', 
+           'ME_MAX_NSERVER', 'ME_MAX_SERVERID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NDPOUT', 'ME_MAX_NPWRPORT', 
            'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
            'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 
            'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
@@ -89,10 +90,11 @@ ME_MAX_ARBID_LENGTH = 10      # Number of characters in the ARX ID name
 ME_MAX_NSNAP = 16             # Maximum number of SNAP boards
 ME_MAX_NSNAPCH = 64           # Number of channels per SNAP board
 ME_MAX_SNAPID_LENGTH = 10     # Number of characters in the SNAP board ID name
-ME_MAX_NSERVER = 9            # Maximum number of server
+ME_MAX_NSERVER = 5            # Maximum number of server
 ME_MAX_SERVERID_LENGTH = 10   # Number of characters in the server ID name
-ME_MAX_NDR = 4                # Maximum number of data recorders
+ME_MAX_NDR = 5                # Maximum number of data recorders
 ME_MAX_DRID_LENGTH = 10       # Number of characters in the DR ID name
+ME_MAX_NDPOUT = 5             # NDP outputs; 1,2,3,4,5
 ME_MAX_NPWRPORT = 50          # Maximum number of power ports
 ME_MAX_SSNAME_LENGTH = 3      # Number of characters in the power port ID names, for codes used for PWR_NAME
 LWA_MAX_NSTD = 256            # Maximum number of stands for the LWA
@@ -162,7 +164,8 @@ SSMIF_STRUCT = """
     int    iARBAnt[ME_MAX_NARB][ME_MAX_NARBCH];        /* ARB_ANT[][] */
     char   sARBIN[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_IN[][] */
     char   sARBOUT[ME_MAX_NARB][ME_MAX_NARBCH][ME_MAX_ARBID_LENGTH+1]; /* ARB_OUT[][] */
-    int    nSnapCh;                  /* N_SNAPCH */
+    int    nSnap;                     /* N_SNAP */
+    int    nSnapCh;                   /* N_SNAPCH */
     char   sSnapID[ME_MAX_NSNAP][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_ID[] */
     char   sSnapSlot[ME_MAX_NSNAP][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_SLOT[] */
     int    eSnapDesi[ME_MAX_NSNAP]; /* SNAP_DESI[] */
@@ -170,7 +173,7 @@ SSMIF_STRUCT = """
     char   sSnapINR[ME_MAX_NSNAP][ME_MAX_NSNAPCH][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_INR[][] */
     char   sSnapINC[ME_MAX_NSNAP][ME_MAX_NSNAPCH][ME_MAX_SNAPID_LENGTH+1]; /* SNAP_INC[][] */
     int    iSnapAnt[ME_MAX_NSNAP][ME_MAX_NSNAPCH];        /* SNAP_ANT[][] */
-    int    nServer;                  /* N_SERVER */
+    int    nServer;                     /* N_SERVER */
     char   sServerID[ME_MAX_NSERVER][ME_MAX_SERVERID_LENGTH+1]; /* SERVER_ID[] */
     char   sServerSlot[ME_MAX_NSERVER][ME_MAX_SERVERID_LENGTH+1]; /* SERVER_SLOT[] */
     int    eServerStat[ME_MAX_NSERVER];       /* SERVER_STAT[] */
