@@ -119,7 +119,7 @@ class StationSettings(object):
     """
     
     def __init__(self, report=None, update=None, fee_power=None, asp_filter=None, asp_atten_1=None, asp_atten_2=None, asp_atten_split=None, 
-                drx_gain=-1, tbf_gain=-1):
+                drx_gain=-1):
         if report is None:
             self.report = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         else:
@@ -156,7 +156,6 @@ class StationSettings(object):
             self.asp_atten_split = asp_atten_split
             
         self.drx_gain = drx_gain
-        self.tbf_gain = tbf_gain
         
     def binary_read(self, fh):
         """
@@ -173,7 +172,7 @@ class StationSettings(object):
         # Parse and save
         ## Common
         self.report['ASP'] = ssStruct.mrp_asp
-        self.report['DP_'] = ssStruct.mrp_ndp
+        self.report['NDP'] = ssStruct.mrp_ndp
         self.report['DR1'] = ssStruct.mrp_dr1
         self.report['DR2'] = ssStruct.mrp_dr2
         self.report['DR3'] = ssStruct.mrp_dr3
@@ -182,7 +181,7 @@ class StationSettings(object):
         self.report['MCS'] = ssStruct.mrp_mcs
         
         self.update['ASP'] = ssStruct.mup_asp
-        self.update['DP_'] = ssStruct.mup_ndp
+        self.update['NDP'] = ssStruct.mup_ndp
         self.update['DR1'] = ssStruct.mup_dr1
         self.update['DR2'] = ssStruct.mup_dr2
         self.update['DR3'] = ssStruct.mup_dr3
@@ -198,7 +197,6 @@ class StationSettings(object):
         self.asp_atten_split = list(ssStruct.asp_ats)
         
         self.drx_gain = ssStruct.drx_gain
-        self.tbf_gain = ssStruct.tbf_gain
 
 
 class SDM(object):
