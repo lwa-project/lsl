@@ -23,11 +23,9 @@ if os.getenv('GITHUB_ACTIONS', None) is not None:
     run_extended_tests = True
 
 
-_TBN_URL = 'https://lda10g.alliance.unm.edu/tutorial/Meteors/056761_000099453'
 _DRX_URL = 'https://lda10g.alliance.unm.edu/tutorial/UnknownPulsar/056227_000024985_DRX.dat'
 _SPC_URL = 'https://lda10g.alliance.unm.edu/tutorial/B0329+54/056770_000044687'
 
-tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'extended', 'tbn-extended.dat')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'extended', 'drx-extended.dat')
 drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'extended', 'drspec-extended.dat')
 
@@ -40,63 +38,11 @@ class extended_ldp_tests(unittest.TestCase):
     def setUp(self):
         """Download the files."""
         
-        for filename,url in zip((tbnFile, drxFile, drspecFile), (_TBN_URL,_DRX_URL,_SPC_URL)):
+        for filename,url in zip((drxFile, drspecFile), (_DRX_URL,_SPC_URL)):
             if not os.path.exists(filename):
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 download_file(url, filename, byte_range=[0, 250*1024*1024])
                 
-    def test_tbn_estimate(self):
-        """Test estimating power levels in a TBN file."""
-        
-        idf = ldp.TBNFile(tbnFile)
-        offset = idf.offset(0.1)       # This file needs a skip at the beginning
-        levels = idf.estimate_levels()
-        self.assertEqual(len(levels), 520)
-        
-    def test_tbn_read(self):
-        """Test more involved reading from a TBN file."""
-        
-        idf = ldp.TBNFile(tbnFile)
-        offset = idf.offset(0.1)       # This file needs a skip at the beginning
-        
-        # Read some
-        for i in range(21):
-            tInt, tStart, data = idf.read(0.1)
-            
-        idf.close()
-        
-    def test_tbn_offset(self):
-        """Test offsetting inside a TBN file."""
-        
-        idf = ldp.TBNFile(tbnFile)
-        offset = idf.offset(0.1)       # This file needs a skip at the beginning
-        
-        # Jump forwards
-        fileStart = idf.start_time
-        offset = idf.offset(0.1)
-        
-        # Read
-        tInt, tStart, data = idf.read(0.11)
-        self.assertAlmostEqual(tStart, fileStart+offset, 9)
-        
-        # Jump forwards
-        fileStart = tStart + tInt
-        offset = idf.offset(0.1)
-        
-        # Read
-        tInt, tStart, data = idf.read(0.12)
-        self.assertAlmostEqual(tStart, fileStart+offset, 9)
-        
-        # Jump backwards
-        fileStart = tStart + tInt
-        offset = idf.offset(-0.15)
-        
-        # Read
-        tInt, tStart, data = idf.read(0.1)
-        self.assertAlmostEqual(tStart, fileStart+offset, 9)
-        
-        idf.close()
-        
     def test_drx_estimate(self):
         """Test estimating power levels in a DRX file."""
         
