@@ -188,7 +188,7 @@ def parse_time(s, station=lwa1):
             else:
                 tzName = mtch.group('tz')
                 if tzName in ['UT', 'UTC']:
-                    tz = _UTC
+                    tz = timezone.utc
                 elif tzName in ['EST', 'EDT']:
                     tz = _EST
                 elif tzName in ['CST', 'CDT']:
@@ -265,7 +265,7 @@ def parse_time(s, station=lwa1):
                 # quantities needed to build a datetime instance
                 dt = astroGetDate(jd)
                 
-                tz = _UTC
+                tz = timezone.utc
                 year = dt.years
                 month = dt.months
                 day = dt.days
