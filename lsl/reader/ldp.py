@@ -2107,7 +2107,7 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
             is_splitfile = True
             
     # Read a bit of data to try to find the right type
-    for mode in (drx, drx8, drspec, tbx, corr):
+    for mode in (drx, drx8, drspec, tbx, cor):
         ## Set if we find a valid frame marker
         foundMatch = False
         ## Set if we can read more than one valid successfully
@@ -2115,7 +2115,7 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
         
         ## Sort out the frame size.  This is tricky because DR spectrometer files
         ## have frames of different sizes depending on the mode
-        if mode in (drspec, tbx, corr):
+        if mode in (drspec, tbx, cor):
             try:
                 mfs = drspec.get_frame_size(fh)
             except:
