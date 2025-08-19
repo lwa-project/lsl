@@ -1870,7 +1870,7 @@ class CORFile(LDPFileBase):
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
                             'sample_rate': srate, 'data_bits': bits, 
                             'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
-                            'start_time_samples': startRaw, 'nbaseline': nBaseline, , 'frame_channel_count': channel_count, 'tint':cFrame.integration_time}
+                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'frame_channel_count': channel_count, 'tint':cFrame.integration_time}
                         
         # Initialize the buffer as part of the description process
         self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False, nsegments=LDP_CONFIG.get('cor_buffer_size'))
