@@ -285,9 +285,10 @@ if __name__ == "__main__":
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
-    parser.add_argument('-v', '--lwasv', action='store_true',
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-v', '--lwasv', action='store_true',
                         help='use LWA-SV instead of LWA1')
-    parser.add_argument('-n', '--lwana', action='store_true',
+    sgroup.add_argument('-n', '--lwana', action='store_true',
                         help='use LWA-NA instead of LWA1')
     parser.add_argument('-t', '--avg-time', type=aph.positive_or_zero_float, default=0.0, 
                         help='time window to average visibilities in seconds; 0 = integrate the entire file')

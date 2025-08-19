@@ -195,9 +195,10 @@ if __name__ == "__main__":
                         help='filename to process')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
-    parser.add_argument('-s', '--lwasv', action='store_true', 
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
-    parser.add_argument('-n', '--lwana', action='store_true', 
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
                         help='use LWA-NA instead of LWA1')
     parser.add_argument('-a', '--average', type=aph.positive_float, default=1.0, 
                         help='number of seconds of data to average for spectra')
