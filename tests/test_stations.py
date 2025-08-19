@@ -188,27 +188,13 @@ class stations_tests(unittest.TestCase):
     def test_interface_modules(self):
         """Test retrieving LSL interface modules."""
         
-        lwa1 = stations.lwa1
-        self.assertEqual(lwa1.interface.get_module('backend').__file__, ndp.__file__)
-        self.assertEqual(lwa1.interface.get_module('mcs').__file__, mcs.__file__)
-        self.assertEqual(lwa1.interface.get_module('sdf').__file__, sdf.__file__)
-        self.assertEqual(lwa1.interface.get_module('metabundle').__file__, metabundle.__file__)
-        self.assertEqual(lwa1.interface.get_module('sdm').__file__, sdm.__file__)
-        
-        lwasv = stations.lwasv
-        self.assertFalse(lwasv.interface.get_module('backend').__file__ == ndp.__file__)
-        self.assertFalse(lwasv.interface.get_module('mcs').__file__ == mcs.__file__)
-        self.assertFalse(lwasv.interface.get_module('sdf').__file__ == sdf.__file__)
-        self.assertFalse(lwasv.interface.get_module('metabundle').__file__ == metabundle.__file__)
-        self.assertFalse(lwasv.interface.get_module('sdm').__file__ == sdm.__file__)
-        
-        lwana = stations.lwana
-        self.assertFalse(lwana.interface.get_module('backend').__file__ == ndp.__file__)
-        self.assertFalse(lwana.interface.get_module('mcs').__file__ == mcs.__file__)
-        self.assertFalse(lwana.interface.get_module('sdf').__file__ == sdf.__file__)
-        self.assertFalse(lwana.interface.get_module('metabundle').__file__ == metabundle.__file__)
-        self.assertFalse(lwana.interface.get_module('sdm').__file__ == sdm.__file__)
-        
+        for site in (stations.lwa1, stations.lwasv, stations.lwana):
+            self.assertEqual(site.interface.get_module('backend').__file__, ndp.__file__)
+            self.assertEqual(site.interface.get_module('mcs').__file__, mcs.__file__)
+            self.assertEqual(site.interface.get_module('sdf').__file__, sdf.__file__)
+            self.assertEqual(site.interface.get_module('metabundle').__file__, metabundle.__file__)
+            self.assertEqual(site.interface.get_module('sdm').__file__, sdm.__file__)
+            
     def test_ssmif(self):
         """Test the SSMIF parser."""
         
