@@ -1097,6 +1097,15 @@ def _parse_ssmif_text(filename_or_fh):
                     pass
                     
             #
+            # Version
+            #
+            
+            if keyword == 'FORMAT_VERSION':
+                version = int(value, 10)
+                if version != 10:
+                    raise RuntimeError(f"Invalid SSMIF format version '{version}'")
+                    
+            #
             # Station Data
             #
             
@@ -1527,6 +1536,8 @@ def _parse_ssmif_binary(filename_or_fh):
         # Read in the first four bytes to get the version code and go from there
         version = fh.read(4)
         version = struct.unpack('<i', version)[0]
+        if version != 10:
+            raise RuntimeError(f"Invalid SSMIF format version '{version}'")
         fh.seek(0)
         
         bssmif = mcs_mod.parse_c_struct(mcs_mod.SSMIF_STRUCT, char_mode='int', endianness='little')
