@@ -277,7 +277,7 @@ def parse_time(s, station=lwa1):
                 microsecond = int(round(microsecond/1000.0))*1000
                 
             # Localize as the appropriate time zone
-            dtObject = datetime(year, month, day, hour, minute, second, microsecond), tzinfo=tz)
+            dtObject = datetime(year, month, day, hour, minute, second, microsecond, tzinfo=tz)
             
     # Return as UTC
     return dtObject.astimezone(timezone.utc)
