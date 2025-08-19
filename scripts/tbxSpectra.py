@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
 """
-Given a TBN file, plot the time averaged spectra for each digitizer input.
+Given a TBT/TBS file, plot the time averaged spectra for each digitizer input.
 """
-
+    
 import os
 import sys
 import math
@@ -11,11 +11,10 @@ import numpy as np
 import argparse
 
 from lsl.common import stations, metabundle
-from lsl.reader.ldp import LWADataFile, TBNFile
-from lsl.correlator import fx as fxc
+from lsl.reader.ldp import LWADataFile, TBXFile
 from lsl.misc import parser as aph
 
-import matplotlib.pyplot as plt
+from matplotlib import pyplot as plt
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -54,107 +53,82 @@ def main(args):
             station = stations.parse_ssmif(args.metadata)
         except ValueError:
             station = metabundle.get_station(args.metadata, apply_sdm=True)
+    elif args.lwana:
+        station = stations.lwana
     elif args.lwasv:
         station = stations.lwasv
     else:
         station = stations.lwa1
     antennas = station.antennas
     
-    # Length of the FFT
-    LFFT = args.fft_length
-    
     idf = LWADataFile(args.filename)
-    if not isinstance(idf, TBNFile):
-        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBN file")
+    if not isinstance(idf, TBXFile):
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBT or TBS file")
         
-    nFramesFile = idf.get_info('nframe')
-    srate = idf.get_info('sample_rate')
+    nFrames = idf.get_info('nframe')
     antpols = len(antennas)
-    
-    # Offset in frames for beampols beam/tuning/pol. sets
-    args.skip = idf.offset(args.skip)
-    
-    # Make sure that the file chunk size contains is an integer multiple
-    # of the FFT length so that no data gets dropped.  This needs to
-    # take into account the number of antpols in the data, the FFT length,
-    # and the number of samples per frame.
-    maxFrames = int((2*260*750)/antpols*512/float(LFFT))*LFFT/512*antpols
-    
-    # Number of frames to integrate over
-    nFrames = int(args.average * srate / 512) * antpols
-    nFrames = int(1.0 * (nFrames // antpols)*512/float(LFFT))*LFFT/512 * antpols
-    args.average = 1.0 * (nFrames // antpols) * 512 / srate
-    
-    # Number of remaining chunks
-    nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
     # Read in the first frame and get the date/time of the first sample 
     # of the frame.  This is needed to get the list of stands.
     beginDate = idf.get_info('start_time').datetime
-    central_freq = idf.get_info('freq1')
+    
+    # Make sure the TBX stand count is consistent with how many antennas we have
+    if antpols != idf.get_info('nantenna'):
+        raise RuntimeError(f"Number of stands in the station ({antpols//2}) does not match what is in the data ({idf.get_info('nantenna')//2})")
+        
+    # Figure out how many frames there are per observation and the number of
+    # channels that are in the file
+    nchannels = idf.get_info('nchan')
+    nFpO = nchannels // idf.get_info('frame_channel_count')
+    
+    # Figure out how many chunks we need to work with
+    nChunks = 1
+    if args.average > 0.5:
+        nChunks = int(np.ceil(args.average/0.5))
+        
+    # Calculate the frequencies
+    freq = idf.get_info('freq1')
+    sample_rate = idf.get_info('sample_rate')
+    central_freq = freq*1.0
+    chan = np.round(central_freq / sample_rate)
+    nif = len(np.where(np.diff(chan) > 1)[0]) + 1
+    central_freq = central_freq.reshape(nif, -1)
+    central_freq = central_freq[:,central_freq.shape[1]//2]
     
     # File summary
     print(f"Filename: {args.filename}")
     print(f"Date of First Frame: {str(beginDate)}")
-    print(f"Ant/Pols: {antpols}")
-    print(f"Sample Rate: {srate} Hz")
-    print(f"Tuning Frequency: {central_freq:.3f} Hz")
-    print(f"Frames: {nFramesFile} ({nFramesFile/antpols*512/srate:.3f} s)")
-    print("---")
-    print(f"Offset: {args.skip:.3f} s ({args.skip*srate*antpols/512} frames)")
-    print(f"Integration: {args.average:.3f} s ({nFrames} frames; {nFrames//antpols} frames per stand/pol)")
+    print(f"Channel Count: {nchannels}")
+    print(f"Sampling rate: {sample_rate} Hz")
+    print("Tuning frequency: %s Hz" % (', '.join("%.3f" % v for v in central_freq)))
+    print(f"Frames: {nFrames} ({nFrames/nFpO/sample_rate:.3f} s)")
+    print("===")
     print(f"Chunks: {nChunks}")
-    
-    # Sanity check
-    if args.skip*srate*antpols/512 > nFramesFile:
-        raise RuntimeError("Requested offset is greater than file length")
-    if nFrames > (nFramesFile - args.skip*srate*antpols/512):
-        raise RuntimeError("Requested integration time+offset is greater than file length")
-        
-    # Setup the window function to use
-    if args.bartlett:
-        window = np.bartlett
-    elif args.blackman:
-        window = np.blackman
-    elif args.hanning:
-        window = np.hanning
-    else:
-        window = fxc.null_window
-        
-    # Master loop over all of the file chunks
-    masterWeight = np.zeros((nChunks, antpols, LFFT))
-    masterSpectra = np.zeros((nChunks, antpols, LFFT))
     
     for i in range(nChunks):
         print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
-            readT, t, data = idf.read(args.average/nChunks)
+            readT, t, data = idf.read(args.average/nChunks, return_ci8=True)
         except Exception as e:
             print(f"Error: {str(e)}")
             continue
             
-        # Calculate the spectra for this block of data and then weight the results by 
-        # the total number of frames read.  This is needed to keep the averages correct.
-        
-        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose, sample_rate=srate)
-        for stand in range(tempSpec.shape[0]):
-            masterSpectra[i,stand,:] = tempSpec[stand,:]
-            masterWeight[i,stand,:] = int(readT*srate/LFFT)
-            
+        # Detect power and integrate
+        data = data['re']**2 + data['im']**2
+        try:
+            spec += data.mean(axis=2)
+        except NameError:
+            spec = data.mean(axis=2)
+    spec /= nChunks
+    
     # Apply the cable loss corrections, if requested
     if args.gain_correct:
-        for s in range(masterSpectra.shape[1]):
+        for s in range(spec.shape[0]):
             currGain = antennas[s].cable.gain(freq)
-            for c in range(masterSpectra.shape[0]):
-                masterSpectra[c,s,:] /= currGain
-                
-    # Now that we have read through all of the chunks, perform the final averaging by
-    # dividing by all of the chunks
-    spec = np.squeeze( (masterWeight*masterSpectra).sum(axis=0) / masterWeight.sum(axis=0) )
-    
+            spec[s,:] /= currGain
+            
     # Put the frequencies in the best units possible
-    freq += central_freq
     freq, units = _best_freq_units(freq)
     
     # Deal with the `keep` options
@@ -173,7 +147,7 @@ def main(args):
                     js.append(i)
                     
     nPlot = len(js)
-    if nPlot < 20:
+    if nPlot < 16:
         if nPlot % 4 == 0 and nPlot != 4:
             figsY = 4
         else:
@@ -181,7 +155,7 @@ def main(args):
         figsX = int(np.ceil(1.0*nPlot/figsY))
     else:
         figsY = 4
-        figsX = 5
+        figsX = 4
     figsN = figsX*figsY
     for i in range(antpolsDisp):
         # Normal plotting
@@ -195,20 +169,6 @@ def main(args):
             ax = fig.add_subplot(figsX, figsY, (k%figsN)+1)
             ax.plot(freq, currSpectra, label=f"Stand: {antennas[j].stand.id}, Pol: {antennas[j].pol} (Dig: {antennas[j].digitizer})")
             
-            # If there is more than one chunk, plot the difference between the global 
-            # average and each chunk
-            if nChunks > 1 and not args.disable_chunks:
-                for l in range(nChunks):
-                    # Some files are padded by zeros at the end and, thus, carry no 
-                    # weight in the average spectra.  Skip over those.
-                    if masterWeight[l,j,:].sum() == 0:
-                        continue
-                        
-                    # Calculate the difference between the spectra and plot
-                    subspectra = np.squeeze( np.log10(masterSpectra[l,j,:])*10.0 )
-                    diff = subspectra - currSpectra
-                    ax.plot(freq, diff)
-                    
             ax.set_title(f"Stand: {antennas[j].stand.id} ({antennas[j].pol}); Dig: {antennas[j].digitizer} [{antennas[j].combined_status}]")
             ax.set_xlabel(f"Frequency [{units}]")
             ax.set_ylabel('P.S.D. [dB/RBW]')
@@ -228,36 +188,23 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-            description='read in a TBN file and create a collection of time-averaged spectra', 
+            description='read in a TBT or TBS file and create a collection of time-averaged spectra', 
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
             )
     parser.add_argument('filename', type=str, 
                         help='filename to process')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
-    parser.add_argument('-v', '--lwasv', action='store_true', 
+    parser.add_argument('-s', '--lwasv', action='store_true', 
                         help='use LWA-SV instead of LWA1')
-    wgroup = parser.add_mutually_exclusive_group(required=False)
-    wgroup.add_argument('-t', '--bartlett', action='store_true', 
-                        help='apply a Bartlett window to the data')
-    wgroup.add_argument('-b', '--blackman', action='store_true', 
-                        help='apply a Blackman window to the data')
-    wgroup.add_argument('-n', '--hanning', action='store_true', 
-                        help='apply a Hanning window to the data')
-    wgroup.add_argument('-p', '--pfb', action='store_true', 
-                        help='enabled the PFB on the F-engine')
-    parser.add_argument('-s', '--skip', type=aph.positive_or_zero_float, default=0.0, 
-                        help='skip the specified number of seconds at the beginning of the file')
-    parser.add_argument('-a', '--average', type=aph.positive_float, default=10.0, 
+    parser.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA1')
+    parser.add_argument('-a', '--average', type=aph.positive_float, default=1.0, 
                         help='number of seconds of data to average for spectra')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
                         help='run %(prog)s in silent mode')
-    parser.add_argument('-l', '--fft-length', type=aph.positive_int, default=4096, 
-                        help='set FFT length')
     parser.add_argument('-g', '--gain-correct', action='store_true',
                         help='correct signals for the cable losses')
-    parser.add_argument('-d', '--disable-chunks', action='store_true', 
-                        help='disable plotting chunks in addition to the global average')
     parser.add_argument('-k', '--keep', type=aph.csv_int_list, default='all', 
                         help='only display the following comma-seperated list of stands')
     parser.add_argument('-o', '--output', type=str, 
