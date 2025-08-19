@@ -13,7 +13,7 @@ from datetime import datetime, timedelta
 
 from lsl.common.mcs import mjdmpm_to_datetime
 from lsl.common import metabundle
-from lsl.reader import tbs, drx, errors
+from lsl.reader import tbx, drx, errors
 
 from lsl.misc import telemetry
 telemetry.track_script()
@@ -84,8 +84,8 @@ def main(args):
 
         ## Get the correct reader to use
         if oMode == 'TBS':
-            reader = tbs
-            reader.FRAME_SIZE = tbs.get_frame_size(fh)
+            reader = tbx
+            reader.FRAME_SIZE = tbx.get_frame_size(fh)
             bwKey = {8: 200e3}
             bwMult = 1.0
             fCount = 8
@@ -207,7 +207,7 @@ def main(args):
 
             ## Get the correct reader to use
             if oMode == 'TBS':
-                reader = tbs
+                reader = tbx
             else:
                 reader = drx
 
