@@ -125,9 +125,6 @@ static int gofast_exec(PyObject *module) {
     // Version and revision information
     PyModule_AddObject(module, "__version__", PyUnicode_FromString("1.1"));
     
-    // Correlator channel count
-    PyModule_AddObject(module, "NCHAN_COR", PyLong_FromLong(COR_NCHAN));
-    
     // Function listings
     PyObject* all = PyList_New(0);
     PyList_Append(all, PyUnicode_FromString("read_drx"));
@@ -141,7 +138,6 @@ static int gofast_exec(PyObject *module) {
     PyList_Append(all, PyUnicode_FromString("read_tbx_ci8"));
     PyList_Append(all, PyUnicode_FromString("SyncError"));
     PyList_Append(all, PyUnicode_FromString("EOFError"));
-    PyList_Append(all, PyUnicode_FromString("NCHAN_COR"));
     PyModule_AddObject(module, "__all__", all);
     return 0;
 }

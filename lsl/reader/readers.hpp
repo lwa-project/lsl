@@ -54,16 +54,9 @@ inline bool validSync5C(uint32_t syncWord) {
     return false;
 }
 
-  
-
 // vdif.cpp
 extern void initVDIFLUTs(void);
 
-/*
- ADP COR mode channel information
-*/
-
-#define COR_NCHAN 72
 
 /*
   Reader Functions and Documentation

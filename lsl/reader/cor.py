@@ -35,7 +35,6 @@ import numpy as np
 
 from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import NCHAN_COR
 from lsl.reader._gofast import read_cor
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
@@ -47,14 +46,9 @@ telemetry.track_module()
 
 
 __version__ = '0.2'
-__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'FRAME_SIZE', 'FRAME_CHANNEL_COUNT', 
-           'get_frames_per_obs', 'get_channel_count', 'get_baseline_count']
-
-#: COR packet size (header + payload)
-FRAME_SIZE = 32 + NCHAN_COR*4*8
-
-#: Number of frequency channels in a COR packet
-FRAME_CHANNEL_COUNT = NCHAN_COR
+__all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'get_frame_size',
+           'get_frames_per_obs', 'get_channel_count', 'get_baseline_count',
+           'get_first_channel']
 
 
 class FrameHeader(FrameHeaderBase):
@@ -227,6 +221,33 @@ def read_frame(filehandle, verbose=False):
     return newFrame
 
 
+def get_frame_size(filehandle):
+    """
+    Find out what the frame size in a file is at the current file location.
+    Returns the frame size in bytes.
+    """
+    
+    nPos = -1
+    with FilePositionSaver(filehandle):
+        for i in range(2500):
+            try:
+                cPos = filehandle.tell()
+                cFrame = read_frame(filehandle)
+                if not cFrame.is_cor:
+                    continue
+                nPos = filehandle.tell()
+                break
+            except EOFError:
+                break
+            except SyncError:
+                filehandle.seek(1, 1)
+                
+    if nPos < 0:
+        raise RuntimeError("Unable to determine a frame size")
+        
+    return nPos - cPos
+
+
 def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
@@ -278,3 +299,38 @@ def get_baseline_count(filehandle):
     nBaseline = 256*(256+1) // 2
     
     return nBaseline
+
+
+def get_first_channel(filehandle, frequency=False, all_frames=False):
+    """
+    Find and return the lowest frequency channel in a TBX file.  If the 
+    `frequency` keyword is True the returned value is in Hz.  If `all` is
+    True then the lowest frequency in each unique TBX frame is returned as
+    a list.
+    """
+    
+    # Find out how many frames there are per observation
+    nFrames = get_frames_per_obs(filehandle)
+    
+    with FilePositionSaver(filehandle):
+        # Find the lowest frequency channel
+        freqs = []
+        while len(freqs) < nFrames:
+            cFrame = read_frame(filehandle)
+            if not cFrame.is_cor:
+                    continue
+            if frequency:
+                freq = cFrame.channel_freqs[0]
+            else:
+                freq = cFrame.header.first_chan
+                
+            if freq not in freqs:
+                freqs.append(freq)
+                
+    freqs.sort()
+    if all_frames:
+        # Return all unique first frequency channels
+        return freqs
+    else:
+        # Return the lowest frequency channel
+        return freqs[0]

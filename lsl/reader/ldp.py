@@ -1794,20 +1794,22 @@ class CORFile(LDPFileBase):
                 cor.read_frame(self.fh)
                 break
             except errors.SyncError:
-                self.fh.seek(-cor.FRAME_SIZE+1, 1)
+                self.fh.seek(1, 1)
                 
         # Skip over any DRX frames the start of the file
         i = 0
         while True:
             try:
+                mark = self.fh.tell()
                 cor.read_frame(self.fh)
+                frame_size = self.fh.tell() - mark
                 break
             except errors.SyncError:
                 i += 1
-                self.fh.seek(-cor.FRAME_SIZE+drx.FRAME_SIZE, 1)
+                self.fh.seek(1, 1)
         if i == 0:
-            self.fh.seek(-cor.FRAME_SIZE, 1)
-        self.fh.seek(-cor.FRAME_SIZE, 1)
+            self.fh.seek(-frame_size, 1)
+        self.fh.seek(-frame_size, 1)
         
         return True
         
@@ -1818,15 +1820,17 @@ class CORFile(LDPFileBase):
         
         # Read in frame
         with FilePositionSaver(self.fh):
+            mark = self.fh.tell()
             junkFrame = cor.read_frame(self.fh)
-            self.fh.seek(-cor.FRAME_SIZE, 1)
+            frame_size = self.fh.tell() - mark
+            self.fh.seek(-frame_size, 1)
             
             # Basic file information
             try:
                 filesize = os.fstat(self.fh.fileno()).st_size
             except AttributeError:
                 filesize = self.fh.size
-            nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
+            nFramesFile = (filesize - self.fh.tell()) // frame_size
             adp_id = junkFrame.adp_id
             srate = fC
             if adp_id & 0x04:
@@ -1847,17 +1851,7 @@ class CORFile(LDPFileBase):
                     k += 1
                     
             # Pre-load the channel mapper
-            self.cmapper = []
-            marker = self.fh.tell()
-            firstFrameCount = 2**64-1
-            while len(self.cmapper) < nchan/cor.FRAME_CHANNEL_COUNT:
-                cFrame = cor.read_frame(self.fh)
-                if cFrame.header.first_chan not in self.cmapper:
-                    self.cmapper.append( cFrame.header.first_chan )
-                if cFrame.header.frame_count < firstFrameCount:
-                    firstFrameCount = cFrame.header.frame_count
-                    start = junkFrame.time
-                    startRaw = junkFrame.payload.timetag
+            self.cmapper = cor.get_first_channel(self.fh, all_frames=True)
             self.cmapper.sort()
             
         # Create a channel mapper dictionary
@@ -1866,15 +1860,17 @@ class CORFile(LDPFileBase):
             self.cmapperd[c] = i
             
         # Calculate the frequencies
+        chan_steps = np.diff(self.mapper)
+        channel_count = np.median(chan_steps) // 4
         freq = np.zeros(nchan)
         for i,c in enumerate(self.cmapper):
-            freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + np.arange(cor.FRAME_CHANNEL_COUNT)
+            freq[i*channel_count:(i+1)*channel_count] = c + np.arange(channel_count)
         freq *= srate
         
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': cor.FRAME_SIZE,
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
                             'sample_rate': srate, 'data_bits': bits, 
                             'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
-                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'tint':cFrame.integration_time}
+                            'start_time_samples': startRaw, 'nbaseline': nBaseline, , 'frame_channel_count': channel_count, 'tint':cFrame.integration_time}
                         
         # Initialize the buffer as part of the description process
         self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False, nsegments=LDP_CONFIG.get('cor_buffer_size'))
@@ -1905,7 +1901,7 @@ class CORFile(LDPFileBase):
             buffer_offset = buffer_offset / fS
             
         offset = offset - buffer_offset
-        framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
+        framesPerObs = self.description['nchan'] // self.description['frame_channel_count'] * self.description['nbaseline']
         frameOffset = int(offset / self.description['tint'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
         self.fh.seek(frameOffset*cor.FRAME_SIZE, 1)
@@ -1975,7 +1971,7 @@ class CORFile(LDPFileBase):
         # Find out how many frames to read in
         if duration is None:
             duration = self.description['nframe'] / framesPerObs * self.description['tint']
-        framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
+        framesPerObs = self.description['nchan'] // self.description['frame_channel_count'] * self.description['nbaseline']
         frame_count = int(round(1.0 * duration / self.description['tint']))
         frame_count = frame_count if frame_count else 1
         duration = frame_count * self.description['tint']
@@ -2035,7 +2031,7 @@ class CORFile(LDPFileBase):
                 aBase = self.bmapperd[cFrame.id]
                 aChan = self.cmapperd[first_chan]
                 aStand = aBase*len(self.cmapper) + aChan
-                data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.data
+                data[aBase,aChan*self.description['frame_channel_count']:(aChan+1)*self.description['frame_channel_count'],:,:,count[aStand]] = cFrame.payload.data
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -2066,7 +2062,7 @@ class CORFile(LDPFileBase):
                     aBase = self.bmapperd[cFrame.id]
                     aChan = self.cmapperd[first_chan]
                     aStand = aBase*len(self.cmapper) + aChan
-                    data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.data
+                    data[aBase,aChan*self.description['frame_channel_count']:(aChan+1)*self.description['frame_channel_count'],:,:,count[aStand]] = cFrame.payload.data
                     count[aStand] += 1
                 nFrameSets += 1
                 
