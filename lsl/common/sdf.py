@@ -829,7 +829,7 @@ class TBT(Observation):
     information about the number of data bits and the number of samples.
     
     .. note::
-        TBW read-out times in ms are calculated using (samples/196000+1)*5000 per
+        TBT read-out times in ms are calculated using (samples/196000+1)*5000 per
         MCS
     
     Required Arguments:
@@ -839,7 +839,6 @@ class TBT(Observation):
      * integer number of samples
     
     Optional Keywords:
-     * bits - number of data bits (4 or 12)
      * comments - comments about the observation
     """
     
