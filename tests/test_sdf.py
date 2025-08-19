@@ -246,10 +246,7 @@ class sdf_tests(unittest.TestCase):
         project = sdf.parse_sdf(tbtFile)
         
         # Bad number of TBT samples
-        project.sessions[0].observations[0].samples = 720000000
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].samples = 720000000
+        project.sessions[0].observations[0].samples = 6*196e6
         self.assertFalse(project.validate())
         
     ### TBS ###
@@ -354,7 +351,7 @@ class sdf_tests(unittest.TestCase):
             
             # Bad frequency
             project.sessions[0].observations[0].filter = 8
-            project.sessions[0].observations[0].frequency1 = 4.0e6
+            project.sessions[0].observations[0].frequency1 = 2.0e6
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
             
@@ -375,29 +372,29 @@ class sdf_tests(unittest.TestCase):
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,1]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = 2
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
                 setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [30 for i in range(256)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(256)])
             
     ### DRX - TRK_RADEC ###
     
@@ -557,29 +554,29 @@ class sdf_tests(unittest.TestCase):
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,1]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = 2
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
                 setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [30 for i in range(256)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(256)])
                 
     ### DRX - TRK_SOL ###
     
@@ -1019,11 +1016,11 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].steps[0].dur, 60000)
         
         # Delays - 1
-        for i in range(260):
+        for i in range(256):
             self.assertEqual(project.sessions[0].observations[0].steps[0].delays[i], 0)
             
         # Gains - 1
-        for i in range(260):
+        for i in range(256):
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][0], 1)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)

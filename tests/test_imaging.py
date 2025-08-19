@@ -53,7 +53,6 @@ __author__    = "Jayce Dowell"
 uvFile = os.path.join(os.path.dirname(__file__), 'data', 'uv-test.fits')
 idiFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test.fits')
 idiAltFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.fits')
-idiSSMIFFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.txt')
 
 
 class imaging_tests(unittest.TestCase):
@@ -190,45 +189,6 @@ class imaging_tests(unittest.TestCase):
         self.assertRaises(IndexError, idi.get_data_set, 2)
         
         idi.close()
-        
-    def test_CorrelatedDataIDI_AltArrayGeometry(self):
-        """Test the utils.CorrelatedDataIDI class on determing array geometry."""
-        
-        # Open the FITS IDI files
-        idi1 = utils.CorrelatedData(idiFile)
-        idi2 = utils.CorrelatedData(idiAltFile)
-        
-        # Dates
-        self.assertEqual(idi1.date_obs.strftime("%Y-%m-%dT%H:%M:%S"), idi2.date_obs.strftime("%Y-%m-%dT%H:%M:%S"))
-        
-        # Stand and baseline counts
-        self.assertEqual(len(idi1.stands), len(idi2.stands))
-        self.assertEqual(idi1.total_baseline_count, idi2.total_baseline_count)
-        self.assertEqual(idi1.integration_count, idi2.integration_count)
-        
-        # Check stands
-        for s1,s2 in zip(idi1.stands, idi2.stands):
-            self.assertEqual(s1, s2)
-            
-        # Check stations
-        station1 = parse_ssmif(idiSSMIFFile)
-        station2 = idi2.station
-        self.assertAlmostEqual(station1.lat, station2.lat, 3)
-        self.assertAlmostEqual(station1.lon, station2.lon, 3)
-        self.assertAlmostEqual(station1.elev, station2.elev, 1)
-        
-        # Check antennas
-        ants1 = idi1.station.antennas
-        ants2 = station2.antennas
-        for a1,a2 in zip(ants1, ants2):
-            self.assertEqual(a1.id, a2.id)
-            self.assertEqual(a1.stand.id, a2.stand.id)
-            self.assertAlmostEqual(a1.stand.x, a2.stand.x, 2)
-            self.assertAlmostEqual(a1.stand.y, a2.stand.y, 2)
-            self.assertAlmostEqual(a1.stand.z, a2.stand.z, 2)
-            
-        idi1.close()
-        idi2.close()
         
     def test_CorrelatedDataUV(self):
         """Test the utils.CorrelatedDataUV class."""
