@@ -6,10 +6,9 @@ tarball.
 """
 
 import sys
-import pytz
 import argparse
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from lsl.common import stations
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
@@ -23,7 +22,6 @@ telemetry.track_script()
 __version__ = "0.3"
 
 # Date/time manipulation
-_UTC = pytz.utc
 _FORMAT_STRING = '%Y/%m/%d %H:%M:%S.%f %Z'
 
 
@@ -49,8 +47,7 @@ def main(args):
     for i in range(nObs):
         tStart[i]  = utcjd_to_unix(project.sessions[0].observations[i].mjd + MJD_OFFSET)
         tStart[i] += project.sessions[0].observations[i].mpm / 1000.0
-        tStart[i]  = datetime.utcfromtimestamp(tStart[i])
-        tStart[i]  = _UTC.localize(tStart[i])
+        tStart[i]  = datetime.fromtimestamp(tStart[i], tz=timezone.utc)
     
     # Get the LST at the start
     observer.date = (min(tStart)).strftime('%Y/%m/%d %H:%M:%S')

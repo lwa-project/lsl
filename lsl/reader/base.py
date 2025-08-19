@@ -6,11 +6,10 @@ classes for all of the LSL readers.
 """
 
 import copy
-import pytz
 import numpy as np
 from functools import total_ordering
 from textwrap import fill as tw_fill
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
 
@@ -593,7 +592,7 @@ class FrameTimestamp(object):
         Timestamp as a time zone-aware datetime instance in UTC.
         """
         
-        return pytz.utc.localize(self.datetime)
+        return self.datetime.replace(tzinfo=timezone.utc)
         
     @property
     def astropy(self):

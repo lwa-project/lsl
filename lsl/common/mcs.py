@@ -43,12 +43,11 @@ import re
 import dbm
 import enum
 import math
-import pytz
 import numpy as np
 import ctypes
 import struct
 from functools import reduce
-from datetime import datetime
+from datetime import datetime, timezone
 
 from astropy import units as astrounits
 from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
@@ -585,9 +584,8 @@ def mjdmpm_to_datetime(mjd, mpm, tz=None):
     """
     
     unix = mjd*86400.0 + mpm/1000.0 - 3506716800.0
-    dt = datetime.utcfromtimestamp(unix)
+    dt = datetime.fromtimestamp(unix, tz=timezone.utc)
     if tz is not None:
-        dt = pytz.utc.localize(dt)
         dt = dt.astimezone(tz)
     return dt
 
@@ -606,7 +604,7 @@ def datetime_to_mjdmpm(dt):
     """
     
     if dt.tzinfo is not None:
-        dt = dt.astimezone(pytz.utc)
+        dt = dt.astimezone(timezone.utc)
         
     year        = dt.year             
     month       = dt.month      

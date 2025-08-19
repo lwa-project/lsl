@@ -33,7 +33,6 @@ import os
 import re
 import copy
 import math
-import pytz
 import ephem
 from functools import total_ordering
 from datetime import datetime, timedelta
@@ -65,7 +64,6 @@ __version__ = '0.2'
 __all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idf',  'get_scan_start_stop', 'is_valid', '__version__']
 
 
-_UTC = pytz.utc
 _DRSUCapacityTB = 10
 
 _MAX_ALT_PHASE_CENTERS = 10
@@ -342,16 +340,16 @@ class Project(object):
                     if obs.pm[0] != 0.0 or obs.pm[1] != 0.0:
                         comments = comments+";;Applied proper motion of %+.1f mas/yr in RA and %+.1f mas/yr in dec" % (obs.pm[0], obs.pm[1])
                         
-                    new_obs = sdfmod.DRX(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdfmod.DRX(obs.intent, obs.target, obs_start, obs.duration, 
                                          ra, dec, 
                                          obs.frequency1, obs.frequency2, obs.filter, 
                                          gain=obs.gain, max_snr=False, comments=comments)
                 elif isinstance(obs, Solar):
-                    new_obs = sdfmod.Solar(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdfmod.Solar(obs.intent, obs.target, obs_start, obs.duration, 
                                            obs.frequency1, obs.frequency2, obs.filter, 
                                            gain=obs.gain, max_snr=False, comments=obs.comments)
                 elif isinstance(obs, Jovian):
-                    new_obs = sdfmod.Jovian(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdfmod.Jovian(obs.intent, obs.target, obs_start, obs.duration, 
                                             obs.frequency1, obs.frequency2, obs.filter, 
                                             gain=obs.gain, max_snr=False, comments=obs.comments)
                 else:
@@ -1574,8 +1572,8 @@ def get_scan_start_stop(obs):
     tStop = tStart +  obs.dur / 1000.0
     
     # Conversion to a timezone-aware datetime instance
-    tStart = _UTC.localize( datetime.utcfromtimestamp(tStart) )
-    tStop  = _UTC.localize( datetime.utcfromtimestamp(tStop ) )
+    tStart = datetime.fromtimestamp(tStart, tz=timezone.utc)
+    tStop  = datetime.fromtimestamp(tStop, tz=timezone.utc)
     
     # Make sure we have an integer number of milliseconds
     ## Start

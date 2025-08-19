@@ -5,9 +5,13 @@ Module that contains commmon routines for the SDF and IDF modules.
 import os
 import re
 import math
-import pytz
 import warnings
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
 
 from astropy.time import Time as AstroTime
 
@@ -87,11 +91,10 @@ def _get_equinox_equation(jd):
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
-_UTC = pytz.utc
-_EST = pytz.timezone('US/Eastern')
-_CST = pytz.timezone('US/Central')
-_MST = pytz.timezone('US/Mountain')
-_PST = pytz.timezone('US/Pacific')
+_EST = zoneinfo.ZoneInfo('US/Eastern')
+_CST = zoneinfo.ZoneInfo('US/Central')
+_MST = zoneinfo.ZoneInfo('US/Mountain')
+_PST = zoneinfo.ZoneInfo('US/Pacific')
 
 
 def parse_time(s, station=lwa1):
@@ -171,7 +174,7 @@ def parse_time(s, station=lwa1):
                     raise ValueError(f"Unknown month abbreviation: '{monthName}'")
                     
             if mtch.group('tz') is None and mtch.group('tzOffset') is None:
-                tz = _UTC
+                tz = timezone.utc
             elif mtch.group('tzOffset') is not None:
                 tzOffsetSign = 1
                 if mtch.group('tzOffset')[0] == '-':
@@ -179,7 +182,9 @@ def parse_time(s, station=lwa1):
                 tzOffsetHours = int( mtch.group('tzOffset').replace(':', '')[1:3] )
                 tzOffsetMinutes = int( mtch.group('tzOffset').replace(':', '')[3:5] )
                 
-                tz = pytz.FixedOffset(tzOffsetSign*(tzOffsetHours*60+tzOffsetMinutes), {})
+                tzOffsetSeconds = tzOffsetHours*3600 + tzOffsetMinutes*60
+                tzOffsetSeconds *= tzOffsetSign
+                tz = timezone(timedelta(seconds=tzOffsetSeconds))
             else:
                 tzName = mtch.group('tz')
                 if tzName in ['UT', 'UTC']:
@@ -196,16 +201,16 @@ def parse_time(s, station=lwa1):
                     tz = 'LST'
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
-                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
+                    warnings.warn(colorfy("{{%%yellow Entering zoneinfo search mode for '%s'}}" % tzName), RuntimeWarning)
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
-                    for tzi in pytz.common_timezones[::-1]:
-                        tz = pytz.timezone(tzi)
+                    for tzi in list(zoneinfo.available_timezones()):
+                        tz = zoneinfo.ZoneInfo(tzi)
                         try:
-                            cTZName = tz.tzname(tzNormal, is_dst=False)
+                            cTZName = tzNormal.replace(tzinfo=tz).tzname()
                         except TypeError:
-                            cTZName = tz.tzname(tzNormal)
+                            continue
                         if cTZName == tzName:
                             tzFound = True
                             break
@@ -272,7 +277,7 @@ def parse_time(s, station=lwa1):
                 microsecond = int(round(microsecond/1000.0))*1000
                 
             # Localize as the appropriate time zone
-            dtObject = tz.localize(datetime(year, month, day, hour, minute, second, microsecond))
+            dtObject = datetime(year, month, day, hour, minute, second, microsecond), tzinfo=tz)
             
     # Return as UTC
-    return dtObject.astimezone(_UTC)
+    return dtObject.astimezone(timezone.utc)

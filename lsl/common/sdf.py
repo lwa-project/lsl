@@ -47,7 +47,6 @@ import os
 import re
 import copy
 import math
-import pytz
 import ephem
 import weakref
 import warnings
@@ -78,7 +77,6 @@ telemetry.track_module()
 __version__ = '1.4'
 __all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBT', 'TBS', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
-_UTC = pytz.utc
 _DRSUCapacityTB = 10
 # Factors for computing the time it takes to read out a TBT from the number 
 # of samples
@@ -2588,8 +2586,8 @@ def get_observation_start_stop(obs):
     tStop = tStart +  obs.dur / 1000.0
     
     # Conversion to a timezone-aware datetime instance
-    tStart = _UTC.localize( datetime.utcfromtimestamp(tStart) )
-    tStop  = _UTC.localize( datetime.utcfromtimestamp(tStop ) )
+    tStart = datetime.fromtimestamp(tStart, tz=timezone.utc)
+    tStop  = datetime.fromtimestamp(tStop, tz=timezone.utc)
     
     # Make sure we have an integer number of milliseconds
     ## Start
