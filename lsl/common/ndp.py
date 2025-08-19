@@ -37,6 +37,12 @@ T = 1.0		# seconds
 T2 = 0.010	# seconds
 N_MAX = 8192	# bytes
 
+#: Minimum TBS tuning word
+TBS_TUNING_WORD_MIN = 65739295
+
+#: Maximum TBS tuning word
+TBS_TUNING_WORD_MAX = 2037918156
+
 #: Minimum DRX tuning word
 DRX_TUNING_WORD_MIN = 222417950        # Tuning word
 
