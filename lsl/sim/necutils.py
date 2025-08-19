@@ -249,6 +249,8 @@ class NECPattern:
                 
                 # Make sure we have NEC install
                 if which_nec4() is None:
+                    if fh is not None:
+                        fh.close()
                     raise RuntimeError("NEC executable 'nec4d' not found in PATH")
                     
                 # Important NOTE:
@@ -258,13 +260,18 @@ class NECPattern:
                 try:
                     subprocess.check_call(['nec4d', necname, outname])
                 except subprocess.CalledProcessError as e:
+                    if fh is not None:
+                        fh.close()
                     raise RuntimeError(f"Bad return value from nec2++ call : {str(e)}")       
                 fh, filefreq = open_and_get_nec_freq(outname)
                 if not close_to(filefreq, freq):
-                    fh.close()
+                    if fh is not None:
+                        fh.close()
                     raise ValueError("NEC failed to generate a file with the correct frequency.")
                     
             else:
+                if fh is not None:
+                    fh.close()
                 raise ValueError(f"NEC output file is at a different frequency ({filefreq}) than the requested frequency ({freq}).")
                     
         #  Now look for RADIATION PATTERN or EXCITATION and read it
@@ -277,6 +284,7 @@ class NECPattern:
                 radpat = False
                 break
         else:
+            fh.close()
             raise RuntimeError("RADIATION PATTERN nor EXCITATION not found!")
             
         if radpat:
