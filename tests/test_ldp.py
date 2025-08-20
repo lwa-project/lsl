@@ -522,14 +522,26 @@ class ldp_tests(unittest.TestCase):
         
     ### File Type Discovery ###
     
+    def test_ldp_discover_tbx(self):
+        """Test the LDP LWADataFile function of TBX."""
+        # DRX
+        f = ldp.LWADataFile(tbxFile)
+        self.assertEqual(type(f), ldp.TBXFile)
+        
+    def test_ldp_discover_cor(self):
+        """Test the LDP LWADataFile function of COR."""
+        # DRX
+        f = ldp.LWADataFile(corFile)
+        self.assertEqual(type(f), ldp.CORFile)
+        
     def test_ldp_discover_drx(self):
-        """Test the LDP LWA1DataFile function of DRX."""
+        """Test the LDP LWADataFile function of DRX."""
         # DRX
         f = ldp.LWADataFile(drxFile)
         self.assertEqual(type(f), ldp.DRXFile)
         
     def test_ldp_discover_drspec(self):
-        """Test the LDP LWA1DataFile function of DR Spectrometer."""
+        """Test the LDP LWADataFile function of DR Spectrometer."""
         # DR Spectrometer
         f = ldp.LWADataFile(drspecFile)
         self.assertEqual(type(f), ldp.DRSpecFile)

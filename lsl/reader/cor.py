@@ -79,19 +79,6 @@ class FrameHeader(FrameHeaderBase):
             return True
         else:
             return False
-            
-    @property
-    def channel_freqs(self):
-        """
-        Return a numpy.float32 array for the center frequencies, in Hz, of
-        each channel in the data.
-        """
-        
-        fC = ndp_common.fC
-        if self.adp_id & 0x04:
-            fC = ndp_common.fC
-            
-        return (np.arange(NCHAN_COR, dtype=np.float32)+self.first_chan) * fC
 
 
 class FramePayload(FramePayloadBase):
@@ -164,10 +151,15 @@ class Frame(FrameBase):
     @property
     def channel_freqs(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.channel_freqs property.
+        Return a numpy.float32 array for the center frequencies, in Hz, of
+        each channel in the data.
         """
         
-        return self.header.channel_freqs
+        fC = ndp_common.fC
+        if self.adp_id & 0x04:
+            fC = ndp_common.fC
+            
+        return (np.arange(self.payload._data.shape[0], dtype=np.float32)+self.header.first_chan) * fC
         
     @property
     def gain(self):
@@ -213,7 +205,7 @@ def read_frame(filehandle, verbose=False):
     try:
         newFrame = read_cor(filehandle, Frame())
     except gSyncError:
-        mark = filehandle.tell() - FRAME_SIZE
+        mark = filehandle.tell()
         raise SyncError(location=mark)
     except gEOFError:
         raise EOFError
@@ -256,7 +248,24 @@ def get_frames_per_obs(filehandle):
     
     # Get the number of channels in the file
     nChan = get_channel_count(filehandle)
-    nFrames = nChan // NCHAN_COR
+    
+    # Get the number of channels per frame
+    frame_channel_count = 0
+    with FilePositionSaver(filehandle):
+        for i in range(2500):
+            try:
+                cFrame = read_frame(filehandle)
+                if not cFrame.is_cor:
+                    continue
+                frame_channel_count = cFrame.payload.data.shape[0]
+                break
+            except EOFError:
+                break
+            except SyncError:
+                filehandle.seek(1, 1)
+                
+    # Get the number of frames needed to cover the number of channels seen
+    nFrames = nChan // frame_channel_count
     
     # Multiply by the number of baselines
     nFrames *= get_baseline_count(filehandle)
@@ -271,6 +280,7 @@ def get_channel_count(filehandle):
     the first several COR records.  Return the number of channels found.
     """
     
+    frame_channel_count = 0
     with FilePositionSaver(filehandle):
         # Build up the list-of-lists that store the index of the first frequency
         # channel in each frame.
@@ -278,6 +288,7 @@ def get_channel_count(filehandle):
         for i in range(64):
             try:
                 cFrame = read_frame(filehandle)
+                frame_channel_count = cFrame.payload.data.shape[0]
             except:
                 break
                 
@@ -286,7 +297,7 @@ def get_channel_count(filehandle):
                 channels.append( chan )
                 
     # Return the number of channels
-    return len(channels)*NCHAN_COR
+    return len(channels)*frame_channel_count
 
 
 def get_baseline_count(filehandle):
@@ -316,9 +327,13 @@ def get_first_channel(filehandle, frequency=False, all_frames=False):
         # Find the lowest frequency channel
         freqs = []
         while len(freqs) < nFrames:
-            cFrame = read_frame(filehandle)
-            if not cFrame.is_cor:
+            try:
+                cFrame = read_frame(filehandle)
+                if not cFrame.is_cor:
                     continue
+            except:
+                break
+                
             if frequency:
                 freq = cFrame.channel_freqs[0]
             else:

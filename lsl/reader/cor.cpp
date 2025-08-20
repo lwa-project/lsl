@@ -34,7 +34,10 @@ typedef struct __attribute__((packed)) {
     int32_t navg;
     int16_t stand0;
     int16_t stand1;
-    float vis[2048];   // Really std::complex<float> vis[256*4]
+    union {
+        float vis[2048];   // Really std::complex<float> vis[256*4]
+        uint32_t raw[2048];
+    };
 } CORPayload;
 
 
@@ -92,29 +95,38 @@ PyObject *read_cor_impl(PyObject *self, PyObject *args) {
         }
         Py_XDECREF(data);
         return NULL;
-    } else if( PyBytes_GET_SIZE(buffer) != sizeof(cFrame) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != frameSize ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(data);
         Py_XDECREF(buffer);
         return NULL;
     }
-    memcpy(&cFrame, PyBytes_AS_STRING(buffer), sizeof(cFrame));
+    memcpy(&cFrame, PyBytes_AS_STRING(buffer), frameSize);
     Py_XDECREF(buffer);
     
-    // Determine the number of channels in the frame - I don't know how to do this
-    // right now since there isn't an explict nchan field in the COR packet header
-    nchan = 192;
+    // Determine the number of channels in the frame
+    if( (NCHAN > 33) && validSync5C((uint32_t) cFrame.payload.raw[33*4*2]) ) {
+        nchan = 33;
+    } else if( (NCHAN > 72) && validSync5C((uint32_t) cFrame.payload.raw[72*4*2]) ) {
+        nchan = 72;
+    } else if( (NCHAN > 112) && validSync5C((uint32_t) cFrame.payload.raw[112*4*2]) ) {
+        nchan = 112;
+    } else {
+        nchan = NCHAN;
+    }
     
     // If nchan is not what we expect, update the cache and retry with correct size
     if( nchan != NCHAN ) {
         cached_nchan = nchan;   // Update for next time
         Py_XDECREF(cor_size);   // Update for next time
-        cor_size = NULL;        // Force NULL since Py_XDECREF isn't guaranteed to change tbx_size
+        cor_size = NULL;        // Force NULL since Py_XDECREF isn't guaranteed to change cor_size
         PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         
         switch(nchan) {
             case 33:
                 return read_cor_impl<33>(self,args);
+            case 72:
+                return read_cor_impl<72>(self,args);
             case 112:
                 return read_cor_impl<112>(self,args);
             case 192:
@@ -155,6 +167,10 @@ PyObject *read_cor_impl(PyObject *self, PyObject *args) {
     
     // Validate
     if( !validSync5C(cFrame.header.sync_word) ) {
+        cached_nchan = 192;   // Update for next time
+        Py_XDECREF(cor_size);   // Update for next time
+        cor_size = NULL;
+        PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
         goto fail;
     }
@@ -226,6 +242,8 @@ PyObject *read_cor(PyObject *self, PyObject *args) {
     switch(cached_nchan) {
         case 33:
             return read_cor_impl<33>(self,args);
+        case 72:
+            return read_cor_impl<72>(self,args);
         case 112:
             return read_cor_impl<112>(self,args);
         case 192:

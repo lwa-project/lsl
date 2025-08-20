@@ -1863,6 +1863,8 @@ class CORFile(LDPFileBase):
             nFramesPerObs = cor.get_frames_per_obs(self.fh)
             nchan = cor.get_channel_count(self.fh)
             nBaseline = cor.get_baseline_count(self.fh)
+            start = junkFrame.time
+            startRaw = junkFrame.payload.timetag
             
             # Pre-load the baseline mapper
             # NOTE: This is done with a dictionary rather than a list since 
@@ -1884,17 +1886,16 @@ class CORFile(LDPFileBase):
             self.cmapperd[c] = i
             
         # Calculate the frequencies
-        chan_steps = np.diff(self.mapper)
-        channel_count = np.median(chan_steps) // 4
+        channel_count = junkFrame.payload.data.shape[0]
         freq = np.zeros(nchan)
         for i,c in enumerate(self.cmapper):
             freq[i*channel_count:(i+1)*channel_count] = c + np.arange(channel_count)
-        freq *= srate
+        freq *= srate*4
         
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
                             'sample_rate': srate, 'data_bits': bits, 
                             'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
-                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'frame_channel_count': channel_count, 'tint':cFrame.integration_time}
+                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'frame_channel_count': channel_count, 'tint':junkFrame.integration_time}
                         
         # Initialize the buffer as part of the description process
         self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False, nsegments=LDP_CONFIG.get('cor_buffer_size'))
