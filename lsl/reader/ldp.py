@@ -1517,16 +1517,24 @@ class TBXFile(LDPFileBase):
             # 196 MHz of the post-upgrade NDP.  ADP data will have a step size
             # of 7840 ticks @ fS vs NDP with 8192 ticks @ fS
             time_tags = []
-            for i in range(100):
-                cFrame = tbx.read_frame(self.fh)
+            mark = self.fh.tell()
+            for i in range(300):
+                try:
+                    cFrame = tbx.read_frame(self.fh)
+                except errors.EOFError:
+                    break
                 if cFrame.payload.timetag not in time_tags:
                     time_tags.append(cFrame.payload.timetag)
-            self.fh.seek(-100*frame_size, 1)
-            time_tags.sort()
-            tt_steps = np.diff(time_tags)
-            tt_step = int(np.round(np.median(tt_steps)))
-            srate = fS / tt_step
-            
+            self.fh.seek(mark, 0)
+            try:
+                time_tags.sort()
+                tt_steps = np.diff(time_tags)
+                tt_step = int(np.round(np.median(tt_steps)))
+                srate = fS / tt_step
+            except Exception as e:
+                warnings.warn(colorfy("{{%yellow Failed to determine sample rate, assuming NDP default}}"))
+                srate = fC
+                
             # Pre-load the channel mapper
             self.mapper = tbx.get_first_channel(self.fh, all_frames=True)
             
@@ -1619,7 +1627,7 @@ class TBXFile(LDPFileBase):
          0) the actual duration of data read in, 
          1) the time tag for the first sample, and
          2) a 3-D Numpy array of data.
-        
+        32
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common..ndp.fS` if the 
