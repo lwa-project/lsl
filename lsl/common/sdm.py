@@ -236,7 +236,7 @@ class SDM(object):
             self.ant_status = [[0,0] for n in range(ME_MAX_NSTD)]
         else:
             self.ant_status = ant_status
-        #if ndpo_status is None:
+        if ndpo_status is None:
             self.ndpo_status = [0 for n in range(ME_MAX_NDR)]
         else:
             self.ndpo_status = ndpo_status

@@ -81,11 +81,6 @@ def main(args):
     nchannels = idf.get_info('nchan')
     nFpO = nchannels // idf.get_info('frame_channel_count')
     
-    # Figure out how many chunks we need to work with
-    nChunks = 1
-    if args.average > 0.5:
-        nChunks = int(np.ceil(args.average/0.5))
-        
     # Calculate the frequencies
     freq = idf.get_info('freq1')
     sample_rate = idf.get_info('sample_rate')
@@ -95,6 +90,13 @@ def main(args):
     central_freq = central_freq.reshape(nif, -1)
     central_freq = central_freq[:,central_freq.shape[1]//2]
     
+    # Figure out how many chunks we need to work with
+    nChunks = 1
+    tFile = nFrames/nFpO/sample_rate
+    args.average = min(tFile, args.average)
+    if args.average > 0.5:
+        nChunks = int(np.ceil(args.average/0.5))
+        
     # File summary
     print(f"Filename: {args.filename}")
     print(f"Date of First Frame: {str(beginDate)}")

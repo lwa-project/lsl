@@ -12,9 +12,8 @@ Data format objects included are:
   * TBFFile
   * CORFILE
 
-Also included are the LWA1DataFile, LWASVDataFile, LWANADataFile, and LWADataFile
-functions that take a filename and try to determine the correct data format
-object to use.
+Also included is the LWADataFile function that takes a filename and tries to
+determine the correct data format object to use.
 
 .. versionchanged:: 1.2.0
     Added support for LWA-SV ADP data
@@ -1508,7 +1507,9 @@ class TBXFile(LDPFileBase):
             nFramesFile = (filesize - self.fh.tell()) // frame_size
             bits = 4
             nFramesPerObs = tbx.get_frames_per_obs(self.fh)
+            nstand = junkFrame.header.nstand
             nchan = tbx.get_channel_count(self.fh)
+            srate = fC
             firstFrameCount = tbx.get_first_frame_count(self.fh)
             
             # Pre-load the channel mapper
@@ -1516,7 +1517,7 @@ class TBXFile(LDPFileBase):
             
             # Check for contiguous frequency coverage
             chan_steps = np.diff(self.mapper)
-            channel_count = np.median(chan_steps)
+            channel_count = int(np.round(np.median(chan_steps)))
             if not all(chan_steps == channel_count):
                 bad_steps = np.where(chan_steps != channel_count)[0]
                 warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
@@ -2113,7 +2114,7 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
         ## have frames of different sizes depending on the mode
         if mode in (drspec, tbx, cor):
             try:
-                mfs = drspec.get_frame_size(fh)
+                mfs = mode.get_frame_size(fh)
             except:
                 mfs = 0
         else:
@@ -2161,7 +2162,7 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
         
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 data file")
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA data file")
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
