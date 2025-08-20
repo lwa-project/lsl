@@ -1509,8 +1509,23 @@ class TBXFile(LDPFileBase):
             nFramesPerObs = tbx.get_frames_per_obs(self.fh)
             nstand = junkFrame.header.nstand
             nchan = tbx.get_channel_count(self.fh)
-            srate = fC
             firstFrameCount = tbx.get_first_frame_count(self.fh)
+            
+            # Catch for "real" TBX data vs converted TBF data from LWA-SV
+            # This uses the reported time tag step to figure out the channel
+            # width since ADP at LWA-SV ran at a clock of 204.8 MHz vs. the
+            # 196 MHz of the post-upgrade NDP.  ADP data will have a step size
+            # of 7840 ticks @ fS vs NDP with 8192 ticks @ fS
+            time_tags = []
+            for i in range(100):
+                cFrame = tbx.read_frame(self.fh)
+                if cFrame.payload.timetag not in time_tags:
+                    time_tags.append(cFrame.payload.timetag)
+            self.fh.seek(-100*frame_size, 1)
+            time_tags.sort()
+            tt_steps = np.diff(time_tags)
+            tt_step = int(np.round(np.median(tt_steps)))
+            srate = fS / tt_step
             
             # Pre-load the channel mapper
             self.mapper = tbx.get_first_channel(self.fh, all_frames=True)
