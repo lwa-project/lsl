@@ -332,14 +332,14 @@ class Project(object):
             output += "SESSION_CRA      %i\n" % (ses.configuration_authority,)
         if ses.drx_beam != -1:
             output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
-        if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag is None else ses.spcMetatag)
+        if ses.spc_setup[0] != 0 and ses.spc_setup[1] != 0:
+            output += "SESSION_SPC      %i %i%s\n" % (ses.spc_setup[0], ses.spc_setup[1], '' if ses.spc_metatag is None else ses.spc_metatag)
         for component in ['ASP', 'NDP', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-            if ses.recordMIB[component] != -1:
-                output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
+            if ses.record_mib[component] != -1:
+                output += "SESSION_MRP_%s  %i\n" % (component, ses.record_mib[component])
         for component in ['ASP', 'NDP', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-            if ses.updateMIB[component] != -1:
-                output += "SESSION_MUP_%s  %i\n" % (component, ses.updateMIB[component])
+            if ses.update_mib[component] != -1:
+                output += "SESSION_MUP_%s  %i\n" % (component, ses.update_mib[component])
         if ses.include_mcssch_log:
             output += "SESSION_LOG_SCH  %i\n" % (ses.include_mcssch_log,)
         if ses.include_mcsexe_log:
@@ -1056,8 +1056,8 @@ class DRX(Observation):
             
         data_rate = DRXSize * 4 * sample_rate / 4096
         if self._parent is not None:
-            nchan, nwin = self._parent.spcSetup
-            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            nchan, nwin = self._parent.spc_setup
+            nprod = 4 if self._parent.spc_metatag in ('{Stokes=IQUV}',) else 2
             SPCSize = 76 + nchan*2*nprod*4
             try:
                 data_rate = SPCSize * sample_rate / (nchan*nwin)
@@ -1389,8 +1389,8 @@ class Stepped(Observation):
             
         data_rate = DRXSize * 4 * sample_rate / 4096
         if self._parent is not None:
-            nchan, nwin = self._parent.spcSetup
-            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            nchan, nwin = self._parent.spc_setup
+            nprod = 4 if self._parent.spc_metatag in ('{Stokes=IQUV}',) else 2
             SPCSize = 76 + nchan*2*nprod*4
             try:
                 data_rate = SPCSize * sample_rate / (nchan*nwin)
@@ -1790,11 +1790,11 @@ class Session(object):
         
         self.configuration_authority = 0
         self.drx_beam = -1
-        self.spcSetup = [0, 0]
-        self.spcMetatag = None
+        self.spc_setup = [0, 0]
+        self.spc_metatag = None
         
-        self.recordMIB = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        self.updateMIB = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.record_mib = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.update_mib = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         
         self.include_mcssch_log = False
         self.include_mcsexe_log = False
@@ -1828,7 +1828,7 @@ class Session(object):
     def spectrometer_channels(self):
         """Number of spectrometer channesl to output, 0 is disables."""
         
-        return self.spcSetup[0]
+        return self.spc_setup[0]
         
     @spectrometer_channels.setter
     def spectrometer_channels(self, value):
@@ -1837,13 +1837,13 @@ class Session(object):
         value = int(value)
         if value not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
             raise ValueError(f"Invalid DR spectrometer channel count '{value}'")
-        self.spcSetup[0] = value
+        self.spc_setup[0] = value
         
     @property
     def spectrometer_integration(self):
         """Number of FFT windows per spectrometer integration, 0 to disable."""
         
-        return self.spcSetup[1]
+        return self.spc_setup[1]
         
     @spectrometer_integration.setter
     def spectrometer_integration(self, value):
@@ -1853,13 +1853,13 @@ class Session(object):
         value = int(value)
         if value not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
             raise ValueError(f"Invalid DR spectrometer integration count '{value}'")
-        self.spcSetup[1] = value
+        self.spc_setup[1] = value
         
     @property
     def spectrometer_metatag(self):
         """Spectrometer polarization selection."""
         
-        return self.spcMetatag
+        return self.spc_metatag
         
     @spectrometer_metatag.setter
     def spectrometer_metatag(self, value):
@@ -1876,7 +1876,7 @@ class Session(object):
                          '{Stokes=XXYY}', '{Stokes=CRCI}', '{Stokes=XXCRCIYY}', 
                          '{Stokes=I}', '{Stokes=IV}', '{Stokes=IQUV}'):
             raise ValueError(f"Invalid DR spectrometer mode '{value}'")
-        self.spcMetatag = value
+        self.spc_metatag = value
         
     def set_mib_record_interval(self, component, interval):
         """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
@@ -1888,9 +1888,9 @@ class Session(object):
           * 0 = never record the MIB entries (the entries are still updated, however)
         """
         
-        if component not in self.recordMIB.keys():
+        if component not in self.record_mib.keys():
                raise KeyError(f"Unknown subsystem '{component}'")
-        self.recordMIB[component] = int(interval)
+        self.record_mib[component] = int(interval)
         
     def set_mib_update_interval(self, component, interval):
         """Set the update interval for one of the level-1 subsystems (ASP, DP_, etc.) to 
@@ -1902,9 +1902,9 @@ class Session(object):
          * 0 = request no updates to the MIB entries
         """
         
-        if component not in self.updateMIB.keys():
+        if component not in self.update_mib.keys():
                raise KeyError(f"Unknown subsystem '{component}'")
-        self.updateMIB[component] = int(interval)
+        self.update_mib[component] = int(interval)
         
     @property
     def data_return_method(self):
@@ -1950,28 +1950,28 @@ class Session(object):
             if verbose:
                 pid_print(f"Error: Invalid beam number '{self.drx_beam}'" )
             failures += 1
-        for key in list(self.recordMIB.keys()):
-            if self.recordMIB[key] < -1:
+        for key in list(self.record_mib.keys()):
+            if self.record_mib[key] < -1:
                 if verbose:
                     pid_print(f"Error: Invalid recording interval for '{key}' MIB entry '{self.recordMIB[key]}'")
                 failures += 1
-            if self.updateMIB[key] < -1:
+            if self.update_mib[key] < -1:
                 if verbose:
-                    pid_print(f"Error: Invalid update interval for '{key}' MIB entry '{self.updateMIB[key]}'")
+                    pid_print(f"Error: Invalid update interval for '{key}' MIB entry '{self.update_mib[key]}'")
                 failures += 1
                 
-        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
-            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+        if self.spc_setup[0] > 0 or self.spc_setup[1] > 0 or self.spc_metatag not in (None, ''):
+            if self.spc_setup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
                 if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer channel count '{self.spcSetup[0]}'")
+                    pid_print(f"Error: Invalid DR spectrometer channel count '{self.spc_setup[0]}'")
                 failures += 1
-            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+            if self.spc_setup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
                 if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer integration count '{self.spcSetup[1]}'")
+                    pid_print(f"Error: Invalid DR spectrometer integration count '{self.spc_setup[1]}'")
                 failures += 1
-            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+            if self.spc_metatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
                 if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer mode '{self.spcMetatag}'")
+                    pid_print(f"Error: Invalid DR spectrometer mode '{self.spc_metatag}'")
                 failures += 1
             if len(self.observations) > 0:
                 if self.observations[0].mode in ('TBT', 'TBS'):
@@ -2272,7 +2272,7 @@ def parse_sdf(filename, verbose=False):
                 continue
             if keyword[0:12] == 'SESSION_MUP_':
                 component = keyword[12:]
-                project.sessions[0].updateMIB[component] = int(value)
+                project.sessions[0].update_mib[component] = int(value)
                 continue
             if keyword == 'SESSION_LOG_SCH':
                 project.sessions[0].include_mcssch_log = bool(value)
@@ -2300,13 +2300,13 @@ def parse_sdf(filename, verbose=False):
                 else:
                     metatag = None
                     
-                project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
-                project.sessions[0].spcMetatag = metatag
-                # If the input field is '' the value of spcSetup is [].  This
+                project.sessions[0].spc_setup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
+                project.sessions[0].spc_metatag = metatag
+                # If the input field is '' the value of spc_setup is [].  This
                 # isn't good for the SDF render so reset [] to [0, 0]
-                if project.sessions[0].spcSetup == []:
-                    project.sessions[0].spcSetup = [0, 0]
-                    project.sessions[0].spcMetatag = None
+                if project.sessions[0].spc_setup == []:
+                    project.sessions[0].spc_setup = [0, 0]
+                    project.sessions[0].spc_metatag = None
                 continue
                 
             # Observation Info

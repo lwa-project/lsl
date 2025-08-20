@@ -55,10 +55,10 @@ def read_ses_file(filename):
     return {'version': bses.FORMAT_VERSION,
             'project_id': bses.PROJECT_ID.lstrip().rstrip(), 'session_id': bses.SESSION_ID, 
             'configuration_authority': bses.SESSION_CRA,
-            'drx_beam': bses.SESSION_DRX_BEAM, 'spcSetup': bses.SESSION_SPC, 
+            'drx_beam': bses.SESSION_DRX_BEAM, 'spc_setup': bses.SESSION_SPC, 
             'mjd': bses.SESSION_START_MJD, 'mpm': bses.SESSION_START_MPM, 'dur': bses.SESSION_DUR,
             'nobs': bses.SESSION_NOBS,
-            'recordMIB': record, 'updateMIB': update, 
+            'record_mib': record, 'update_mib': update, 
             'include_mcssch_log': bses.SESSION_LOG_SCH, 'include_mcsexe_log': bses.SESSION_LOG_EXE,
             'include_station_smib': bses.SESSION_INC_SMIB, 'include_station_design': bses.SESSION_INC_DES}
 
@@ -110,7 +110,7 @@ def read_obs_file(filename):
             
     output = {'version': bheader.FORMAT_VERSION,
               'project_id': bheader.PROJECT_ID.lstrip().rstrip(), 'session_id': bheader.SESSION_ID,
-              'drx_beam': bheader.SESSION_DRX_BEAM, 'spcSetup': bheader.SESSION_SPC,
+              'drx_beam': bheader.SESSION_DRX_BEAM, 'spc_setup': bheader.SESSION_SPC,
               'obs_id': bheader.OBS_ID,
               'mjd': bheader.OBS_START_MJD, 'mpm': bheader.OBS_START_MPM, 'dur': bheader.OBS_DUR,
               'mode': ObservingMode(bheader.OBS_MODE), 'beamdipole_mode': bheader.OBS_BDM, 
@@ -247,7 +247,10 @@ def get_station(tarname, apply_sdm=True):
         try:
             ti = tf.getmember('ssmif.dat')
         except KeyError:
-            return None
+            ## No SSMIF file in there, fall back to the hostname
+            hostname = get_mcs_hostname(tarname)
+            hostname = hostname.split('-')[0]
+            return getattr(stations, hostname, None)
         tf.extractall(path=tempDir, members=[ti,])
         
         # Read in the SSMIF

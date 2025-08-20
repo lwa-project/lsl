@@ -36,10 +36,6 @@ def main(args):
     aspConfigB = metabundle.get_asp_configuration_summary(inputTGZ, which='Beginning')
     aspConfigE = metabundle.get_asp_configuration_summary(inputTGZ, which='End')
     site = metabundle.get_station(inputTGZ)
-    if site is None:
-        hostname = metabundle.get_mcs_hostname(inputTGZ)
-        sta_name = hostname.split('-')[0]
-        site = getattr(stations, sta_name, None)
     observer = site.get_observer()
     
     nObs = len(project.sessions[0].observations)
@@ -70,7 +66,7 @@ def main(args):
     print(f" -> Last observation ends at {(max(tStart) + lastDur).strftime(_FORMAT_STRING)}")
     if project.sessions[0].observations[0].mode not in ('TBW', 'TBN'):
         drspec = 'No'
-        if project.sessions[0].spcSetup[0] != 0 and project.sessions[0].spcSetup[1] != 0:
+        if project.sessions[0].spc_setup[0] != 0 and project.sessions[0].spc_setup[1] != 0:
             drspec = 'Yes'
         drxBeam = project.sessions[0].drx_beam
         if drxBeam < 1:
@@ -80,7 +76,7 @@ def main(args):
         print(f" DRX Beam: {drxBeam}")
         print(f" DR Spectrometer used? {drspec}")
         if drspec == 'Yes':
-            print(f" -> {project.sessions[0].spcSetup[0]} channels, {project.sessions[0].spcSetup[1]} windows/integration")
+            print(f" -> {project.sessions[0].spc_setup[0]} channels, {project.sessions[0].spc_setup[1]} windows/integration")
     else:
         tbsCount = 0
         tbtCount = 0
