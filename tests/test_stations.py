@@ -227,7 +227,7 @@ class stations_tests(unittest.TestCase):
                 station[0].cable.response()
                 
             for filt in ('split', 'full', 'reduced', 'split@3MHz', 'full@3MHz'):
-                if station.name == 'LWA-NA' and filt == 'full@3MHz':
+                if station.name == 'LWANA' and filt == 'full@3MHz':
                     continue
                 with self.subTest(station=station.name, filter=filt):
                     station[0].arx.response(filt)
