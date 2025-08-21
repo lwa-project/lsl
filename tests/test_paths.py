@@ -24,8 +24,8 @@ class paths_tests(unittest.TestCase):
         astroFile = os.path.join(modPath, 'astro.py')
         self.assertTrue(os.path.exists(astroFile))
 
-        tbwFile = os.path.join(modPath, 'reader', 'tbw.py')
-        self.assertTrue(os.path.exists(tbwFile))
+        tbxFile = os.path.join(modPath, 'reader', 'tbx.py')
+        self.assertTrue(os.path.exists(tbxFile))
 
     def test_data_path(self):
         """Test the paths.data variable."""
