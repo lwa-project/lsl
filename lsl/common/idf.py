@@ -35,7 +35,7 @@ import copy
 import math
 import ephem
 from functools import total_ordering
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from astropy import units as astrounits
 from astropy.coordinates import Angle as AstroAngle

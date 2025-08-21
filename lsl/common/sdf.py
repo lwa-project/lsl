@@ -51,7 +51,7 @@ import ephem
 import weakref
 import warnings
 from functools import total_ordering
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from astropy import units as astrounits
 from astropy.coordinates import Angle as AstroAngle
