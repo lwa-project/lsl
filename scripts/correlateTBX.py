@@ -29,7 +29,7 @@ telemetry.track_script()
 
 def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['xx',], chunk_size=100):
     """
-    Given a lsl.reader.ldp.TBFFile instances and various parameters for the
+    Given a lsl.reader.ldp.TBXFile instances and various parameters for the
     cross-correlation, write cross-correlate the data and save it to a file.
     """
     
@@ -183,7 +183,7 @@ def main(args):
     antennas = station.antennas
     
     with LWADataFile(args.filename) as idf:
-        if not isinstance(idf, TBFFile):
+        if not isinstance(idf, TBXFile):
             raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBT or TBS file")
             
         jd = idf.get_info('start_time').jd
@@ -278,7 +278,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='cross-correlate data in a TBF file', 
+        description='cross-correlate data in a TBX file', 
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
     parser.add_argument('filename', type=str, 

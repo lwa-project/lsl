@@ -1953,7 +1953,7 @@ class Session(object):
         for key in list(self.record_mib.keys()):
             if self.record_mib[key] < -1:
                 if verbose:
-                    pid_print(f"Error: Invalid recording interval for '{key}' MIB entry '{self.recordMIB[key]}'")
+                    pid_print(f"Error: Invalid recording interval for '{key}' MIB entry '{self.record_mib[key]}'")
                 failures += 1
             if self.update_mib[key] < -1:
                 if verbose:
@@ -2268,7 +2268,7 @@ def parse_sdf(filename, verbose=False):
                 continue
             if keyword[0:12] == 'SESSION_MRP_':
                 component = keyword[12:]
-                project.sessions[0].recordMIB[component] = int(value)
+                project.sessions[0].record_mib[component] = int(value)
                 continue
             if keyword[0:12] == 'SESSION_MUP_':
                 component = keyword[12:]

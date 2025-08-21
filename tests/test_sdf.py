@@ -1041,11 +1041,11 @@ class sdf_tests(unittest.TestCase):
             for ints in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
                 for mode in (None, '', 'XXYY', 'IV', 'IQUV'):
                     ## Method 1
-                    project.sessions[0].spcSetup = [channels, ints]
+                    project.sessions[0].spc_setup = [channels, ints]
                     if mode in (None, ''):
-                        project.sessions[0].spcMetatag = mode
+                        project.sessions[0].spc_metatag = mode
                     else:
-                        project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+                        project.sessions[0].spc_metatag = '{Stokes=%s}' % mode
                     self.assertTrue(project.validate())
                     
                     ## Method 2
@@ -1055,23 +1055,23 @@ class sdf_tests(unittest.TestCase):
                         project.sessions[0].spectrometer_metatag = mode
                     else:
                         project.sessions[0].spectrometer_metatag = 'Stokes=%s' % mode
-                    self.assertEqual(project.sessions[0].spcSetup[0], channels)
-                    self.assertEqual(project.sessions[0].spcSetup[1], ints)
-                    self.assertEqual(project.sessions[0].spcMetatag, None if mode in (None, '') else '{Stokes=%s}' % mode)
+                    self.assertEqual(project.sessions[0].spc_setup[0], channels)
+                    self.assertEqual(project.sessions[0].spc_setup[1], ints)
+                    self.assertEqual(project.sessions[0].spc_metatag, None if mode in (None, '') else '{Stokes=%s}' % mode)
                     self.assertTrue(project.validate())
                     
         # Bad channel count
-        project.sessions[0].spcSetup = [31, 6144]
+        project.sessions[0].spc_setup = [31, 6144]
         self.assertFalse(project.validate())
         
         # Bad integration count
-        project.sessions[0].spcSetup = [32, 6145]
+        project.sessions[0].spc_setup = [32, 6145]
         self.assertFalse(project.validate())
         
         # Unsupported mode
         for mode in ('XX', 'XY', 'YX', 'YY', 'XXXYYXYY', 'I', 'Q', 'U', 'V'):
-            project.sessions[0].spcSetup = [32, 6144]
-            project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+            project.sessions[0].spc_setup = [32, 6144]
+            project.sessions[0].spc_metatag = '{Stokes=%s}' % mode
             self.assertFalse(project.validate())
             
     ### DRX - Beam/Dipole Mode ###
