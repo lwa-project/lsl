@@ -17,7 +17,7 @@ from lsl.reader.base import FrameTimestamp
 from lsl.common.data_access import download_file
 
 
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -28,8 +28,8 @@ if os.getenv('GITHUB_ACTIONS', None) is not None:
 
 _VDIF_URL = 'https://fornax.phys.unm.edu/lwa/data/eLWA_test_small_raw.tar.gz'
 
-tarFile = os.path.join(os.path.dirname(__file__), 'data', 'eLWA_test_raw.tar.gz')
-vdifFile = os.path.join(os.path.dirname(__file__), 'data', '19A-065_sb37228330_1_1_000.58761.982590671294.4.1.AC-01.0000.vdif')
+tarFile = os.path.join(os.path.dirname(__file__), 'data', 'extended', 'eLWA_test_raw.tar.gz')
+vdifFile = os.path.join(os.path.dirname(__file__), 'data', 'extended',  '19A-065_sb37228330_1_1_000.58761.982590671294.4.1.AC-01.0000.vdif')
 
 
 @unittest.skipUnless(run_extended_tests, "requires appropriate environment variable to be set")
@@ -41,6 +41,7 @@ class extended_reader_tests(unittest.TestCase):
         """Create the temporary file directory."""
         
         if not os.path.exists(tarFile):
+            os.makedirs(os.path.dirname(tarFile), exist_ok=True)
             download_file(_VDIF_URL, tarFile)
             subprocess.check_call(['tar', '-C', os.path.dirname(tarFile), '-xzf', tarFile])
             

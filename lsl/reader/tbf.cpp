@@ -29,6 +29,7 @@ typedef struct __attribute__((packed)) {
 
 typedef struct __attribute__((packed)) {
     int64_t timetag;
+    uint8_t bytes[6144];       // The maximum possible size
 } TBFPayload;
 
 
@@ -37,29 +38,35 @@ typedef struct __attribute__((packed)) {
     TBFPayload payload;
 } TBFFrame;
 
+/*
+  State variables to keep track of the last read_tbf_impl used
+*/
+
+static int cached_nstand = 256;
 
 PyObject *tbf_method = NULL;
-PyObject *tbf_size   = NULL;
-PyObject *tbf_dsize  = NULL;
+PyObject *tbf_size = NULL;
 
-
-template<typename T, NPY_TYPES N>
-PyObject *read_tbf(PyObject *self, PyObject *args) {
+template<int NSTAND, typename T, NPY_TYPES N>
+PyObject *read_tbf_impl(PyObject *self, PyObject *args) {
     PyObject *ph, *buffer, *output, *frame, *fHeader, *fPayload, *temp;
     PyArrayObject *data;
     int i, nstand;
-    unsigned char raw_data[6144];
     TBFFrame cFrame;
+    
+    static constexpr int frameSize = sizeof(TBFHeader)+8+12*NSTAND*2*1;
     
     if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
         PyErr_Format(PyExc_RuntimeError, "Invalid parameters");
         return NULL;
     }
     
-    // Read from the file - header + timestamp
+    // Read from the file - header + timestamp + NSTAND-sized buffer
     if( tbf_method == NULL ) {
         tbf_method = Py_BuildValue("s", "read");
-        tbf_size = Py_BuildValue("i", sizeof(cFrame));
+    }
+    if( tbf_size == NULL ) {
+        tbf_size = Py_BuildValue("i", frameSize);
     }
     buffer = PyObject_CallMethodObjArgs(ph, tbf_method, tbf_size, NULL);
     if( buffer == NULL ) {
@@ -69,12 +76,12 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
         }
         return NULL;
-    } else if( PyBytes_GET_SIZE(buffer) != sizeof(cFrame) ) {
+    } else if( PyBytes_GET_SIZE(buffer) != frameSize ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
         Py_XDECREF(buffer);
         return NULL;
     }
-    memcpy(&cFrame, PyBytes_AS_STRING(buffer), sizeof(cFrame));
+    memcpy(&cFrame, PyBytes_AS_STRING(buffer), frameSize);
     Py_XDECREF(buffer);
     
     // Determine the number of stands in the frame - default to 256 for
@@ -87,24 +94,24 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
         nstand = 256;
       }
     }
-    tbf_dsize = Py_BuildValue("i", 12*nstand*2*1);
     
-    // Read from the file - data
-    buffer = PyObject_CallMethodObjArgs(ph, tbf_method, tbf_dsize, NULL);
-    if( buffer == NULL ) {
-        if( PyObject_HasAttrString(ph, "read") ) {
-            PyErr_Format(PyExc_IOError, "An error occured while reading from the file");
-        } else {
-            PyErr_Format(PyExc_AttributeError, "Object does not have a read() method");
+    // If nstand is not what we expect, update the cache and retry with correct size
+    if( nstand != NSTAND ) {
+        cached_nstand = nstand; // Update for next time
+        Py_XDECREF(tbf_size);   // Update for next time
+        tbf_size = NULL;        // Force NULL since Py_XDECREF isn't guaranteed to change tbf_size
+        PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
+        
+        switch(nstand) {
+            case 64:  
+                return read_tbf_impl<64, T, N>(self, args);
+            case 256: 
+                return read_tbf_impl<256, T, N>(self, args);
+            default:
+                PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
+                return NULL;
         }
-        return NULL;
-    } else if( PyBytes_GET_SIZE(buffer) != 12*nstand*2*1 ) {
-        PyErr_Format(EOFError, "End of file encountered during filehandle read");
-        Py_XDECREF(buffer);
-        return NULL;
     }
-    memcpy(&raw_data, PyBytes_AS_STRING(buffer), 12*nstand*2*1);
-    Py_XDECREF(buffer);
     
     // Create the output data array
     npy_intp dims[3];
@@ -132,17 +139,17 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     const int8_t *fp;
     T *a;
     a = (T *) PyArray_DATA(data);
-    for(i=0; i<12*nstand*2*1; i+=4) {
-        fp = tbfLUT[ raw_data[i] ];
+    for(i=0; i<12*NSTAND*2*1; i+=4) {
+        fp = tbfLUT[ cFrame.payload.bytes[i] ];
         *(a + 2*i + 0) = fp[0];
         *(a + 2*i + 1) = fp[1];
-        fp = tbfLUT[ raw_data[i+1] ];
+        fp = tbfLUT[ cFrame.payload.bytes[i+1] ];
         *(a + 2*i + 2) = fp[0];
         *(a + 2*i + 3) = fp[1];
-        fp = tbfLUT[ raw_data[i+2] ];
+        fp = tbfLUT[ cFrame.payload.bytes[i+2] ];
         *(a + 2*i + 4) = fp[0];
         *(a + 2*i + 5) = fp[1];
-        fp = tbfLUT[ raw_data[i+3] ];
+        fp = tbfLUT[ cFrame.payload.bytes[i+3] ];
         *(a + 2*i + 6) = fp[0];
         *(a + 2*i + 7) = fp[1];
     }
@@ -151,9 +158,8 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     
     // Validate
     if( !validSync5C(cFrame.header.syncWord) ) {
-        buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(cFrame)-12*nstand*2*1, 1);
+        buffer = PyObject_CallMethod(ph, "seek", "ii", -frameSize, 1);
         PyErr_Format(SyncError, "Mark 5C sync word differs from expected");
-        Py_XDECREF(buffer);
         Py_XDECREF(data);
         return NULL;
     }
@@ -201,6 +207,20 @@ PyObject *read_tbf(PyObject *self, PyObject *args) {
     Py_XDECREF(data);
     
     return output;
+}
+
+
+template<typename T, NPY_TYPES N>
+PyObject *read_tbf(PyObject *self, PyObject *args) {
+    // Try fast path first with cached nstand
+    switch(cached_nstand) {
+        case 64:  
+            return read_tbf_impl<64, T, N>(self, args);
+        case 256: 
+            return read_tbf_impl<256, T, N>(self, args);
+        default:
+            return read_tbf_impl<256, T, N>(self, args);
+    }
 }
 
 

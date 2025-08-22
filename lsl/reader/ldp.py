@@ -7,6 +7,7 @@ Data format objects included are:
   * TBWFile
   * TBNFile
   * DRXFile
+  * DRX8File
   * DRSpecFile
   * TBFFile
   * CORFILE
@@ -15,11 +16,11 @@ Also included are the LWA1DataFile, LWASVDataFile, LWANADataFile, and LWADataFil
 functions that take a filename and try to determine the correct data format
 object to use.
 
-.. versionchanged:: 2.1.6
-    Added support for LWA-NA NDP data
-
 .. versionchanged:: 1.2.0
     Added support for LWA-SV ADP data
+    
+.. versionchanged:: 3.0.4
+    Added support for DRX8 data
 """
 
 import os
@@ -34,8 +35,8 @@ from collections import deque, defaultdict
 from lsl.common.dp import fS
 from lsl.common.adp import fC
 from lsl.common.ndp import fC as ndp_fC
-from lsl.reader import tbw, tbn, drx, drspec, tbf, cor, errors
-from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, TBFFrameBuffer, CORFrameBuffer
+from lsl.reader import tbw, tbn, drx, drx8, drspec, tbf, cor, errors
+from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, DRX8FrameBuffer, TBFFrameBuffer, CORFrameBuffer
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp, CI8
 from lsl.common.color import colorfy
@@ -47,9 +48,9 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.5'
-__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRSpecFile', 'TBFFile', 'LWA1DataFile', 
-           'LWASVDataFile', 'LWANADataFile', 'LWADataFile']
+__version__ = '0.6'
+__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRX8File', 'DRSpecFile', 'TBFFile',
+           'LWA1DataFile', 'LWASVDataFile', 'LWANADataFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):
@@ -924,6 +925,8 @@ class DRXFile(LDPFileBase):
             try:
                 junkFrame = drx.read_frame(self.fh)
                 try:
+                    # ... this really is DRX data
+                    assert(junkFrame.is_drx)
                     # ... that has a valid decimation
                     srate = junkFrame.sample_rate
                     # ... that it comes after 1980 (I don't know why this happens)
@@ -936,6 +939,30 @@ class DRXFile(LDPFileBase):
                 
         self.fh.seek(-drx.FRAME_SIZE, 1)
         
+        # Sometimes we get a file that has a large gap at the beginning for
+        # reasons unknown.  If this seems to have happened jump over the gap
+        # and issue a warning to the user.
+        for checkpoint_size in (1, 2, 4, 8, 16):
+            try:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+                
+            if filesize > checkpoint_size*1024**2:
+                foffset = 0
+                toffset = 0
+                with FilePositionSaver(self.fh):
+                    self.fh.seek(((checkpoint_size*1024**2-1)//drx.FRAME_SIZE+1)*drx.FRAME_SIZE, 1)
+                    newFrame = drx.read_frame(self.fh)
+                    toffset = newFrame.time - junkFrame.time
+                    if toffset > 300:
+                        foffset = self.fh.tell() - drx.FRAME_SIZE
+                        
+                if foffset > 0:
+                    warnings.warn(colorfy("{{%%yellow Large (%.1f hr) gap at the beginning, skipping in %i B}}" % (toffset/3600, foffset)), RuntimeWarning)
+                    self.fh.seek(foffset, 0)
+                    break
+                    
         # Line up the time tags for the various tunings/polarizations
         ids = []
         timetags = []
@@ -1031,7 +1058,8 @@ class DRXFile(LDPFileBase):
         
         # Iterate on the offsets until we reach the right point in the file.  This
         # is needed to deal with files that start with only one tuning and/or a 
-        # different sample rate.  
+        # different sample rate.
+        nattempt = 0
         diffs_used = deque([], 25)
         while True:
             junkFrame = drx.read_frame(self.fh)
@@ -1060,7 +1088,9 @@ class DRXFile(LDPFileBase):
                 break
             try:
                 self.fh.seek(cOffset*drx.FRAME_SIZE, 1)
+                nattempt += 1
                 assert(len(set(diffs_used)) > len(diffs_used)//4)
+                assert(nattempt < 1000)
             except (IOError, AssertionError):
                 warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
 
@@ -1300,6 +1330,465 @@ class DRXFile(LDPFileBase):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
                         cFrame = drx.read_frame(self.fh, verbose=False)
+                    except errors.EOFError:
+                        break
+                    except errors.SyncError:
+                        continue
+                        
+                    b,t,p = cFrame.id
+                    aStand = 2*(t-1) + p
+                    
+                    data[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = np.abs( cFrame.payload.data )
+                    count[aStand] +=  1
+                    
+        # Statistics
+        rv = norm()
+        frac = rv.cdf(sigma) - rv.cdf(-sigma)
+        index = int(round(data.shape[1]*frac))
+        if index == data.shape[1]:
+            index = data.shape[1] - 1
+        
+        levels = [0, 0, 0, 0]
+        for i in range(4):
+            data2 = sorted(data[i,:])
+            levels[i] = data2[index]
+            
+        return levels
+
+
+class DRX8File(LDPFileBase):
+    """
+    Class to make it easy to interface with a DRX8 file.  DRX8 data consist of a
+    time series of complex data a variable sample rate of up to 19.6 MHz from
+    the beamformer.
+    
+    Methods defined for this class are:
+      * get_info - Get information about the file's contents
+      * get_remaining_frame_count - Get the number of frames remaining in the file
+      * offset - Offset a specified number of seconds into the file
+      * read_frame - Read and return a single `lsl.reader.drx.Frame` instance
+      * read - Read a chunk of data in and return it as a numpy array
+      * estimate_levels - Estimate the n-sigma level for the absolute value of the voltages 
+    """
+    
+    def _ready_file(self):
+        """
+        Given an open file handle, find the start of valid DRX8 data.  This function:
+        1) aligns on the first valid Mark 5C frame and
+        2) skips over frames with a decimation of zero. 
+        3) aligns the tuning/polarization timetags
+        """
+        
+        # Align on the start of a Mark5C packet...
+        while True:
+            try:
+                junkFrame = drx8.read_frame(self.fh)
+                try:
+                    # ... this really is DRX8 data
+                    assert(junkFrame.is_drx8)
+                    # ... that has a valid decimation
+                    srate = junkFrame.sample_rate
+                    # ... that it comes after 1980 (I don't know why this happens)
+                    assert(junkFrame.payload.timetag > 61849368000000000)
+                    break
+                except (ZeroDivisionError, AssertionError):
+                    pass
+            except errors.SyncError:
+                self.fh.seek(-drx8.FRAME_SIZE+1, 1)
+                
+        self.fh.seek(-drx8.FRAME_SIZE, 1)
+        
+        # Sometimes we get a file that has a large gap at the beginning for
+        # reasons unknown.  If this seems to have happened jump over the gap
+        # and issue a warning to the user.
+        for checkpoint_size in (1, 2, 4, 8, 16):
+            try:
+                filesize = os.fstat(self.fh.fileno()).st_size
+            except AttributeError:
+                filesize = self.fh.size
+                
+            if filesize > checkpoint_size*1024**2:
+                foffset = 0
+                toffset = 0
+                with FilePositionSaver(self.fh):
+                    self.fh.seek(((checkpoint_size*1024**2-1)//drx8.FRAME_SIZE+1)*drx8.FRAME_SIZE, 1)
+                    newFrame = drx8.read_frame(self.fh)
+                    toffset = newFrame.time - junkFrame.time
+                    if toffset > 300:
+                        foffset = self.fh.tell() - drx8.FRAME_SIZE
+                        
+                if foffset > 0:
+                    warnings.warn(colorfy("{{%%yellow Large (%.1f hr) gap at the beginning, skipping in %i B}}" % (toffset/3600, foffset)), RuntimeWarning)
+                    self.fh.seek(foffset, 0)
+                    break
+                    
+        # Line up the time tags for the various tunings/polarizations
+        ids = []
+        timetags = []
+        for i in range(32):
+            junkFrame = drx8.read_frame(self.fh)
+            b,t,p = junkFrame.id
+            id = (t,p)
+            if id not in ids:
+                ids.append(id)
+            timetags.append(junkFrame.payload.timetag)
+        self.fh.seek(-32*drx8.FRAME_SIZE, 1)
+        
+        return True
+        
+    def _describe_file(self):
+        """
+        Describe the DRX8 file.
+        """
+        
+        try:
+            filesize = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            filesize = self.fh.size
+        nFramesFile = (filesize - self.fh.tell()) // drx8.FRAME_SIZE
+        tunepols = drx8.get_frames_per_obs(self.fh)
+        tunepol = tunepols[0] + tunepols[1] + tunepols[2] + tunepols[3]
+        beampols = tunepol
+        bits = 8
+        
+        with FilePositionSaver(self.fh):
+            beams = []
+            tunes = []
+            pols = []
+            tuning1 = 0.0
+            tuning2 = 0.0
+            for i in range(32):
+                try:
+                    junkFrame0 = self.read_frame()
+                    junkFrame1 = self.read_frame()
+                except (errors.SyncError, errors.EOFError):
+                    break
+                for junkFrame in (junkFrame0, junkFrame1):
+                    b,t,p = junkFrame.id
+                    srate = junkFrame.sample_rate
+                    if b not in beams:
+                        beams.append(b)
+                    if t not in tunes:
+                        tunes.append(t)
+                    if p not in pols:
+                        pols.append(p)
+                        
+                    if t == 1:
+                        tuning1 = junkFrame.central_freq
+                    else:
+                        tuning2 = junkFrame.central_freq
+                        
+                if i == 0:
+                    start = junkFrame0.time
+                    startRaw = junkFrame0.payload.timetag - junkFrame0.header.time_offset
+                    
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': drx8.FRAME_SIZE,
+                            'nbeampol': beampols, 'beam': b, 
+                            'sample_rate': srate, 'data_bits': bits, 
+                            'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1, 'freq2': tuning2}
+                        
+        # Initialize the buffer as part of the description process
+        self.buffer = DRX8FrameBuffer(beams=beams, tunes=tunes, pols=pols, nsegments=LDP_CONFIG.get('drx_buffer_size'))
+        
+    def offset(self, offset):
+        """
+        Offset a specified number of seconds in an open DRX8 file.  This function 
+        returns the exact offset time.
+        """
+        
+        # Figure out how far we need to offset inside the file
+        junkFrame = drx8.read_frame(self.fh)
+        self.fh.seek(-drx8.FRAME_SIZE, 1)
+        
+        # Get the initial time, sample rate, and beampols
+        t0 = junkFrame.time
+        if getattr(self, "_timetag", None) is not None:
+            curr = self.buffer.peek(require_filled=False)
+            if curr is not None:
+                t0 = FrameTimestamp.from_dp_timetag(curr, junkFrame.header.time_offset)
+        sample_rate = junkFrame.sample_rate
+        beampols = drx8.get_frames_per_obs(self.fh)
+        beampols = sum(beampols)
+        
+        # Offset in frames for beampols beam/tuning/pol. sets
+        ioffset = int(offset * sample_rate / 4096 * beampols)
+        ioffset = int(1.0 * ioffset / beampols) * beampols
+        self.fh.seek(ioffset*drx8.FRAME_SIZE, 1)
+        
+        # Iterate on the offsets until we reach the right point in the file.  This
+        # is needed to deal with files that start with only one tuning and/or a 
+        # different sample rate. 
+        nattempt = 0
+        diffs_used = deque([], 25)
+        while True:
+            junkFrame = drx8.read_frame(self.fh)
+            self.fh.seek(-drx8.FRAME_SIZE, 1)
+            
+            ## Figure out where in the file we are and what the current tuning/sample 
+            ## rate is
+            t1 = junkFrame.time
+            sample_rate = junkFrame.sample_rate
+            beampols = drx8.get_frames_per_obs(self.fh)
+            beampols = sum(beampols)
+            
+            ## See how far off the current frame is from the target
+            tDiff = (t1 - t0) - offset
+            diffs_used.append(tDiff)
+            
+            ## Half that to come up with a new seek parameter
+            tCorr   = -tDiff / 2.0
+            cOffset = int(tCorr * sample_rate / 4096 * beampols)
+            cOffset = int(1.0 * cOffset / beampols) * beampols
+            ioffset += cOffset
+            
+            ## If the offset is zero, we are done.  Otherwise, apply the offset
+            ## and check the location in the file again/
+            if cOffset == 0:
+                break
+            try:
+                self.fh.seek(cOffset*drx8.FRAME_SIZE, 1)
+                nattempt += 1
+                assert(len(set(diffs_used)) > len(diffs_used)//4)
+                assert(nattempt < 1000)
+            except (IOError, AssertionError):
+                warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
+
+                break
+                
+        # Update the file metadata
+        self._describe_file()
+        
+        # Reset the buffer
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
+            
+        # Zero out the time tag checker
+        self._timetag = None
+        
+        return t1 - t0
+        
+    def read_frame(self, return_ci8=False):
+        """
+        Read and return a single `lsl.reader.drx8.Frame` instance.  If
+        `return_ci8` is True then the frame will contain `lsl.reader.base.CI8`
+        data instead of numpy.complex64 data.
+        """
+        
+        # Reset the buffer
+        if hasattr(self, "buffer"):
+            self.buffer.reset()
+            
+        # Zero out the time tag checker
+        self._timetagSkip = None
+        self._timetag = None
+        
+        drx8_rf = drx8.read_frame_ci8 if return_ci8 else drx8.read_frame
+        return drx8_rf(self.fh)
+        
+    def read(self, duration, time_in_samples=False, return_ci8=False):
+        """
+        Given an open DRX8 file and an amount of data to read in in seconds, read 
+        in the data and return a three-element tuple of the actual duration read 
+        in, the time for the first sample, and the data as numpy 
+        array.
+        
+        The time tag is returned as seconds since the UNIX epoch as a 
+        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
+        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        `time_in_samples' keyword is set.
+        
+        If `return_ci8` is True then the data are returned will contain 
+        `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
+        dimensions are input by samples.
+        
+        ..note::
+            This function always returns an array with the first dimension
+            holding four elements.  These elements contain, in order:
+             * Tuning 1, polarization X
+             * Tuning 1, polarization Y
+             * Tuning 2, polarization X
+             * Tuning 2, polarization Y
+        """
+        
+        # Make sure there is file left to read
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
+            try:
+                if self.buffer.is_empty():
+                    raise errors.EOFError()
+            except AttributeError:
+                raise errors.EOFError()
+                
+        # Covert the sample rate to an expected timetag skip
+        if getattr(self, "_timetagSkip", None) is None:
+            self._timetagSkip = int(4096 / self.description['sample_rate'] * fS)
+            
+        # Setup the read_frame version to use
+        drx8_rf = drx8.read_frame_ci8 if return_ci8 else drx8.read_frame
+        
+        # Setup the counter variables:  frame count and time tag count
+        if getattr(self, "_timetag", None) is None:
+            self._timetag = {0:0, 1:0, 2:0, 3:0}
+            
+        # Find out how many frames to read in
+        frame_count = int(round(1.0 * duration * self.description['sample_rate'] / 4096))
+        frame_count = frame_count if frame_count else 1
+        
+        # Setup the output arrays
+        setTime = None
+        if return_ci8:
+            data = np.zeros((4,frame_count*4096), dtype=CI8)
+            data_view = data.view(np.int16)
+        else:
+            data = np.zeros((4,frame_count*4096), dtype=np.complex64)
+            data_view = data.view(np.float64)
+            
+        # Go!
+        nFrameSets = 0
+        eofFound = False
+        count = {0:0, 1:0, 2:0, 3:0}
+        while True:
+            if eofFound or nFrameSets == frame_count:
+                break
+                
+            if not self.buffer.overfilled:
+                cFrames = deque()
+                for i in range(self.description['nbeampol']):
+                    try:
+                        cFrames.append( drx8_rf(self.fh, verbose=False) )
+                    except errors.EOFError:
+                        eofFound = True
+                        self.buffer.append(cFrames)
+                        cFrames = []
+                        break
+                    except errors.SyncError:
+                        continue
+                self.buffer.append(cFrames)
+                
+            cTimetag = self.buffer.peek()
+            if cTimetag is None:
+                # Continue adding frames if nothing comes out.
+                continue
+            else:
+                # Otherwise, make sure we are on track
+                aStand = 0
+                if self._timetag[aStand] == 0:
+                    pass
+                elif cTimetag != self._timetag[aStand]+self._timetagSkip:
+                    missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
+                    if int(missing) == missing and missing < LDP_CONFIG.get('drx_autofill_size'):
+                        ## This is kind of black magic down here
+                        for m in range(int(missing)):
+                            m = self._timetag[aStand] + self._timetagSkip*(m+1)
+                            try:
+                                baseframe = copy.deepcopy(cFrames[0])
+                            except NameError:
+                                baseframe = copy.deepcopy(self.buffer.buffer[cTimetag][0])
+                            baseframe.payload.timetag = m
+                            baseframe.payload._data *= 0
+                            self.buffer.append(baseframe)
+            cFrames = self.buffer.get()
+            
+            # If something comes out, add it to the data array
+            for cFrame in cFrames:
+                b,t,p = cFrame.id
+                aStand = 2*(t-1) + p
+                cTimetag = cFrame.payload.timetag
+                if self._timetag[aStand] == 0:
+                    self._timetag[aStand] = cTimetag - self._timetagSkip
+                if cTimetag != self._timetag[aStand]+self._timetagSkip:
+                    actStep = cTimetag - self._timetag[aStand]
+                    if self.ignore_timetag_errors:
+                        warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
+                    else:
+                        raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
+                        
+                if setTime is None:
+                    if time_in_samples:
+                        setTime = cFrame.payload.timetag - cFrame.header.time_offset
+                    else:
+                        setTime = cFrame.time
+                        
+                data_view[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data.view(data_view.dtype)
+                count[aStand] +=  1
+                self._timetag[aStand] = cTimetag
+            nFrameSets += 1
+            
+        # If we've hit the end of the file and haven't read in enough frames, 
+        # flush the buffer
+        if eofFound and nFrameSets != frame_count:
+            for cFrames in self.buffer.flush():
+                for cFrame in cFrames:
+                    b,t,p = cFrame.id
+                    aStand = 2*(t-1) + p
+                    cTimetag = cFrame.payload.timetag
+                    if self._timetag[aStand] == 0:
+                        self._timetag[aStand] = cTimetag - self._timetagSkip
+                    if cTimetag != self._timetag[aStand]+self._timetagSkip:
+                        actStep = cTimetag - self._timetag[aStand]
+                        if self.ignore_timetag_errors:
+                            warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
+                        else:
+                            raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
+                            
+                    if setTime is None:
+                        if time_in_samples:
+                            setTime = cFrame.payload.timetag - cFrame.header.time_offset
+                        else:
+                            setTime = cFrame.time
+                            
+                    data_view[aStand, count[aStand]*4096:(count[aStand]+1)*4096] = cFrame.payload.data.view(data_view.dtype)
+                    count[aStand] +=  1
+                    self._timetag[aStand] = cTimetag
+                nFrameSets += 1
+                
+                if nFrameSets == frame_count:
+                    break
+                    
+        # Adjust the duration to account for all of the things that could 
+        # have gone wrong while reading the data
+        duration = nFrameSets * 4096 / self.description['sample_rate']
+            
+        return duration, setTime, data
+        
+    def estimate_levels(self, nframe=100, sigma=5.0):
+        """
+        Estimate the n-sigma level for the absolute value of the voltages.  
+        Returns a list with indicies corresponding to:
+         0)  Tuning 1, X pol.
+         1)  Tuning 1, Y pol.
+         2)  Tuning 2, X pol.
+         3)  Tuning 2, Y pol.
+        
+        ..note::
+            The returned list always has four items, regardless of whether 
+            or not the input DRX8 file has one or two tunings.
+        """
+        
+        # Make sure there is file left to read
+        try:
+            curr_size = os.fstat(self.fh.fileno()).st_size
+        except AttributeError:
+            curr_size = self.fh.size
+        if self.fh.tell() == curr_size:
+            try:
+                if self.buffer.is_empty():
+                    raise errors.EOFError()
+            except AttributeError:
+                raise errors.EOFError()
+                
+        # Sample the data
+        with FilePositionSaver(self.fh):
+            count = {0:0, 1:0, 2:0, 3:0}
+            data = np.zeros((4, nframe*4096))
+            for i in range(nframe):
+                for j in range(self.description['nbeampol']):
+                    # Read in the next frame and anticipate any problems that could occur
+                    try:
+                        cFrame = drx8.read_frame(self.fh, verbose=False)
                     except errors.EOFError:
                         break
                     except errors.SyncError:
@@ -2570,7 +3059,11 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             is_splitfile = True
             
     # Read a bit of data to try to find the right type
-    for mode in (drx, tbf, cor, drspec):
+    ## Set if we find a valid frame marker
+    foundMatch = False
+    ## Set if we can read more than one valid successfully
+    foundMode = False
+    for mode in (drx, drx8, tbf, cor, drspec):
         ## Set if we find a valid frame marker
         foundMatch = False
         ## Set if we can read more than one valid successfully
@@ -2613,9 +3106,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                 for i in range(2):
                     junkFrame = mode.read_frame(fh)
                 foundMode = True
-            except errors.EOFError:
-                break
-            except errors.SyncError:
+            except (errors.EOFError, errors.SyncError):
                 ### Reset for the next mode...
                 fh.seek(0)
         else:
@@ -2627,9 +3118,9 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             break
             
     # There is an ambiguity that can arise for TBF data such that it *looks* 
-    # like DRX.  If the identified mode is DRX, skip halfway into the file and 
-    # verify that it is still DRX.
-    if mode in (drx, tbn):
+    # like DRX/DRX8.  If the identified mode is DRX/DRX8, skip halfway into
+    # the file and verify that it is still DRX/DRX8.
+    if mode in (drx, drx8, tbn):
         ## Sort out the frame size
         omfs = mode.FRAME_SIZE
         
@@ -2641,7 +3132,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         fh.seek(nFrames//2*omfs)
         
         ## Read a bit of data to try to find the right type
-        for mode in (drx, tbf):
+        for mode in (drx, drx8, tbf):
             ### Set if we find a valid frame marker
             foundMatch = False
             ### Set if we can read more than one valid successfully
@@ -2675,7 +3166,7 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                     for i in range(4):
                         junkFrame = mode.read_frame(fh)
                     foundMode = True
-                except errors.SyncError:
+                except (errors.SyncError, errors.EOFError):
                     #### Reset for the next mode...
                     fh.seek(nFrames//2*omfs)
             else:
@@ -2700,6 +3191,10 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         ldpInstance = DRXFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
+    elif mode == drx8:
+        ldpInstance = DRX8File(filename=filename, fh=fh,
+                               ignore_timetag_errors=ignore_timetag_errors,
+                               buffering=buffering)
     elif mode == tbf:
         ldpInstance = TBFFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
@@ -2758,7 +3253,7 @@ def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-
             
     # Failed?
     if not found:
-        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 or LWA-SV data file")
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1, LWA-SV, or LWA-NA data file")
         
     return ldpInstance
 

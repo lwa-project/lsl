@@ -19,6 +19,7 @@ This package contains a collection of tools for reading, format shifting, and an
 REQUIREMENTS
 ------------
  * python >= 3.8
+ * C++ compiler with at least C++11 support
  * fftw3 >= 3.2 (single precision version)
  * gsl >= 2.4
  * gdbm >= 1.8

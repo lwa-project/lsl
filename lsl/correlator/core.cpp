@@ -759,6 +759,8 @@ void compute_xengine_two(long nStand,
     // Setup
     Py_BEGIN_ALLOW_THREADS
     
+    constexpr int scale = std::is_same<InType, int8_t>::value ? 2 : 1;
+    
     // Mapper for baseline number to stand 1, stand 2
     long s1, s2, mapper[nBL][2];
     long k = 0;
@@ -790,7 +792,7 @@ void compute_xengine_two(long nStand,
             }
             
             for(c=0; c<nChan; c++) {
-                blas_dotc_sub(nFFT, (data2 + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (data1 + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                blas_dotc_sub(nFFT, (data2 + scale*mapper[bl][1]*nChan*nFFT + scale*c*nFFT), 1, (data1 + scale*mapper[bl][0]*nChan*nFFT + scale*c*nFFT), 1, &tempVis);
                 *(dataA + bl*nChan + c) = tempVis / (float) nActVis;
             }
         }
@@ -813,6 +815,8 @@ void compute_xengine_three(long nStand,
                            OutType* dataA) {
     // Setup
     Py_BEGIN_ALLOW_THREADS
+    
+    constexpr int scale = std::is_same<InType, int8_t>::value ? 2 : 1;
     
     // Mapper for baseline number to stand 1, stand 2
     long s1, s2, mapper[nBL][2];
@@ -852,19 +856,19 @@ void compute_xengine_three(long nStand,
             
             for(c=0; c<nChan; c++) {
                 // XX
-                blas_dotc_sub(nFFT, (dataX + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataX + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                blas_dotc_sub(nFFT, (dataX + scale*mapper[bl][1]*nChan*nFFT + scale*c*nFFT), 1, (dataX + scale*mapper[bl][0]*nChan*nFFT + scale*c*nFFT), 1, &tempVis);
                 *(dataA + 0*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureX;
                 
                 // XY
-                blas_dotc_sub(nFFT, (dataY + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataX + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                blas_dotc_sub(nFFT, (dataY + scale*mapper[bl][1]*nChan*nFFT + scale*c*nFFT), 1, (dataX + scale*mapper[bl][0]*nChan*nFFT + scale*c*nFFT), 1, &tempVis);
                 *(dataA + 1*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross0;
                 
                 // YX
-                blas_dotc_sub(nFFT, (dataX + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataY + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                blas_dotc_sub(nFFT, (dataX + scale*mapper[bl][1]*nChan*nFFT + scale*c*nFFT), 1, (dataY + scale*mapper[bl][0]*nChan*nFFT + scale*c*nFFT), 1, &tempVis);
                 *(dataA + 2*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisCross1;
                 
                 // YY
-                blas_dotc_sub(nFFT, (dataY + mapper[bl][1]*nChan*nFFT + c*nFFT), 1, (dataY + mapper[bl][0]*nChan*nFFT + c*nFFT), 1, &tempVis);
+                blas_dotc_sub(nFFT, (dataY + scale*mapper[bl][1]*nChan*nFFT + scale*c*nFFT), 1, (dataY + scale*mapper[bl][0]*nChan*nFFT + scale*c*nFFT), 1, &tempVis);
                 *(dataA + 3*nBL*nChan + bl*nChan + c) = tempVis / (float) nActVisPureY;
             }
         }
@@ -888,10 +892,10 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
     // Bring the data into C and make it usable
     data1 = (PyArrayObject *) PyArray_ContiguousFromObject(signals1, 
                                                         PyArray_TYPE((PyArrayObject *) signals1), 
-                                                        3, 3);
+                                                        3, 4);
     data2 = (PyArrayObject *) PyArray_ContiguousFromObject(signals2, 
                                                         PyArray_TYPE((PyArrayObject *) signals1), 
-                                                        3, 3);
+                                                        3, 4);
     valid1 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid1, NPY_UINT8, 2, 2);
     valid2 = (PyArrayObject *) PyArray_ContiguousFromObject(sigValid2, NPY_UINT8, 2, 2);
     if( data1 == NULL ) {
@@ -935,7 +939,8 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
                                       (unsigned char *) PyArray_DATA(valid2), \
                                       (Complex32 *) PyArray_DATA(vis))
     
-    switch( PyArray_TYPE(data1) ){
+    switch( PyArray_LSL_TYPE(data1, 3) ){
+        case( LSL_CI8        ): LAUNCH_XENGINE_TWO(int8_t); break;
         case( NPY_COMPLEX64  ): LAUNCH_XENGINE_TWO(Complex32); break;
         case( NPY_COMPLEX128 ): LAUNCH_XENGINE_TWO(Complex64); break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
@@ -999,10 +1004,10 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
     // Bring the data into C and make it usable
     dataX = (PyArrayObject *) PyArray_ContiguousFromObject(signalsX, 
                                                         PyArray_TYPE((PyArrayObject *) signalsX), 
-                                                        3, 3);
+                                                        3, 4);
     dataY = (PyArrayObject *) PyArray_ContiguousFromObject(signalsY, 
                                                         PyArray_TYPE((PyArrayObject *) signalsX), 
-                                                        3, 3);
+                                                        3, 4);
     validX = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidX, NPY_UINT8, 2, 2);
     validY = (PyArrayObject *) PyArray_ContiguousFromObject(sigValidY, NPY_UINT8, 2, 2);
     if( dataX == NULL ) {
@@ -1047,7 +1052,8 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
                                         (unsigned char *) PyArray_DATA(validY), \
                                         (Complex32 *) PyArray_DATA(vis))
     
-    switch( PyArray_TYPE(dataX) ){
+    switch( PyArray_LSL_TYPE(dataX, 3) ){
+        case( LSL_CI8        ): LAUNCH_XENGINE_THREE(int8_t); break;
         case( NPY_COMPLEX64  ): LAUNCH_XENGINE_THREE(Complex32); break;
         case( NPY_COMPLEX128 ): LAUNCH_XENGINE_THREE(Complex64); break;
         default: PyErr_Format(PyExc_RuntimeError, "Unsupport input data type"); goto fail;
@@ -1151,9 +1157,16 @@ static int correlator_exec(PyObject *module) {
     if( pModule != NULL ) {
         PyObject* pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
-            char filename[256];
-            sprintf(filename, "%s/fftwf_wisdom.txt", PyString_AsString(pDataPath));
-            read_wisdom(filename, module);
+            char* pathname = PyString_AsString(pDataPath);
+            char* filename = (char*) malloc(strlen(pathname)+strlen("/fftwf_wisdom.txt")+1);
+            if( filename != NULL ) {
+                strcpy(filename, pathname);
+                strcat(filename, "/fftwf_wisdom.txt");
+                
+                read_wisdom(filename, module);
+                
+                free(filename);
+            }
         }
         Py_XDECREF(pDataPath);
     } else {

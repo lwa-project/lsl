@@ -1,7 +1,24 @@
+3.0.7:
+ * Updated ldp.DRXFile and DRX8File to check for large (>5 minute) gaps at the beginning of the file
+ * Add functionality for converting Stokes VisibilityDataSets into the Circular Polarization basis
+
+3.0.6:
+ * Updated to IGRF14
+
+3.0.5:
+ * Fixed DRX8 CI8 support
+ * Re-enabled DRX8 file detection for lsl.reader.ldp.LWANADataFile
+ * Updated drxSpectra.py to work with DRX8 files as well
+
 3.0.4:
  * Added support for OVRO-LWA in IDFs
  * Reduced the number of "Cannot download file ..." warning when importing lsl
  * Cleaned up uniform and Briggs weighting in the lsl.imaging.utils.ImgWPlus class
+ * Added missing DRX8 methods to lsl.reader.buffer and lsl.reader.ldp
+ * Updated lsl.correlator._core.XEngine[23] to work with CI8 data
+ * Moved drxSpectra, tbfSpectra, and correlateTBF over to use CI8 loading by default
+ * Improved performance of the TBF reader
+ * Updated the README and installation notes to say that you need a C++ compiler with C++11 support
 
 3.0.3
  * Fixed a problem with applying station dynamic metadata to a LWAStation object

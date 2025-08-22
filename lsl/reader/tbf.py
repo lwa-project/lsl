@@ -223,6 +223,7 @@ def get_frame_size(filehandle):
     Returns the frame size in bytes.
     """
     
+    nPos = -1
     with FilePositionSaver(filehandle):
         for i in range(2500):
             try:
@@ -237,6 +238,9 @@ def get_frame_size(filehandle):
             except SyncError:
                 filehandle.seek(1, 1)
                 
+    if nPos < 0:
+        raise RuntimeError("Unable to determine a frame size")
+        
     return nPos - cPos
 
 

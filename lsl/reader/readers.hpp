@@ -48,8 +48,16 @@ extern int8_t  tbfLUT[256][2];
   Support Functions
 */
 
-// gofast.cpp
-extern int validSync5C(uint32_t);
+// Validate a collection of Mark 5C sync words.  Return true if all are valid.
+inline bool validSync5C(uint32_t syncWord) {
+    if( syncWord == 0x5CDEC0DE ) {
+        return true;
+    }
+    return false;
+}
+
+  
+
 // vdif.cpp
 extern void initVDIFLUTs(void);
 

@@ -17,22 +17,6 @@ PyObject *SyncError;
 PyObject *EOFError;
 
 
-/*
-  Validate a collection of Mark 5C sync words.  Return 1 is all are
-  valid.
-*/
-
-int validSync5C(uint32_t syncWord) {
-    int valid = 0;
-    
-    if( syncWord == 0x5CDEC0DE ) {
-        valid = 1;
-    }
-    
-    return valid;
-}
-
-
 /* 
   Look-up Tables
 */

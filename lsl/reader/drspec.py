@@ -596,10 +596,14 @@ def get_frame_size(filehandle):
     Returns the frame size in bytes.
     """
     
+    nPos = -1
     with FilePositionSaver(filehandle):
         cPos = filehandle.tell()
         read_frame(filehandle)
         nPos = filehandle.tell()
+        
+    if nPos < 0:
+        raise RuntimeError("Unable to determine a frame size")
         
     return nPos - cPos
 

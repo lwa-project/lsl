@@ -61,7 +61,7 @@ def _load_igrf():
     # Go!
     dataCos = {}
     dataSin = {}
-    with DataAccess.open('geo/igrf13coeffs.txt', 'r') as fh:
+    with DataAccess.open('geo/igrf14coeffs.txt', 'r') as fh:
         for line in fh:
             ## Is this line a comment?
             line = line.replace('\n', '')
