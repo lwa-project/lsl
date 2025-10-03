@@ -169,7 +169,9 @@ class LSLConfigContainer(object):
     
     def __init__(self, filename=_CONFIG_FILENAME):
         self.filename = filename
+        self._loaded = 0.0
         self._changed = False
+        self._changed_list = {}
         
         self._parameters = OrderedDict()
         self._load_config()
@@ -209,6 +211,8 @@ class LSLConfigContainer(object):
                 
         try:
             with open(self.filename, 'r') as fh:
+                self._loaded = os.path.getmtime(self.filename)
+                
                 section = None
                 for line in fh:
                     line = line.strip().rstrip()
@@ -260,13 +264,22 @@ class LSLConfigContainer(object):
         Save the configuation to disk.
         """
         
-        if self._changed:
-            if not _IS_READONLY:
+        if not _IS_READONLY:
+            mtime = os.path.getmtime(self.filename)
+            print(mtime, self._loaded, self._changed)
+            if mtime > self._loaded and self._changed:
+                warnings.warn('\u001b[33mConfiguration file changed on disk, abandoning changes from this session\u001b[0m', RuntimeWarning)
+                for key,value in self._changed_list.items():
+                    warnings.warn("\u001b[33m  %s: %s -> %s\u001b[0m" % (key, value[0], value[1]), RuntimeWarning)
+                self._changed = False
+                
+            if self._changed:
                 with FileLock(self.filename) as lock:
                     assert(lock.locked())
                     
                     with open(self.filename, 'w') as fh:
                         fh.write(str(self))
+                    self._changed_list.clear()
                     self._changed = False
                     
     def view(self, section):
@@ -304,6 +317,9 @@ class LSLConfigContainer(object):
                                                                        name))
             self._parameters[name].value = value
             if value != old_value:
+                if name in self._changed_list:
+                    old_value = self._changed_list[name][0]
+                self._changed_list[name] = (old_value, value)
                 self._changed = True
                 
         except KeyError:
