@@ -265,14 +265,14 @@ class LSLConfigContainer(object):
         """
         
         if not _IS_READONLY:
-            mtime = os.path.getmtime(self.filename)
-            print(mtime, self._loaded, self._changed)
-            if mtime > self._loaded and self._changed:
-                warnings.warn('\u001b[33mConfiguration file changed on disk, abandoning changes from this session\u001b[0m', RuntimeWarning)
-                for key,value in self._changed_list.items():
-                    warnings.warn("\u001b[33m  %s: %s -> %s\u001b[0m" % (key, value[0], value[1]), RuntimeWarning)
-                self._changed = False
-                
+            if os.path.exists(self.filename) and self._changed:
+                mtime = os.path.getmtime(self.filename)
+                if mtime > self._loaded:
+                    warnings.warn('\u001b[33mConfiguration file changed on disk, abandoning changes from this session\u001b[0m', RuntimeWarning)
+                    for key,value in self._changed_list.items():
+                        warnings.warn("\u001b[33m  %s: %s -> %s\u001b[0m" % (key, value[0], value[1]), RuntimeWarning)
+                    self._changed = False
+                    
             if self._changed:
                 with FileLock(self.filename) as lock:
                     assert(lock.locked())
