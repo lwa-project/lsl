@@ -2,6 +2,7 @@
  * Updated ldp.DRXFile and DRX8File to check for large (>5 minute) gaps at the beginning of the file
  * Add functionality for converting Stokes VisibilityDataSets into the Circular Polarization basis
  * Improve state tracking for changes to the LSL configuration file
+ * Add support for a LSLCONFIGDIR environment variable to control where the configuration/cache is stored
 
 3.0.6:
  * Updated to IGRF14
