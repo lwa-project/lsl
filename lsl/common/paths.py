@@ -13,12 +13,14 @@ DATA
 
 import os
 import importlib.util
-    
+
+from lsl.config import LSL_CONFIG
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['MODULE', 'DATA', 'WISDOM', 'MODULE_BUILD', 'DATA_BUILD', 'WISDOM_BUILD']
 
 
@@ -32,7 +34,7 @@ MODULE = os.path.dirname(MODULE)
 DATA = os.path.join(MODULE, 'data')
 
 #: Absolute path to where the LSL-specific FFTW wisdom file is stored
-WISDOM = os.path.join(os.path.expanduser('~'), '.lsl')
+WISDOM = LSL_CONFIG.dirname
 
 
 # If we seem to be in the building directory, make the module and 

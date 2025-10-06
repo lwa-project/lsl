@@ -12,23 +12,27 @@ from textwrap import fill as tw_fill
 from lsl.version import full_version as lsl_version
 from lsl.misc.file_lock import FileLock
 
+_CONFIG_DIR = os.getenv('LSLCONFIGDIR',
+                        os.path.join(os.path.expanduser('~'), '.lsl')
+                       )
+
 # Create the .lsl directory and set the config filename
 try:
-    if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-        os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-    with FileLock(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test')):
-        with open(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'), 'w') as fh:
+    if not os.path.exists(_CONFIG_DIR):
+        os.mkdir(_CONFIG_DIR)
+    with FileLock(os.path.join(_CONFIG_DIR, 'write.test')):
+        with open(os.path.join(_CONFIG_DIR, 'write.test'), 'w') as fh:
             fh.write('test')
-        os.unlink(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'))
+        os.unlink(os.path.join(_CONFIG_DIR, 'write.test'))
     _IS_READONLY = False
 except OSError:
     _IS_READONLY = True
     warnings.warn('\u001b[33mCannot create or write to on-disk configuration cache\u001b[0m', RuntimeWarning)
     
-_CONFIG_FILENAME = os.path.join(os.path.expanduser('~'), '.lsl', 'lsl.cfg')
+_CONFIG_FILENAME = os.path.join(_CONFIG_DIR, 'lsl.cfg')
 
 
-__version__ = "0.2"
+__version__ = "0.3"
 __all__ = ['LSL_CONFIG',]
 
 
@@ -175,6 +179,14 @@ class LSLConfigContainer(object):
         
         self._parameters = OrderedDict()
         self._load_config()
+        
+    @property
+    def dirname(self):
+        """
+        Directory where the LSL configuration information is stored.
+        """
+        
+        return os.path.dirname(self.filename)
         
     def __repr__(self):
         n = self.__class__.__module__+'.'+self.__class__.__name__
