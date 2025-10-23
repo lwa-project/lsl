@@ -32,9 +32,9 @@ __all__ = ['is_active', 'enable', 'disable', 'ignore',
 
 try:
     # Create the cache directory
-    if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-        os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-    _CACHE_DIR = os.path.join(os.path.expanduser('~'), '.lsl', 'telemetry_cache')
+    if not os.path.exists(LSL_CONFIG.dirname):
+        os.mkdir(LSL_CONFIG.dirname)
+    _CACHE_DIR = os.path.join(LSL_CONFIG.dirname, 'telemetry_cache')
     if not os.path.exists(_CACHE_DIR):
         os.mkdir(_CACHE_DIR)
 

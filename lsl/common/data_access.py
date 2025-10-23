@@ -20,7 +20,7 @@ from lsl.common.color import colorfy
 from lsl.config import LSL_CONFIG
 DOWN_CONFIG = LSL_CONFIG.view('download')
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['download_file', 'DataAccess']
 
 
@@ -128,7 +128,7 @@ class _DataAccess(object):
     def __init__(self):
         # Create the cache directory
         try:
-            self._data_cache = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'data_cache'), max_size=0)
+            self._data_cache = FileCache(os.path.join(LSL_CONFIG.dirname, 'data_cache'), max_size=0)
         except OSError:
             self._data_cache = MemoryCache(max_size=0)
             warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)

@@ -12,23 +12,27 @@ from textwrap import fill as tw_fill
 from lsl.version import full_version as lsl_version
 from lsl.misc.file_lock import FileLock
 
+_CONFIG_DIR = os.getenv('LSLCONFIGDIR',
+                        os.path.join(os.path.expanduser('~'), '.lsl')
+                       )
+
 # Create the .lsl directory and set the config filename
 try:
-    if not os.path.exists(os.path.join(os.path.expanduser('~'), '.lsl')):
-        os.mkdir(os.path.join(os.path.expanduser('~'), '.lsl'))
-    with FileLock(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test')):
-        with open(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'), 'w') as fh:
+    if not os.path.exists(_CONFIG_DIR):
+        os.mkdir(_CONFIG_DIR)
+    with FileLock(os.path.join(_CONFIG_DIR, 'write.test')):
+        with open(os.path.join(_CONFIG_DIR, 'write.test'), 'w') as fh:
             fh.write('test')
-        os.unlink(os.path.join(os.path.expanduser('~'), '.lsl', 'write.test'))
+        os.unlink(os.path.join(_CONFIG_DIR, 'write.test'))
     _IS_READONLY = False
 except OSError:
     _IS_READONLY = True
     warnings.warn('\u001b[33mCannot create or write to on-disk configuration cache\u001b[0m', RuntimeWarning)
     
-_CONFIG_FILENAME = os.path.join(os.path.expanduser('~'), '.lsl', 'lsl.cfg')
+_CONFIG_FILENAME = os.path.join(_CONFIG_DIR, 'lsl.cfg')
 
 
-__version__ = "0.2"
+__version__ = "0.3"
 __all__ = ['LSL_CONFIG',]
 
 
@@ -169,10 +173,20 @@ class LSLConfigContainer(object):
     
     def __init__(self, filename=_CONFIG_FILENAME):
         self.filename = filename
+        self._loaded = 0.0
         self._changed = False
+        self._changed_list = {}
         
         self._parameters = OrderedDict()
         self._load_config()
+        
+    @property
+    def dirname(self):
+        """
+        Directory where the LSL configuration information is stored.
+        """
+        
+        return os.path.dirname(self.filename)
         
     def __repr__(self):
         n = self.__class__.__module__+'.'+self.__class__.__name__
@@ -209,6 +223,8 @@ class LSLConfigContainer(object):
                 
         try:
             with open(self.filename, 'r') as fh:
+                self._loaded = os.path.getmtime(self.filename)
+                
                 section = None
                 for line in fh:
                     line = line.strip().rstrip()
@@ -260,13 +276,22 @@ class LSLConfigContainer(object):
         Save the configuation to disk.
         """
         
-        if self._changed:
-            if not _IS_READONLY:
+        if not _IS_READONLY:
+            if os.path.exists(self.filename) and self._changed:
+                mtime = os.path.getmtime(self.filename)
+                if mtime > self._loaded:
+                    warnings.warn('\u001b[33mConfiguration file changed on disk, abandoning changes from this session\u001b[0m', RuntimeWarning)
+                    for key,value in self._changed_list.items():
+                        warnings.warn("\u001b[33m  %s: %s -> %s\u001b[0m" % (key, value[0], value[1]), RuntimeWarning)
+                    self._changed = False
+                    
+            if self._changed:
                 with FileLock(self.filename) as lock:
                     assert(lock.locked())
                     
                     with open(self.filename, 'w') as fh:
                         fh.write(str(self))
+                    self._changed_list.clear()
                     self._changed = False
                     
     def view(self, section):
@@ -304,6 +329,9 @@ class LSLConfigContainer(object):
                                                                        name))
             self._parameters[name].value = value
             if value != old_value:
+                if name in self._changed_list:
+                    old_value = self._changed_list[name][0]
+                self._changed_list[name] = (old_value, value)
                 self._changed = True
                 
         except KeyError:

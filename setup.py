@@ -332,20 +332,18 @@ class lsl_build_ext(build_ext):
             fftwFlags, fftwLibs = get_fftw()
             
         ## Update the extensions with the additional compilier/linker flags
+        cflags = []
+        for cf in (openmpFlags, gslFlags, fftwFlags):
+            cflags.extend(cf)
+        ldflags = []
+        for lf in (openmpLibs, gslLibs, fftwLibs):
+            ldflags.extend( ldflags )
         for ext in self.extensions:
-            ### Compiler flags
-            for cflags in (openmpFlags, gslFlags, fftwFlags):
-                try:
-                    ext.extra_compile_args.extend( cflags )
-                except TypeError:
-                    ext.extra_compile_args = cflags
-            ### Linker flags
-            for ldflags in (openmpLibs, gslLibs, fftwLibs):
-                try:
-                    ext.extra_link_args.extend( ldflags )
-                except TypeError:
-                    ext.extra_link_args = ldflags
-                    
+            ext.extra_compile_args = ext.extra_compile_args.copy()
+            ext.extra_compile_args.extend(cflags)
+            ext.extra_link_args = ext.extra_compile_args.copy()
+            ext.extra_link_args.extend(ldflags)
+            
         ## HACK: Update the log verbosity - for some reason this gets set to 
         ##       WARN when I replace build_ext
         try:
