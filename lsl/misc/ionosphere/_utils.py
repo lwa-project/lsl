@@ -27,7 +27,7 @@ __all__ = ['get_cache_dir', 'download_worker', 'load_mjd']
 
 # Create the cache directory
 try:
-    _CACHE_DIR = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'ionospheric_cache'),
+    _CACHE_DIR = FileCache(os.path.join(LSL_CONFIG.dirname, 'ionospheric_cache'),
                            max_size=lambda: IONO_CONFIG.get('max_cache_size'))
 except OSError:
     _CACHE_DIR = MemoryCache(max_size=lambda: IONO_CONFIG.get('max_cache_size'))
