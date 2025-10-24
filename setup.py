@@ -332,16 +332,15 @@ class lsl_build_ext(build_ext):
             fftwFlags, fftwLibs = get_fftw()
             
         ## Update the extensions with the additional compilier/linker flags
-        cflags = []
+        cflags, ldflags = [], []
         for cf in (openmpFlags, gslFlags, fftwFlags):
             cflags.extend(cf)
-        ldflags = []
         for lf in (openmpLibs, gslLibs, fftwLibs):
-            ldflags.extend( ldflags )
+            ldflags.extend( lf )
         for ext in self.extensions:
             ext.extra_compile_args = ext.extra_compile_args.copy()
             ext.extra_compile_args.extend(cflags)
-            ext.extra_link_args = ext.extra_compile_args.copy()
+            ext.extra_link_args = ext.extra_link_args.copy()
             ext.extra_link_args.extend(ldflags)
             
         ## HACK: Update the log verbosity - for some reason this gets set to 
