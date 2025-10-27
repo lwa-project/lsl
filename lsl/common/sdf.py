@@ -49,6 +49,7 @@ import copy
 import math
 import pytz
 import ephem
+import logging
 import weakref
 import warnings
 from functools import total_ordering
@@ -248,18 +249,16 @@ class Project(object):
         failures = 0
         sessionCount = 1
         if len(self.id) > 8:
-            if verbose:
-                pid_print("Project ID is too long")
+            pid_print("Project ID is too long", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         for session in self.sessions:
-            if verbose:
-                pid_print(f"Validating session {sessionCount}")
+            pid_print(f"Validating session {sessionCount}", level=logging.INFO, logging_only=(not verbose))
             if not session.validate(verbose=verbose):
                 failures += 1
                 
             if session.station != self.sessions[0].station:
-                pid_print("Session station mis-match")
+                pid_print("Session station mis-match", level=logging.ERROR)
                 failures += 1
                 
             sessionCount += 1
@@ -749,67 +748,55 @@ class Observation(object):
         # FEE
         if len(self.fee_power) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of FEE power settings ({len(self.fee_power)} != {nstand})")
+            pid_print(f"Invalid number of FEE power settings ({len(self.fee_power)} != {nstand})", level=logging.ERROR, logging_only=(not verbose))
         for f,fee in enumerate(self.fee_power):
             if not isinstance(fee, (tuple, list)):
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Expected a tuple or list for the FEE {f} power setting")
+                pid_print(f"Expected a tuple or list for the FEE {f} power setting, not {type(fee).__name__}", level=logging.ERROR, logging_only=(not verbose))
                 continue
             if len(fee) != 2:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid number of polarizations on FEE {f} ({len(fee)} != 2)")
+                pid_print(f"Invalid number of polarizations on FEE {f} ({len(fee)} != 2)", level=logging.ERROR, logging_only=(not verbose))
                 continue
             for p in (0, 1):
                 if fee[p] not in (-1, 0, 1):
                     failures += 1
-                    if verbose:
-                        pid_print(f"Error: Invalid power setting on FEE {f}, polarization {p} '{fee[p]}'")
+                    pid_print(f"Invalid power setting on FEE {f}, polarization {p} '{fee[p]}'", level=logging.ERROR, logging_only=(not verbose))
                         
         # ASP
         ## Filter
         if len(self.asp_filter) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP filter settings ({len(self.asp_filter)} < {nstand})")
+            pid_print(f"Invalid number of ASP filter settings ({len(self.asp_filter)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
         for f,filt in enumerate(self.asp_filter):
             if is_dp and filt > 3:
                 warnings.warn(colorfy("{{%%yellow ASP filter %i is degenerate with %i for DP-based stations}}" % (filt, filt-4)), RuntimeWarning)
                 
             if filt not in (-1, 0, 1, 2, 3, 4, 5):
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP filter setting on stand {f} '{filt}'")
+                pid_print(f"Invalid ASP filter setting on stand {f} '{filt}'", level=logging.ERROR, logging_only=(not verbose))
         ## AT1/AT2/ATS
         if len(self.asp_atten_1) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP attenuator 1 settings ({len(self.asp_atten_1)} < {nstand})")
+            pid_print(f"Invalid number of ASP attenuator 1 settings ({len(self.asp_atten_1)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
         for f,atten in enumerate(self.asp_atten_1):
             if atten < -1 or atten > 15:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP attenuator 1 setting on stand {f} '{atten}'")
+                pid_print(f"Invalid ASP attenuator 1 setting on stand {f} '{atten}'", level=logging.ERROR, logging_only=(not verbose))
         if len(self.asp_atten_2) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP attenuator 2 settings ({len(self.asp_atten_2)} < {nstand})")
+            pid_print(f"Invalid number of ASP attenuator 2 settings ({len(self.asp_atten_2)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
         for f,atten in enumerate(self.asp_atten_2):
             if atten < -1 or atten > 15:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP attenuator 2 setting on stand {f} '{atten}'")
+                pid_print(f"Invalid ASP attenuator 2 setting on stand {f} '{atten}'", level=logging.ERROR, logging_only=(not verbose))
         if len(self.asp_atten_split) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP attenuator split settings (({len(self.asp_atten_split)} < {nstand})")
+            pid_print(f"Invalid number of ASP attenuator split settings (({len(self.asp_atten_split)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
         for f,atten in enumerate(self.asp_atten_split):
             if atten < -1 or atten > 15:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP attenuator split setting on stand {f} '{atten}'")
+                pid_print(f"Invalid ASP attenuator split setting on stand {f} '{atten}'", level=logging.ERROR, logging_only=(not verbose))
                     
         # Any failures indicates a bad FEE/ASP configuration
         if failures == 0:
@@ -886,22 +873,18 @@ class TBW(Observation):
         failures = 0
         # Basic - Sample size and data bits agreement
         if self.bits not in [4, 12]:
-            if verbose:
-                pid_print(f"Error: Invalid number of data bits '{self.bits}'")
+            pid_print(f"Invalid number of data bits '{self.bits}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.bits == 12 and self.samples > 12000000:
-            if verbose:
-                pid_print(f"Error: Invalid number of samples for 12-bit data ({self.samples} > 12000000)")
+            pid_print(f"Invalid number of samples for 12-bit data ({self.samples} > 12000000)", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.bits == 4 and self.samples > 36000000:
-            if verbose:
-                pid_print(f"Error: Invalid number of samples for 4-bit data ({self.samples} > 36000000)")
+            pid_print(f"Invalid number of samples for 4-bit data ({self.samples} > 36000000)", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            pid_print(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - ASP
@@ -969,22 +952,19 @@ class TBN(Observation):
         failures = 0
         # Basic - Duration, frequency, and filter code values
         if self.dur < 1:
-            if verbose:
-                pid_print("Error: Specified a duration of length zero")
+            pid_print("Specified a duration of length zero", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.freq1 < backend.TBN_TUNING_WORD_MIN or self.freq1 > backend.TBN_TUNING_WORD_MAX:
             if verbose:
-                print(f"Error: Specified frequency is outside of the {be_name} tuning range")
+                print(f"Specified frequency is outside of the {be_name} tuning range", level=logging.ERROR)
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
-            if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+            pid_print(f" Invalid filter code '{self.filter}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            pid_print(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - ASP
@@ -1144,32 +1124,26 @@ class DRX(Observation):
         failures = 0
         # Basic - Duration, frequency, and filter code values
         if self.dur < 1:
-            if verbose:
-                pid_print("Error: Specified a duration of length zero")
+            pid_print("Specified a duration of length zero", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 1 is outside of the {be_name} tuning range")
+            pid_print(f"Specified frequency for tuning 1 is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 2 is outside of the {be_name} tuning range")
+            pid_print(f"Specified frequency for tuning 2 is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
-            if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+            pid_print(f"Invalid filter code '{self.filter}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
-            if verbose:
-                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the observation")
+            pid_print(f"Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the observation", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            pid_print(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - ASP
@@ -1471,34 +1445,29 @@ class Stepped(Observation):
         failures = 0
         # Basic - filter setup
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
-            if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+            pid_print(f"Invalid filter code '{self.filter}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Basic - steps
         stepCount = 1
         for step in self.steps:
-            if verbose:
-                pid_print(f"Validating step {stepCount}")
+            pid_print(f"Validating step {stepCount}", level=logging.INFO, logging_only=(not verbose))
             if not step.validate(verbose=verbose):
                 failures += 1
             if step.is_radec != self.is_radec:
-                if verbose:
-                    pid_print("Error: Step is not of the same coordinate type as observation")
+                pid_print("Step is not of the same coordinate type as observation", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
                 
             stepCount += 1
             
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
-            if verbose:
-                pid_print(f"Error: Target steps only above the horizon for {self.target_visibility*100.0:.1f}% of the observation")
+            pid_print(f"Target steps only above the horizon for {self.target_visibility*100.0:.1f}% of the observation", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            pid_print(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - ASP
@@ -1741,44 +1710,35 @@ class BeamStep(object):
         if self.delays is not None:
             if len(self.delays) != 2*mandc.LWA_MAX_NSTD:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Specified delay list had the wrong number of antennas")
+                pid_print("Specified delay list had the wrong number of antennas", level=logging.ERROR, logging_only=(not verbose))
             if self.gains is None:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Delays specified but gains were not")
+                pid_print("Delays specified but gains were not", level=logging.ERROR, logging_only=(not verbose))
         if self.gains is not None:
             if len(self.gains) != mandc.LWA_MAX_NSTD:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Specified gain list had the wrong number of stands")
+                pid_print("Specified gain list had the wrong number of stands", level=logging.ERROR, logging_only=(not verbose))
             for g,gain in enumerate(self.gains):
                 if len(gain) != 2:
                     failures += 1
-                    if verbose:
-                        pid_print(f"Error: Expected a 2x2 matrix of gain values for stand {g}")
+                    pid_print(f"Expected a 2x2 matrix of gain values for stand {g}", level=logging.ERROR, logging_only=(not verbose))
                 else:
                     if len(gain[0]) != 2 or len(gain[1]) != 2:
                         failures += 1
-                        if verbose:
-                            pid_print(f"Error: Expected a 2x2 matrix of gain values for stand {g}")
+                        pid_print(f"Expected a 2x2 matrix of gain values for stand {g}", level=logging.ERROR, logging_only=(not verbose))
             if self.delays is None:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Gains specified but delays were not")
+                pid_print("Gains specified but delays were not", level=logging.ERROR, logging_only=(not verbose))
         # Basic - Observation time
         if self.dur < 5:
-            if verbose:
-                pid_print(f"Error: step dwell time ({self.dur} ms) is too short" )
+            pid_print(f"Step dwell time ({self.dur} ms) is too short", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         # Basic - Frequency and filter code values
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 1 is outside of the {be_name} tuning range")
+            pid_print(f"Specified frequency for tuning 1 is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 2 is outside of the {be_name} tuning range")
+            pid_print(f"Specified frequency for tuning 2 is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         # Any failures indicates a bad observation
         if failures == 0:
@@ -1962,51 +1922,41 @@ class Session(object):
         failures = 0
         totalData = 0.0
         if self.id < 1 or self.id > 9999:
-            if verbose:
-                pid_print(f"Error: Invalid session ID number '{self.id}'")
+            pid_print(f"Invalid session ID number '{self.id}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         if self.configuration_authority < 0 or self.configuration_authority > 65535:
-            if verbose:
-                pid_print(f"Error: Invalid configuraton request authority '{self.configuration_authority}'")
+            pid_print(f"Invalid configuraton request authority '{self.configuration_authority}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.drx_beam != -1 and self.drx_beam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
-            if verbose:
-                pid_print(f"Error: Invalid beam number '{self.drx_beam}'" )
+            pid_print(f"Invalid beam number '{self.drx_beam}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         for key in list(self.recordMIB.keys()):
             if self.recordMIB[key] < -1:
-                if verbose:
-                    pid_print(f"Error: Invalid recording interval for '{key}' MIB entry '{self.recordMIB[key]}'")
+                pid_print(f"Invalid recording interval for '{key}' MIB entry '{self.recordMIB[key]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
             if self.updateMIB[key] < -1:
-                if verbose:
-                    pid_print(f"Error: Invalid update interval for '{key}' MIB entry '{self.updateMIB[key]}'")
+                pid_print(f"Invalid update interval for '{key}' MIB entry '{self.updateMIB[key]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
                 
         if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
             if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
-                if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer channel count '{self.spcSetup[0]}'")
+                pid_print(f"Invalid DR spectrometer channel count '{self.spcSetup[0]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
             if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
-                if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer integration count '{self.spcSetup[1]}'")
+                pid_print(f"Invalid DR spectrometer integration count '{self.spcSetup[1]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
             if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
-                if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer mode '{self.spcMetatag}'")
+                pid_print(f"Invalid DR spectrometer mode '{self.spcMetatag}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
             if len(self.observations) > 0:
                 if self.observations[0].mode in ('TBW', 'TBN'):
-                    if verbose:
-                        pid_print(f"Error: DR spectrometer incompatible with '{self.observations[0].mode}")
+                    pid_print(f"DR spectrometer incompatible with '{self.observations[0].mode}", level=logging.ERROR, logging_only=(not verbose))
                     failures += 1
                     
         observationCount = 1
         for obs in self.observations:
-            if verbose:
-                pid_print(f"Validating observation {observationCount}")
+            pid_print(f"Validating observation {observationCount}", level=logging.INFO, logging_only=(not verbose))
             
             if not obs.validate(verbose=verbose):
                 failures += 1
@@ -2024,7 +1974,7 @@ class Session(object):
 
             for j in range(len(sObs)):
                 if verbose and i != j:
-                    pid_print(f"Checking for overlap between observations {i+1} and {j+1}")
+                    pid_print(f"Checking for overlap between observations {i+1} and {j+1}", level=logging.INFO)
 
                 cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
                 cStop = cStart + int(sObs[j].dur)
@@ -2038,13 +1988,11 @@ class Session(object):
                         overlaps.append(j)
             
             if nOverlaps > maxOverlaps:
-                if verbose:
-                    pid_print(f"Error: Observation %i overlaps with {i+1}"+(','.join(["%i" % (j+1) for j in overlaps])))
+                pid_print(f"Observation %i overlaps with {i+1}"+(','.join(["%i" % (j+1) for j in overlaps])), level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
             
         if totalData >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Total data volume for session exceeds {_DRSUCapacityTB} TB DRSU limit")
+            pid_print(f"Total data volume for session exceeds {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         
         if failures == 0:
@@ -2110,8 +2058,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
-    if verbose:
-        pid_print(f"Obs {obs_temp['id']} is mode {mode}")
+    pid_print(f"Obs {obs_temp['id']} is mode {mode}", level=logging.INFO, logging_only=(not verbose))
         
     if mode == 'TBW':
         obsOut = TBW(obs_temp['name'], obs_temp['target'], utcString, 12000000, comments=obs_temp['comments'])
@@ -2131,8 +2078,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     elif mode == 'TRK_LUN':
         obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
-        if verbose:
-            pid_print(f"-> found {len(beam_temps)} steps")
+        pid_print(f"-> found {len(beam_temps)} steps", level=logging.INFO, logging_only=(not verbose))
             
         obsOut = Stepped(obs_temp['name'], obs_temp['target'], utcString, obs_temp['filter'], is_radec=obs_temp['stpRADec'], steps=[], gain=obs_temp['gain'], comments=obs_temp['comments'])
         for beam_temp in beam_temps:
@@ -2347,8 +2293,7 @@ def parse_sdf(filename, verbose=False):
                 obs_temp['id'] = int(value)
                 project.project_office.observations[0].append( None )
             
-                if verbose:
-                    pid_print(f"Started obs {int(value)}")
+                pid_print(f"Started obs {int(value)}", level=logging.INFO, logging_only=(not verbose))
                 
                 continue
             if keyword == 'OBS_TITLE':

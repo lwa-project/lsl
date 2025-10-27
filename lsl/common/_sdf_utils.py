@@ -6,6 +6,7 @@ import os
 import re
 import math
 import pytz
+import logging
 import warnings
 from datetime import datetime
 
@@ -14,13 +15,27 @@ from astropy.time import Time as AstroTime
 from lsl.astro import date as astroDate, get_date as astroGetDate
 from lsl.common.stations import lwa1
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 __version__ = '0.1'
 __all__ = ['pid_print', 'render_file_size', 'render_bandwidth', 'parse_time']
 
 
-def pid_print(*args, **kwds):
-    print(f"[{os.getpid()}]", *args, **kwds)
+def pid_print(*args, level=None, logging_only=False, **kwds):
+    if level is not None:
+        if level == logging.DEBUG:
+            LSL_LOGGER.debug(*args, **kwds)
+        elif level == logging.INFO:
+            LSL_LOGGER.info(*args, **kwds)
+        elif level == logging.WARNING:
+            LSL_LOGGER.warning(*args, **kwds)
+        elif level == logging.ERROR:
+            LSL_LOGGER.error(*args, **kwds)
+        elif level == logging.CRITICAL:
+            LSL_LOGGER.critical(*args, **kwds)
+            
+    if not logging_only:
+        print(f"[{os.getpid()}]", *args, **kwds)
 
 
 def render_file_size(size):
