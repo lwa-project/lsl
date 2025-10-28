@@ -15,7 +15,7 @@ except AttributeError:
 from lsl import astro
 from lsl import transform
 from lsl.common.data_access import DataAccess
-from lsl.logging import LSL_LOGGER
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()

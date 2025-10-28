@@ -955,8 +955,7 @@ class TBN(Observation):
             pid_print("Specified a duration of length zero", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.freq1 < backend.TBN_TUNING_WORD_MIN or self.freq1 > backend.TBN_TUNING_WORD_MAX:
-            if verbose:
-                print(f"Specified frequency is outside of the {be_name} tuning range", level=logging.ERROR)
+            pid_print(f"Specified frequency is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             pid_print(f" Invalid filter code '{self.filter}'", level=logging.ERROR, logging_only=(not verbose))
