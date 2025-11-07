@@ -448,13 +448,13 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
     tempPhaseOffsets %= 2*np.pi
     tempPhaseOffsets[np.where( tempPhaseOffsets >  np.pi )] -= 2*np.pi
 
-    LSL_LOGGER.debug(f'Best Gains: {tempGains}')
+    LSL_LOGGER.info(f'Best Gains: {tempGains}')
     bestGains = tempGains
 
-    LSL_LOGGER.debug(f'Best Delays: {tempDelays}')
+    LSL_LOGGER.info(f'Best Delays: {tempDelays}')
     bestDelays = tempDelays
 
-    LSL_LOGGER.debug(f'Best Phase Offsets: {tempPhaseOffsets}')
+    LSL_LOGGER.info(f'Best Phase Offsets: {tempPhaseOffsets}')
     bestPhaseOffsets = tempPhaseOffsets
     
     return dataSet, bestGains, bestDelays, bestPhaseOffsets, converged
