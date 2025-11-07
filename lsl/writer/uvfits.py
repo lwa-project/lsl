@@ -10,6 +10,7 @@ functions defined in this module are based heavily off the lwda_fits library.
 import os
 import gc
 import math
+import logging
 import numpy as np
 from datetime import datetime
 
@@ -22,6 +23,7 @@ from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 from lsl import astro
 from lsl.writer.fitsidi import WriterBase
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -138,11 +140,15 @@ class Uv(WriterBase):
                 mapper[stands[i]] = stands[i]
                 
         # If the mapper has been enabled, tell the user about it
-        if enableMapper and self.verbose:
-            print("UVFITS: stand ID mapping enabled")
+        if enableMapper:
+            if self.verbose:
+                print("UVFITS: stand ID mapping enabled")
+            LSL_LOGGER.info("UVFITS: stand ID mapping enabled")
             for key in mapper.keys():
                 value = mapper[key]
-                print("UVFITS:  stand #%i -> mapped #%i" % (key, value))
+                if self.verbose:
+                    print(f"UVFITS:  stand #{key} -> mapped #{value}")
+                LSL_LOGGER.info(f"UVFITS:  stand #{key} -> mapped #{value}")
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

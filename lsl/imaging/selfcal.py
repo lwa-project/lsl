@@ -14,9 +14,11 @@ supported self-calibration methods are:
 ..versionadded:: 0.5.5
 """
 
+import logging
 import numpy as np
 
 from lsl.statistics import robust
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -288,8 +290,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         found = True
     if not found:
         raise RuntimeError(f"Stand #{ref_ant} not found in the array provided")
-    if verbose:
-        print(f"Using antenna #{ref_ant} as a reference (Stand #{aa.ants[ref_ant].stand})")
+    LSL_LOGGER.debug(f"Using antenna #{ref_ant} as a reference (Stand #{aa.ants[ref_ant].stand})")
         
     # Frequency in GHz so that the delays can be in ns
     fq = dataSet.freq[chan] / 1e9
@@ -308,9 +309,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         # Amplitude
         #
         if amplitude:
-            if verbose:
-                print('  %iA' % (i+1,))
-                
+            LSL_LOGGER.debug(f'  {i+1}A')
+
             A = _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
@@ -326,8 +326,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             
             valid = np.where( np.abs(bestGains) < 1e6 )[0]
             metric = (np.abs(bestGains[valid])).max()
-            if verbose:
-                print('    ', metric)
+            LSL_LOGGER.debug(f'    {metric}')
             if metric < amplitude_cutoff:
                 amplitude = False
                 converged = True
@@ -338,9 +337,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         # Delay and/or phase
         #
         if phase_only:
-            if verbose:
-                print('  %iP' % (i+1,))
-                
+            LSL_LOGGER.debug(f'  {i+1}P')
+
             A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
@@ -359,18 +357,16 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             
             valid = np.where( np.abs(bestPhaseOffsets) < 1e6 )[0]
             metric = (np.abs(bestPhaseOffsets[valid])).max()
-            if verbose:
-                print('    ', metric)
+            LSL_LOGGER.debug(f'    {metric}')
             if metric < phase_cutoff:
                 phase_only = False
                 converged = True
-                
+
             dataSet = _scale_data(origSet, np.ones_like(tempPhaseOffsets), np.zeros_like(tempPhaseOffsets), tempPhaseOffsets)
-            
+
         elif delay_only:
-            if verbose:
-                print('  %iD' % (i+1,))
-                
+            LSL_LOGGER.debug(f'  {i+1}D')
+
             A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
@@ -389,18 +385,16 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             
             valid = np.where( np.abs(bestDelays) < 1e6 )[0]
             metric = (np.abs(bestDelays[valid])).max()
-            if verbose:
-                print('    ', metric)
+            LSL_LOGGER.debug(f'    {metric}')
             if metric < delay_cutoff:
                 delay_only = False
                 converged = True
-                
+
             dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, np.zeros_like(tempDelays))
-            
+
         elif delay_and_phase:
-            if verbose:
-                print('  %iD+P' % (i+1,))
-                
+            LSL_LOGGER.debug(f'  {i+1}D+P')
+
             ## Delay first
             A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -440,12 +434,11 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             valid = np.where( (np.abs(bestDelays) < 1e6) & (np.abs(bestPhaseOffsets) < 1e6) )[0]
             metric1 = (np.abs(bestDelays[valid])).max()
             metric2 = (np.abs(bestPhaseOffsets[valid])).max()
-            if verbose:
-                print('    ', metric1, metric2)
+            LSL_LOGGER.debug(f'    {metric1} {metric2}')
             if metric1 < delay_cutoff and metric2 < phase_cutoff:
                 delay_and_phase = False
                 converged = True
-                
+
             dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, tempPhaseOffsets)
             
         else:
@@ -454,17 +447,14 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
     # Make sure the phase is (-pi, pi]
     tempPhaseOffsets %= 2*np.pi
     tempPhaseOffsets[np.where( tempPhaseOffsets >  np.pi )] -= 2*np.pi
-    
-    if verbose:
-        print('Best Gains: ', tempGains)
+
+    LSL_LOGGER.info(f'Best Gains: {tempGains}')
     bestGains = tempGains
-    
-    if verbose:
-        print('Best Delays: ', tempDelays)
+
+    LSL_LOGGER.info(f'Best Delays: {tempDelays}')
     bestDelays = tempDelays
-    
-    if verbose:
-        print('Best Phase Offsets: ', tempPhaseOffsets)
+
+    LSL_LOGGER.info(f'Best Phase Offsets: {tempPhaseOffsets}')
     bestPhaseOffsets = tempPhaseOffsets
     
     return dataSet, bestGains, bestDelays, bestPhaseOffsets, converged
