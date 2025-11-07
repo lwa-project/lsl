@@ -312,8 +312,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         #
         if amplitude:
             if verbose:
-                print('  %iA' % (i+1,))
-            LSL_LOGGER.info('  %iA' % (i+1,))
+                print(f'  {i+1}A')
+            LSL_LOGGER.info(f'  {i+1}A')
 
             A = _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -344,8 +344,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         #
         if phase_only:
             if verbose:
-                print('  %iP' % (i+1,))
-            LSL_LOGGER.info('  %iP' % (i+1,))
+                print(f'  {i+1}P')
+            LSL_LOGGER.info(f'  {i+1}P')
 
             A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -376,8 +376,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
 
         elif delay_only:
             if verbose:
-                print('  %iD' % (i+1,))
-            LSL_LOGGER.info('  %iD' % (i+1,))
+                print(f'  {i+1}D')
+            LSL_LOGGER.info(f'  {i+1}D')
 
             A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -408,8 +408,8 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
 
         elif delay_and_phase:
             if verbose:
-                print('  %iD+P' % (i+1,))
-            LSL_LOGGER.info('  %iD+P' % (i+1,))
+                print(f'  {i+1}D+P')
+            LSL_LOGGER.info(f'  {i+1}D+P')
 
             ## Delay first
             A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)

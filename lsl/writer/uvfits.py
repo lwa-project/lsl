@@ -147,8 +147,8 @@ class Uv(WriterBase):
             for key in mapper.keys():
                 value = mapper[key]
                 if self.verbose:
-                    print("UVFITS:  stand #%i -> mapped #%i" % (key, value))
-                LSL_LOGGER.info("UVFITS:  stand #%i -> mapped #%i" % (key, value))
+                    print(f"UVFITS:  stand #{key} -> mapped #{value}")
+                LSL_LOGGER.info(f"UVFITS:  stand #{key} -> mapped #{value}")
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

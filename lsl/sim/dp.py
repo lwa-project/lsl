@@ -44,16 +44,14 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
     lowerSpike = -sample_rate / 4.0
 
     if verbose:
-        print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
-            (nframes, sample_rate/1e3, len(stands)))
-    LSL_LOGGER.info("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
-        (nframes, sample_rate/1e3, len(stands)))
+        print(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
+    LSL_LOGGER.info(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
 
     for i in range(nframes):
         if i % 1000 == 0:
             if verbose:
-                print(" frame %i" % (i+1))
-            LSL_LOGGER.debug(" frame %i" % (i+1))
+                print(f" frame {i+1}")
+            LSL_LOGGER.debug(f" frame {i+1}")
         t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/dp_common.fS - start_time + np.arange(samplesPerFrame, dtype=np.float32) / sample_rate
         
@@ -92,17 +90,15 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     lowerSpike2 = -sample_rate / 3.0
 
     if verbose:
-        print("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % \
-            (nframes, sample_rate/1e6, len(stands), ntuning))
-    LSL_LOGGER.info("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % \
-        (nframes, sample_rate/1e6, len(stands), ntuning))
+        print(f"Simulating {nframes} frames of DRX Data @ {sample_rate/1e6:.2f} MHz for {len(stands)} beams, {ntuning} tunings each:")
+    LSL_LOGGER.info(f"Simulating {nframes} frames of DRX Data @ {sample_rate/1e6:.2f} MHz for {len(stands)} beams, {ntuning} tunings each:")
 
     beams = stands
     for i in range(nframes):
         if i % 1000 == 0:
             if verbose:
-                print(" frame %i" % i)
-            LSL_LOGGER.debug(" frame %i" % i)
+                print(f" frame {i}")
+            LSL_LOGGER.debug(f" frame {i}")
         t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/dp_common.fS - start_time + np.arange(samplesPerFrame, dtype=np.float32) / sample_rate
         for beam in beams:
@@ -296,16 +292,14 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     aa = _get_antennaarray(kwargs['station'], stands, start_time, freqs)
 
     if verbose:
-        print("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
-            (nframes, sample_rate/1e3, len(stands)))
-    LSL_LOGGER.info("Simulating %i frames of TBN Data @ %.2f kHz for %i stands:" % \
-        (nframes, sample_rate/1e3, len(stands)))
+        print(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
+    LSL_LOGGER.info(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
 
     for i in range(nframes):
         if i % 1000 == 0:
             if verbose:
-                print(" frame %i" % (i+1))
-            LSL_LOGGER.debug(" frame %i" % (i+1))
+                print(f" frame {i+1}")
+            LSL_LOGGER.debug(f" frame {i+1}")
         t = int(start_time*dp_common.fS) + int(i*dp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/dp_common.fS - start_time + np.arange(samplesPerFrame, dtype=np.float32) / sample_rate
         

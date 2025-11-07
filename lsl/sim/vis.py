@@ -870,8 +870,8 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         yw *= np.pi/180
 
         if verbose:
-            print("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/np.pi, yw*180/np.pi))
-        LSL_LOGGER.info("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/np.pi, yw*180/np.pi))
+            print(f"Using a 2-D Gaussian beam with sigmas {xw*180/np.pi:.1f} by {yw*180/np.pi:.1f} degrees")
+        LSL_LOGGER.info(f"Using a 2-D Gaussian beam with sigmas {xw*180/np.pi:.1f} by {yw*180/np.pi:.1f} degrees")
         beam = Beam2DGaussian(freqs, xw, yw)
 
     elif force_flat:
@@ -901,7 +901,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
             beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
             
     if pos_error != 0:
-        warnings.warn(colorfy("{{%%yellow Creating array with positional errors between %.3f and %.3f m}}" % (-pos_error, pos_error)), RuntimeWarning)
+        warnings.warn(colorfy(f"{{{{%%yellow Creating array with positional errors between {-pos_error:.3f} and {pos_error:.3f} m}}}}"), RuntimeWarning)
 
     # Build an array of AIPY Antenna objects
     ants = []
