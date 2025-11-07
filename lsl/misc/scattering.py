@@ -1,6 +1,6 @@
 """
-Module for removing multi-path scattering effects in pulsar profiles.  This 
-is based on the CLEAN-like deconvolution method presented in Bhat, N., 
+Module for removing multi-path scattering effects in pulsar profiles.  This
+is based on the CLEAN-like deconvolution method presented in Bhat, N.,
 Cordes, J., & Chatterjee, S.  2003, ApJ, 584, 782.
 
 http://iopscience.iop.org/0004-637X/584/2/782/fulltext/56392.text.html
@@ -10,9 +10,11 @@ http://iopscience.iop.org/0004-637X/584/2/782/fulltext/56392.text.html
     seconds.
 """
 
+import logging
 import numpy as np
 
 from lsl.statistics import robust
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -221,13 +223,17 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     merit = meritList[bestTau]
     cc = ccList[bestTau]
     resids = residList[bestTau]
-    
+
     # Report on the findings
     if verbose:
         print("Multi-path Scattering Results:")
         print("  Iterations Used: %i of %i" % (i, max_iter))
         print("  Best-fit Scattering time: %.3f ms" % (tScat*1000.0,))
         print("  Figure-of-merit:  %.5f" % merit)
+    LSL_LOGGER.info("Multi-path Scattering Results:")
+    LSL_LOGGER.info("  Iterations Used: %i of %i" % (i, max_iter))
+    LSL_LOGGER.info("  Best-fit Scattering time: %.3f ms" % (tScat*1000.0,))
+    LSL_LOGGER.info("  Figure-of-merit:  %.5f" % merit)
         
     # Restore the profile using a Gaussian with a sigma value of 5 time steps
     sigmaRestore = 5*(t[1]-t[0])

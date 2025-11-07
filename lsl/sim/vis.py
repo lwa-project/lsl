@@ -50,6 +50,7 @@ import os
 import aipy
 import math
 import ephem
+import logging
 import numpy as np
 import warnings
 from scipy.interpolate import interp1d
@@ -66,6 +67,7 @@ from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 from lsl.sim._simfast import FastVis
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -866,14 +868,16 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         # Degrees to radians
         xw *= np.pi/180
         yw *= np.pi/180
-        
+
         if verbose:
             print("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/np.pi, yw*180/np.pi))
+        LSL_LOGGER.info("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/np.pi, yw*180/np.pi))
         beam = Beam2DGaussian(freqs, xw, yw)
-        
+
     elif force_flat:
         if verbose:
             print("Using flat beam model")
+        LSL_LOGGER.info("Using flat beam model")
         beam = Beam(freqs)
         
     else:
@@ -890,9 +894,10 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
                 dd.close()
             except AttributeError:
                 pass
-                
+
             if verbose:
                 print(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
+            LSL_LOGGER.info(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
             beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
             
     if pos_error != 0:
@@ -965,11 +970,14 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     if jd is None:
         jd = aa.get_jultime()
     else:
-        if verbose:
-            if count is not None and max is not None:
+        if count is not None and max is not None:
+            if verbose:
                 print(f"Setting Julian Date to {jd:.5f} ({count} of {max})")
-            else:
+            LSL_LOGGER.info(f"Setting Julian Date to {jd:.5f} ({count} of {max})")
+        else:
+            if verbose:
                 print(f"Setting Julian Date to {jd:.5f}")
+            LSL_LOGGER.info(f"Setting Julian Date to {jd:.5f}")
         aa.set_jultime(jd)
     Gij_sf = aa.passband(0,1)
     def Bij_sf(xyz, pol):
@@ -991,17 +999,19 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     srcs_sh = []
     if verbose:
         print("Sources Used for Simulation:")
+    LSL_LOGGER.info("Sources Used for Simulation:")
     for name in srcs:
         ## Update the source's coordinates
         src = srcs[name]
         src.compute(aa)
-        
+
         ## Remove sources below the horizon
         srcTop = src.get_crds(crdsys='top', ncrd=3)
         srcAzAlt = aipy.coord.top2azalt(srcTop)
         if srcAzAlt[1] < 0:
             if verbose:
                 print(f"  {name}: below horizon")
+            LSL_LOGGER.debug(f"  {name}: below horizon")
             continue
             
         ## Topocentric coordinates for the gain pattern calculations
