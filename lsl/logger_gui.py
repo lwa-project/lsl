@@ -1,3 +1,61 @@
+"""
+GUI for displaying LSL logger messages in real-time.
+
+This module provides a Tkinter-based GUI for monitoring log messages from the
+LSL logger. It's designed to be integrated into applications that use LSL,
+particularly those where console output might be hidden or inconvenient.
+
+Usage Examples
+--------------
+Basic integration into an LSL script::
+
+    from lsl.logger_gui import LoggerGUI
+    from lsl.common import sdf
+
+    # Create and start the GUI
+    gui = LoggerGUI()
+
+    # Your LSL processing code - log messages will appear in the GUI
+    station = sdf.parse_sdf('myfile.sdf')
+    # ... do work ...
+
+    # Run the GUI event loop (this blocks until window is closed)
+    gui.mainloop()
+
+Running in a separate thread (non-blocking)::
+
+    import threading
+    from lsl.logger_gui import LoggerGUI
+    from lsl.imaging import selfcal
+
+    # Start GUI in background thread
+    gui = LoggerGUI()
+    gui_thread = threading.Thread(target=gui.mainloop, daemon=True)
+    gui_thread.start()
+
+    # Continue with LSL work while GUI runs
+    # All log messages will appear in the GUI window
+    gains, delays = selfcal.self_cal(...)
+
+    # Keep script running
+    input("Press Enter to exit...")
+
+Using individual components::
+
+    import tkinter as tk
+    from lsl.logger_gui import LoggerFrame, FilterFrame
+
+    # Create custom window with logger components
+    root = tk.Tk()
+    frame = tk.Frame(root)
+    frame.pack()
+
+    logger_display = LoggerFrame(frame)
+    logger_display.start()
+
+    root.mainloop()
+"""
+
 import queue
 import signal
 import logging
@@ -320,6 +378,45 @@ class LoggerGUI(object):
     """
     Tk GUI to help display messages from the main LSL logger in a "not on the
     console" way.
+
+    Features
+    --------
+    - Real-time display of log messages with color-coded levels
+    - Adjustable logger level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    - Optional console output toggle
+    - File logging with save dialog
+    - Module-based pattern filtering (e.g., 'lsl.imaging.*')
+    - Automatic buffer management (max 10,000 lines)
+    - Clear buffer button
+
+    Parameters
+    ----------
+    root : tk.Tk, optional
+        Existing Tk root window. If None, a new root window is created.
+
+    Examples
+    --------
+    Simple usage with blocking GUI::
+
+        from lsl.logger_gui import LoggerGUI
+        gui = LoggerGUI()
+        # ... do LSL work that generates log messages ...
+        gui.mainloop()
+
+    Non-blocking background GUI::
+
+        import threading
+        from lsl.logger_gui import LoggerGUI
+
+        gui = LoggerGUI()
+        threading.Thread(target=gui.mainloop, daemon=True).start()
+        # ... continue with other work ...
+
+    Notes
+    -----
+    The GUI attaches a ThreadedHandler to the main LSL logger, allowing it to
+    capture messages from any thread. When the GUI is closed, the handler is
+    automatically removed.
     """
 
     def __init__(self, root=None):
@@ -388,5 +485,57 @@ class LoggerGUI(object):
 
 
 if __name__ == '__main__':
+    import time
+    import threading
+
+    print("Starting logger GUI demo mode...")
+    print("This will generate test log messages to demonstrate the GUI features.")
+    print("Close the GUI window to exit.\n")
+
+    # Create the GUI
     gui = LoggerGUI()
+
+    # Set logger to DEBUG level to see all messages
+    lsl_logger.set_log_level(logging.DEBUG)
+
+    # Demo function that generates log messages
+    def generate_demo_messages():
+        time.sleep(2)  # Wait for GUI to initialize
+
+        lsl_logger.LSL_LOGGER.debug("Debug message: Detailed diagnostic information")
+        time.sleep(1)
+
+        lsl_logger.LSL_LOGGER.info("Info message: Normal operational message")
+        time.sleep(1)
+
+        lsl_logger.LSL_LOGGER.warning("Warning message: Something unexpected happened")
+        time.sleep(1)
+
+        lsl_logger.LSL_LOGGER.error("Error message: Operation failed")
+        time.sleep(1)
+
+        lsl_logger.LSL_LOGGER.critical("Critical message: System in critical state")
+        time.sleep(2)
+
+        lsl_logger.LSL_LOGGER.info("Try adjusting the Logger Level dropdown")
+        time.sleep(1)
+        lsl_logger.LSL_LOGGER.info("Enable Console Output to see messages in terminal")
+        time.sleep(1)
+        lsl_logger.LSL_LOGGER.info("Click 'Log to File...' to save messages to disk")
+        time.sleep(1)
+        lsl_logger.LSL_LOGGER.info("Use Module Filter to filter by pattern (e.g., 'lsl_logger')")
+        time.sleep(2)
+
+        # Simulate some work with progress messages
+        for i in range(5):
+            lsl_logger.LSL_LOGGER.debug(f"Processing iteration {i+1} of 5...")
+            time.sleep(1)
+
+        lsl_logger.LSL_LOGGER.info("Demo complete! Close window to exit.")
+
+    # Start demo message generator in background thread
+    demo_thread = threading.Thread(target=generate_demo_messages, daemon=True)
+    demo_thread.start()
+
+    # Run GUI (blocks until window closed)
     gui.mainloop()
