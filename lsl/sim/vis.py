@@ -899,9 +899,9 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
                 print(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
             LSL_LOGGER.info(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
             beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
-            
+
     if pos_error != 0:
-        warnings.warn(colorfy(f"{{{{%%yellow Creating array with positional errors between {-pos_error:.3f} and {pos_error:.3f} m}}}}"), RuntimeWarning)
+        LSL_LOGGER.warning(f"Creating array with positional errors between {-pos_error:.3f} and {pos_error:.3f} m")
 
     # Build an array of AIPY Antenna objects
     ants = []
