@@ -40,6 +40,11 @@ _active_filters = {}
 def set_log_level(logging_level):
     """
     Set the logging level for the LSL logger.
+
+    Parameters
+    ----------
+    logging_level : int
+        The logging level (e.g., logging.DEBUG, logging.INFO, logging.WARNING).
     """
     
     global LSL_LOGGER
@@ -50,6 +55,11 @@ def set_log_level(logging_level):
 def get_log_level():
     """
     Get the current logging level for the LSL logger.
+
+    Returns
+    -------
+    int
+        The current logging level.
     """
     
     global LSL_LOGGER
@@ -73,6 +83,13 @@ def add_handler(logging_handler, formatter=LSL_LOG_FORMAT):
     """
     Add a new handler to the LSL logger.  If the `formatter` keyword is not None
     then the handler's formatter will be set before it is added.
+
+    Parameters
+    ----------
+    logging_handler : logging.Handler
+        The handler to add to the logger.
+    formatter : logging.Formatter, optional
+        The formatter to apply to the handler. If None, no formatter is set.
     """
     
     global LSL_LOGGER
@@ -86,6 +103,11 @@ def add_handler(logging_handler, formatter=LSL_LOG_FORMAT):
 def remove_handler(logging_handler):
     """
     Remove the specified handler from the LSL logger.
+
+    Parameters
+    ----------
+    logging_handler : logging.Handler
+        The handler to remove from the logger.
     """
     
     global LSL_LOGGER
@@ -116,6 +138,11 @@ _warning_logger.addHandler(_warning_handler)
 def capture_warnings(enable_capture):
     """
     Enable/disable capturing `warning.warn()` calls into the main LSL logger.
+
+    Parameters
+    ----------
+    enable_capture : bool
+        If True, capture warnings into the logger. If False, disable capture.
     """
 
     logging.captureWarnings(enable_capture)
