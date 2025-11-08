@@ -75,11 +75,15 @@ def sources(ax, gimg, srcs, phase_center='z', label=True, marker='x', color='whi
     """
     For a matplotlib axis instance showing an image of the sky, plot the
     locations of the srcs given in the 'srcs' dictionary.
-    
+
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
-    
+
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
@@ -106,15 +110,19 @@ def sources(ax, gimg, srcs, phase_center='z', label=True, marker='x', color='whi
 def horizon(ax, gimg, altitude_cut=1e-3, color='white'):
     """
     For a matplotlib axis instance showing an image of the sky, plot the horizon.
-    
+
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
-    
+
     .. versionchanged:: 1.1.0
-        Added a new argument for the AntennaArray instance to provide a 
+        Added a new argument for the AntennaArray instance to provide a
         uniform default call for all functions.
     """
-    
+
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
@@ -135,11 +143,15 @@ def graticule_radec(ax, gimg, label=True, color='white'):
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant declinate and RA.  Declinations are spaced at 20 degree intervals
     and RAs are spaced at 2 hour intervals.
-    
+
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
-    
+
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
@@ -187,7 +199,11 @@ def graticule_azalt(ax, gimg, label=True, color='white'):
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
-    
+
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
