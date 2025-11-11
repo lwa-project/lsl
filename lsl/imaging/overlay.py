@@ -75,7 +75,7 @@ def sources(ax, gimg, srcs, phase_center='z', label=True, marker='x', color='whi
     """
     For a matplotlib axis instance showing an image of the sky, plot the
     locations of the srcs given in the 'srcs' dictionary.
-
+    
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
@@ -195,7 +195,7 @@ def graticule_azalt(ax, gimg, label=True, color='white'):
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant azimuth and altitude.  Altitudes are spaced at 20 degree intervals
     and azimuths are spaced at 45 degree intervals.
-    
+
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
