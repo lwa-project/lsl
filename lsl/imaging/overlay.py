@@ -143,15 +143,15 @@ def graticule_radec(ax, gimg, label=True, color='white'):
     For a matplotlib axis instance showing an image of the sky, plot lines of
     constant declinate and RA.  Declinations are spaced at 20 degree intervals
     and RAs are spaced at 2 hour intervals.
-
+    
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
-
+    
     # Validate input type
     if not isinstance(gimg, ImgWPlus):
         raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
-
+        
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
