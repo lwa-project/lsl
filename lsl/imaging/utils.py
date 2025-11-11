@@ -1376,11 +1376,11 @@ class ImgWPlus(aipy.img.ImgW):
                 raise ValueError(f"Shape mis-match: {self.shape} != {uv.shape}")
             if len(self.bm) != len(uv.bm):
                 raise ValueError(f"Order mis-match: {len(self.bm)} != {len(uv.bm)}")
-
+                
             self.uv += uv.uv
             for i in range(len(self.bm)):
                 self.bm[i] += uv.bm[i]
-
+                
         elif isinstance(uv, np.ndarray):
             if not isinstance(bm, (list, tuple)):
                 raise ValueError("Expected bm to be a list or tuple")
@@ -1388,16 +1388,16 @@ class ImgWPlus(aipy.img.ImgW):
                 raise ValueError(f"Shape mis-match: {self.uv.shape} != {uv.shape}")
             if len(self.bm) != len(bm):
                 raise ValueError(f"Order mis-match: {len(self.bm)} != {len(bm)}")
-
+                
             self.uv += uv
             for i in range(len(self.bm)):
                 self.bm[i] += bm[i]
-
+                
         else:
             raise TypeError("Expected an ImgWPlus or np.ndarray instance")
-
-        return self
             
+        return self
+        
     @property
     def field_of_view(self):
         """
