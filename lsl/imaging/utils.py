@@ -261,7 +261,9 @@ class CorrelatedDataIDI(CorrelatedDataBase):
             self.extended = False
             self.conjugate = True
             try:
-                if hdulist[0].header['LWATYPE'] == 'IDI-EXTENDED-ZA':
+                lwatype = hdulist[0].header['LWATYPE']
+                # Check for ExtendedIDI format: 'EXTENDED-*' (current) or 'IDI-EXTENDED-*' (backwards compat)
+                if lwatype.startswith('EXTENDED-') or lwatype.startswith('IDI-EXTENDED-'):
                     self.extended = True
             except KeyError:
                 ## Catch for LEDA64-NM data
