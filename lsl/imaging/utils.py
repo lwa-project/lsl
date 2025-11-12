@@ -1398,6 +1398,8 @@ class ImgWPlus(aipy.img.ImgW):
         else:
             raise TypeError("Expected an ImgWPlus or np.ndarray instance")
             
+        return self
+        
     @property
     def field_of_view(self):
         """
