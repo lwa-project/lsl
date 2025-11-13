@@ -485,18 +485,18 @@ class Project(object):
                     
                     if at2 != -1:
                         output += "OBS_ASP_AT2[%i]  %i\n" % (at2ID, at2)
-            ## Second attenuator setting
-            if all(j == obs.asp_atten_split[0] for j in obs.asp_atten_split):
+            ## Third attenuator setting
+            if all(j == obs.asp_atten_3[0] for j in obs.asp_atten_3):
                 ### All the same
-                if obs.asp_atten_split[0] != -1:
-                    output += "OBS_ASP_ATS[%i]  %i\n" % (0, obs.asp_atten_split[0])
+                if obs.asp_atten_3[0] != -1:
+                    output += "OBS_ASP_AT3[%i]  %i\n" % (0, obs.asp_atten_3[0])
             else:
                 ### Some different
-                for j,ats in enumerate(obs.asp_atten_split):
-                    atsID = j + 1
+                for j,at3 in enumerate(obs.asp_atten_3):
+                    at3ID = j + 1
                     
-                    if ats != -1:
-                        output += "OBS_ASP_ATS[%i]  %i\n" % (atsID, ats)
+                    if at3 != -1:
+                        output += "OBS_ASP_AT3[%i]  %i\n" % (at3ID, at3)
             ## TBT settings
             if obs.mode == 'TBT':
 
@@ -558,7 +558,7 @@ class Observation(object):
         self.asp_filter = [-1 for n in range(LWA_MAX_NSTD)]
         self.asp_atten_1 = [-1 for n in range(LWA_MAX_NSTD)]
         self.asp_atten_2 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.asp_atten_split = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_3 = [-1 for n in range(LWA_MAX_NSTD)]
 
         self.gain = int(gain)
         
@@ -769,7 +769,7 @@ class Observation(object):
                 failures += 1
                 if verbose:
                     pid_print(f"Error: Invalid ASP filter setting on stand {f} '{filt}'")
-        ## AT1/AT2/ATS
+        ## AT1/AT2/AT3
         if len(self.asp_atten_1) < nstand:
             failures += 1
             if verbose:
@@ -788,15 +788,15 @@ class Observation(object):
                 failures += 1
                 if verbose:
                     pid_print(f"Error: Invalid ASP attenuator 2 setting on stand {f} '{atten}'")
-        if len(self.asp_atten_split) < nstand:
+        if len(self.asp_atten_3) < nstand:
             failures += 1
             if verbose:
-                pid_print(f"Error: Invalid number of ASP attenuator split settings (({len(self.asp_atten_split)} < {nstand})")
-        for f,atten in enumerate(self.asp_atten_split):
-            if atten < -1 or atten > 15:
+                pid_print(f"Error: Invalid number of ASP attenuator 3 settings (({len(self.asp_atten_3)} < {nstand})")
+        for f,atten in enumerate(self.asp_atten_3):
+            if atten < -1 or atten > 31:
                 failures += 1
                 if verbose:
-                    pid_print(f"Error: Invalid ASP attenuator split setting on stand {f} '{atten}'")
+                    pid_print(f"Error: Invalid ASP attenuator 3 setting on stand {f} '{atten}'")
                     
         # Any failures indicates a bad FEE/ASP configuration
         if failures == 0:
@@ -2137,7 +2137,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     obsOut.asp_filter = copy.deepcopy(obs_temp['aspFlt'])
     obsOut.asp_atten_1 = copy.deepcopy(obs_temp['aspAT1'])
     obsOut.asp_atten_2 = copy.deepcopy(obs_temp['aspAT2'])
-    obsOut.asp_atten_split = copy.deepcopy(obs_temp['aspATS'])
+    obsOut.asp_atten_3 = copy.deepcopy(obs_temp['aspAT3'])
     
     # Force the observation to be updated
     obsOut.update()
@@ -2174,7 +2174,7 @@ def parse_sdf(filename, verbose=False):
                 'stpRADec': True, 'tbtSamples': 0, 'gain': -1, 
                 'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
                 'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
-                'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}
+                'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT3': [-1 for n in range(LWA_MAX_NSTD)]}
     beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
     beam_temps = []
     
@@ -2543,12 +2543,12 @@ def parse_sdf(filename, verbose=False):
                 else:
                     obs_temp['aspAT2'][ids[0]-1] = int(value)
                 continue
-            if keyword == 'OBS_ASP_ATS':
+            if keyword == 'OBS_ASP_AT3':
                 if ids[0] == 0:
-                    for n in range(len(obs_temp['aspATS'])):
-                        obs_temp['aspATS'][n] = int(value)
+                    for n in range(len(obs_temp['aspAT3'])):
+                        obs_temp['aspAT3'][n] = int(value)
                 else:
-                    obs_temp['aspATS'][ids[0]-1] = int(value)
+                    obs_temp['aspAT3'][ids[0]-1] = int(value)
                 continue
             if keyword == 'OBS_TBT_SAMPLES':
                 obs_temp['tbtSamples'] = int(value)

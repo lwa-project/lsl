@@ -170,7 +170,7 @@ def get_session_metadata(tarname):
 def get_asp_configuration(tarname, which='beginning'):
     """
     Given an MCS meta-data tarball, extract the ASP MIB contained in it and return 
-    a dictionary of values for the filter, AT1, AT2, and ATSplit.  The 'which'
+    a dictionary of values for the filter, AT1, AT2, and AT3.  The 'which'
     keyword is used to specify whether or not the configuration returned is at the
     beginning (default) or end of the session.
     
@@ -182,10 +182,10 @@ def get_asp_configuration(tarname, which='beginning'):
         raise ValueError(f"Unknown configuration time '{which}'")
         
     # Stub ASP configuration
-    aspConfig = {'asp_filter':      [-1 for i in range(264)],
-                 'asp_atten_1':     [-1 for i in range(264)],
-                 'asp_atten_2':     [-1 for i in range(264)],
-                 'asp_atten_split': [-1 for i in range(264)]}
+    aspConfig = {'asp_filter':      [-1 for i in range(256)],
+                 'asp_atten_1':     [-1 for i in range(256)],
+                 'asp_atten_2':     [-1 for i in range(256)],
+                 'asp_atten_3':     [-1 for i in range(256)]}
     
     with managed_mkdtemp(prefix='metadata-bundle-') as tempDir:
         # Find the .pag file and extract it
@@ -227,8 +227,8 @@ def get_asp_configuration(tarname, which='beginning'):
                         ### AT2
                         aspConfig['asp_atten_2'][values[2]-1] = int(aspMIB[key].value)
                     elif values[1] == 3:
-                        ### ATSPLIT
-                        aspConfig['asp_atten_split'][values[2]-1] = int(aspMIB[key].value)
+                        ### AT3
+                        aspConfig['asp_atten_3'][values[2]-1] = int(aspMIB[key].value)
                     else:
                         pass
                         
@@ -241,7 +241,7 @@ def get_asp_configuration(tarname, which='beginning'):
 def get_asp_configuration_summary(tarname, which='beginning'):
     """
     Similar to get_asp_configuration, but returns only a single value for each
-    of the four ASP paramters:  filter, AT, AT2, and ATSplit.  The values
+    of the four ASP paramters:  filter, AT, AT2, and AT3.  The values
     are based off the mode of the parameter.
     
     .. versionadded:: 0.6.5

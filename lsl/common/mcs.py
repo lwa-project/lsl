@@ -216,7 +216,7 @@ STATION_SETTINGS_STRUCT = """
     signed short int asp_flt[LWA_MAX_NSTD]; // OBS_ASP_FLT[LWA_MAX_NSTD] // ASP_FLT[LWA_MAX_NSTD]
     signed short int asp_at1[LWA_MAX_NSTD]; // OBS_ASP_AT1[LWA_MAX_NSTD] // ASP_AT1[LWA_MAX_NSTD]
     signed short int asp_at2[LWA_MAX_NSTD]; // OBS_ASP_AT2[LWA_MAX_NSTD] // ASP_AT2[LWA_MAX_NSTD]
-    signed short int asp_ats[LWA_MAX_NSTD]; // OBS_ASP_ATS[LWA_MAX_NSTD] // ASP_ATS[LWA_MAX_NSTD]
+    signed short int asp_at3[LWA_MAX_NSTD]; // OBS_ASP_AT3[LWA_MAX_NSTD] // ASP_AT3[LWA_MAX_NSTD]
     signed short int drx_gain; // OBS_DRX_GAIN // DRX_GAIN
 """
 
@@ -318,7 +318,7 @@ OSF2_STRUCT = """
     signed short int   OBS_ASP_FLT[LWA_MAX_NSTD];
     signed short int   OBS_ASP_AT1[LWA_MAX_NSTD];
     signed short int   OBS_ASP_AT2[LWA_MAX_NSTD];
-    signed short int   OBS_ASP_ATS[LWA_MAX_NSTD];
+    signed short int   OBS_ASP_AT3[LWA_MAX_NSTD];
     unsigned int       OBS_TBT_SAMPLES;
     signed short int   OBS_DRX_GAIN;
     unsigned int       alignment;
@@ -752,6 +752,7 @@ class CommandID(enum.Enum):
     COR    = 41
     TBT    = 42
     TBS    = 43
+    AT3    = 44
 
 
 class ObservingMode(enum.Enum):
