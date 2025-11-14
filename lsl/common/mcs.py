@@ -753,6 +753,7 @@ class CommandID(enum.Enum):
     TBT    = 42
     TBS    = 43
     AT3    = 44
+    LOC    = 45
 
 
 class ObservingMode(enum.Enum):
