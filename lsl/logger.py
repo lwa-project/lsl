@@ -209,6 +209,8 @@ def enable_file_logging(filename, level=None, mode='a'):
 
     # Remove existing file handler if present
     if _file_handler is not None:
+        import warnings
+        warnings.warn(f"Closing existing log file and switching to '{filename}'", RuntimeWarning)
         LSL_LOGGER.removeHandler(_file_handler)
         _file_handler.close()
 

@@ -138,6 +138,38 @@ class logger_tests(unittest.TestCase):
             if os.path.exists(log_file):
                 os.unlink(log_file)
 
+    def test_file_logging_switch_warning(self):
+        """Test warning when switching log files."""
+        import warnings
+
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+            log_file1 = f.name
+        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+            log_file2 = f.name
+
+        try:
+            # Enable first file
+            logger.enable_file_logging(log_file1)
+
+            # Switch to second file should generate warning
+            with warnings.catch_warnings(record=True) as w:
+                warnings.simplefilter("always")
+                logger.enable_file_logging(log_file2)
+
+                # Check warning was raised
+                self.assertEqual(len(w), 1)
+                self.assertTrue(issubclass(w[0].category, RuntimeWarning))
+                self.assertIn("Closing existing log file", str(w[0].message))
+                self.assertIn(log_file2, str(w[0].message))
+
+            logger.disable_file_logging()
+
+        finally:
+            if os.path.exists(log_file1):
+                os.unlink(log_file1)
+            if os.path.exists(log_file2):
+                os.unlink(log_file2)
+
     def test_file_logging_with_level(self):
         """Test file logging with specific level."""
         with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
