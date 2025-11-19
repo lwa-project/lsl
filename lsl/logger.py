@@ -1,5 +1,6 @@
 import sys
 import queue
+import fnmatch
 import logging
 
 from lsl.common.color import uncolorfy
@@ -252,7 +253,7 @@ class _ModuleFilter(logging.Filter):
         Return True if the record's module name matches the pattern.
         Supports wildcards: '*' matches any sequence, '?' matches one character.
         """
-        import fnmatch
+        
         return fnmatch.fnmatch(record.name, self.pattern)
 
 
