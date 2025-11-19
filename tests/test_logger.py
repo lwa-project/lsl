@@ -160,7 +160,8 @@ class logger_tests(unittest.TestCase):
                 self.assertEqual(len(w), 1)
                 self.assertTrue(issubclass(w[0].category, RuntimeWarning))
                 self.assertIn("Closing existing log file", str(w[0].message))
-                self.assertIn(log_file2, str(w[0].message))
+                self.assertIn(log_file1, str(w[0].message))  # Old file
+                self.assertIn(log_file2, str(w[0].message))  # New file
 
             logger.disable_file_logging()
 
