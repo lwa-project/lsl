@@ -332,8 +332,14 @@ class LSLConfigContainer(object):
         
         try:
             old_value = self._parameters[name].value
-            # Allow type changes only when old_value or new value is None (for optional parameters)
-            if type(value) != type(old_value) and old_value is not None and value is not None:
+            # Check if this parameter has None as its default (making it optional/flexible)
+            section, item = name.rsplit('.', 1)
+            default_value = DEFAULTS_ALL.get(section, {}).get(item, {}).get('value')
+            is_optional = default_value is None
+
+            # Allow type changes only for optional parameters (those with None defaults)
+            # For non-optional parameters, enforce strict type checking
+            if type(value) != type(old_value) and not is_optional:
                 raise TypeError("Expected %s but found %s for '%s'" % (type(old_value).__name__,
                                                                        type(value).__name__,
                                                                        name))
@@ -370,8 +376,14 @@ class LSLConfigContainer(object):
         
         try:
             old_value = self._parameters[name].value
-            # Allow type changes only when old_value or new value is None (for optional parameters)
-            if type(value) != type(old_value) and old_value is not None and value is not None:
+            # Check if this parameter has None as its default (making it optional/flexible)
+            section, item = name.rsplit('.', 1)
+            default_value = DEFAULTS_ALL.get(section, {}).get(item, {}).get('value')
+            is_optional = default_value is None
+
+            # Allow type changes only for optional parameters (those with None defaults)
+            # For non-optional parameters, enforce strict type checking
+            if type(value) != type(old_value) and not is_optional:
                 raise TypeError("Expected %s but found %s for '%s'" % (type(old_value).__name__,
                                                                        type(value).__name__,
                                                                        name))
