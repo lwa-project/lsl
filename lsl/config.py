@@ -176,7 +176,8 @@ class LSLConfigContainer(object):
         self._loaded = 0.0
         self._changed = False
         self._changed_list = {}
-        
+        self._version_changed = False
+
         self._parameters = OrderedDict()
         self._load_config()
         
@@ -235,8 +236,9 @@ class LSLConfigContainer(object):
                             existing_version = line.split('LSL Version:', 1)[1]
                             existing_version = existing_version.strip().rstrip()
                             if existing_version != lsl_version:
+                                self._version_changed = True
                                 self._changed = True
-                                
+
                         continue
                         
                     if line[0] == '[':
@@ -269,30 +271,37 @@ class LSLConfigContainer(object):
                             self._parameters[name] = param
                             
         except IOError:
+            # File doesn't exist, will need to create it
             self._changed = True
             
     def _save_config(self):
         """
         Save the configuation to disk.
         """
-        
+
         if not _IS_READONLY:
-            if os.path.exists(self.filename) and self._changed:
+            if os.path.exists(self.filename) and len(self._changed_list) > 0:
                 mtime = os.path.getmtime(self.filename)
                 if mtime > self._loaded:
+                    # The file was modified on disk after we loaded it
+                    # Abandon our parameter changes but still save if version changed
                     warnings.warn('\u001b[33mConfiguration file changed on disk, abandoning changes from this session\u001b[0m', RuntimeWarning)
                     for key,value in self._changed_list.items():
                         warnings.warn("\u001b[33m  %s: %s -> %s\u001b[0m" % (key, value[0], value[1]), RuntimeWarning)
-                    self._changed = False
-                    
+                    self._changed_list.clear()
+                    # Don't reset _changed if version changed - we still need to update the file
+                    if not self._version_changed:
+                        self._changed = False
+
             if self._changed:
                 with FileLock(self.filename) as lock:
                     assert(lock.locked())
-                    
+
                     with open(self.filename, 'w') as fh:
                         fh.write(str(self))
                     self._changed_list.clear()
                     self._changed = False
+                    self._version_changed = False
                     
     def view(self, section):
         """
@@ -320,20 +329,35 @@ class LSLConfigContainer(object):
         """
         Set the value of a parameter.
         """
-        
+
         try:
             old_value = self._parameters[name].value
-            if type(value) != type(old_value):
+            # Allow type changes only when old_value or new value is None (for optional parameters)
+            if type(value) != type(old_value) and old_value is not None and value is not None:
                 raise TypeError("Expected %s but found %s for '%s'" % (type(old_value).__name__,
                                                                        type(value).__name__,
                                                                        name))
             self._parameters[name].value = value
             if value != old_value:
                 if name in self._changed_list:
-                    old_value = self._changed_list[name][0]
-                self._changed_list[name] = (old_value, value)
-                self._changed = True
-                
+                    # Get the original value from when we first changed this parameter
+                    original_value = self._changed_list[name][0]
+                else:
+                    # This is the first change to this parameter
+                    original_value = old_value
+
+                # Check if we're setting back to the original value
+                if value == original_value:
+                    # Remove from changed list since we're back to the original value
+                    if name in self._changed_list:
+                        del self._changed_list[name]
+                    # Update _changed flag based on whether we still have changes
+                    self._changed = (len(self._changed_list) > 0) or self._version_changed
+                else:
+                    # Track the change from original to new value
+                    self._changed_list[name] = (original_value, value)
+                    self._changed = True
+
         except KeyError:
             raise ValueError(f"Unknown parameter '{name}'")
             
@@ -343,10 +367,11 @@ class LSLConfigContainer(object):
         Temporarily set the value of a parameter.  This value will not persist
         across Python sessions.
         """
-        
+
         try:
             old_value = self._parameters[name].value
-            if type(value) != type(old_value):
+            # Allow type changes only when old_value or new value is None (for optional parameters)
+            if type(value) != type(old_value) and old_value is not None and value is not None:
                 raise TypeError("Expected %s but found %s for '%s'" % (type(old_value).__name__,
                                                                        type(value).__name__,
                                                                        name))
