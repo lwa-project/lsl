@@ -118,7 +118,7 @@ class StationSettings(object):
     Python object that holds the status for the sub-subsystems in a SDM file.
     """
     
-    def __init__(self, report=None, update=None, fee_power=None, asp_filter=None, asp_atten_1=None, asp_atten_2=None, asp_atten_split=None, 
+    def __init__(self, report=None, update=None, fee_power=None, asp_filter=None, asp_atten_1=None, asp_atten_2=None, asp_atten_3=None, 
                 drx_gain=-1):
         if report is None:
             self.report = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
@@ -150,10 +150,10 @@ class StationSettings(object):
         else:
             self.asp_atten_2 = asp_atten_2
             
-        if asp_atten_split is None:
-            self.asp_atten_split = [0 for n in range(ME_MAX_NSTD)]
+        if asp_atten_3 is None:
+            self.asp_atten_3 = [0 for n in range(ME_MAX_NSTD)]
         else:
-            self.asp_atten_split = asp_atten_split
+            self.asp_atten_3 = asp_atten_3
             
         self.drx_gain = drx_gain
         
@@ -194,7 +194,7 @@ class StationSettings(object):
         self.asp_filter = list(ssStruct.asp_flt)
         self.asp_atten_1 = list(ssStruct.asp_at1)
         self.asp_atten_2 = list(ssStruct.asp_at2)
-        self.asp_atten_split = list(ssStruct.asp_ats)
+        self.asp_atten_3 = list(ssStruct.asp_at3)
         
         self.drx_gain = ssStruct.drx_gain
 

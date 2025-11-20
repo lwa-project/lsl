@@ -73,9 +73,9 @@ class mcs_ndp_tests(unittest.TestCase):
     def test_cid_limits(self):
         """Test valid command ID values"""
         
-        for i in range(0, 43+1):
+        for i in range(0, 45+1):
             mcs.CommandID(i)
-        self.assertRaises(ValueError, mcs.CommandID, 44)
+        self.assertRaises(ValueError, mcs.CommandID, 46)
         
     def test_mode_limits(self):
         """Test valid observing mode values"""
