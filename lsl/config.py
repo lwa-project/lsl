@@ -238,7 +238,7 @@ class LSLConfigContainer(object):
                             if existing_version != lsl_version:
                                 self._version_changed = True
                                 self._changed = True
-
+                                
                         continue
                         
                     if line[0] == '[':
@@ -278,7 +278,7 @@ class LSLConfigContainer(object):
         """
         Save the configuation to disk.
         """
-
+        
         if not _IS_READONLY:
             if os.path.exists(self.filename) and len(self._changed_list) > 0:
                 mtime = os.path.getmtime(self.filename)
@@ -292,11 +292,11 @@ class LSLConfigContainer(object):
                     # Don't reset _changed if version changed - we still need to update the file
                     if not self._version_changed:
                         self._changed = False
-
+                    
             if self._changed:
                 with FileLock(self.filename) as lock:
                     assert(lock.locked())
-
+                    
                     with open(self.filename, 'w') as fh:
                         fh.write(str(self))
                     self._changed_list.clear()
@@ -329,7 +329,7 @@ class LSLConfigContainer(object):
         """
         Set the value of a parameter.
         """
-
+        
         try:
             old_value = self._parameters[name].value
             # Allow type changes only when old_value or new value is None (for optional parameters)
@@ -345,7 +345,7 @@ class LSLConfigContainer(object):
                 else:
                     # This is the first change to this parameter
                     original_value = old_value
-
+                
                 # Check if we're setting back to the original value
                 if value == original_value:
                     # Remove from changed list since we're back to the original value
@@ -367,7 +367,7 @@ class LSLConfigContainer(object):
         Temporarily set the value of a parameter.  This value will not persist
         across Python sessions.
         """
-
+        
         try:
             old_value = self._parameters[name].value
             # Allow type changes only when old_value or new value is None (for optional parameters)
