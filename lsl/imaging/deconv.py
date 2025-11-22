@@ -125,7 +125,7 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
     the flux.  Thus the CLEAN loop becomes:
       1.  Find the peak flux in the residual image
       2.  Compute the systems response to a point source at that location
-      3.  Remove the scaled porition of this beam from the residuals
+      3.  Remove the scaled portion of this beam from the residuals
       4.  Go to 1.
     
     CLEAN tuning parameters:
@@ -370,7 +370,7 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
     loop becomes: 
       1.  Find the peak flux in the residual image
       2.  Compute the systems response to a point source at that location
-      3.  Remove the scaled porition of this beam from the residuals
+      3.  Remove the scaled portion of this beam from the residuals
       4.  Go to 1.
     
     This function differs from clean() in that it only cleans localized 
