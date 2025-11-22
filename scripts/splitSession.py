@@ -265,7 +265,7 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--source', action='store_true', 
                         help='split by source name instead of observation ID')
     parser.add_argument('-f', '--force', action='store_true', 
-                        help='force overwritting of existing split files')
+                        help='force overwriting of existing split files')
     args = parser.parse_args()
 
     main(args)

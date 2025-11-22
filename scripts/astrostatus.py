@@ -81,7 +81,7 @@ if __name__ == '__main__':
         screen.border()
         
         if curses.has_colors():
-            curses. use_default_colors()
+            curses.use_default_colors()
             
             curses.init_pair(1, -1, -1)
             curses.init_pair(2, curses.COLOR_RED, -1)
