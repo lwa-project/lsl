@@ -334,7 +334,7 @@ class astro_tests(unittest.TestCase):
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 69, 0, 0)
         self.assertRaises(ValueError, astro.zonedate, 2000, 1, 1, 0, 0, 73, 0)
         
-    def test_zonedata_string(self):
+    def test_zonedate_string(self):
         """Test astro.zonedate string representations."""
         
         d = astro.zonedate(2000, 4, 28, 21, 49, 13.0238, -3600 * 5)
