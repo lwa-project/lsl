@@ -101,9 +101,9 @@ def smooth(x, window_len=10, window='hanning'):
     Cookbook at http://www.scipy.org/Cookbook/SignalSmooth
     
     This method is based on the convolution of a scaled window with the signal.
-    The signal is prepared by introducing reflected copies of the signal 
+    The signal is prepared by introducing reflected copies of the signal
     (with the window size) in both ends so that transient parts are minimized
-    in the begining and end part of the output signal.
+    in the beginning and end part of the output signal.
     
     Input:
       * x: the input signal 

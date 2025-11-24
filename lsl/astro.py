@@ -206,17 +206,17 @@ class hms(object):
         
         if hours is not None:
             if hours < 0 or hours > 23:
-                raise ValueError(f"hours paramerer range is [0, 23], is set to {hours}")
+                raise ValueError(f"hours parameter range is [0, 23], is set to {hours}")
             self.hours = hours
             
         if minutes is not None:
             if minutes < 0 or minutes > 59:
-                raise ValueError(f"minutes paramerer range is [0, 59], is set to {minutes}")
+                raise ValueError(f"minutes parameter range is [0, 59], is set to {minutes}")
             self.minutes = minutes
             
         if seconds is not None:
             if seconds < 0.0 or seconds >= 60.0:
-                raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
+                raise ValueError(f"seconds parameter range is [0.0, 60.0), is set to {seconds:0.3f}")
             self.seconds = seconds
             
     def __iadd__(self, other):
@@ -336,27 +336,27 @@ class date(object):
             
         if months is not None:
             if months < 1 or months > 12:
-                raise ValueError(f"months paramerer range is [1, 12], is set to {months}")
+                raise ValueError(f"months parameter range is [1, 12], is set to {months}")
             self.months = months
             
         if days is not None:
             if days < 1 or days > 31:
-                raise ValueError(f"days paramerer range is [1, 31], is set to {days}")
+                raise ValueError(f"days parameter range is [1, 31], is set to {days}")
             self.days = days
             
         if hours is not None:
             if hours < 0 or hours > 23:
-                raise ValueError(f"hours paramerer range is [0, 23], is set to {hours}")
+                raise ValueError(f"hours parameter range is [0, 23], is set to {hours}")
             self.hours = hours
             
         if minutes is not None:
             if minutes < 0 or minutes > 59:
-                raise ValueError(f"minutes paramerer range is [0, 59], is set to {minutes}")
+                raise ValueError(f"minutes parameter range is [0, 59], is set to {minutes}")
             self.minutes = minutes
             
         if seconds is not None:
             if seconds < 0.0 or seconds >= 60.0:
-                raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
+                raise ValueError(f"seconds parameter range is [0.0, 60.0), is set to {seconds:0.3f}")
             self.seconds = seconds
             
     def __str__(self):
@@ -437,53 +437,53 @@ class date(object):
         try:
             (yearStr, monthStr, dayStr) = dateStr.split('-')
         except ValueError:
-            raise ValueError(f"date incorrectly formated: {dateStr}") 
+            raise ValueError(f"date incorrectly formatted: {dateStr}") 
             
         try:
             year = int(yearStr)
         except ValueError:
-            raise ValueError(f"year incorrectly formated: {yearStr}")
+            raise ValueError(f"year incorrectly formatted: {yearStr}")
             
         try:
             month = int(monthStr)
         except ValueError:
-            raise ValueError(f"month incorrectly formated: {monthStr}")
+            raise ValueError(f"month incorrectly formatted: {monthStr}")
         if month < 1 or month > 12:
-            raise ValueError(f"months paramerer range is [1, 12], is set to {month}")
+            raise ValueError(f"months parameter range is [1, 12], is set to {month}")
             
         try:
             day = int(dayStr)
         except ValueError:
-            raise ValueError(f"day incorrectly formated: {dayStr}")
+            raise ValueError(f"day incorrectly formatted: {dayStr}")
         if day < 1 or day > 31:
-            raise ValueError(f"days paramerer range is [1, 31], is set to {day}")
+            raise ValueError(f"days parameter range is [1, 31], is set to {day}")
             
-        # parse time sting 
+        # parse time string 
         try:    
             (hourStr, minuteStr, secondStr) = timeStr.split(':') 
         except ValueError:
-            raise ValueError(f"time incorrectly formated: {timeStr}")         
+            raise ValueError(f"time incorrectly formatted: {timeStr}")         
             
         try:
             hour = int(hourStr)
         except ValueError:
-            raise ValueError(f"hour incorrectly formated: {hourStr}")
+            raise ValueError(f"hour incorrectly formatted: {hourStr}")
         if hour < 0 or hour > 23:
-            raise ValueError(f"hours paramerer range is [0, 23], is set to {hour}")
+            raise ValueError(f"hours parameter range is [0, 23], is set to {hour}")
             
         try:
             minute = int(minuteStr)
         except ValueError:
-            raise ValueError(f"minutes incorrectly formated: {minuteStr}")
+            raise ValueError(f"minutes incorrectly formatted: {minuteStr}")
         if minute < 0 or minute > 59:
-            raise ValueError(f"minutes paramerer range is [0, 59], is set to {minute}")
+            raise ValueError(f"minutes parameter range is [0, 59], is set to {minute}")
             
         try:
             second = float(secondStr)
         except ValueError:
-            raise ValueError(f"seconds incorrectly formated: {secondStr}")
+            raise ValueError(f"seconds incorrectly formatted: {secondStr}")
         if second < 0.0 or second >= 60.0:
-            raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
+            raise ValueError(f"seconds parameter range is [0.0, 60.0), is set to {seconds:0.3f}")
             
         # set attributes
         self.years = year
@@ -527,27 +527,27 @@ class zonedate(object):
             
         if months is not None:
             if months < 1 or months > 12:
-                raise ValueError(f"months paramerer range is [1, 12], is set to {months}")
+                raise ValueError(f"months parameter range is [1, 12], is set to {months}")
             self.months = months
             
         if days is not None:
             if days < 1 or days > 31:
-                raise ValueError(f"days paramerer range is [1, 31], is set to {days}")
+                raise ValueError(f"days parameter range is [1, 31], is set to {days}")
             self.days = days
             
         if hours is not None:
             if hours < 0 or hours > 23:
-                raise ValueError(f"hours paramerer range is [0, 23], is set to {hours}")
+                raise ValueError(f"hours parameter range is [0, 23], is set to {hours}")
             self.hours = hours
             
         if minutes is not None:
             if minutes < 0 or minutes > 59:
-                raise ValueError(f"minutes paramerer range is [0, 59], is set to {minutes}")
+                raise ValueError(f"minutes parameter range is [0, 59], is set to {minutes}")
             self.minutes = minutes
             
         if seconds is not None:
             if seconds < 0.0 or seconds >= 60.0:
-                raise ValueError(f"seconds paramerer range is [0.0, 60.0), is set to {seconds:0.3f}")
+                raise ValueError(f"seconds parameter range is [0.0, 60.0), is set to {seconds:0.3f}")
             self.seconds = seconds
             
         if gmtoff is None:
@@ -744,7 +744,7 @@ class hrz_posn(object):
             raise RuntimeError("Cannot set az when this.astropy is not None")
             
         if value < 0.0 or value >= 360.0:
-            raise ValueError(f"az paramerer range is [0.0, 360.0), is set to {value:0.3f}")
+            raise ValueError(f"az parameter range is [0.0, 360.0), is set to {value:0.3f}")
         self._az = value
         
     @property
@@ -761,7 +761,7 @@ class hrz_posn(object):
             raise RuntimeError("Cannot set alt when this.astropy is not None")
             
         if value < -90.0 or value > 90.0:
-            raise ValueError(f"alt paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+            raise ValueError(f"alt parameter range is [-90.0, 90.0], is set to {value:0.3f}")
         self._alt = value
         
     @property
@@ -786,7 +786,7 @@ class hrz_posn(object):
         if value is None:
             return 90.0 - self.alt
         if value <  0.0 or value > 180.0:
-            raise ValueError(f"value paramerer range is [0.0, 180.0], is set to {value:0.3f}")
+            raise ValueError(f"value parameter range is [0.0, 180.0], is set to {value:0.3f}")
         self.alt = 90.0 - value 
         
     def __str__(self):
@@ -957,7 +957,7 @@ class equ_posn(object):
         if isinstance(value, hms):
             value = value.to_deg()
         if value < 0.0 or value >= 360.0:
-            raise ValueError(f"ra paramerer range is [0.0, 360.0), is set to {value:0.3f}")
+            raise ValueError(f"ra parameter range is [0.0, 360.0), is set to {value:0.3f}")
         self._ra = value
         
     @property
@@ -976,7 +976,7 @@ class equ_posn(object):
         if isinstance(value, dms):
             value = value.to_deg()
         if value < -90.0 or value > 90.0:
-            raise ValueError(f"dec paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+            raise ValueError(f"dec parameter range is [-90.0, 90.0], is set to {value:0.3f}")
         self._dec = value
         
     @property
@@ -1072,7 +1072,7 @@ class equ_posn(object):
         """
         Get local horizontal coordinates from equatorial/celestial coordinates.
         
-        Param: observer - Object of type geo_posn representing the observers's
+        Param: observer - Object of type geo_posn representing the observer's
                           location on Earth.
         Param: jD       - UTC Julian day (float).
         
@@ -1217,7 +1217,7 @@ class gal_posn(object):
         if isinstance(value, hms):
             value = value.to_deg()
         if value < -360.0 or value >= 360.0:
-            raise ValueError(f"l paramerer range is [-360.0, 360.0), is set to {value:0.3f}")
+            raise ValueError(f"l parameter range is [-360.0, 360.0), is set to {value:0.3f}")
         self._l = value
         
     @property
@@ -1236,7 +1236,7 @@ class gal_posn(object):
         if isinstance(value, dms):
             value = value.to_deg()
         if value < -90.0 or value > 90.0:
-            raise ValueError(f"b paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+            raise ValueError(f"b parameter range is [-90.0, 90.0], is set to {value:0.3f}")
         self._b = value
         
     @property
@@ -1883,8 +1883,8 @@ def add_hms(source, dest):
     """
     Adds time/angle hours, minutes, seconds.
     
-    Param: source - Object of type hms represeting angle 1.
-    Param: dest   - Object of type hms represeting angle 2.
+    Param: source - Object of type hms representing angle 1.
+    Param: dest   - Object of type hms representing angle 2.
     
     Returns object of type hms representing sum of angles.
     """
@@ -2624,7 +2624,7 @@ def get_solar_rst(jD, observer):
     Param: jD       - UTC Julian day (float).
     Param: observer - Object of type geo_posn representing observer position.
     
-    Returns Object of type rst_time represeting UTC ephemeris times,
+    Returns Object of type rst_time representing UTC ephemeris times,
             or None if the object is circumpolar.
     """
     
@@ -2662,7 +2662,7 @@ def get_jupiter_rst(jD, observer):
     Param: jD       - UTC Julian day (float).
     Param: observer - Object of type geo_posn representing observer position.
     
-    Returns Object of type rst_time represeting UTC ephemeris times,
+    Returns Object of type rst_time representing UTC ephemeris times,
             or None if the object is circumpolar.
     """
     
@@ -2700,7 +2700,7 @@ def get_saturn_rst(jD, observer):
     Param: jD       - UTC Julian day (float).
     Param: observer - Object of type geo_posn representing observer position.
     
-    Returns Object of type rst_time represeting UTC ephemeris times,
+    Returns Object of type rst_time representing UTC ephemeris times,
             or None if the object is circumpolar.
     """
 
@@ -2738,7 +2738,7 @@ def get_lunar_rst(jD, observer):
     Param: jD       - UTC Julian day (float).
     Param: observer - Object of type geo_posn representing observer position.
     
-    Returns Object of type rst_time represeting UTC ephemeris times,
+    Returns Object of type rst_time representing UTC ephemeris times,
             or None if the object is circumpolar.
     """
     
@@ -2776,7 +2776,7 @@ def get_venus_rst(jD, observer):
     Param: jD       - UTC Julian day (float).
     Param: observer - Object of type geo_posn representing observer position.
     
-    Returns Object of type rst_time represeting UTC ephemeris times,
+    Returns Object of type rst_time representing UTC ephemeris times,
             or None if the object is circumpolar.
     """
     
@@ -2814,7 +2814,7 @@ def get_mars_rst(jD, observer):
     Param: jD       - UTC Julian day (float).
     Param: observer - Object of type geo_posn representing observer position.
     
-    Returns Object of type rst_time represeting UTC ephemeris times,
+    Returns Object of type rst_time representing UTC ephemeris times,
             or None if the object is circumpolar.
     """
     
@@ -3266,7 +3266,7 @@ class geo_posn(object):
         if isinstance(value, dms):
             value = value.to_deg()
         if value < -90.0 or value > 90.0:
-            raise ValueError(f"lat paramerer range is [-90.0, 90.0], is set to {value:0.3f}")
+            raise ValueError(f"lat parameter range is [-90.0, 90.0], is set to {value:0.3f}")
         self._lat = value
     
     @property

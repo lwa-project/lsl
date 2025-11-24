@@ -116,7 +116,7 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     if window is null_window:
         window = None
     if window is not None and pfb:
-        raise RuntimeError("Cannot use a seperate window function with the PFB")
+        raise RuntimeError("Cannot use a separate window function with the PFB")
         
     if pfb:
         func = _spec.PFBPSD
@@ -175,7 +175,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     if window is null_window:
         window = None
     if window is not None and pfb:
-        raise RuntimeError("Cannot use a seperate window function with the PFB")
+        raise RuntimeError("Cannot use a separate window function with the PFB")
         
     if pfb:
         func = _stokes.PFBPSD
@@ -301,7 +301,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     if window is null_window:
         window = None
     if window is not None and pfb:
-        raise RuntimeError("Cannot use a seperate window function with the PFB")
+        raise RuntimeError("Cannot use a separate window function with the PFB")
         
     # F - defaults to running parallel in C via OpenMP
     if pfb:
@@ -456,7 +456,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     if window is null_window:
         window = None
     if window is not None and pfb:
-        raise RuntimeError("Cannot use a seperate window function with the PFB")
+        raise RuntimeError("Cannot use a separate window function with the PFB")
         
     # F - defaults to running parallel in C via OpenMP
     if pfb:

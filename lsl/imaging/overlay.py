@@ -79,7 +79,11 @@ def sources(ax, gimg, srcs, phase_center='z', label=True, marker='x', color='whi
     .. versionchanged:: 3.0.0
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
-    
+
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
@@ -111,10 +115,14 @@ def horizon(ax, gimg, altitude_cut=1e-3, color='white'):
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     
     .. versionchanged:: 1.1.0
-        Added a new argument for the AntennaArray instance to provide a 
+        Added a new argument for the AntennaArray instance to provide a
         uniform default call for all functions.
     """
     
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+        
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
@@ -140,6 +148,10 @@ def graticule_radec(ax, gimg, label=True, color='white'):
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
     
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+        
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs
@@ -188,6 +200,10 @@ def graticule_azalt(ax, gimg, label=True, color='white'):
         Switch to using imaging.utils.ImgWPlus for all image coordinate info.
     """
     
+    # Validate input type
+    if not isinstance(gimg, ImgWPlus):
+        raise TypeError(f"Expected gimg to be an ImgWPlus instance, got {type(gimg).__name__}")
+        
     # Setup
     mjd = gimg.mjd
     wcs = gimg.wcs

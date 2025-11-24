@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d
 
 from lsl import skymap, astro
 from lsl.common import stations
-from lsl.sim.beam import get_avaliable_models, beam_response
+from lsl.sim.beam import get_available_models, beam_response
 from lsl.misc import parser as aph
 
 from lsl.misc import telemetry

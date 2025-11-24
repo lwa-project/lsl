@@ -248,7 +248,7 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--update', action='store_true', 
                         help='update the default LWA1 SSMIF')
     parser.add_argument('-r', '--revert', action='store_true', 
-                        help='reveret the default LWA1 SSMIF to an older version')
+                        help='revert the default LWA1 SSMIF to an older version')
     parser.add_argument('-f', '--file', type=str, 
                         help='update the default LWA1 SSMIF using the specified file')
     args = parser.parse_args()

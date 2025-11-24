@@ -142,7 +142,7 @@ class beamformer_tests(unittest.TestCase):
 
 
 class  beamformer_test_suite(unittest.TestSuite):
-    """A unittest.TestSuite class which contains all of the lsl.sim.vis units 
+    """A unittest.TestSuite class which contains all of the lsl.sim.vis unit
     tests."""
     
     def __init__(self):

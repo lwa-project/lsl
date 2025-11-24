@@ -41,7 +41,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
     toKeep = [antennas[i].digitizer-1 for i in good]
     mapper = [antennas[i] for i in good]
     
-    # Create a list of unqiue stands to know what style of IDI file to create
+    # Create a list of unique stands to know what style of IDI file to create
     stands = set( [antennas[i].stand.id for i in good] )
     
     # Figure out the output mode
@@ -62,7 +62,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
     setDT = setTime.datetime
     print(f"Working on set #1 ({setTime-ref_time:.3f} seconds after set #1 = {setDT.strftime('%Y/%m/%d %H:%M:%S.%f')}")
     
-    # In order for the TBW stuff to actaully run, we need to run in with sub-
+    # In order for the TBW stuff to actually run, we need to run in with sub-
     # integrations.  8 sub-integrations (61.2 ms / 8 = 7.7 ms per section) 
     # seems to work ok with a "reasonable" number of channels.
     nSec = 8
@@ -115,7 +115,7 @@ def process_chunk(idf, site, good, filename, LFFT=64, overlap=1, pfb=False, pols
         sys.stdout.write(pb.show()+'\r')
         sys.stdout.write('\n')
         sys.stdout.flush()
-    print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime):.3f} s per integration)")
+    print(f"->  Cumulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime):.3f} s per integration)")
     
     fits.write()
     fits.close()
