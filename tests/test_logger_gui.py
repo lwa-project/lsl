@@ -18,8 +18,10 @@ try:
     # Try to create a test root to see if display is available
     try:
         test_root = tk.Tk()
+        test_root.update()
         test_root.destroy()
         have_display = True
+        
     except tk.TclError:
         have_display = False
         
