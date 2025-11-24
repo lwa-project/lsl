@@ -47,7 +47,7 @@ def main(args):
     uvw = uvutils.compute_uvw(antennas, HA=HA, dec=dec, freq=args.frequency)
     uvw = np.squeeze(uvw[:,:,0])
     
-    # Coursely grid the uv data to come up with a rough beam
+    # Coarsely grid the uv data to come up with a rough beam
     grid = np.zeros((1*240,1*240))
     for i in range(uvw.shape[0]):
         u = round((uvw[i,0]+120)*1)
@@ -133,7 +133,7 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='plot the UV-plane converage of an LWA station', 
+        description='plot the UV-plane coverage of an LWA station', 
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
     sgroup = parser.add_mutually_exclusive_group(required=False)

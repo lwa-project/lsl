@@ -1056,7 +1056,7 @@ class _XEngine_tests(unittest.TestCase):
 
 class fx_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.correlator.fx
-    units tests."""
+    unit tests."""
     
     def __init__(self):
         unittest.TestSuite.__init__(self)

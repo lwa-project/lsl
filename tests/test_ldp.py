@@ -657,7 +657,7 @@ class ldp_tests(unittest.TestCase):
         
     ### SplitFileWrapper ###
     
-    def testldp_splitfilewrapper(self):
+    def test_ldp_splitfilewrapper(self):
         """Test the LDP interface for a SplitFileWrapper."""
         
         # Split up the TBN file into many many parts
@@ -893,7 +893,7 @@ class ldp_tests(unittest.TestCase):
                 continue
             except errors.EOFError:
                 break
-        self.assertEqual(len(frames), 8-1)  # We loose part of the first frame to TBN   
+        self.assertEqual(len(frames), 8-1)  # We lose part of the first frame to TBN   
         
     def tearDown(self):
         """Cleanup"""

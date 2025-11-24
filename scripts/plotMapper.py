@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Read and plot the NOSTA_MAPPER table in a FITS IDI file writen by 
+Read and plot the NOSTA_MAPPER table in a FITS IDI file written by 
 lsl.writer.fitsidi if it exists.
 """
 

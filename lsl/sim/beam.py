@@ -15,7 +15,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 __version__ = '0.2'
-__all__ = ['mueller_matrix', 'beam_response', 'get_avaliable_models']
+__all__ = ['mueller_matrix', 'beam_response', 'get_available_models']
 
 
 _MODELS = OrderedDict()
@@ -378,5 +378,5 @@ def beam_response(model, pol, az, alt, frequency=74e6, degrees=True):
     return resp
 
 
-def get_avaliable_models():
+def get_available_models():
     return list(_MODELS.keys()) + ['llfss']

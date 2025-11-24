@@ -44,7 +44,7 @@ class mathutils_tests(unittest.TestCase):
         self.assertEqual(len(y), 1)
         self.assertAlmostEqual(y[0], 1.0)
         
-    def test_cmagnitde(self):
+    def test_cmagnitude(self):
         """Test mathutils.cmagnitude() function."""
         
         x = complex(1, 0)
@@ -92,7 +92,7 @@ class mathutils_tests(unittest.TestCase):
             self.assertAlmostEqual(p[1], next(ip))
             
     def test_creal(self):
-        """Test mathtutil.creal() function."""
+        """Test mathutils.creal() function."""
         
         x = (1, math.radians(0.0))
         self.assertAlmostEqual(mathutils.creal(x), 1.0)
@@ -107,7 +107,7 @@ class mathutils_tests(unittest.TestCase):
         self.assertAlmostEqual(mathutils.creal(x), 0.0)
             
     def test_cimag(self):
-        """Test mathtutil.cimag() function."""
+        """Test mathutils.cimag() function."""
         
         x = (1, math.radians(0.0))
         self.assertAlmostEqual(mathutils.cimag(x), 0.0)
@@ -183,7 +183,7 @@ class mathutils_tests(unittest.TestCase):
         mathutils.from_dB(x)
         
     def test_gaussian_gen(self):
-        """Test 1-D and 2-D Gaussisan generating functions."""
+        """Test 1-D and 2-D Gaussian generating functions."""
         
         # 1-D
         height = 1
@@ -201,7 +201,7 @@ class mathutils_tests(unittest.TestCase):
         value = gauFnc(np.arange(0, 100), np.arange(0,100))
         
     def test_gaussian_par(self):
-        """Test 1-D and 2-D Gaussisan parameter estimation."""
+        """Test 1-D and 2-D Gaussian parameter estimation."""
         
         # 1-D
         height = 1.5

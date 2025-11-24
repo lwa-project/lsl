@@ -287,7 +287,7 @@ class ldp_ndp_tests(unittest.TestCase):
                 continue
             except errors.EOFError:
                 break
-        self.assertEqual(len(frames), 7)  # We no longer loose part of the first frame to DRX   
+        self.assertEqual(len(frames), 7)  # We no longer lose part of the first frame to DRX   
         
     def tearDown(self):
         """Cleanup"""

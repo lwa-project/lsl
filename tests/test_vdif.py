@@ -81,7 +81,7 @@ class vdif_tests(unittest.TestCase):
                 np.testing.assert_allclose((vFrame.payload.data*256-1)/2, tFrame.payload.data[0,:].astype(np.int8), atol=1e-6)
                 
     def test_vdif_complex(self):
-        """Test writing complex data to VIDF format."""
+        """Test writing complex data to VDIF format."""
 
         # Setup the file names
         testFile = os.path.join(self.testPath, 'tbn-test-W.fits')

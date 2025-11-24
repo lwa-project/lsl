@@ -31,7 +31,7 @@ class kurtosis_tests(unittest.TestCase):
         self.assertAlmostEqual(upper, 1.28313, 5)
         
     def test_kurtosis(self):
-        """Test that spectal kurtosis runs"""
+        """Test that spectral kurtosis runs"""
         
         data = np.random.randn(300) + np.random.randn(300)*1j
         sk = kurtosis.spectral_fft(data)
@@ -58,7 +58,7 @@ class kurtosis_tests(unittest.TestCase):
 
 class kurtosis_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.statistics.kurtosis 
-    units tests."""
+    unit tests."""
     
     def __init__(self):
         unittest.TestSuite.__init__(self)

@@ -196,7 +196,7 @@ class LWA_Catalog(Catalog):
                     decMinutes = int(line[25:27], 10)
                     decSeconds = float(line[28:32])
                 except ValueError as err:
-                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated: '{line}' : {err}]")
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorrectly formated: '{line}' : {err}]")
                     
                 name = name.rstrip()           
                 
@@ -373,7 +373,7 @@ class PKS_Catalog(Catalog):
                     decMinutes = int(line[37:39])
                     decSeconds = int(line[40:42])
                 except ValueError:
-                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorrectly formated [{line}]")
                     
                 ra = astro.hms(raHours, raMinutes, raSeconds)
                 if decSign == '-':
@@ -437,7 +437,7 @@ class PKS90_Catalog(Catalog):
                     decMinutes = int(line[27:29])
                     decSeconds = float(line[30:34])
                 except ValueError:
-                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorrectly formated [{line}]")
                     
                 ra = astro.hms(raHours, raMinutes, raSeconds)
                 if decSign == '-':
@@ -496,7 +496,7 @@ class C3C_Catalog(Catalog):
                     decDegrees = int(line[28:30])
                     decMinutes = float(line[31:35])
                 except ValueError:
-                    raise RuntimeError(f"file {fileName} line {lineNum} incorectly formated [{line}]")
+                    raise RuntimeError(f"file {fileName} line {lineNum} incorrectly formated [{line}]")
                     
                 name = ('3C' + name.strip())         
                 
@@ -551,7 +551,7 @@ class C4C_Catalog(Catalog):
                     decMinutes = float(line[26:30])
                     alias = line[64:-1]
                 except ValueError:
-                    raise RuntimeError(f"file {fileName}, line {lineNum} incorectly formated [{line}]")
+                    raise RuntimeError(f"file {fileName}, line {lineNum} incorrectly formated [{line}]")
                     
                 name = name.strip()        
                 name = ('4C' + name)

@@ -1430,12 +1430,12 @@ class Aips(Idi):
 class ExtendedIdi(Idi):
     """
     Sub-class of the FITS IDI writer for making files that support up to
-    65,535 antennas.  This is done by changing the packing of baselines 
+    65,535 antennas.  This is done by changing the packing of baselines
     stored in the UVDATA table.  The new packing for baseline (i,j) is:
     (i << 16) & (j)
-    It also sets the FITS `LWATYPE` keyword in the primary HDU to a value 
-    of `IDI-EXTENDED-ZA` to distinguish files written by this writer 
-    from the standard IDI writer.
+    It also sets the FITS `LWATYPE` keyword in the primary HDU to a value
+    of `EXTENDED-<mode>` (e.g., `EXTENDED-ZA`) to distinguish files written
+    by this writer from the standard IDI writer.
     """
     
     _MAX_ANTS = 65535

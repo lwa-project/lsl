@@ -73,7 +73,7 @@ class dedispersion_tests(unittest.TestCase):
 
 class dedispersion_test_suite(unittest.TestSuite):
     """A unittest.TestSuite class which contains all of the lsl.misc.dedispersion 
-    units tests."""
+    unit tests."""
     
     def __init__(self):
         unittest.TestSuite.__init__(self)
