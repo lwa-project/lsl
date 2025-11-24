@@ -147,13 +147,13 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--dataset', type=int, default=-1, 
                         help='data set to image')
     parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
-                        help='minimun baseline uvw length to include in lambda at the midpoint frequency')
+                        help='minimum baseline uvw length to include in lambda at the midpoint frequency')
     parser.add_argument('-a', '--include-auto', action='store_true',
                         help='also plot auto-correlations')
-    parser.add_argument('-i', '--include', type=aph.csv_int_list, default='all', 
-                        help='comma seperated list of dipoles to include')
-    parser.add_argument('-e', '--exclude', type=aph.csv_int_list, default='none', 
-                        help='comma seperated list of dipoles to exclude')
+    parser.add_argument('-i', '--include', type=aph.csv_int_list, default='all',
+                        help='comma separated list of dipoles to include')
+    parser.add_argument('-e', '--exclude', type=aph.csv_int_list, default='none',
+                        help='comma separated list of dipoles to exclude')
     parser.add_argument('-f', '--frequency', action='store_true', 
                         help='label the channels in frequency rather than channel')
     parser.add_argument('-l', '--log', action='store_true', 

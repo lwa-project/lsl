@@ -12,7 +12,7 @@ import argparse
 
 from scipy.interpolate import interp1d
 
-from lsl.sim.beam import get_avaliable_models, beam_response
+from lsl.sim.beam import get_available_models, beam_response
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt

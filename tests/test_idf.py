@@ -735,7 +735,7 @@ class idf_tests(unittest.TestCase):
         self.assertEqual(project.runs[0].scans[0].mpm,  75630001)
         
     def test_set_stations(self):
-        """Test the set stations functionlity."""
+        """Test the set stations functionality."""
         
         project = idf.parse_idf(drxFile)
         project.runs[0].stations = [lwasv, lwa1]

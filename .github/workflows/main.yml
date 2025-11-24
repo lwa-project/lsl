@@ -1,20 +1,10 @@
 name: "Build and Test"
 on: [push, pull_request, release]
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
 jobs:
-  pre_build:
-    runs-on: ubuntu-latest
-    outputs:
-      should_skip: ${{ steps.skip_check.outputs.should_skip }}
-    steps:
-      - id: skip_check
-        uses: fkirc/skip-duplicate-actions@v5
-        with:
-          concurrent_skipping: 'never'
-          skip_after_successful_duplicate: 'true'
-          do_not_skip: '["pull_request", "release", "workflow_dispatch", "schedule"]'
   build:
-    needs: pre_build
-    if: ${{ needs.pre_build.outputs.should_skip != 'true' }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:

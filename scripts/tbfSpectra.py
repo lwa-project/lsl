@@ -193,8 +193,8 @@ if __name__ == "__main__":
                         help='run %(prog)s in silent mode')
     parser.add_argument('-g', '--gain-correct', action='store_true',
                         help='correct signals for the cable losses')
-    parser.add_argument('-k', '--keep', type=aph.csv_int_list, default='all', 
-                        help='only display the following comma-seperated list of stands')
+    parser.add_argument('-k', '--keep', type=aph.csv_int_list, default='all',
+                        help='only display the following comma-separated list of stands')
     parser.add_argument('-o', '--output', type=str, 
                         help='output file name for spectra image')
     args = parser.parse_args()
