@@ -290,7 +290,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         found = True
     if not found:
         raise RuntimeError(f"Stand #{ref_ant} not found in the array provided")
-    LSL_LOGGER.debug(f"Using antenna #{ref_ant} as a reference (Stand #{aa.ants[ref_ant].stand})")
+    LSL_LOGGER.info(f"Using antenna #{ref_ant} as a reference (Stand #{aa.ants[ref_ant].stand})")
         
     # Frequency in GHz so that the delays can be in ns
     fq = dataSet.freq[chan] / 1e9
@@ -310,7 +310,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
         #
         if amplitude:
             LSL_LOGGER.debug(f'  {i+1}A')
-
+            
             A = _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
@@ -332,13 +332,13 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
                 converged = True
                 
             dataSet = _scale_data(origSet, tempGains, np.zeros_like(tempGains), np.zeros_like(tempGains))
-        
+            
         #
         # Delay and/or phase
         #
         if phase_only:
             LSL_LOGGER.debug(f'  {i+1}P')
-
+            
             A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
@@ -361,12 +361,12 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             if metric < phase_cutoff:
                 phase_only = False
                 converged = True
-
+                
             dataSet = _scale_data(origSet, np.ones_like(tempPhaseOffsets), np.zeros_like(tempPhaseOffsets), tempPhaseOffsets)
-
+            
         elif delay_only:
             LSL_LOGGER.debug(f'  {i+1}D')
-
+            
             A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
@@ -389,12 +389,12 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             if metric < delay_cutoff:
                 delay_only = False
                 converged = True
-
+                
             dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, np.zeros_like(tempDelays))
-
+            
         elif delay_and_phase:
             LSL_LOGGER.debug(f'  {i+1}D+P')
-
+            
             ## Delay first
             A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -438,23 +438,32 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             if metric1 < delay_cutoff and metric2 < phase_cutoff:
                 delay_and_phase = False
                 converged = True
-
+                
             dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, tempPhaseOffsets)
             
         else:
             pass
             
+    # Did we converge?
+    if converged:
+        LSL_LOGGER.info('Fit converged')
+    else:
+        LSL_LOGGER.warning('Fit failed to convege')
+        
     # Make sure the phase is (-pi, pi]
     tempPhaseOffsets %= 2*np.pi
     tempPhaseOffsets[np.where( tempPhaseOffsets >  np.pi )] -= 2*np.pi
 
-    LSL_LOGGER.info(f'Best Gains: {tempGains}')
+    if amplitude:
+        LSL_LOGGER.info(f'Best Gains: {tempGains}')
     bestGains = tempGains
 
-    LSL_LOGGER.info(f'Best Delays: {tempDelays}')
+    if delay_only or delay_and_phase:
+        LSL_LOGGER.info(f'Best Delays: {tempDelays}')
     bestDelays = tempDelays
 
-    LSL_LOGGER.info(f'Best Phase Offsets: {tempPhaseOffsets}')
+    if phase_only or delay_and_phase:
+        LSL_LOGGER.info(f'Best Phase Offsets: {tempPhaseOffsets}')
     bestPhaseOffsets = tempPhaseOffsets
     
     return dataSet, bestGains, bestDelays, bestPhaseOffsets, converged
