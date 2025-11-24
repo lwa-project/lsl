@@ -211,7 +211,6 @@ def parse_time(s, station=lwa1):
                     tz = 'LST'
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
-                    from lsl.logger import LSL_LOGGER
                     LSL_LOGGER.warning(f"Entering pytz search mode for '{tzName}'")
 
                     tzFound = False
