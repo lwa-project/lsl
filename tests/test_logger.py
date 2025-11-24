@@ -22,99 +22,99 @@ class logger_tests(unittest.TestCase):
         """Set up test fixtures."""
         
         # Store original logger state
-        self._original_level = lsl_lsl_logger.get_log_level()
+        self._original_level = lsl_logger.get_log_level()
         
         # Clear any existing handlers except the default NullHandler
-        for handler in lsl_lsl_logger.LSL_LOGGER.handlers[:]:
+        for handler in lsl_logger.LSL_LOGGER.handlers[:]:
             if not isinstance(handler, logging.NullHandler):
-                lsl_lsl_logger.LSL_LOGGER.removeHandler(handler)
+                lsl_logger.LSL_LOGGER.removeHandler(handler)
                 
         # Clear any filters
-        lsl_lsl_logger.clear_filters()
+        lsl_logger.clear_filters()
         
         # Reset module-level handler tracking
-        lsl_lsl_logger._console_handler = None
-        lsl_lsl_logger._file_handler = None
+        lsl_logger._console_handler = None
+        lsl_logger._file_handler = None
         
     def tearDown(self):
         """Clean up after tests."""
         
         # Restore original log level
-        lsl_lsl_logger.set_log_level(self._original_level)
+        lsl_logger.set_log_level(self._original_level)
         
         # Disable console and file logging
-        lsl_lsl_logger.disable_console_logging()
-        lsl_lsl_logger.disable_file_logging()
+        lsl_logger.disable_console_logging()
+        lsl_logger.disable_file_logging()
         
         # Clear all filters
-        lsl_lsl_logger.clear_filters()
+        lsl_logger.clear_filters()
         
         # Clear the log queue
-        while not lsl_lsl_logger.LSL_LOG_QUEUE.empty():
+        while not lsl_logger.LSL_LOG_QUEUE.empty():
             try:
-                lsl_lsl_logger.LSL_LOG_QUEUE.get_nowait()
+                lsl_logger.LSL_LOG_QUEUE.get_nowait()
             except queue.Empty:
                 break
                 
     def test_set_get_log_level(self):
         """Test setting and getting log levels."""
         
-        lsl_lsl_logger.set_log_level(logging.DEBUG)
-        self.assertEqual(lsl_lsl_logger.get_log_level(), logging.DEBUG)
+        lsl_logger.set_log_level(logging.DEBUG)
+        self.assertEqual(lsl_logger.get_log_level(), logging.DEBUG)
         
-        lsl_lsl_logger.set_log_level(logging.WARNING)
-        self.assertEqual(lsl_lsl_logger.get_log_level(), logging.WARNING)
+        lsl_logger.set_log_level(logging.WARNING)
+        self.assertEqual(lsl_logger.get_log_level(), logging.WARNING)
         
-        lsl_lsl_logger.set_log_level(logging.ERROR)
-        self.assertEqual(lsl_lsl_logger.get_log_level(), logging.ERROR)
+        lsl_logger.set_log_level(logging.ERROR)
+        self.assertEqual(lsl_logger.get_log_level(), logging.ERROR)
         
     def test_threaded_handler(self):
         """Test ThreadedHandler puts records in queue."""
         
         # Add a ThreadedHandler
-        handler = lsl_lsl_logger.ThreadedHandler()
-        lsl_lsl_logger.add_handler(handler)
+        handler = lsl_logger.ThreadedHandler()
+        lsl_logger.add_handler(handler)
         
         # Clear queue first
-        while not lsl_lsl_logger.LSL_LOG_QUEUE.empty():
-            lsl_lsl_logger.LSL_LOG_QUEUE.get_nowait()
+        while not lsl_logger.LSL_LOG_QUEUE.empty():
+            lsl_logger.LSL_LOG_QUEUE.get_nowait()
             
         # Generate a log message
-        lsl_lsl_logger.LSL_LOGGER.info("Test message")
+        lsl_logger.LSL_LOGGER.info("Test message")
         
         # Check it appears in queue
-        self.assertFalse(lsl_lsl_logger.LSL_LOG_QUEUE.empty())
-        record = lsl_lsl_logger.LSL_LOG_QUEUE.get(timeout=1)
+        self.assertFalse(lsl_logger.LSL_LOG_QUEUE.empty())
+        record = lsl_logger.LSL_LOG_QUEUE.get(timeout=1)
         self.assertIsInstance(record, logging.LogRecord)
         self.assertIn("Test message", record.getMessage())
         
         # Clean up
-        lsl_lsl_logger.remove_handler(handler)
+        lsl_logger.remove_handler(handler)
         
     def test_console_logging_enable_disable(self):
         """Test enabling and disabling console logging."""
         
         # Initially no console handler
-        self.assertIsNone(lsl_lsl_logger._console_handler)
+        self.assertIsNone(lsl_logger._console_handler)
         
         # Enable console logging
-        lsl_lsl_logger.enable_console_logging()
-        self.assertIsNotNone(lsl_lsl_logger._console_handler)
-        self.assertIsInstance(lsl_lsl_logger._console_handler, logging.StreamHandler)
+        lsl_logger.enable_console_logging()
+        self.assertIsNotNone(lsl_logger._console_handler)
+        self.assertIsInstance(lsl_logger._console_handler, logging.StreamHandler)
         
         # Verify handler is in logger
-        self.assertIn(lsl_lsl_logger._console_handler, lsl_lsl_logger.LSL_LOGGER.handlers)
+        self.assertIn(lsl_logger._console_handler, lsl_logger.LSL_LOGGER.handlers)
         
         # Disable console logging
-        lsl_lsl_logger.disable_console_logging()
-        self.assertIsNone(lsl_lsl_logger._console_handler)
+        lsl_logger.disable_console_logging()
+        self.assertIsNone(lsl_logger._console_handler)
         
     def test_console_logging_with_level(self):
         """Test console logging with specific level."""
         
-        lsl_lsl_logger.enable_console_logging(level=logging.WARNING)
-        self.assertIsNotNone(lsl_lsl_logger._console_handler)
-        self.assertEqual(lsl_lsl_logger._console_handler.level, logging.WARNING)
+        lsl_logger.enable_console_logging(level=logging.WARNING)
+        self.assertIsNotNone(lsl_logger._console_handler)
+        self.assertEqual(lsl_logger._console_handler.level, logging.WARNING)
         
     def test_file_logging_enable_disable(self):
         """Test enabling and disabling file logging."""
@@ -125,10 +125,10 @@ class logger_tests(unittest.TestCase):
             
         try:
             # Initially no file handler
-            self.assertIsNone(lsl_lsl_logger._file_handler)
+            self.assertIsNone(lsl_logger._file_handler)
             
             # Enable file logging
-            lsl_lsl_logger.enable_file_logging(log_file)
+            lsl_logger.enable_file_logging(log_file)
             self.assertIsNotNone(lsl_logger._file_handler)
             self.assertIsInstance(lsl_logger._file_handler, logging.FileHandler)
             
@@ -324,7 +324,7 @@ class logger_tests(unittest.TestCase):
         
         # This message should be filtered out (different logger name)
         other_logger = logging.getLogger('lsl.imaging')
-        other_lsl_logger.info("Should not appear")
+        other_logger.info("Should not appear")
         
         # Check queue - should only have one message
         messages = []
