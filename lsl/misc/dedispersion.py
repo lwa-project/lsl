@@ -98,8 +98,8 @@ def get_coherent_sample_size(central_freq, sample_rate, dm):
     dedispersion to a data stream.
     """
     
-    # Roughly estimate the number of points we need to look at to do the dedispersion 
-    # correctly.  Based on the the relative dispersion delay between the high and low
+    # Roughly estimate the number of points we need to look at to do the dedispersion
+    # correctly.  Based on the relative dispersion delay between the high and low
     # ends of an observational band.
     F0 = central_freq
     BW = sample_rate

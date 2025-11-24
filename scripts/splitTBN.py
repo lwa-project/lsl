@@ -66,7 +66,7 @@ def main(args):
     print(f"Seconds to Skip:  {args.offset:.3f} ({nSkip} captures)")
     print(f"Seconds to Split: {args.count:.3f} ({nCaptures} captures)")
 
-    # Make sure that the first frame in the file is the first frame if a capture 
+    # Make sure that the first frame in the file is the first frame of a capture 
     # (stand 1, pol 0).  If not, read in as many frames as necessary to get to 
     # the beginning of a complete capture.
     frame = tbn.read_frame(fh)

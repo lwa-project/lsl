@@ -1036,7 +1036,7 @@ def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
         rdata = np.array(rdata)
         
         # For some reason the RMS map has a lower resolution than the actual TEC map.
-        # Interpolate up the the resolution of the actual TEC map so that we have an
+        # Interpolate up the resolution of the actual TEC map so that we have an
         # uncertainty at each point
         interpFunction = RectBivariateSpline(rlats, rlngs, rdata, kx=1, ky=1)
         rms = data*0.0

@@ -41,7 +41,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
     toKeep = [antennas[i].digitizer-1 for i in good]
     mapper = [antennas[i] for i in good]
     
-    # Create a list of unqiue stands to know what style of IDI file to create
+    # Create a list of unique stands to know what style of IDI file to create
     stands = set( [antennas[i].stand.id for i in good] )
     
     # Figure out the output mode
@@ -87,7 +87,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
             toUse = np.where( (freq>5.0e6) & (freq<93.0e6) )
             toUse = toUse[0]
             
-            # If we are in the first polarazation product of the first iteration,  setup
+            # If we are in the first polarization product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
                 pol1, pol2 = fxc.pol_to_pols(pol)
@@ -99,7 +99,7 @@ def process_chunk(idf, site, good, filename, int_time=5.0, LFFT=64, overlap=1, p
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
             fits.add_data_set(setTime, readT, blList, vis[:,toUse], pol=pol)
-        print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
+        print(f"->  Cumulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
         
     # Cleanup after everything is done
     fits.write()
@@ -187,7 +187,7 @@ def main(args):
     if args.samples > nSets:
         args.samples = nSets
         
-    # Loop over junks of 300 integrations to make sure that we don't overflow 
+    # Loop over chunks of 300 integrations to make sure that we don't overflow 
     # the FITS IDI memory buffer
     s = 0
     leftToDo = args.samples

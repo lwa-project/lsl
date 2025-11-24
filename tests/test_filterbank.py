@@ -29,7 +29,7 @@ class filterbank_tests(unittest.TestCase):
             filterbank.fft(data, nchan, P=ntap, window=window)
             
     def test_filterbank_real(self):
-        """Test that the filtebank works on real-valued data."""
+        """Test that the filterbank works on real-valued data."""
         
         for ntap in (1, 2, 4, 8, 16):
             for dtype in (np.float32, np.float64):
@@ -37,7 +37,7 @@ class filterbank_tests(unittest.TestCase):
                     self.run_filterbank_test(dtype, ntap=ntap)
                     
     def test_filterbank_complex(self):
-        """Test that the filtebank works on real-valued data."""
+        """Test that the filterbank works on real-valued data."""
         
         for ntap in (1, 2, 4, 8, 16):
             for dtype in (np.complex64, np.complex128):
@@ -67,7 +67,7 @@ class filterbank_tests(unittest.TestCase):
 
 
 class filterbank_test_suite(unittest.TestSuite):
-    """A unittest.TestSuite class which contains all of the lsl.misc.geodesy
+    """A unittest.TestSuite class which contains all of the lsl.correlator.filterbank
     module unit tests."""
     
     def __init__(self):

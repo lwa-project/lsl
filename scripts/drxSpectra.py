@@ -75,7 +75,7 @@ def main(args):
     # Number of remaining chunks
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
-    # Date & Central Frequnecy
+    # Date & Central Frequency
     beginDate = idf.get_info('start_time').datetime
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')

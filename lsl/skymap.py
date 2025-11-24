@@ -2,7 +2,7 @@
 Classes and methods to model sky brightness and visibility.
 
 .. versionchanged:: 1.2.0
-    Removed the orignal SkyMap class that uses LFmap at 73.9 MHz
+    Removed the original SkyMap class that uses LFmap at 73.9 MHz
     Updated SkyMapGSM to use the actual GSM rather than a fit to the GSM
     Added a new SkyMapLFSM that uses the 5.1 degree resolution LFSM
 """
@@ -38,7 +38,7 @@ class SkyMapBase(object):
     This code is the base class for the sky map. It takes as input a skymap file
     name and frequency to which the skymap corresponds.  It has the following
     methods:
-     * _init_ - takes the array coordinate filename as an input argument.
+     * __init__ - takes the array coordinate filename as an input argument.
      * normalize_power - Converts the skymap powers (in Kelvin radiated into 4 pi
                          ster) into a power seen at the antenna.
      * compute_total_power - Sums the power for all sources in the sky
@@ -78,7 +78,7 @@ class SkyMapBase(object):
         
     def compute_total_power(self):
         """
-        Compute and return the the total power from the sky.
+        Compute and return the total power from the sky.
         """
         
         if len(self._power) == 0:
@@ -205,12 +205,12 @@ class SkyMapLFSM(SkyMapGSM):
 class ProjectedSkyMap(object):
     """
     The class for handling the model sky brightness maps over a particular site.
-    This code is the base class for the sky map visible at a specific location. It 
+    This code is the base class for the sky map visible at a specific location. It
     takes as input a skymap file name and frequency to which the skymap corresponds.
     It inherits from class SkyMap. It has the following methods:
-     1. _init_ - takes the array coordinate filename as an input argument.
-     2. get_direction_cosines - Computes the direction cosines 
-     3. compute_visibile_power - Sums the power for all visible sources in 
+     1. __init__ - takes the array coordinate filename as an input argument.
+     2. get_direction_cosines - Computes the direction cosines
+     3. compute_visibile_power - Sums the power for all visible sources in
         the sky.
     """
     
@@ -272,7 +272,7 @@ class ProjectedSkyMap(object):
         
     def compute_visible_power(self):
         """
-        Compute and return the the total power from visible portion of the sky.
+        Compute and return the total power from visible portion of the sky.
         """
         
         if len(self.visibleNormalizedPower) == 0:
