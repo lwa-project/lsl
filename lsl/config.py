@@ -32,7 +32,7 @@ except OSError:
 _CONFIG_FILENAME = os.path.join(_CONFIG_DIR, 'lsl.cfg')
 
 
-__version__ = "0.3"
+__version__ = "0.4"
 __all__ = ['LSL_CONFIG',]
 
 
