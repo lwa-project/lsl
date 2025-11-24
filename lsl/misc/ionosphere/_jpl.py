@@ -45,7 +45,7 @@ def _download(mjd, type='final', cache_dir=None):
         
     # Attempt to download the data
     status = download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_url'), year, dayOfYear, filename), filename)
-    if not status:
+    if not status and IONO_CONFIG.get('jpl_mirror') is not None:
         status = download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('jpl_mirror'), year, dayOfYear, filename), filename)
     return status
 

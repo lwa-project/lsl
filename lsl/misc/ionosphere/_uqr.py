@@ -45,7 +45,7 @@ def _download(mjd, type='final'):
         
     # Attempt to download the data
     status = download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_url'), year, dayOfYear, filename), filename)
-    if not status:
+    if not status and IONO_CONFIG.get('uqr_mirror') is not None:
         status = download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('uqr_mirror'), year, dayOfYear, filename), filename)
     return status
 

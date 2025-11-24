@@ -47,6 +47,8 @@ def _download(mjd, type='final'):
     # Attempt to download the data
     for fname in (alt_filename, filename):
         status = download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, fname), filename)
+        if not status and IONO_CONFIG.get('ustec_url') is not None:
+            status = download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_mirror'), year, month, fname), filename)
         if status:
             break
     return status
