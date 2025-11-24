@@ -38,11 +38,18 @@ def _download(mjd, type='final'):
     year = dt.year
     month = dt.month
     dateStr = dt.strftime("%Y%m%d")
+    altDateStr = dt.strftime("%Y_%m_%d")
     # Build up the filename
     filename = f"{dateStr}_ustec.tar.gz"
+    # New style filename (this should probably be the default)
+    alt_filename = f"ustec_{altDateStr}.tar.gz"
     
     # Attempt to download the data
-    return download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, filename), filename)
+    for fname in (alt_filename, filename):
+        status = download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, fname), filename)
+        if status:
+            break
+    return status
 
 
 def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
@@ -166,7 +173,7 @@ def _parse_ustec_individual(filename_or_fh, rmsname_or_fh=None):
         rms = data*0.0
         for i in range(lats.shape[0]):
             for j in range(lats.shape[0]):
-                rms[i,j] = interpFunction(lats[i,j], lngs[i,j])
+                rms[i,j] = interpFunction(lats[i,j], lngs[i,j])[0,0]
     else:
         ## Sadness, no RMS file found...
         rms = data*0.05
