@@ -31,7 +31,7 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
     """
     Private function for generating a basic TBN signal.
     """
-
+    
     start_time = kwargs['start_time']
     filter = kwargs['filter']
     verbose = kwargs['verbose']
@@ -42,11 +42,11 @@ def _basic_tbn(fh, stands, nframes, **kwargs):
     samplesPerFrame = 512
     upperSpike = sample_rate / 4.0
     lowerSpike = -sample_rate / 4.0
-
+    
     if verbose:
         print(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
     LSL_LOGGER.info(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
-
+    
     for i in range(nframes):
         if i % 1000 == 0:
             if verbose:
@@ -73,7 +73,7 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     """
     Private function for generating a basic TBN signal.
     """
-
+    
     start_time = kwargs['start_time']
     filter = kwargs['filter']
     ntuning = kwargs['ntuning']
@@ -88,11 +88,11 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     lowerSpike1 = -sample_rate / 4.0
     upperSpike2 = sample_rate / 3.0
     lowerSpike2 = -sample_rate / 3.0
-
+    
     if verbose:
         print(f"Simulating {nframes} frames of DRX Data @ {sample_rate/1e6:.2f} MHz for {len(stands)} beams, {ntuning} tunings each:")
     LSL_LOGGER.info(f"Simulating {nframes} frames of DRX Data @ {sample_rate/1e6:.2f} MHz for {len(stands)} beams, {ntuning} tunings each:")
-
+    
     beams = stands
     for i in range(nframes):
         if i % 1000 == 0:
@@ -131,13 +131,13 @@ def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filte
     TBN
      * noise + (sample_rate/4) kHz signal for x-pol. and noise + 
         (-sample_rate/4) for y-pol.
-
+    
     DRX
      * noise + (sample_rate/4) kHz signal for x-pol. and noise + 
         (-sample_rate/4) for y-pol. -> tuning 1
      * noise + (-sample_rate/3) kHz signal for x-pol. and noise + 
         (sample_rate/3) for y-pol. -> tuning 2
-        
+    
     All modes need to have stands (a list of :class:`lsl.common.stations.Antenna`
     instances for TBN, a list of integer beams numbers for DRX) and number of
     frames to generate.  The TBN and DRX frames need the 'filter'
@@ -147,7 +147,7 @@ def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filte
     .. versionchanged:: 0.4.4
         Added the `noise_strength` keyword to control how much noise is added to 
         the data.
-        
+    
     .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
         
@@ -156,10 +156,10 @@ def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filte
         `stands` is now a list of :class:`lsl.common.stations.Antenna`
         instances for TBN
     """
-
+    
     if start_time == 0:
         start_time = time.time()
-
+        
     if mode == 'TBN':
         _basic_tbn(fh, stands, nframes, filter=filter, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     elif mode == 'DRX':
@@ -173,7 +173,7 @@ def _get_antennaarray(station, stands, utime, freqs):
     Given a LWA station object, a list of stands, an observation time, and
     a list of frequencies in Hz, build an aipy AntennaArray object.
     """
-
+    
     return vis.build_sim_array(station, stands, freqs/1e9, jd=astro.unix_to_utcjd(utime))
 
 
@@ -185,7 +185,7 @@ def _get_source_parameters(aa, timestamp, srcs):
     
     # Set the time for the array
     aa.set_unixtime(timestamp)
-
+    
     # Compute the source parameters
     srcs_tp = []
     srcs_mt = []
@@ -195,30 +195,30 @@ def _get_source_parameters(aa, timestamp, srcs):
         ## Update the source's coordinates
         src = srcs[name]
         src.compute(aa)
-
+        
         ## Get parameters
         top = src.get_crds(crdsys='top', ncrd=3)	# topo. coords.
         mat = src.map							# equitorial -> topo. rotation matrix
         jys = src.get_jys()						# F_nu
         frq = aa.get_afreqs()					# nu
-
+        
         ## Fix the lowest frequencies to avoid problems with the flux blowing up
         ## at nu = 0 Hz by replacing flux values below 1 MHz with the flux at 
         ## 1 MHz
         Jyat1MHz = jys[ np.where( np.abs(frq-0.001) == np.abs(frq-0.001).min() ) ]
         jys = np.where( frq >= 0.001, jys, Jyat1MHz )
-
+        
         ## Filter out sources that are below the horizon or have no flux
         srcAzAlt = aipycoord.top2azalt(top)
         if srcAzAlt[1] <= 0 or jys.sum() <= 0:
             continue
-
+            
         ## Save values into the source arrays
         srcs_tp.append( top )
         srcs_mt.append( mat )
         srcs_jy.append( jys )
         srcs_fq.append( frq )
-
+        
     # Return the values as a dictionary
     return {'topo': srcs_tp, 'trans': srcs_mt, 'flux': srcs_jy, 'freq': srcs_fq}
 
@@ -227,9 +227,8 @@ def _build_signals(aa, stands, src_params, times):
     """
     Given an aipy AntennaArray, a list of stand numbers, a dictionary of source 
     parameters, and an array of times in ns, return a numpy array of the simulated 
-    signals that is Nstands x Ntimes in shape
-    ."""
-
+    signals that is Nstands x Ntimes in shape."""
+    
     # Find out how many stands, srcs, and samples (times) we are working with
     Nstand = len(aa.ants)
     Ntime = len(times)
@@ -237,7 +236,7 @@ def _build_signals(aa, stands, src_params, times):
     # Setup a temporary array to hold the signals per stand and time.
     # This array is complex so that it can accommidate TBN data
     temp = np.zeros((Nstand, Ntime), dtype=np.complex128)
-
+    
     # Loop over sources and stands to build up the signals
     for topo,trans,flux,freq in zip(src_params['topo'], src_params['trans'], src_params['flux'], src_params['freq']):
         # Random Guassian noise for seeding this source
@@ -248,7 +247,7 @@ def _build_signals(aa, stands, src_params, times):
             antResponse = np.squeeze( ant.bm_response(topo, pol='x' if std.pol == 0 else 'y') )
             ## Create array of stand position for geometric delay calculations
             xyz = np.array([std.stand.x, std.stand.y, std.stand.z])
-
+            
             ## First, do the geometric delay
             geoDelay = np.dot(topo, xyz) / speedOfLight * 1e9 # s -> ns 
             
@@ -290,11 +289,11 @@ def _point_source_tbn(fh, stands, src, nframes, **kwargs):
     samplesPerFrame = 512
     freqs = (np.fft.fftfreq(samplesPerFrame, d=1.0/sample_rate)) + central_freq
     aa = _get_antennaarray(kwargs['station'], stands, start_time, freqs)
-
+    
     if verbose:
         print(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
     LSL_LOGGER.info(f"Simulating {nframes} frames of TBN Data @ {sample_rate/1e3:.2f} kHz for {len(stands)} stands:")
-
+    
     for i in range(nframes):
         if i % 1000 == 0:
             if verbose:
@@ -328,7 +327,7 @@ def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', 
     """
     Generate a collection of frames with a point source signal for TBN.  
     The point source is specified as a aipy.src object.
-        
+    
     All modes need to have stands (a list of :class:`lsl.common.stations.Antenna`
     instances), a number of frames to generate, and the `filter' keyword set to
     specify the filter width.
@@ -336,19 +335,19 @@ def point_source(fh, stands, src, nframes, station=lwa_common.lwa1, mode='TBN', 
     .. versionchanged:: 0.4.4
         Added the `noise_strength` keyword to control how much noise is added to 
         the data.
-        
+    
     .. versionchanged:: 2.0.0
         Removed support for generating TBW data.
-        
+    
     .. versionchanged:: 2.1.8
         Add the `station` keyword and documentation cleanup
         `stands` is now a list of :class:`lsl.common.stations.Antenna`
         instances
     """
-
+    
     if start_time == 0:
         start_time = time.time()
-
+        
     if mode == 'TBN':
         _point_source_tbn(fh, stands, src, nframes, station=station, central_freq=central_freq, filter=filter, gain=gain, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
     else:
