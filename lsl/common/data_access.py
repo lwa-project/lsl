@@ -29,11 +29,11 @@ def download_file(url, filename_or_fh, byte_range=None, verbose=True):
     Given a URL and either a filename or open file handle, download the URL and
     write the data.  Returns a three-element tuple:
      * the remote size as reported by 'Content-Length',
-     * the number of bytes recieved, and
+     * the number of bytes received, and
      * the URL modification time as reported by the 'Last-Modified' HTTP header.
     All three will be 0 if there was a problem downloading the file.
     
-    .. note::  If `byte_range` is not None then only the porition of the file
+    .. note::  If `byte_range` is not None then only the portion of the file
                between [start_byte, end_byte] is downloaded.
     """
     

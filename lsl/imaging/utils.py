@@ -422,11 +422,11 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                                                                    name=row['SOURCE'], 
                                                                    epoch=phase_time.jd - astro.DJD_OFFSET)
                             
-                # Figure out if we have seperate WEIGHT data or not
-                seperateWeights = False
+                # Figure out if we have separate WEIGHT data or not
+                separateWeights = False
                 for col in uvData.data.columns:
                     if col.name == 'WEIGHT':
-                        seperateWeights = True
+                        separateWeights = True
                         break
                         
                 # Pull out the raw data from the table
@@ -437,7 +437,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 except KeyError:
                     u, v, w = uvData.data['UU---SIN'][selection], uvData.data['VV---SIN'][selection], uvData.data['WW---SIN'][selection]
                 vis = np.ascontiguousarray(uvData.data['FLUX'][selection], dtype=np.float32)
-                if seperateWeights:
+                if separateWeights:
                     wgt = np.ascontiguousarray(uvData.data['WEIGHT'][selection])
                 else:
                     wgt = None
@@ -446,7 +446,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 ## Axis sizes
                 nFreq = len(self.freq)
                 nStk = len(self.pols)
-                nCmp = 2 if seperateWeights else 3
+                nCmp = 2 if separateWeights else 3
                 if vis.size//nFreq//nStk//nCmp != len(bl):
                     ### Catch for FITS-IDI files generate by interfits
                     nCmp = 2 if nCmp == 3 else 3
@@ -460,7 +460,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 uvw = np.array([u,v,w], dtype=np.float32)
                 ## Reshape the visibilities and weights
                 vis.shape = (vis.size//nFreq//nStk//nCmp, nFreq, nStk, nCmp)
-                if seperateWeights:
+                if separateWeights:
                     if wgt.shape != nFreq*nStk:
                         ## Catch for some old stuff
                         wgt = np.concatenate([wgt,]*len(self.pols))
