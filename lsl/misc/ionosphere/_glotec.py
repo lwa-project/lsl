@@ -42,7 +42,10 @@ def _download(mjd, type='final'):
     filename = f"glotec_icao_{dateStr}Z.geojson"
     
     # Attempt to download the data
-    return download_worker('%s/%s' % (IONO_CONFIG.get('glotec_url'), filename), filename)
+    status = download_worker('%s/%s' % (IONO_CONFIG.get('glotec_url'), filename), filename)
+    if not status and IONO_CONFIG.get('glotec_mirror') is not None:
+        status = download_worker('%s/%s' % (IONO_CONFIG.get('glotec_mirror'), filename), filename)
+    return status
 
 
 def _parse_glotec_map(filename_or_fh):

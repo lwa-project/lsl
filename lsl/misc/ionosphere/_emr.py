@@ -48,7 +48,7 @@ def _download(mjd, type='final'):
     # Attempt to download the data
     for fname in (long_filename, filename):
         status = download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('emr_url'), year, dayOfYear, fname), filename)
-        if not status:
+        if not status and IONO_CONFIG.get('emr_mirror') is not None:
             status = download_worker('%s/%04i/%03i/%s' % (IONO_CONFIG.get('emr_mirror'), year, dayOfYear, fname), filename)
         if status:
             break
