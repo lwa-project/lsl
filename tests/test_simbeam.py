@@ -18,7 +18,7 @@ class sim_beam_tests(unittest.TestCase):
     def test_model_list(self):
         """Test listing all available dipole response models."""
         
-        names = simbeam.get_avaliable_models()
+        names = simbeam.get_available_models()
         self.assertEqual(len(names), 7)
         
     def test_response(self):
@@ -34,7 +34,7 @@ class sim_beam_tests(unittest.TestCase):
         alt2 = np.arange(90)
         az2, alt2 = np.meshgrid(az2, alt2)
         
-        for model in simbeam.get_avaliable_models():
+        for model in simbeam.get_available_models():
             with self.subTest(model=model, dim=0):
                 pattern = simbeam.beam_response(model, 'XX', az0, alt0, frequency=70e6)
                 self.assertTrue(isinstance(pattern, float))
@@ -65,7 +65,7 @@ class sim_beam_tests(unittest.TestCase):
         alt2 = np.arange(90)
         az2, alt2 = np.meshgrid(az2, alt2)
         
-        for model in simbeam.get_avaliable_models():
+        for model in simbeam.get_available_models():
             for pol in ('XX', 'XY', 'YX', 'YY', 'I', 'Q', 'U', 'V'):
                 with self.subTest(pol=pol, dim=1):
                     pattern = simbeam.beam_response(model, pol, az, alt, frequency=70e6)
@@ -96,7 +96,7 @@ class sim_beam_tests(unittest.TestCase):
         alt2 = np.arange(90)
         az2, alt2 = np.meshgrid(az2, alt2)
         
-        for model in simbeam.get_avaliable_models():
+        for model in simbeam.get_available_models():
             with self.subTest(model=model, dim=0):
                 pattern = simbeam.mueller_matrix(model, az0, alt0, frequency=70e6)
                 self.assertEqual(pattern.shape, (4,4))
