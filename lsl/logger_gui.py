@@ -61,6 +61,8 @@ import signal
 import logging
 import threading
 
+from lsl import logger as lsl_logger
+
 try:
     have_tk = True
     
@@ -69,9 +71,7 @@ try:
     from tkinter.scrolledtext import ScrolledText
 except ImportError:
     have_tk = False
-
-
-from lsl import logger as lsl_logger
+    lsl_logger.LSL_LOGGER.error("Cannot import tk")
 
 
 class LoggerFrame(object):
