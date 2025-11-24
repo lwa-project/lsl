@@ -29,11 +29,11 @@ def thin(t, tau):
     Pulsar broadening function for multi-path scattering through a
     thin screen.
     """
-
+    
     g  = 1.0/tau * np.exp(-t/tau)
     g  = np.where(t >= 0, g, 0)
     g /= g.sum()
-
+    
     return g
 
 
@@ -41,11 +41,11 @@ def thick(t, tau):
     """
     Pulse broadening function for multi-path scattering through a
     thick screen.
-
+    
     From:
     Williamson, I. P. 1972, MNRAS, 157, 55; first equation on page 62 
     """
-
+    
     tPrime = t + 1e-15
     
     g  = np.sqrt(np.pi*tau/4/tPrime**3)
@@ -60,18 +60,18 @@ def uniform(t, tau):
     """
     Pulsr broadening function for multi-path scattering through a 
     uniform screen.
-
+    
     From:
     Williamson, I. P. 1972, MNRAS, 157, 55; last equation on page 65
     """
-
+    
     tPrime = t + 1e-15
     
     g  = np.sqrt(np.pi**5*tau**3/8/tPrime**5)
     g *= np.exp(-np.pi**2*tau/4/tPrime)
     g  = np.where(t > 0, g, 0)
     g /= g.sum()
-
+    
     return g
 
 
@@ -84,17 +84,17 @@ def _positivity(t, raw, resids, cc):
     
     # Weight factor
     m = 1.0
-
+    
     # Tuning factor to find when the CLEANed profile goes negative
     x = 3./2.
-
+    
     # Get the off-pulsar standard deviation
     sigma = robust.std(raw)
     
     temp = -resids - x*sigma
     f  = (resids**2 * np.where(temp>=0, 1, 0)).mean()
     f *= m/sigma**2
-
+    
     return f
 
 def _skewness(t, raw, resids, cc):
@@ -103,7 +103,7 @@ def _skewness(t, raw, resids, cc):
     Equation 12 of Bhat, N., Cordes, J., & Chatterjee, S.  2003, ApJ, 
     584, 782.
     """
-
+    
     tM = (t*cc).sum() / cc.sum()
     t2 = ((t - tM)**2 * cc).sum()
     t3 = ((t - tM)**3 * cc).sum()
@@ -120,7 +120,7 @@ def _figure_of_merit(t, raw, resids, cc):
     From:
     Bhat, N., Cordes, J., & Chatterjee, S.  2003, ApJ, 584, 782.
     """
-
+    
     # Use robust methods to estimate the off-pulse mean and standard deviation
     m = robust.mean(raw)
     s = robust.std(raw)
@@ -128,7 +128,7 @@ def _figure_of_merit(t, raw, resids, cc):
     # Find the fraction of noise-like points in the residuals
     n = len( np.where( np.abs(resids - m) <= 3*s )[0] )
     n = float(n) / raw.size
-
+    
     # Compute the positivity and skewness
     f = _positivity(t, raw, resids, cc)
     g = _skewness(t, raw, resids, cc)
@@ -154,12 +154,12 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
      3) tScatMin: minimum scattering time to search
      4) tScatMax: maximum scattering time to search
      5) tScatStep: time step for tScat search
-        
+    
     Options:
      * gain: CLEAN loop gain (default is 0.05)
      * max_iter: maximum number of iterations to use (default is 10000)
      * screen: pulse broadening function (default is thin)
-        
+    
     Outputs (as a tuple):
      1) tScat: best-fit scattering time in seconds
      2) merit: figure of merit for the deconvolution/scattering time fit
@@ -170,10 +170,10 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     meritList = {}
     ccList = {}
     residList = {}
-
+    
     # Off-pulsar standard deviation
     sigma = robust.std(raw)
-
+    
     # Loop over tScat values
     best = np.inf
     bestTau = None
@@ -181,7 +181,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
         ## Setup the temporary variables
         working = raw*1.0
         cc = raw*0.0
-
+        
         ## Iterate...
         i = 0
         while i < max_iter:
@@ -189,7 +189,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
             peak = np.where( working == working.max() )[0][0]
             if working.max() < 3./2.*sigma:
                 break
-
+                
             ### Generate the clean component
             tPeak = t[peak]
             tRel = t - tPeak
@@ -223,7 +223,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     merit = meritList[bestTau]
     cc = ccList[bestTau]
     resids = residList[bestTau]
-
+    
     # Report on the findings
     if verbose:
         print("Multi-path Scattering Results:")
@@ -234,7 +234,7 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     LSL_LOGGER.info(f"  Iterations Used: {i} of {max_iter}")
     LSL_LOGGER.info(f"  Best-fit Scattering time: {tScat*1000.0:.3f} ms")
     LSL_LOGGER.info(f"  Figure-of-merit:  {merit:.5f}")
-        
+    
     # Restore the profile using a Gaussian with a sigma value of 5 time steps
     sigmaRestore = 5*(t[1]-t[0])
     restoreFunction = np.exp(-t**2 / (2*sigmaRestore**2))
@@ -246,4 +246,3 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     
     # Done!
     return tScat, merit, out
-    
