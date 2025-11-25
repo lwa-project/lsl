@@ -394,6 +394,9 @@ class LoggerGUI(object):
     root : tk.Tk, optional
         Existing Tk root window. If None, a new root window is created.
     
+    title : str, optional
+        Title for the window. Defaults to "LSL Logger".
+    
     Examples
     --------
     Simple usage with blocking GUI::
@@ -412,6 +415,15 @@ class LoggerGUI(object):
         threading.Thread(target=gui.mainloop, daemon=True).start()
         # ... continue with other work ...
     
+    As part of another GUI application as a child window::
+        
+        import tkinter as tk
+        from lsl.logger_gui import LoggerGUI
+        
+        app = MainGUIApp()  # Create the main GUI application
+        gui = LoggerGUI(root=tk.Toplevel())
+        app.mainloop()
+    
     Notes
     -----
     The GUI attaches a ThreadedHandler to the main LSL logger, allowing it to
@@ -419,7 +431,7 @@ class LoggerGUI(object):
     automatically removed.
     """
     
-    def __init__(self, root=None):
+    def __init__(self, root=None, title='LSL Logger'):
         if not have_tk:
             raise RuntimeError("Cannot create GUI because tk module is not available")
             
@@ -427,7 +439,7 @@ class LoggerGUI(object):
             root = tk.Tk()
             
         self._root = root
-        self._root.title('LSL Logger')
+        self._root.title(title)
         self._root.columnconfigure(0, weight=1)
         self._root.rowconfigure(0, weight=1)
         
