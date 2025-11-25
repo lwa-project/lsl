@@ -9,13 +9,17 @@ dipoles.  See the `README.NEC` file included in the LSL data directory for
 more information about what is included.
 """
 
-import numpy as np
-from lsl.misc.mathutils import regrid
-from lsl.common.color import colorfy
 import os
 import re
+import numpy as np
+import logging
 import warnings
 import subprocess
+
+from lsl.misc.mathutils import regrid
+from lsl.common.color import colorfy
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -76,7 +80,7 @@ def open_and_get_nec_freq(fname):
         fh.close()
         raise RuntimeError("Frequency value not found")
         
-    #print("Found frequency %f MHz" % freq)
+    LSL_LOGGER.debug(f"Found frequency {freq} MHz")
     return (fh, freq)
 
 
@@ -91,9 +95,9 @@ def change_nec_freq(necname, freq):
         # Substitute the freq in the right field of the FR card
         for i in range(len(lines)):
             if lines[i][:2] == 'FR':
-                #print("Found line : %s" % lines[i])
+                LSL_LOGGER.debug(f"Found line: {lines[i]}")
                 vals = re.split(',| +', lines[i])
-                #print("Vals = %s" % vals)
+                LSL_LOGGER.debug(f"Vals = {vals}")
                 vals[5] = "%.2f" % freq
                 lines[i] = " ".join(vals)
                 # Make sure this line ends in newline
@@ -173,7 +177,7 @@ class NECImpedance:
                 else:
                     #print("No more freqs...")
                     break
-                #print("Found frequency %f MHz" % freq)
+                LSL_LOGGER.debug(f"Found frequency {freq} MHz")
                 for line in fh:
                     if line.find('ANTENNA INPUT PARAMETERS') >= 0:
                         break
@@ -309,7 +313,7 @@ class NECPattern:
             theta = 90-int(cols[0].split('.')[0])
             phi = int(cols[1].split('.')[0])
             if theta < 0 or theta > 90 or phi > 359:
-                #print("Skipping ",phi,theta)
+                LSL_LOGGER.debug(f"Skipping phi={phi}, theta={theta}")
                 continue
             powgain = float(cols[4])
             phsgain = float(cols[6])
@@ -318,8 +322,7 @@ class NECPattern:
             self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*np.exp(1j*phsgain*180/np.pi)
             n += 1
             #print("theta %d phi %d gain %f @ %f deg" % (theta, phi, powgain, phsgain))
-
-
+            
     def _read_excitation(self, fh):
         """
         Private function to read in data stored in a collection of EXCITATION 
