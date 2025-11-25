@@ -75,6 +75,8 @@ from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
 
+from lsl.logger import LSL_LOGGER
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -2596,26 +2598,31 @@ def is_valid(filename, verbose=False):
         passes += 1
         if verbose:
             print(colorfy("Parser - {{%green OK}}"))
+        LSL_LOGGER.info("Parser - OK")
             
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
                 print(colorfy("Validator - {{%green OK}}"))
+            LSL_LOGGER.info("Validator - OK")
         else:
             failures += 1
             if verbose:
                 print(colorfy("Validator -{{%red {{%bold FAILED}}}}"))
-                
+            LSL_LOGGER.error("Validator - FAILED")
+            
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
             print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
-            
+        LSL_LOGGER.error("Parser - FAILED")
+        
     if verbose:
         print("---")
-        print("%i passed / %i failed" % (passes, failures))
-        
+        print(f"{passes} passed / {failures} failed")
+    LSL_LOGGER.info(f"{passes} passed / {failures} failed")
+    
     return False if failures else True

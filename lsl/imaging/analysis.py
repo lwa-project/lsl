@@ -8,8 +8,11 @@ Module for analyzing images.  Currently, this module supports:
 
 import math
 import numpy as np
+import logging
 from scipy.signal import convolve, medfilt
 from scipy.interpolate import bisplrep, bisplev
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -259,6 +262,11 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
             print("  Peak: %.3f" % cPeak)
             print("  Sharpness: %.3f%s" % (cSharpness, " (rejected)" if not validSharpness else ""))
             print("  Roundness: %.3f%s" % (cRoundness, " (rejected)" if not validRoundness else ""))
+        LSL_LOGGER.info("Source #%i" % (i+1,))
+        LSL_LOGGER.info("  Center:  %.3f, %.3f" % (xcen, ycen))
+        LSL_LOGGER.info("  Peak: %.3f" % cPeak)
+        LSL_LOGGER.info("  Sharpness: %.3f%s" % (cSharpness, " (rejected)" if not validSharpness else ""))
+        LSL_LOGGER.info("  Roundness: %.3f%s" % (cRoundness, " (rejected)" if not validRoundness else ""))
             
     # Print out a summary, if requested
     if verbose:
@@ -269,7 +277,13 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
         print("  Number Rejected:")
         print("    Sharpness: %i" % bad['sharp'])
         print("    Roundness: %i" % bad['round'])
-        
+    LSL_LOGGER.info("Summary")
+    LSL_LOGGER.info("  Detections: %i" % nGood)
+    LSL_LOGGER.info("  Valid Detections: %i" % nStar)
+    LSL_LOGGER.info("  Number Rejected:")
+    LSL_LOGGER.info("    Sharpness: %i" % bad['sharp'])
+    LSL_LOGGER.info("    Roundness: %i" % bad['round'])
+    
     # Trim the output arrays for the actual number of stars found
     x = x[:nStar]
     y = y[:nStar]

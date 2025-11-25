@@ -3,6 +3,7 @@ import sys
 import gzip
 import numpy as np
 import socket
+import logging
 import warnings
 import subprocess
 from io import StringIO
@@ -15,6 +16,8 @@ from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.common.progress import DownloadBar
 from lsl.common.color import colorfy
 from lsl.misc.file_cache import FileCache, MemoryCache
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.config import LSL_CONFIG
 IONO_CONFIG = LSL_CONFIG.view('ionosphere')
@@ -69,6 +72,7 @@ def _download_worker_cddis(url, filename):
     
     # Attempt to download the data
     print(f"Downloading {url}")
+    LSL_LOGGER.info(f"Downloading {url}")
     ## Login
     ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))
     status = ftps.login("anonymous", "lwa@unm.edu")

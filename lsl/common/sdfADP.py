@@ -47,6 +47,7 @@ import re
 import copy
 import math
 import pytz
+import logging
 from datetime import datetime, timedelta
 
 from lsl.transform import Time
@@ -63,6 +64,8 @@ from lsl.common._sdf_utils import *
 from lsl.common.sdf import Observer, ProjectOffice
 from lsl.common.sdf import Project as _Project, Session as _Session
 from lsl.common.sdf import UCF_USERNAME_RE, Observation, TBN, DRX, Solar, Jovian, Lunar, Stepped, BeamStep
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -413,25 +416,25 @@ class TBF(Observation):
         # Basic - Sample size, frequency, and filter
         if self.samples > 5*196000000:
             if verbose:
-                pid_print(f"Error: Invalid number of samples ({self.samples} > {5*196000000})")
+                pid_print(f"Error: Invalid number of samples ({self.samples} > {5*196000000})", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
             if verbose:
-                pid_print(f"Error: Specified frequency for tuning 1 is outside of the {be_name} tuning range")
+                pid_print(f"Error: Specified frequency for tuning 1 is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
             if verbose:
-                pid_print(f"Error: Specified frequency for tuning 2 is outside of the {be_name} tuning range")
+                pid_print(f"Error: Specified frequency for tuning 2 is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+                pid_print(f"Error: Invalid filter code '{self.filter}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
             if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - ASP
@@ -490,7 +493,7 @@ class Session(_Session):
             if self.observations[0].mode ==  'TBF':
                 if self.drx_beam != 1:
                     if verbose:
-                        pid_print("Error: TBF can only run on beam 1")
+                        pid_print("Error: TBF can only run on beam 1", level=logging.ERROR, logging_only=(not verbose))
                     failures += 1
                     
         if failures == 0:
@@ -534,7 +537,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
     if verbose:
-        pid_print(f"Obs {obs_temp['id']} is mode {mode}")
+        pid_print(f"Obs {obs_temp['id']} is mode {mode}", level=logging.INFO, logging_only=(not verbose))
         
     if mode == 'TBF':
         obsOut = TBF(obs_temp['name'], obs_temp['target'], utcString, f1, f2, obs_temp['filter'], obs_temp['tbfSamples'], comments=obs_temp['comments'])
@@ -550,7 +553,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
         obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         if verbose:
-            pid_print(f"-> found {len(beam_temps)} steps")
+            pid_print(f"-> found {len(beam_temps)} steps", level=logging.INFO, logging_only=(not verbose))
             
         obsOut = Stepped(obs_temp['name'], obs_temp['target'], utcString, obs_temp['filter'], is_radec=obs_temp['stpRADec'], steps=[], gain=obs_temp['gain'], comments=obs_temp['comments'])
         for beam_temp in beam_temps:
@@ -766,7 +769,7 @@ def parse_sdf(filename, verbose=False):
                 project.project_office.observations[0].append( None )
             
                 if verbose:
-                    pid_print(f"Started obs {value}")
+                    pid_print(f"Started obs {value}", level=logging.INFO, logging_only=(not verbose))
                     
                 continue
             if keyword == 'OBS_TITLE':
@@ -1067,26 +1070,31 @@ def is_valid(filename, verbose=False):
         passes += 1
         if verbose:
             print(colorfy("Parser - {{%green OK}}"))
-            
+        LSL_LOGGER.info("Parser - OK")
+        
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
                 print(colorfy("Validator - {{%green OK}}"))
+            LSL_LOGGER.info("Validator - OK")
         else:
             failures += 1
             if verbose:
                 print(colorfy("Validator -{{%red {{%bold FAILED}}}}"))
-                
+            LSL_LOGGER.error("Validator - FAILED")
+            
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
             print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
-            
+        LSL_LOGGER.error("Parser - FAILED")
+        
     if verbose:
         print("---")
-        print("%i passed / %i failed" % (passes, failures))
-        
+        print(f"{passes} passed / {failures} failed")
+    LSL_LOGGER.info(f"{passes} passed / {failures} failed")
+    
     return False if failures else True
