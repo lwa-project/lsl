@@ -1,3 +1,8 @@
+3.0.8:
+ * Updated the filenames for the USTEC ionospheric product
+ * Fixed false alarms from the LSL configuration change tracker
+ * Better handling of optional fields i the LSL configuration manager
+
 3.0.7:
  * Updated ldp.DRXFile and DRX8File to check for large (>5 minute) gaps at the beginning of the file
  * Add functionality for converting Stokes VisibilityDataSets into the Circular Polarization basis
