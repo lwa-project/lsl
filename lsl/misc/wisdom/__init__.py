@@ -8,6 +8,7 @@ Module for building and saving LSL-specific FFTW wisdom.
 from __future__ import print_function, division, absolute_import
 
 import os
+import logging
 import numpy
 from datetime import datetime
 
@@ -58,12 +59,12 @@ def show():
     fh.close()
     
     print("LSL FFTW Wisdom:")
-    print(" Lines: %i" % len(lines))
-    print(" Size: %i bytes" % os.path.getsize(_WISDOM_FFTW))
-    print(" Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8]))
+    print(f" Lines: {len(lines)}")
+    print(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")
+    print(f" Last Modified: {datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8])}")
     LSL_LOGGER.info("LSL FFTW Wisdom:")
-    LSL_LOGGER.info(" Lines: %i" % len(lines))
-    LSL_LOGGER.info(" Size: %i bytes" % os.path.getsize(_WISDOM_FFTW))
-    LSL_LOGGER.info(" Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8]))
+    LSL_LOGGER.info(f" Lines: {len(lines)}")
+    LSL_LOGGER.info(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")
+    LSL_LOGGER.info(f" Last Modified: {datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8])}")
     
     return True
