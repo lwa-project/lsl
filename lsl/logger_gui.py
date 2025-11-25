@@ -378,7 +378,7 @@ class LoggerGUI(object):
     """
     Tk GUI to help display messages from the main LSL logger in a "not on the
     console" way.
-    
+
     Features
     --------
     - Real-time display of log messages with color-coded levels
@@ -388,57 +388,61 @@ class LoggerGUI(object):
     - Module-based pattern filtering (e.g., 'lsl.imaging.*')
     - Automatic buffer management (max 10,000 lines)
     - Clear buffer button
-    
+
     Parameters
     ----------
-    root : tk.Tk, optional
-        Existing Tk root window. If None, a new root window is created.
-    
     title : str, optional
         Title for the window. Defaults to "LSL Logger".
-    
+
     Examples
     --------
     Simple usage with blocking GUI::
-        
+
         from lsl.logger_gui import LoggerGUI
         gui = LoggerGUI()
         # ... do LSL work that generates log messages ...
         gui.mainloop()
-    
+
     Non-blocking background GUI::
-        
+
         import threading
         from lsl.logger_gui import LoggerGUI
-        
+
         gui = LoggerGUI()
         threading.Thread(target=gui.mainloop, daemon=True).start()
         # ... continue with other work ...
-    
+
     As part of another GUI application as a child window::
-        
+
         import tkinter as tk
         from lsl.logger_gui import LoggerGUI
-        
-        app = MainGUIApp()  # Create the main GUI application
-        gui = LoggerGUI(root=tk.Toplevel())
-        app.mainloop()
-    
+
+        root = tk.Tk()
+        # ... create your main GUI widgets ...
+        gui = LoggerGUI()  # Automatically becomes a child window
+        root.mainloop()
+
     Notes
     -----
     The GUI attaches a ThreadedHandler to the main LSL logger, allowing it to
     capture messages from any thread. When the GUI is closed, the handler is
     automatically removed.
+
+    The LoggerGUI automatically detects if a Tk root window already exists:
+    - If no root exists, it creates a new root window (tk.Tk())
+    - If a root exists, it creates a child window (tk.Toplevel())
     """
-    
-    def __init__(self, root=None, title='LSL Logger'):
+
+    def __init__(self, title='LSL Logger'):
         if not have_tk:
             raise RuntimeError("Cannot create GUI because tk module is not available")
-            
-        if root is None:
-            root = tk.Tk()
-            
-        self._root = root
+
+        # Automatically detect if a root window exists
+        if tk._default_root is None:
+            self._root = tk.Tk()
+        else:
+            self._root = tk.Toplevel()
+
         self._root.title(title)
         self._root.columnconfigure(0, weight=1)
         self._root.rowconfigure(0, weight=1)

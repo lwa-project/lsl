@@ -353,52 +353,50 @@ class logger_gui_tests(unittest.TestCase):
             
     def test_logger_gui_creation(self):
         """Test creating a complete LoggerGUI."""
-        
-        root = tk.Tk()
+
         try:
-            gui = LoggerGUI(root=root)
+            gui = LoggerGUI()
             self.assertIsNotNone(gui)
             self.assertIsNotNone(gui._display)
             self.assertIsNotNone(gui._filter)
-            
+
             # Clean up
             gui.quit()
-            
+
         finally:
             # Ensure root is destroyed even if quit fails
             try:
-                root.destroy()
-            except tk.TclError:
+                gui._root.destroy()
+            except (tk.TclError, AttributeError):
                 pass
                 
     def test_logger_gui_with_messages(self):
         """Test LoggerGUI with actual log messages."""
-        
-        root = tk.Tk()
+
         try:
-            gui = LoggerGUI(root=root)
-            
+            gui = LoggerGUI()
+
             # Generate log messages
             lsl_logger.LSL_LOGGER.info("Test message 1")
             lsl_logger.LSL_LOGGER.warning("Test warning")
-            
+
             # Give GUI time to process
-            root.update()
+            gui._root.update()
             time.sleep(0.2)
-            root.update()
-            
+            gui._root.update()
+
             # Check messages appear in display
             text_content = gui._display._text.get(1.0, tk.END)
             self.assertIn("Test message 1", text_content)
             self.assertIn("Test warning", text_content)
-            
+
             # Clean up
             gui.quit()
-            
+
         finally:
             try:
-                root.destroy()
-            except tk.TclError:
+                gui._root.destroy()
+            except (tk.TclError, AttributeError):
                 pass
 
 
