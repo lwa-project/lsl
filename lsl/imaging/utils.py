@@ -36,10 +36,10 @@ import re
 import sys
 import aipy
 import ephem
+import logging
 import numpy as np
 import atexit
 import shutil
-import logging
 import tarfile
 import tempfile
 import warnings
@@ -61,6 +61,7 @@ from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
 from lsl.common.color import colorfy
 from lsl.testing import SilentVerbose
+from lsl.logger import LSL_LOGGER
 
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -68,8 +69,6 @@ from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityD
 from scipy import fftpack
 fft2Function = fftpack.fft2
 ifft2Function = fftpack.ifft2
-
-from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -110,8 +109,8 @@ def CorrelatedData(filename, verbose=False):
             return CorrelatedDataMS(filename)
         except Exception as e:
             if verbose:
-                print("MS - ERROR: %s" % str(e))
-            LSL_LOGGER.debug("MS - ERROR: %s" % str(e))
+                print(f"MS - ERROR: {str(e)}")
+            LSL_LOGGER.error(f"MS - ERROR: {str(e)}")
             raise RuntimeError(f"Directory '{filename}' does not appear to be a MeasurmentSet")
             
     else:
@@ -121,25 +120,22 @@ def CorrelatedData(filename, verbose=False):
             return CorrelatedDataIDI(filename)
         except Exception as e:
             if verbose:
-                print("FITSIDI - ERROR: %s" % str(e))
-            LSL_LOGGER.debug("FITSIDI - ERROR: %s" % str(e))
-            
+                print(f"FITSIDI - ERROR: {str(e)}")
+            LSL_LOGGER.error(f"FITSIDI - ERROR: {str(e)}")
         ## UVFITS
         try:
             return CorrelatedDataUV(filename)
         except Exception as e:
             if verbose:
-                print("UVFITS - ERROR: %s" % str(e))
-            LSL_LOGGER.debug("UVFITS - ERROR: %s" % str(e))
-            
+                print(f"UVFITS - ERROR: {str(e)}")
+            LSL_LOGGER.error(f"UVFITS - ERROR: {str(e)}")
         ## Measurment Set as a compressed entity
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
             if verbose:
-                print("MS - ERROR: %s" % str(e))
-            LSL_LOGGER.debug("MS - ERROR: %s" % str(e))
-            
+                print(f"MS - ERROR: {str(e)}")
+            LSL_LOGGER.error(f"MS - ERROR: {str(e)}")
     if not valid:
         raise RuntimeError(f"File '{filename}' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet")
 

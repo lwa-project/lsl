@@ -7,8 +7,8 @@ Module for analyzing images.  Currently, this module supports:
 """
 
 import math
-import numpy as np
 import logging
+import numpy as np
 from scipy.signal import convolve, medfilt
 from scipy.interpolate import bisplrep, bisplev
 
@@ -257,33 +257,33 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
             
         ## Print out information, if requested
         if verbose:
-            print("Source #%i" % (i+1,))
-            print("  Center:  %.3f, %.3f" % (xcen, ycen))
-            print("  Peak: %.3f" % cPeak)
-            print("  Sharpness: %.3f%s" % (cSharpness, " (rejected)" if not validSharpness else ""))
-            print("  Roundness: %.3f%s" % (cRoundness, " (rejected)" if not validRoundness else ""))
-        LSL_LOGGER.info("Source #%i" % (i+1,))
-        LSL_LOGGER.info("  Center:  %.3f, %.3f" % (xcen, ycen))
-        LSL_LOGGER.info("  Peak: %.3f" % cPeak)
-        LSL_LOGGER.info("  Sharpness: %.3f%s" % (cSharpness, " (rejected)" if not validSharpness else ""))
-        LSL_LOGGER.info("  Roundness: %.3f%s" % (cRoundness, " (rejected)" if not validRoundness else ""))
+            print(f"Source #{i+1}")
+            print(f"  Center:  {xcen:.3f}, {ycen:.3f}")
+            print(f"  Peak: {cPeak:.3f}")
+            print(f"  Sharpness: {cSharpness:.3f}{' (rejected)' if not validSharpness else ''}")
+            print(f"  Roundness: {cRoundness:.3f}{' (rejected)' if not validRoundness else ''}")
+        LSL_LOGGER.info(f"Source #{i+1}")
+        LSL_LOGGER.info(f"  Center:  {xcen:.3f}, {ycen:.3f}")
+        LSL_LOGGER.info(f"  Peak: {cPeak:.3f}")
+        LSL_LOGGER.info(f"  Sharpness: {cSharpness:.3f}{' (rejected)' if not validSharpness else ''}")
+        LSL_LOGGER.info(f"  Roundness: {cRoundness:.3f}{' (rejected)' if not validRoundness else ''}")
             
     # Print out a summary, if requested
     if verbose:
         print(" ")
         print("Summary")
-        print("  Detections: %i" % nGood)
-        print("  Valid Detections: %i" % nStar)
+        print(f"  Detections: {nGood}")
+        print(f"  Valid Detections: {nStar}")
         print("  Number Rejected:")
-        print("    Sharpness: %i" % bad['sharp'])
-        print("    Roundness: %i" % bad['round'])
+        print(f"    Sharpness: {bad['sharp']}")
+        print(f"    Roundness: {bad['round']}")
+    LSL_LOGGER.info(" ")
     LSL_LOGGER.info("Summary")
-    LSL_LOGGER.info("  Detections: %i" % nGood)
-    LSL_LOGGER.info("  Valid Detections: %i" % nStar)
+    LSL_LOGGER.info(f"  Detections: {nGood}")
+    LSL_LOGGER.info(f"  Valid Detections: {nStar}")
     LSL_LOGGER.info("  Number Rejected:")
-    LSL_LOGGER.info("    Sharpness: %i" % bad['sharp'])
-    LSL_LOGGER.info("    Roundness: %i" % bad['round'])
-    
+    LSL_LOGGER.info(f"    Sharpness: {bad['sharp']}")
+    LSL_LOGGER.info(f"    Roundness: {bad['round']}")
     # Trim the output arrays for the actual number of stars found
     x = x[:nStar]
     y = y[:nStar]

@@ -5,8 +5,8 @@ Deconvolution support for images made with :func:`lsl.imaging.utils.build_gridde
     Switched from AntennaArray to imaging.utils.ImgWPlus for all image coordinate info
 """
 
-import numpy as np
 import logging
+import numpy as np
 from aipy.fit import RadioFixedBody
 from scipy.signal import fftconvolve as convolve
 
@@ -246,14 +246,17 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
             currDec = deg_to_dms(peakDec * 180/np.pi)
             currAz  = deg_to_dms(peakAz * 180/np.pi)
             currAlt = deg_to_dms(peakAlt * 180/np.pi)
-            
-            print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, np.log10(peakV), peak_x, peak_y))
-            print("               -> RA: %s, Dec: %s" % (currRA, currDec))
-            print("               -> az: %s, el: %s" % (currAz, currAlt))
-        LSL_LOGGER.info("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, np.log10(peakV), peak_x, peak_y))
-        LSL_LOGGER.info("               -> RA: %s, Dec: %s" % (currRA, currDec))
-        LSL_LOGGER.info("               -> az: %s, el: %s" % (currAz, currAlt))
-        
+
+            print(f"Iteration {i+1}:  Log peak of {np.log10(peakV):.3f} at row: {peak_x}, column: {peak_y}")
+            print(f"               -> RA: {currRA}, Dec: {currDec}")
+            print(f"               -> az: {currAz}, el: {currAlt}")
+        LSL_LOGGER.debug(f"Iteration {i+1}:  Log peak of {np.log10(peakV):.3f} at row: {peak_x}, column: {peak_y}")
+        currRA  = deg_to_hms(peakRA * 180/np.pi)
+        currDec = deg_to_dms(peakDec * 180/np.pi)
+        currAz  = deg_to_dms(peakAz * 180/np.pi)
+        currAlt = deg_to_dms(peakAlt * 180/np.pi)
+        LSL_LOGGER.debug(f"               -> RA: {currRA}, Dec: {currDec}")
+        LSL_LOGGER.debug(f"               -> az: {currAz}, el: {currAlt}")
         # Check for the exit criteria
         if peakV < 0:
             exitStatus = 'peak value is negative'
@@ -277,13 +280,12 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
             beam /= beam.max()
             if verbose:
                 print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-            LSL_LOGGER.debug("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-            
+            LSL_LOGGER.debug(f"                   {beam.mean()} {beam.min()} {beam.max()} {beam.sum()}")
+
             prevBeam[beamIndex] = beam
             if verbose:
-                print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
-            LSL_LOGGER.debug("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
-            
+                print(f"               -> Beam cache contains {len(prevBeam.keys())} entries")
+            LSL_LOGGER.debug(f"               -> Beam cache contains {len(prevBeam.keys())} entries")
         # Calculate how much signal needs to be removed...
         toRemove = gain*peakV*beam
         working -= toRemove
@@ -324,13 +326,13 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
             pylab.draw()
             
         if working.max()/working.std() < sigma:
-            exitStatus = 'peak is less than %.3f-sigma' % sigma
-            
+            exitStatus = f'peak is less than {sigma:.3f}-sigma'
+
             break
-            
+
     # Summary
-    print("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
-    LSL_LOGGER.info("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
+    print(f"Exited after {i+1} iterations with status '{exitStatus}'")
+    LSL_LOGGER.info(f"Exited after {i+1} iterations with status '{exitStatus}'")
     
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
@@ -463,8 +465,8 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
         # Make sure the source is up
         src.compute(aa)
         if verbose:
-            print('Source: %s @ %s degrees altitude' % (name, src.alt))
-        LSL_LOGGER.info('Source: %s @ %s degrees altitude' % (name, src.alt))
+            print(f'Source: {name} @ {src.alt} degrees altitude')
+        LSL_LOGGER.info(f'Source: {name} @ {src.alt} degrees altitude')
         if src.alt <= 10*np.pi/180.0:
             continue
             
@@ -542,14 +544,17 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                 currDec = deg_to_dms(peakDec * 180/np.pi)
                 currAz  = deg_to_dms(peakAz * 180/np.pi)
                 currAlt = deg_to_dms(peakAlt * 180/np.pi)
-                
-                print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, np.log10(peakV), peak_x, peak_y))
-                print("               -> RA: %s, Dec: %s" % (currRA, currDec))
-                print("               -> az: %s, el: %s" % (currAz, currAlt))
-            LSL_LOGGER.info("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, np.log10(peakV), peak_x, peak_y))
-            LSL_LOGGER.info("               -> RA: %s, Dec: %s" % (currRA, currDec))
-            LSL_LOGGER.info("               -> az: %s, el: %s" % (currAz, currAlt))
-            
+
+                print(f"{name} - Iteration {i+1}:  Log peak of {np.log10(peakV):.3f} at row: {peak_x}, column: {peak_y}")
+                print(f"               -> RA: {currRA}, Dec: {currDec}")
+                print(f"               -> az: {currAz}, el: {currAlt}")
+            LSL_LOGGER.debug(f"{name} - Iteration {i+1}:  Log peak of {np.log10(peakV):.3f} at row: {peak_x}, column: {peak_y}")
+            currRA  = deg_to_hms(peakRA * 180/np.pi)
+            currDec = deg_to_dms(peakDec * 180/np.pi)
+            currAz  = deg_to_dms(peakAz * 180/np.pi)
+            currAlt = deg_to_dms(peakAlt * 180/np.pi)
+            LSL_LOGGER.debug(f"               -> RA: {currRA}, Dec: {currDec}")
+            LSL_LOGGER.debug(f"               -> az: {currAz}, el: {currAlt}")
             # Check for the exit criteria
             if peakV < 0:
                 exitStatus = 'peak value is negative'
@@ -565,7 +570,6 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                 if verbose:
                     print("               -> Computing beam(s)")
                 LSL_LOGGER.debug("               -> Computing beam(s)")
-                
                 beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
                 beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
                 beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
@@ -573,13 +577,12 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                 beam /= beam.max()
                 if verbose:
                     print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-                LSL_LOGGER.debug("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-                
+                LSL_LOGGER.debug(f"                   {beam.mean()} {beam.min()} {beam.max()} {beam.sum()}")
+
                 prevBeam[beamIndex] = beam
                 if verbose:
-                    print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
-                LSL_LOGGER.debug("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
-                
+                    print(f"               -> Beam cache contains {len(prevBeam.keys())} entries")
+                LSL_LOGGER.debug(f"               -> Beam cache contains {len(prevBeam.keys())} entries")
             # Calculate how much signal needs to be removed...
             toRemove = gain*peakV*beam
             working -= toRemove
@@ -622,19 +625,19 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                     pass
                     
                 try:
-                    st.set_text('%s @ %i' % (name, i+1))
+                    st.set_text(f'{name} @ {i+1}')
                 except NameError:
-                    st = pylab.suptitle('%s @ %i' % (name, i+1))
+                    st = pylab.suptitle(f'{name} @ {i+1}')
                 pylab.draw()
                 
             if np.abs(np.max(working[rx0:rx1,ry0:ry1])-np.median(working[background]))/rStd(working[background]) <= sigma:
-                exitStatus = 'peak is less than %.3f-sigma' % sigma
-                
+                exitStatus = f'peak is less than {sigma:.3f}-sigma'
+
                 break
-                
+
         # Summary
-        print("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
-        LSL_LOGGER.info("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
+        print(f"Exited after {i+1} iterations with status '{exitStatus}'")
+        LSL_LOGGER.info(f"Exited after {i+1} iterations with status '{exitStatus}'")
         
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
@@ -835,15 +838,14 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
         
         ## Status report
         if verbose:
-            print("Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS))
-            print("               -> maximum residual: %.4e (%.3f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max()))
-            print("               -> minimum residual: %.4e (%.3f%% of peak)" % (diff.min(), 100.0*diff.min()/img.max()))
-            print("               -> delta RMS: %.4e (%.3f%%)" % (RMS-oldRMS, 100.0*(RMS-oldRMS)/RMS))
-        LSL_LOGGER.info("Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS))
-        LSL_LOGGER.info("               -> maximum residual: %.4e (%.3f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max()))
-        LSL_LOGGER.info("               -> minimum residual: %.4e (%.3f%% of peak)" % (diff.min(), 100.0*diff.min()/img.max()))
-        LSL_LOGGER.info("               -> delta RMS: %.4e (%.3f%%)" % (RMS-oldRMS, 100.0*(RMS-oldRMS)/RMS))
-        
+            print(f"Iteration {k+1}:  {len(bSrcs.keys())} sources used, RMS is {RMS:.4e}")
+            print(f"               -> maximum residual: {diff.max():.4e} ({100.0*diff.max()/img.max():.3f}% of peak)")
+            print(f"               -> minimum residual: {diff.min():.4e} ({100.0*diff.min()/img.max():.3f}% of peak)")
+            print(f"               -> delta RMS: {RMS-oldRMS:.4e} ({100.0*(RMS-oldRMS)/RMS:.3f}%)")
+        LSL_LOGGER.debug(f"Iteration {k+1}:  {len(bSrcs.keys())} sources used, RMS is {RMS:.4e}")
+        LSL_LOGGER.debug(f"               -> maximum residual: {diff.max():.4e} ({100.0*diff.max()/img.max():.3f}% of peak)")
+        LSL_LOGGER.debug(f"               -> minimum residual: {diff.min():.4e} ({100.0*diff.min()/img.max():.3f}% of peak)")
+        LSL_LOGGER.debug(f"               -> delta RMS: {RMS-oldRMS:.4e} ({100.0*(RMS-oldRMS)/RMS:.3f}%)")
         ## Make the cleaned residuals map ready for updating the model
         diff = diff2
         diffScaled = diff * simToModel
@@ -887,11 +889,10 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
             pylab.cla()
             pylab.plot(rHist)
             pylab.draw()
-            
+
     # Summary
-    print("Exited after %i iterations with status '%s'" % (k+1, exitStatus))
-    LSL_LOGGER.info("Exited after %i iterations with status '%s'" % (k+1, exitStatus))
-    
+    print(f"Exited after {k+1} iterations with status '{exitStatus}'")
+    LSL_LOGGER.info(f"Exited after {k+1} iterations with status '{exitStatus}'")
     # Restore
     conv = convolve(mdl2, beamClean, mode='same')
     conv = np.ma.masked_array(conv, mask=convMask, dtype=conv.dtype)
