@@ -263,8 +263,10 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
      * phase_cutoff - 0.01 radians, and
      * delay_cutoff - 0.2 ns (0.01 radians over 10 MHz)
      
-    Tikhonov regularization is also supported with the `inv_epsilon` keyword that
-    controls degree.  Setting this to zero (the default) disables this.
+    Tikhonov regularization is also supported with the `inv_epsilon` keyword
+    that controls the degree regularization.  For details see:
+      https://en.wikipedia.org/wiki/Ridge_regpression
+    Setting `inv_epsilon` to zero (the default) disables this feature.
     """
 
     # Make sure we have the right polarization
