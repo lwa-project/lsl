@@ -8,6 +8,9 @@ supported self-calibration methods are:
  * delay/phase offset
  * amplitude and delay/phase offset
 
+.. versionchanged:: 3.0.8
+   Added support for Tikhonov regularization
+
 ..versionchanged:: 0.6.3
     Reworked the module to make it more versatile
     
@@ -324,13 +327,12 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             C = C[good]
             
             if inv_epsilon > 0:
-                AT = A.T
-                R = 1/inv_epsilon**2 * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(AT,A) + R, return_rank=True)
-                bestGains = numpy.dot(trc, numpy.dot(AT,v))
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(AT,A) + np.dot(R.T,R), return_rank=True)
+                bestGains = np.dot(trc, np.dot(A.T,C))
                 
             else:
-                bestGains, resid, rank, s = np.linalg.lstsq(A, C)
+                bestGains, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestGains)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             bestGains = np.exp(bestGains)
@@ -361,13 +363,12 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             C = C[good]
             
             if inv_epsilon > 0:
-                AT = A.T
-                R = 1/inv_epsilon**2 * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(AT,A) + R, return_rank=True)
-                bestGains = numpy.dot(trc, numpy.dot(AT,v))
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestPhaseOffsets = np.dot(trc, np.dot(A.T,C))
                 
             else:
-                bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C)
+                bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestPhaseOffsets)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
@@ -398,13 +399,12 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             C = C[good]
             
             if inv_epsilon > 0:
-                AT = A.T
-                R = 1/inv_epsilon**2 * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(AT,A) + R, return_rank=True)
-                bestGains = numpy.dot(trc, numpy.dot(AT,v))
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestDelays = np.dot(trc, np.dot(A.T,C))
                 
             else:
-                bestDelays, resid, rank, s = np.linalg.lstsq(A, C)
+                bestDelays, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestDelays)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
@@ -436,13 +436,12 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             C = C[good]
             
             if inv_epsilon > 0:
-                AT = A.T
-                R = 1/inv_epsilon**2 * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(AT,A) + R, return_rank=True)
-                bestGains = numpy.dot(trc, numpy.dot(AT,v))
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestDelays = np.dot(trc, np.dot(A.T,C))
                 
             else:
-                bestDelays, resid, rank, s = np.linalg.lstsq(A, C)
+                bestDelays, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestDelays)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
@@ -461,7 +460,13 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             A = A[good,:]
             C = C[good]
             
-            bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C)
+            if inv_epsilon > 0:
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestPhaseOffsets = np.dot(trc, np.dot(A.T,C))
+                
+            else:
+                bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestPhaseOffsets)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
