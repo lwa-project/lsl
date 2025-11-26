@@ -830,7 +830,7 @@ def parse_sdf(filename, verbose=False):
                 project.project_office.observations[0].append( None )
             
                 if verbose:
-                    print("[%i] Started obs %i" % (os.getpid(), int(value)))
+                    pid_print("Started obs %i" % (int(value),), level=logging.INFO, logging_only=(not verbose))
                 
                 continue
             if keyword == 'OBS_TITLE':
