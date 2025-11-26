@@ -714,16 +714,45 @@ class imaging_tests(unittest.TestCase):
                 # Go for it!
                 aa = idi.get_antennaarray()
                 ds = idi.get_data_set(1)
-                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
-                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
-                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
-                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
-                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
-                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
-                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
-                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
-                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
-                
+                with self.subTest(mode='phase only'):
+                    with self.subTest(amplitude=True):
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, return_convergence=True)
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, inv_epsilon=0.01)
+                    with self.subTest(amplitude=False):
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, 
+                                                  amplitude=False)
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                  inv_epsilon=0.01, verbose=False, amplitude=False)
+                        
+                with self.subTest(mode='delay only'):
+                    with self.subTest(amplitude=True):
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, return_convergence=True)
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, inv_epsilon=0.01)
+                    with self.subTest(amplitude=False):
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=False)
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                  amplitude=False, inv_epsilon=0.01, verbose=False)
+                        
+                with self.subTest(mode='delay and phase'):
+                    with self.subTest(amplitude=True):
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       verbose=False, amplitude=True,
+                                                       return_convergence=True)
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       verbose=False, amplitude=True,
+                                                       inv_epsilon=0.01)
+                    with self.subTest(amplitude=False):
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       verbose=False, amplitude=False)
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       amplitude=False, inv_epsilon=0.01,
+                                                       verbose=False)
+                        
                 # Error checking
                 self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
                 self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
