@@ -793,7 +793,7 @@ class PointingDirection(object):
         Create a new pointing direction instance.
         
         source  - instance of type CelestialPosition or PlanetaryPosition 
-                represeting target source location
+                representing target source location
         site    - instance of GeographicalPosition representing observer 
                 location
         """

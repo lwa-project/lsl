@@ -51,7 +51,7 @@ def main(args):
     if not isinstance(idf, DRSpecFile):
         raise RuntimeError("File '%s' does not appear to be a valid DR spectrometer file" % os.path.basename(args.filename))
         
-    # Basic file informaiton
+    # Basic file information
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     beam = idf.get_info('beam')
@@ -72,7 +72,7 @@ def main(args):
     maxFramesTime = maxFrames*tInt
     nChunks = int(math.ceil(1.0*(nFrames)/maxFrames))
     
-    # Date & Central Frequnecy
+    # Date & Central Frequency
     beginDate = idf.get_info('start_time').datetime
     central_freq1 = idf.get_info('freq1')
     central_freq2 = idf.get_info('freq2')
@@ -113,7 +113,7 @@ def main(args):
             print(f"Error: {str(e)}")
             continue
             
-        ## Integrate up the chunck
+        ## Integrate up the chunk
         data = data.mean(axis=1)
         
         ## Save

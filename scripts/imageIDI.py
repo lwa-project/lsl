@@ -92,7 +92,7 @@ def main(args):
         print(f"    Selected Frequencies: {freq[toWork[0]]/1e6:.3f} to {freq[toWork[-1]]/1e6:.3f} MHz")
         
         # Prune out what needs to go
-        if args.include != 'any' or args.exclude != 'none':
+        if args.include != 'all' or args.exclude != 'none':
             print("    Processing include/exclude lists")
             dataDict = dataDict.get_antenna_subset(include=args.include, 
                                                    exclude=args.exclude, 
@@ -256,11 +256,11 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--dataset', type=int, default=-1, 
                         help='data set to image')
     parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
-                        help='minimun baseline uvw length to include in lambda at the midpoint frequency')
-    parser.add_argument('-i', '--include', type=aph.csv_int_list, default='all', 
-                        help='comma seperated list of dipoles to include')
-    parser.add_argument('-e', '--exclude', type=aph.csv_int_list, default='none', 
-                        help='comma seperated list of dipoles to exclude')
+                        help='minimum baseline uvw length to include in lambda at the midpoint frequency')
+    parser.add_argument('-i', '--include', type=aph.csv_int_list, default='all',
+                        help='comma separated list of dipoles to include')
+    parser.add_argument('-e', '--exclude', type=aph.csv_int_list, default='none',
+                        help='comma separated list of dipoles to exclude')
     parser.add_argument('-t', '--topo', action='store_true', 
                         help='display an az/el grid instead of a RA/Dec grid')
     parser.add_argument('-u', '--utc', action='store_true', 

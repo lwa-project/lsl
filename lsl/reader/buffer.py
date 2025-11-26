@@ -291,9 +291,9 @@ class FrameBufferBase(object):
         
     def get(self, key_to_return=None):
         """
-        Return a list of frames that consitute a 'full' buffer.  Afterwards, 
+        Return a list of frames that constitute a 'full' buffer.  Afterwards, 
         delete that buffer and mark it as closed so that any missing frames that
-        are recieved late are dropped.  If none of the buffers are ready to be 
+        are received late are dropped.  If none of the buffers are ready to be 
         dumped, None is returned.
         """
         

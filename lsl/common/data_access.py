@@ -20,7 +20,7 @@ from lsl.common.color import colorfy
 from lsl.config import LSL_CONFIG
 DOWN_CONFIG = LSL_CONFIG.view('download')
 
-__version__ = '0.2'
+__version__ = '0.3'
 __all__ = ['download_file', 'DataAccess']
 
 
@@ -29,11 +29,11 @@ def download_file(url, filename_or_fh, byte_range=None, verbose=True):
     Given a URL and either a filename or open file handle, download the URL and
     write the data.  Returns a three-element tuple:
      * the remote size as reported by 'Content-Length',
-     * the number of bytes recieved, and
+     * the number of bytes received, and
      * the URL modification time as reported by the 'Last-Modified' HTTP header.
     All three will be 0 if there was a problem downloading the file.
     
-    .. note::  If `byte_range` is not None then only the porition of the file
+    .. note::  If `byte_range` is not None then only the portion of the file
                between [start_byte, end_byte] is downloaded.
     """
     
@@ -128,7 +128,7 @@ class _DataAccess(object):
     def __init__(self):
         # Create the cache directory
         try:
-            self._data_cache = FileCache(os.path.join(os.path.expanduser('~'), '.lsl', 'data_cache'), max_size=0)
+            self._data_cache = FileCache(os.path.join(LSL_CONFIG.dirname, 'data_cache'), max_size=0)
         except OSError:
             self._data_cache = MemoryCache(max_size=0)
             warnings.warn(colorfy("{{%yellow Cannot create or write to on-disk data cache, using in-memory data cache}}"), RuntimeWarning)

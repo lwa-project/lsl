@@ -8,6 +8,9 @@ supported self-calibration methods are:
  * delay/phase offset
  * amplitude and delay/phase offset
 
+.. versionchanged:: 3.0.8
+   Added support for Tikhonov regularization and exposed the loop gain
+
 ..versionchanged:: 0.6.3
     Reworked the module to make it more versatile
     
@@ -15,6 +18,8 @@ supported self-calibration methods are:
 """
 
 import numpy as np
+
+from scipy.linalg import lstsq, decomp, decomp_svd, pinv
 
 from lsl.statistics import robust
 
@@ -235,7 +240,7 @@ def _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     return Cp
 
 
-def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, phase_only=False, delay_only=False, delay_and_phase=False, amplitude_cutoff=1.001, phase_cutoff=0.01, delay_cutoff=0.2, verbose=True):
+def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, phase_only=False, delay_only=False, delay_and_phase=False, amplitude_cutoff=1.001, phase_cutoff=0.01, delay_cutoff=0.2, inv_epsilon=0.0, verbose=True):
     """
     Function used to perform a variety of self-calibration strategies on 
     data stored in a readUVData dictionary and a model sky stored in a 
@@ -255,8 +260,13 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
     drops below the quantity's cutoff value.  The cutoff keywords and 
     their default values are:
      * amplitude_cutoff - 1.001, 
-     * phase_cutoff - 0.01 radians, 
-     * delay_cutoff - 0.2 ns (0.01 radians over 10 MHz),
+     * phase_cutoff - 0.01 radians, and
+     * delay_cutoff - 0.2 ns (0.01 radians over 10 MHz)
+     
+    Tikhonov regularization is also supported with the `inv_epsilon` keyword
+    that controls the degree regularization.  For details see:
+      https://en.wikipedia.org/wiki/Ridge_regpression
+    Setting `inv_epsilon` to zero (the default) disables this feature.
     """
 
     # Make sure we have the right polarization
@@ -318,7 +328,13 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             A = A[good,:]
             C = C[good]
             
-            bestGains, resid, rank, s = np.linalg.lstsq(A, C)
+            if inv_epsilon > 0:
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestGains = np.dot(trc, np.dot(A.T,C))
+                
+            else:
+                bestGains, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestGains)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             bestGains = np.exp(bestGains)
@@ -348,14 +364,20 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             A = A[good,:]
             C = C[good]
             
-            bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C)
+            if inv_epsilon > 0:
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestPhaseOffsets = np.dot(trc, np.dot(A.T,C))
+                
+            else:
+                bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestPhaseOffsets)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
             bestPhaseOffsets = list(bestPhaseOffsets)
             bestPhaseOffsets.insert(ref_ant, 0.0)
             bestPhaseOffsets = np.array(bestPhaseOffsets)
-            tempPhaseOffsets += 0.5*bestPhaseOffsets
+            tempPhaseOffsets += loop_gain*bestPhaseOffsets
             
             valid = np.where( np.abs(bestPhaseOffsets) < 1e6 )[0]
             metric = (np.abs(bestPhaseOffsets[valid])).max()
@@ -378,14 +400,20 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             A = A[good,:]
             C = C[good]
             
-            bestDelays, resid, rank, s = np.linalg.lstsq(A, C)
+            if inv_epsilon > 0:
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestDelays = np.dot(trc, np.dot(A.T,C))
+                
+            else:
+                bestDelays, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestDelays)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
             bestDelays = list(bestDelays)
             bestDelays.insert(ref_ant, 0.0)
             bestDelays = np.array(bestDelays)
-            tempDelays += 0.5*bestDelays
+            tempDelays += loop_gain*bestDelays
             
             valid = np.where( np.abs(bestDelays) < 1e6 )[0]
             metric = (np.abs(bestDelays[valid])).max()
@@ -409,14 +437,20 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             A = A[good,:]
             C = C[good]
             
-            bestDelays, resid, rank, s = np.linalg.lstsq(A, C)
+            if inv_epsilon > 0:
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestDelays = np.dot(trc, np.dot(A.T,C))
+                
+            else:
+                bestDelays, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestDelays)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
             bestDelays = list(bestDelays)
             bestDelays.insert(ref_ant, 0.0)
             bestDelays = np.array(bestDelays)
-            tempDelays += 0.5*bestDelays
+            tempDelays += loop_gain*bestDelays
             
             dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, tempPhaseOffsets)
             
@@ -428,7 +462,13 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
             A = A[good,:]
             C = C[good]
             
-            bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C)
+            if inv_epsilon > 0:
+                R = 1/inv_epsilon * np.eye(*A.shape)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
+                bestPhaseOffsets = np.dot(trc, np.dot(A.T,C))
+                
+            else:
+                bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
             resid = np.array(C - np.dot(A, bestPhaseOffsets)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
@@ -470,7 +510,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=
     return dataSet, bestGains, bestDelays, bestPhaseOffsets, converged
 
 
-def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, return_convergence=False, verbose=True):
+def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, inv_epsilon=0.0, return_convergence=False, verbose=True):
     """
     Function to apply a phase-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -484,10 +524,11 @@ def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
-      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant,
+                loop_gain=loop_gain, max_iter=max_iter, 
                 amplitude=amplitude, phase_only=True, 
                 amplitude_cutoff=amplitude_cutoff, phase_cutoff=phase_cutoff, 
-                verbose=verbose)
+                inv_epsilon=inv_epsilon, verbose=verbose)
     
                            
     if amplitude:
@@ -499,7 +540,7 @@ def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     return output
 
 
-def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, return_convergence=False, verbose=True):
+def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, inv_epsilon=0.0, return_convergence=False, verbose=True):
     """
     Function to apply a delay-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -513,10 +554,11 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
-      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, 
+                loop_gain=loop_gain, max_iter=max_iter, 
                 amplitude=amplitude, delay_only=True, 
                 amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff,
-                verbose=verbose)
+                inv_epsilon=inv_epsilon, verbose=verbose)
                                             
     if amplitude:
         output = (caldDict, gains, delays)
@@ -527,7 +569,7 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     return output
 
 
-def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, return_convergence=False, verbose=True):
+def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, inv_epsilon=0.0,  return_convergence=False, verbose=True):
     """
     Function to apply a delay and phase offset (and, optionally, a amplitude)
     self-calibration to data stored in a readUVData dictionary and a model 
@@ -541,10 +583,11 @@ def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, ampl
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
-      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, 
+                loop_gain=loop_gain, max_iter=max_iter, 
                 amplitude=amplitude, delay_and_phase=True, 
                 amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff, phase_cutoff=phase_cutoff, 
-                verbose=verbose)
+                inv_epsilon=inv_epsilon, verbose=verbose)
                                             
     if amplitude:
         output = (caldDict, gains, delays, phaseOffsets)

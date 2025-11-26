@@ -62,7 +62,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
     toKeep = [antennas[i].digitizer-1 for i in good]
     mapper = [antennas[i] for i in good]
     
-    # Create a list of unqiue stands to know what style of IDI file to create
+    # Create a list of unique stands to know what style of IDI file to create
     stands = set( [antennas[i].stand.id for i in good] )
     
     # Figure out the output mode
@@ -143,7 +143,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
                                                        -ant2.stand.z/speedOfLight))
                 vis[k,:] *= phaseRot2.conj()*phaseRot1 / gain2 / gain1
                 
-            # If we are in the first polarazation product of the first iteration,  setup
+            # If we are in the first polarization product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
                 pol1, pol2 = fxc.pol_to_pols(pol)
@@ -156,7 +156,7 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
                 
             # Convert the setTime to a MJD and save the visibilities to the FITS IDI file
             fits.add_data_set(setTime, readT, baselines, vis, pol=pol)
-        print(f"->  Cummulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
+        print(f"->  Cumulative Wall Time: {time.time()-wallTime:.3f} s ({(time.time()-wallTime)/(s+1):.3f} s per integration)")
         
     # Cleanup after everything is done
     fits.write()
@@ -251,7 +251,7 @@ def main(args):
         # Make sure we don't try to do too many sets
         args.samples = min([args.samples, nSets])
         
-        # Loop over junks of 100 integrations to make sure that we don't overflow 
+        # Loop over chunks of 100 integrations to make sure that we don't overflow 
         # the FITS IDI memory buffer
         s = 0
         basename = os.path.split(args.filename)[1]

@@ -1,6 +1,16 @@
+3.0.8:
+ * Updated the filenames for the USTEC ionospheric product
+ * Fixed false alarms from the LSL configuration change tracker
+ * Better handling of optional fields i the LSL configuration manager
+ * Exposed the `loop_gain` parameter in the various `lsl.imaging.selfcal` functions
+ * Added support for Tikhonov regularization to the various `lsl.imaging.selfcal` functions
+
 3.0.7:
  * Updated ldp.DRXFile and DRX8File to check for large (>5 minute) gaps at the beginning of the file
  * Add functionality for converting Stokes VisibilityDataSets into the Circular Polarization basis
+ * Improve state tracking for changes to the LSL configuration file
+ * Add support for a LSLCONFIGDIR environment variable to control where the configuration/cache is stored
+ * Fixed a bug that caused `lsl.imaging.utils.CorrelatedDataIDI to not detected ExtendedIDI files
 
 3.0.6:
  * Updated to IGRF14

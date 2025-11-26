@@ -1096,7 +1096,7 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].observations[1].set_beamdipole_mode(73)
         out = project.render()
         
-    def test_beamdiploe_errors(self):
+    def test_beamdipole_errors(self):
         """Test various beam/dipole mode SDF errors."""
         
         project = sdf.parse_sdf(drxFile)
@@ -1243,7 +1243,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].mpm,  30001)
         
     def test_set_station(self):
-        """Test the set stations functionlity."""
+        """Test the set stations functionality."""
         
         project = sdf.parse_sdf(drxFile)
         project.sessions[0].station = lwa1
