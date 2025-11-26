@@ -9,7 +9,7 @@ supported self-calibration methods are:
  * amplitude and delay/phase offset
 
 .. versionchanged:: 3.0.8
-   Added support for Tikhonov regularization
+   Added support for Tikhonov regularization and exposed the loop gain
 
 ..versionchanged:: 0.6.3
     Reworked the module to make it more versatile
@@ -508,7 +508,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
     return dataSet, bestGains, bestDelays, bestPhaseOffsets, converged
 
 
-def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, inv_epsilon=0.0, return_convergence=False, verbose=True):
+def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, phase_cutoff=0.01, inv_epsilon=0.0, return_convergence=False, verbose=True):
     """
     Function to apply a phase-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -522,7 +522,8 @@ def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
-      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant,
+                loop_gain=loop_gain, max_iter=max_iter, 
                 amplitude=amplitude, phase_only=True, 
                 amplitude_cutoff=amplitude_cutoff, phase_cutoff=phase_cutoff, 
                 inv_epsilon=inv_epsilon, verbose=verbose)
@@ -537,7 +538,7 @@ def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     return output
 
 
-def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, inv_epsilon=0.0, return_convergence=False, verbose=True):
+def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, inv_epsilon=0.0, return_convergence=False, verbose=True):
     """
     Function to apply a delay-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -551,7 +552,8 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
-      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, 
+                loop_gain=loop_gain, max_iter=max_iter, 
                 amplitude=amplitude, delay_only=True, 
                 amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff,
                 inv_epsilon=inv_epsilon, verbose=verbose)
@@ -565,7 +567,7 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude
     return output
 
 
-def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, inv_epsilon=0.0,  return_convergence=False, verbose=True):
+def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, phase_cutoff=0.01, inv_epsilon=0.0,  return_convergence=False, verbose=True):
     """
     Function to apply a delay and phase offset (and, optionally, a amplitude)
     self-calibration to data stored in a readUVData dictionary and a model 
@@ -579,7 +581,8 @@ def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, max_iter=30, ampl
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
-      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, max_iter=max_iter, 
+      _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant, 
+                loop_gain=loop_gain, max_iter=max_iter, 
                 amplitude=amplitude, delay_and_phase=True, 
                 amplitude_cutoff=amplitude_cutoff, delay_cutoff=delay_cutoff, phase_cutoff=phase_cutoff, 
                 inv_epsilon=inv_epsilon, verbose=verbose)
