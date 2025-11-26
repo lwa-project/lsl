@@ -6,6 +6,10 @@ These errors are currently meant to deal with file I/O problems.
     Removed numpyError and re-enumerated
 """
 
+import logging
+
+from lsl.logger import LSL_LOGGER
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -80,7 +84,10 @@ def list_error_codes(errno=None):
     else:
         if errno == 1:
             print("1: End of file encountered during filehandle read")
+            LSL_LOGGER.info("1: End of file encountered during filehandle read")
         elif errno == 2:
             print("2: Sync word differs from expected")
+            LSL_LOGGER.info("2: Sync word differs from expected")
         else:
-            print("Unknown error code '%i'" % errno)
+            print(f"Unknown error code '{errno}'")
+            LSL_LOGGER.info(f"Unknown error code '{errno}'")

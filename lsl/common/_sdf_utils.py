@@ -211,8 +211,8 @@ def parse_time(s, station=lwa1):
                     tz = 'LST'
                 else:
                     ## Exhaustive search through pytz.  This may yield strange matches...
-                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
-                    
+                    LSL_LOGGER.warning(f"Entering pytz search mode for '{tzName}'")
+
                     tzFound = False
                     tzNormal = datetime(year, month, day)
                     for tzi in pytz.common_timezones[::-1]:

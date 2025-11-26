@@ -50,6 +50,7 @@ import os
 import aipy
 import math
 import ephem
+import logging
 import numpy as np
 import warnings
 from scipy.interpolate import interp1d
@@ -66,6 +67,7 @@ from lsl.common.stations import lwa1
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 from lsl.sim._simfast import FastVis
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -221,7 +223,7 @@ class RadioEarthSatellite(object):
             diff = np.abs(fPrime - afreqs)*1e9
             good = np.where( diff <= self.tbw/2.0 )
             self.jys[good] = self._jys * min([1.0, dFreq*1e9/self.tbw])
-                
+            
     def get_jys(self):
         """
         Return the fluxes vs. freq that should be used for simulation.
@@ -459,7 +461,7 @@ class Antenna(aipy.amp.Antenna):
     number in the Antenna.stand attribute.  This also add a getBeamShape 
     attribute that pulls in the old vis.getBeamShape function.
     """
-
+    
     def __init__(self, x, y, z, beam, phsoff=[0.,0.], bp_r=np.array([1]), bp_i=np.array([0]), amp=1, pointing=(0.,np.pi/2,0), stand=0, **kwargs):
         """
         New init function that include stand ID number support.  From aipy.amp.Antenna:
@@ -485,12 +487,13 @@ class Antenna(aipy.amp.Antenna):
         .. note::
             This differs from the AIPY implementation in that the LWA X-pol.
             is oriented N-S, not E-W.
-            
+        
         .. note::
             This function also accepts two and three-dimensions arrays of 
             topocentric coordinates, similar to what img.ImgW.get_top() 
             produces, and computes the beam response at all points.
         """
+        
         top = np.array(top)
         pol = pol.lower()
         
@@ -515,7 +518,7 @@ class Antenna(aipy.amp.Antenna):
                         
             else:
                 raise ValueError(f"Cannot dot a ({str(a.shape)}) with b ({str(b.shape)})")
-            
+                
             return temp
             
         top = {'y':_robust_dot(self.rot_pol_x, top), 
@@ -599,13 +602,13 @@ class AntennaArray(aipy.amp.AntennaArray):
         Return a numpy array listing the stands found in the AntennaArray 
         object.
         """
-
+        
         stands = []
         for ant in self.ants:
             stands.append(ant.stand)
-        
+            
         return np.array(stands)
-
+        
     def set_unixtime(self, timestamp):
         """
         Set the array time using a UNIX timestamp (epoch 1970).
@@ -676,10 +679,13 @@ class AntennaArray(aipy.amp.AntennaArray):
             self[i].update()
             
     def get_baseline_fast(self, i, j, src='z', map=None):
-        """Return the baseline corresponding to i,j in various coordinate 
+        """
+        Return the baseline corresponding to i,j in various coordinate 
         projections: src='e' for current equatorial, 'z' for zenith 
         topocentric, 'r' for unrotated equatorial, or a RadioBody for
-        projection toward that source - fast."""
+        projection toward that source - fast.
+        """
+        
         bl = self[j] - self[i]
         
         if isinstance(src, str):
@@ -704,9 +710,11 @@ class AntennaArray(aipy.amp.AntennaArray):
         return np.dot(m, bl).transpose()
         
     def gen_uvw_fast(self, i, j, src='z', w_only=False, map=None):
-        """Compute uvw coordinates of baseline relative to provided RadioBody, 
+        """
+        Compute uvw coordinates of baseline relative to provided RadioBody, 
         or 'z' for zenith uvw coordinates.  If w_only is True, only w (instead
-        of (u,v,w) will be returned) - fast."""
+        of (u,v,w) will be returned) - fast.
+        """
         
         x,y,z = self.get_baseline_fast(i,j, src=src, map=map)
         
@@ -729,7 +737,10 @@ class AntennaArray(aipy.amp.AntennaArray):
         return out
         
     def gen_phs_fast(self, src, i, j, mfreq=.150, ionref=None, srcshape=None, resolve_src=False, u=None, v=None, w=None):
-        """Return phasing that is multiplied to data to point to src - fast."""
+        """
+        Return phasing that is multiplied to data to point to src - fast.
+        """
+        
         if ionref is None:
             try:
                 ionref = src.ionref
@@ -824,7 +835,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     .. versionchanged:: 1.0.3
         Changed the meaning of the force_gaussian parameters so that the
         Gaussian full width at half maximum in degrees is passed in.
-        
+    
     .. versionchanged:: 1.0.1
         Moved the simulation code over from AIPY to the new _simFast module.  
         This should be much faster but under the caveats that the bandpass
@@ -833,7 +844,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         
         Added an option to use a 2-D Gaussian beam pattern via the force_gaussian
         keyword.
-        
+    
     .. versionchanged:: 0.4.0
         Switched over to passing in Antenna instances generated by the
         :mod:`lsl.common.station` module instead of a list of stand ID numbers.
@@ -868,12 +879,14 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         yw *= np.pi/180
         
         if verbose:
-            print("Using a 2-D Gaussian beam with sigmas %.1f by %.1f degrees" % (xw*180/np.pi, yw*180/np.pi))
+            print(f"Using a 2-D Gaussian beam with sigmas {xw*180/np.pi:.1f} by {yw*180/np.pi:.1f} degrees")
+        LSL_LOGGER.info(f"Using a 2-D Gaussian beam with sigmas {xw*180/np.pi:.1f} by {yw*180/np.pi:.1f} degrees")
         beam = Beam2DGaussian(freqs, xw, yw)
         
     elif force_flat:
         if verbose:
             print("Using flat beam model")
+        LSL_LOGGER.info("Using flat beam model")
         beam = Beam(freqs)
         
     else:
@@ -893,11 +906,12 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
                 
             if verbose:
                 print(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
+            LSL_LOGGER.info(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
             beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
             
     if pos_error != 0:
-        warnings.warn(colorfy("{{%%yellow Creating array with positional errors between %.3f and %.3f m}}" % (-pos_error, pos_error)), RuntimeWarning)
-
+        LSL_LOGGER.warning(f"Creating array with positional errors between {-pos_error:.3f} and {pos_error:.3f} m")
+        
     # Build an array of AIPY Antenna objects
     ants = []
     for antenna in antennas:
@@ -913,7 +927,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         amp = 0*antenna.cable.gain(freqs*1e9) + 1
         
         ants.append( Antenna(eq[0], eq[1], eq[2], beam, phsoff=delayCoeff, amp=amp, stand=antenna.stand.id) )
-
+        
     # Combine the array of antennas with the array's location to generate an
     # AIPY AntennaArray object
     simAA = AntennaArray(station.aipy_location, ants)
@@ -965,11 +979,14 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     if jd is None:
         jd = aa.get_jultime()
     else:
-        if verbose:
-            if count is not None and max is not None:
+        if count is not None and max is not None:
+            if verbose:
                 print(f"Setting Julian Date to {jd:.5f} ({count} of {max})")
-            else:
+            LSL_LOGGER.info(f"Setting Julian Date to {jd:.5f} ({count} of {max})")
+        else:
+            if verbose:
                 print(f"Setting Julian Date to {jd:.5f}")
+            LSL_LOGGER.info(f"Setting Julian Date to {jd:.5f}")
         aa.set_jultime(jd)
     Gij_sf = aa.passband(0,1)
     def Bij_sf(xyz, pol):
@@ -991,6 +1008,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     srcs_sh = []
     if verbose:
         print("Sources Used for Simulation:")
+    LSL_LOGGER.debug("Sources Used for Simulation:")
     for name in srcs:
         ## Update the source's coordinates
         src = srcs[name]
@@ -1002,7 +1020,12 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         if srcAzAlt[1] < 0:
             if verbose:
                 print(f"  {name}: below horizon")
+            LSL_LOGGER.warning(f"  {name}: below horizon")
             continue
+        else:
+            if verbose:
+                print(f"  {name}")
+            LSL_LOGGER.debug(f"  {name}")
             
         ## Topocentric coordinates for the gain pattern calculations
         srcTop.shape = (1,3)
@@ -1191,7 +1214,7 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
         if phase_offsets is not None:
             gain += 1j*phase_offsets[i]
         cGains.append( amps[i]*np.exp(gain) )
-
+        
     # Apply the scales and delays for all polarization pairs found in the original data
     for pds in sclData:
         if isinstance(pds, VisibilityDataSet):

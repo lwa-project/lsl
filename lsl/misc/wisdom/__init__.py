@@ -8,12 +8,15 @@ Module for building and saving LSL-specific FFTW wisdom.
 from __future__ import print_function, division, absolute_import
 
 import os
+import logging
 import numpy
 from datetime import datetime
 
 from lsl.common.paths import WISDOM as wisdomPath
 from lsl.common.busy import BusyIndicator
 from lsl.misc import _wisdom
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -49,6 +52,7 @@ def show():
     
     if not os.path.exists(_WISDOM_FFTW):
         print("No LSL-specific FFTW wisdom file found, consider running 'python -m lsl.misc.wisdom'")
+        LSL_LOGGER.warning("No LSL-specific FFTW wisdom file found, consider running 'python -m lsl.misc.wisdom'")
         return False
         
     fh = open(_WISDOM_FFTW, 'r')
@@ -56,8 +60,12 @@ def show():
     fh.close()
     
     print("LSL FFTW Wisdom:")
-    print(" Lines: %i" % len(lines))
-    print(" Size: %i bytes" % os.path.getsize(_WISDOM_FFTW))
-    print(" Last Modified: %s" % datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8]))
+    print(f" Lines: {len(lines)}")
+    print(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")
+    print(f" Last Modified: {datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8])}")
+    LSL_LOGGER.info("LSL FFTW Wisdom:")
+    LSL_LOGGER.info(f" Lines: {len(lines)}")
+    LSL_LOGGER.info(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")
+    LSL_LOGGER.info(f" Last Modified: {datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8])}")
     
     return True

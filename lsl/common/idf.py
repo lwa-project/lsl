@@ -35,6 +35,7 @@ import copy
 import math
 import pytz
 import ephem
+import logging
 from functools import total_ordering
 from datetime import datetime, timedelta
 
@@ -56,6 +57,8 @@ from lsl.common import sdf, sdfADP, sdfNDP
 
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -142,12 +145,12 @@ class Project(object):
         runCount = 1
         if len(self.id) > 8:
             if verbose:
-                pid_print("Project ID is too long")
+                pid_print("Project ID is too long", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         for run in self.runs:
             if verbose:
-                pid_print(f"Validating run {runCount}")
+                pid_print(f"Validating run {runCount}", level=logging.INFO, logging_only=(not verbose))
             if not run.validate(verbose=verbose):
                 failures += 1
                 
@@ -515,7 +518,7 @@ class Run(object):
         totalData = 0.0
         if self.id < 1 or self.id > 9999:
             if verbose:
-                pid_print(f"Error: Invalid run ID number '{self.id}'")
+                pid_print(f"Error: Invalid run ID number '{self.id}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         station_count = {}
@@ -527,13 +530,13 @@ class Run(object):
         for station in station_count:
             if station_count[station] != 1:
                 if verbose:
-                    pid_print(f"Error: Station '{station}' is included {station_count[station]} times")
+                    pid_print(f"Error: Station '{station}' is included {station_count[station]} times", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
                 
         scanCount = 1
         for obs in self.scans:
             if verbose:
-                pid_print(f"Validating scan {scanCount}")
+                pid_print(f"Validating scan {scanCount}", level=logging.INFO, logging_only=(not verbose))
                 
             if not obs.validate(verbose=verbose):
                 failures += 1
@@ -542,7 +545,7 @@ class Run(object):
             if scanCount > 1:
                 if obs.filter != self.scans[scanCount-2].filter:
                     if verbose:
-                        pid_print(f"Error: Filter code changes at scan {scanCount}")
+                        pid_print(f"Error: Filter code changes at scan {scanCount}", level=logging.ERROR, logging_only=(not verbose))
                     failures += 1
                     
             scanCount += 1
@@ -557,7 +560,7 @@ class Run(object):
 
             for j in range(len(sObs)):
                 if verbose and i != j:
-                    pid_print(f"Checking for overlap between scans {i+1} and {j+1}")
+                    pid_print(f"Checking for overlap between scans {i+1} and {j+1}", level=logging.INFO, logging_only=(not verbose))
 
                 cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
                 cStop = cStart + int(sObs[j].dur)
@@ -572,12 +575,12 @@ class Run(object):
             
             if nOverlaps > maxOverlaps:
                 if verbose:
-                    pid_print(f"Error: Scan {i+1} overlaps with "+(','.join(["%i" % (j+1) for j in overlaps])))
+                    pid_print(f"Error: Scan {i+1} overlaps with "+(','.join(["%i" % (j+1) for j in overlaps])), level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
             
         if totalData >= (len(self.stations)*_DRSUCapacityTB*1024**4):
             if verbose:
-                pid_print(f"Error: Total data volume for run exceeds per-station {_DRSUCapacityTB} TB DRSU limit")
+                pid_print(f"Error: Total data volume for run exceeds per-station {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         
         if failures == 0:
@@ -900,36 +903,36 @@ class Scan(object):
         # Basic - Intent, duration, frequency, and filter code values
         if self.dur < 1:
             if verbose:
-                pid_print("Error: Specified a duration of length zero")
+                pid_print("Error: Specified a duration of length zero", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.freq1 < tuning_min or self.freq1 > tuning_max:
             if verbose:
-                pid_print("Error: Specified frequency for tuning 1 is outside of LWA tuning range")
+                pid_print("Error: Specified frequency for tuning 1 is outside of LWA tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if (self.freq2 < tuning_min or self.freq2 > tuning_max) and self.freq2 != 0:
             if verbose:
-                pid_print("Error: Specified frequency for tuning 2 is outside of LWA tuning range")
+                pid_print("Error: Specified frequency for tuning 2 is outside of LWA tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
             if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+                pid_print(f"Error: Invalid filter code '{self.filter}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
             if verbose:
-                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
+                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - alternate phase centers
         if len(self.alt_phase_centers) > _MAX_ALT_PHASE_CENTERS:
             if verbose:
-                pid_print("Error: too many alternate phase centers defined")
+                pid_print("Error: too many alternate phase centers defined", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
         for j,phase_center in enumerate(self.alt_phase_centers):
             if not phase_center.validate(verbose=verbose):
                 if verbose:
-                    pid_print(f"Error: invalid alternate phase center {j+1}")
+                    pid_print(f"Error: invalid alternate phase center {j+1}", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
                 
             ## Closeness to pointing center
@@ -946,13 +949,13 @@ class Scan(object):
             beam = 2.0*74e6/max([self.frequency1, self.frequency2])
             if alt_sep > beam/2.0:
                 if verbose:
-                    pid_print(f"Error: alternate phase center {j+1} is {alt_sep:.1f} degrees from pointing center")
+                    pid_print(f"Error: alternate phase center {j+1} is {alt_sep:.1f} degrees from pointing center", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
                 
         # Advanced - Data Volume
         if self.dataVolumeStation >= (_DRSUCapacityTB*1024**4):
             if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Any failures indicates a bad scan
@@ -1206,7 +1209,7 @@ class AlternatePhaseCenter(object):
         ## Advanced - Target Visibility
         if self.target_visibility < 1.0:
             if verbose:
-                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
+                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Any failures indicates a bad alternate phase center
@@ -1247,7 +1250,7 @@ def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
     if verbose:
-        pid_print(f"Scan {obs_temp['id']} is mode {mode}")
+        pid_print(f"Scan {obs_temp['id']} is mode {mode}", level=logging.INFO, logging_only=(not verbose))
         
     if mode == 'TRK_RADEC':
         obsOut = DRX(obs_temp['target'], obs_temp['intent'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], pm=obs_temp['pm'], comments=obs_temp['comments'])
@@ -1421,7 +1424,7 @@ def parse_idf(filename, verbose=False):
                 project.project_office.scans[0].append( None )
             
                 if verbose:
-                    pid_print(f"Started scan {value}")
+                    pid_print(f"Started scan {value}", level=logging.INFO, logging_only=(not verbose))
                 
                 continue
             if keyword == 'SCAN_TARGET':
@@ -1603,26 +1606,31 @@ def is_valid(filename, verbose=False):
         passes += 1
         if verbose:
             print(colorfy("Parser - {{%green OK}}"))
-            
+        LSL_LOGGER.info("Parser - OK")
+        
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
                 print(colorfy("Validator - {{%green OK}}"))
+            LSL_LOGGER.info("Validator - OK")
         else:
             failures += 1
             if verbose:
                 print(colorfy("Validator - {{%red {{%bold FAILED}}}}"))
-                
+            LSL_LOGGER.error("Validator - FAILED")
+            
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
             print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
-            
+        LSL_LOGGER.error("Parser - FAILED")
+        
     if verbose:
         print("---")
-        print("%i passed / %i failed" % (passes, failures))
-        
+        print(f"{passes} passed / {failures} failed")
+    LSL_LOGGER.info(f"{passes} passed / {failures} failed")
+    
     return False if failures else True

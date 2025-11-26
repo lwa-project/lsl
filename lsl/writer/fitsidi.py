@@ -18,6 +18,7 @@ functions defined in this module are based heavily off the lwda_fits library.
 import os
 import re
 import math
+import logging
 import numpy as np
 import warnings
 from functools import total_ordering
@@ -32,6 +33,7 @@ from astropy.io import fits as astrofits
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 from lsl.correlator.uvutils import compute_uvw
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -455,11 +457,15 @@ class Idi(WriterBase):
                 mapper[stands[i]] = stands[i]
                 
         # If the mapper has been enabled, tell the user about it
-        if enableMapper and self.verbose:
-            print("FITS IDI: stand ID mapping enabled")
+        if enableMapper:
+            if self.verbose:
+                print("FITS IDI: stand ID mapping enabled")
+            LSL_LOGGER.info("FITS IDI: stand ID mapping enabled")
             for key in mapper.keys():
                 value = mapper[key]
-                print("FITS IDI:  stand #%i -> mapped #%i" % (key, value))
+                if self.verbose:
+                    print(f"FITS IDI:  stand #{key} -> mapped #{value}")
+                LSL_LOGGER.info(f"FITS IDI:  stand #{key} -> mapped #{value}")
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

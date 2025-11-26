@@ -75,6 +75,8 @@ from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
 
+from lsl.logger import LSL_LOGGER
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -770,8 +772,8 @@ class Observation(object):
             pid_print(f"Invalid number of ASP filter settings ({len(self.asp_filter)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
         for f,filt in enumerate(self.asp_filter):
             if is_dp and filt > 3:
-                warnings.warn(colorfy("{{%%yellow ASP filter %i is degenerate with %i for DP-based stations}}" % (filt, filt-4)), RuntimeWarning)
-                
+                pid_print(f"ASP filter {filt} is degenerate with {filt-4} for DP-based stations", level=logging.WARNING, logging_only=(not verbose))
+
             if filt not in (-1, 0, 1, 2, 3, 4, 5):
                 failures += 1
                 pid_print(f"Invalid ASP filter setting on stand {f} '{filt}'", level=logging.ERROR, logging_only=(not verbose))
@@ -2596,26 +2598,31 @@ def is_valid(filename, verbose=False):
         passes += 1
         if verbose:
             print(colorfy("Parser - {{%green OK}}"))
+        LSL_LOGGER.info("Parser - OK")
             
         valid = proj.validate()
         if valid:
             passes += 1
             if verbose:
                 print(colorfy("Validator - {{%green OK}}"))
+            LSL_LOGGER.info("Validator - OK")
         else:
             failures += 1
             if verbose:
                 print(colorfy("Validator -{{%red {{%bold FAILED}}}}"))
-                
+            LSL_LOGGER.error("Validator - FAILED")
+            
     except IOError as e:
         raise e
     except:
         failures += 1
         if verbose:
             print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
-            
+        LSL_LOGGER.error("Parser - FAILED")
+        
     if verbose:
         print("---")
-        print("%i passed / %i failed" % (passes, failures))
-        
+        print(f"{passes} passed / {failures} failed")
+    LSL_LOGGER.info(f"{passes} passed / {failures} failed")
+    
     return False if failures else True

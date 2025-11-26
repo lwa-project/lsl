@@ -5,6 +5,7 @@ import time
 import zlib
 import shutil
 import socket
+import logging
 import calendar
 import warnings
 import contextlib
@@ -16,6 +17,8 @@ from lsl.common.paths import DATA as DATA_PATH
 from lsl.common.progress import DownloadBar
 from lsl.misc.file_cache import FileCache, MemoryCache
 from lsl.common.color import colorfy
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.config import LSL_CONFIG
 DOWN_CONFIG = LSL_CONFIG.view('download')
@@ -59,6 +62,7 @@ def download_file(url, filename_or_fh, byte_range=None, verbose=True):
             raise RuntimeError("filename_or_fh appears to not be opened for binary writing")
             
     print(f"Downloading {url}")
+    LSL_LOGGER.info(f"Downloading {url}")
     try:
         received = 0
         mtime = 0.0
