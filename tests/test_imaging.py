@@ -719,7 +719,7 @@ class imaging_tests(unittest.TestCase):
                         junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
                                                   amplitude=True, return_convergence=True)
                         junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
-                                                  amplitude=True)
+                                                  amplitude=True, inv_epsilon=0.01)
                     with self.subTest(amplitude=False):
                         junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, 
                                                   amplitude=False)
@@ -731,7 +731,7 @@ class imaging_tests(unittest.TestCase):
                         junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
                                                   amplitude=True, return_convergence=True)
                         junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
-                                                  amplitude=True)
+                                                  amplitude=True, inv_epsilon=0.01)
                     with self.subTest(amplitude=False):
                         junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
                                                   amplitude=False)
@@ -744,7 +744,8 @@ class imaging_tests(unittest.TestCase):
                                                        verbose=False, amplitude=True,
                                                        return_convergence=True)
                         junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
-                                                       verbose=False, amplitude=True)
+                                                       verbose=False, amplitude=True,
+                                                       inv_epsilon=0.01)
                     with self.subTest(amplitude=False):
                         junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
                                                        verbose=False, amplitude=False)
