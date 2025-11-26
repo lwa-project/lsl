@@ -330,7 +330,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             
             if inv_epsilon > 0:
                 R = 1/inv_epsilon * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(AT,A) + np.dot(R.T,R), return_rank=True)
+                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
                 bestGains = np.dot(trc, np.dot(A.T,C))
                 
             else:
