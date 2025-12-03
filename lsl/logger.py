@@ -7,11 +7,12 @@ import warnings
 from lsl.version import full_version
 
 __version__ = '0.1'
-__all__ = ['LSL_LOGGER', 'LSL_LOG_FORMAT', 'LSL_LOG_QUEUE', 'set_log_level',
-           'get_log_level', 'ThreadedHandler', 'add_handler', 'remove_handler',
-           'capture_warnings', 'enable_console_logging', 'disable_console_logging',
-           'enable_file_logging', 'disable_file_logging', 'add_filter',
-           'remove_filter', 'clear_filters']
+__all__ = ['LSL_LOGGER', 'LSL_LOG_FORMAT', 'LSL_LOG_QUEUE', 'make_note',
+           'set_log_level', 'get_log_level', 'ThreadedHandler', 'add_handler',
+           'remove_handler', 'capture_warnings', 'enable_console_logging',
+           'disable_console_logging', 'enable_file_logging',
+           'disable_file_logging', 'add_filter', 'remove_filter',
+           'clear_filters']
 
 
 #: The LSL logger instance that users should use
@@ -38,6 +39,22 @@ LSL_LOGGER.info(f"LSL {full_version}")
 _console_handler = None
 _file_handler = None
 _active_filters = {}
+
+
+def make_note(msg, *args, **kwds):
+    """
+    Add a note to the LSL logger instance.
+    
+    Parameters
+    ----------
+    msg : str
+        Note to log
+    """
+    
+    global LSL_LOGGER
+    
+    msg = "NOTE:"+msg
+    LSL_LOGGER.info(msg, *args, **kwds)
 
 
 def set_log_level(logging_level):

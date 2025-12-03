@@ -98,6 +98,7 @@ class LoggerFrame(object):
         self._text.tag_config('WARNING', foreground='orange')
         self._text.tag_config('ERROR', foreground='red')
         self._text.tag_config('CRITICAL', foreground='red', underline=1)
+        self._text.tag_config('NOTE', foreground='blue')
         
         # Attach the ThreadedHandler so we that can access messages from other
         # threads
@@ -111,10 +112,17 @@ class LoggerFrame(object):
         
         # Format
         msg = self._handler.format(record)
+        levelname = record.levelname
         
+        # Deal with notes
+        if levelname == 'INFO' and record.msg.startswith('NOTE:'):
+            levelname = 'NOTE'
+            msg = msg.replace('NOTE:','')
+            msg = msg.replace('[INFO', '[NOTE')
+            
         # Add
         self._text.configure(state='normal')
-        self._text.insert(tk.END, msg + '\n', record.levelname)
+        self._text.insert(tk.END, msg + '\n', levelname)
         self._line_count += 1
         
         # Trim buffer if it exceeds max_lines
