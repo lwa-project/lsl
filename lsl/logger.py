@@ -4,6 +4,8 @@ import fnmatch
 import logging
 import warnings
 
+from lsl.version import full_version
+
 __version__ = '0.1'
 __all__ = ['LSL_LOGGER', 'LSL_LOG_FORMAT', 'LSL_LOG_QUEUE', 'set_log_level',
            'get_log_level', 'ThreadedHandler', 'add_handler', 'remove_handler',
@@ -30,6 +32,7 @@ _LSL_LOG_HANDLER = logging.NullHandler()
 _LSL_LOG_HANDLER.setFormatter(LSL_LOG_FORMAT)
 LSL_LOGGER.addHandler(_LSL_LOG_HANDLER)
 LSL_LOGGER.setLevel(logging.INFO)
+LSL_LOGGER.info(f"LSL {full_version}")
 
 # Track console and file handlers
 _console_handler = None
