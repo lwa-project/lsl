@@ -82,8 +82,7 @@ class _TelemetryClient(object):
             self.active = TELE_CONFIG.get('enabled')
             
             # Register the "send" method to be called by atexit... at exit
-            if not _IS_READONLY:
-                atexit.register(self.send, True)
+            atexit.register(self.send, True)
                 
         else:
             self.active = False
