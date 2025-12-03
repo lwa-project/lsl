@@ -19,6 +19,8 @@ from functools import wraps
 
 from lsl.version import version as lsl_version
 
+from lsl.logger import LSL_LOGGER
+
 from lsl.config import LSL_CONFIG
 TELE_CONFIG = LSL_CONFIG.view('telemetry')
 
@@ -120,6 +122,7 @@ class _TelemetryClient(object):
         success = False
         with self._lock:
             if self.active and self._cache_count > 0:
+                LSL_LOGGER.info('Sending LSL telemetry data')
                 try:
                     tNow = time.time()
                     payload = ';'.join(["%s;%i;%i;%.6f" % (name,
@@ -138,7 +141,7 @@ class _TelemetryClient(object):
                         self.clear()
                         success = True
                 except Exception as e:
-                    warnings.warn("Failed to send telemetry data: %s" % str(e))
+                    LSL_LOGGER.warning(f"Failed to send telemetry data: {str(e)}")
             else:
                 self.clear()
                 
