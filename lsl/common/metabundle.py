@@ -121,7 +121,7 @@ def read_obs_file(filename):
               'nsteps': bheader.OBS_STP_N, 'is_radec': bheader.OBS_STP_RADEC,  'steps': steps, 
               'fee_power': flat_to_multi(bfooter.OBS_FEE, *bfooter.dims['OBS_FEE']), 
               'asp_filter': list(bfooter.OBS_ASP_FLT), 'asp_atten_1': list(bfooter.OBS_ASP_AT1), 
-              'asp_atten_2': list(bfooter.OBS_ASP_AT2), 'asp_atten_split': list(bfooter.OBS_ASP_ATS)}
+              'asp_atten_2': list(bfooter.OBS_ASP_AT2), 'asp_atten_3': list(bfooter.OBS_ASP_AT3)}
     output['tbt_samples'] = bfooter.OBS_TBT_SAMPLES
     output['drx_gain'] = bfooter.OBS_DRX_GAIN
     

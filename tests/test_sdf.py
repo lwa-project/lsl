@@ -385,7 +385,7 @@ class sdf_tests(unittest.TestCase):
             self.assertFalse(project.validate(verbose=True))
             
             project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
-            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_3', 'asp_filter'):
                 setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
@@ -497,9 +497,9 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].observations[0].asp_atten_2[1] = 3
         out = project.render()
         
-        project.sessions[0].observations[0].asp_atten_split = [1 for i in project.sessions[0].observations[0].asp_filter]
-        project.sessions[0].observations[0].asp_atten_split[0] = 3
-        project.sessions[0].observations[0].asp_atten_split[1] = 3
+        project.sessions[0].observations[0].asp_atten_3 = [1 for i in project.sessions[0].observations[0].asp_filter]
+        project.sessions[0].observations[0].asp_atten_3[0] = 3
+        project.sessions[0].observations[0].asp_atten_3[1] = 3
         out = project.render()
         
     def test_drx_errors(self):
@@ -567,12 +567,12 @@ class sdf_tests(unittest.TestCase):
             self.assertFalse(project.validate(verbose=True))
             
             project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
-            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_3', 'asp_filter'):
                 setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [30 for i in range(256)])
+                setattr(project.sessions[0].observations[0], attr, [35 for i in range(256)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
@@ -851,7 +851,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].asp_filter[0], 2)
         self.assertEqual(project.sessions[0].observations[0].asp_atten_1[0], 10)
         self.assertEqual(project.sessions[0].observations[0].asp_atten_2[0], 12)
-        self.assertEqual(project.sessions[0].observations[0].asp_atten_split[0], 14)
+        self.assertEqual(project.sessions[0].observations[0].asp_atten_3[0], 14)
         
         # Steps - 1
         self.assertEqual(len(project.sessions[0].observations[0].steps), 4)
@@ -876,7 +876,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].asp_filter[0], 1)
         self.assertEqual(project.sessions[0].observations[1].asp_atten_1[0], 11)
         self.assertEqual(project.sessions[0].observations[1].asp_atten_2[0], 13)
-        self.assertEqual(project.sessions[0].observations[1].asp_atten_split[0], 15)
+        self.assertEqual(project.sessions[0].observations[1].asp_atten_3[0], 15)
         
         # Steps - 2
         self.assertEqual(len(project.sessions[0].observations[1].steps), 2)

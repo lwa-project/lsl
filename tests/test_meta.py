@@ -133,27 +133,27 @@ class metabundle_tests(unittest.TestCase):
         
         # Beginning config.
         aspConfig = metabundle.get_asp_configuration_summary(mdbFile, which='beginning')
-        self.assertEqual(aspConfig['asp_filter'],      3)
-        self.assertEqual(aspConfig['asp_atten_1'],     0)
-        self.assertEqual(aspConfig['asp_atten_2'],     0)
-        self.assertEqual(aspConfig['asp_atten_split'], 0)
+        self.assertEqual(aspConfig['asp_filter'],  3)
+        self.assertEqual(aspConfig['asp_atten_1'], 0)
+        self.assertEqual(aspConfig['asp_atten_2'], 0)
+        self.assertEqual(aspConfig['asp_atten_3'], 0)
         
         # End config.
         aspConfig = metabundle.get_asp_configuration_summary(mdbFile, which='End')
-        self.assertEqual(aspConfig['asp_filter'],      3)
-        self.assertEqual(aspConfig['asp_atten_1'],     0)
-        self.assertEqual(aspConfig['asp_atten_2'],     0)
-        self.assertEqual(aspConfig['asp_atten_split'], 0)
+        self.assertEqual(aspConfig['asp_filter'],  3)
+        self.assertEqual(aspConfig['asp_atten_1'], 0)
+        self.assertEqual(aspConfig['asp_atten_2'], 0)
+        self.assertEqual(aspConfig['asp_atten_3'], 0)
         
         # Unknown code
         self.assertRaises(ValueError, metabundle.get_asp_configuration_summary, mdbFile, 'middle')
         
         # Not a summary
         aspConfig = metabundle.get_asp_configuration(mdbFile, which='End')
-        self.assertEqual(aspConfig['asp_filter'][0],      3)
-        self.assertEqual(aspConfig['asp_atten_1'][0],     0)
-        self.assertEqual(aspConfig['asp_atten_2'][0],     0)
-        self.assertEqual(aspConfig['asp_atten_split'][0], 0)
+        self.assertEqual(aspConfig['asp_filter'][0],  3)
+        self.assertEqual(aspConfig['asp_atten_1'][0], 0)
+        self.assertEqual(aspConfig['asp_atten_2'][0], 0)
+        self.assertEqual(aspConfig['asp_atten_3'][0], 0)
         
     def test_is_valid(self):
         """Test whether or not is_valid works."""
