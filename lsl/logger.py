@@ -4,8 +4,6 @@ import fnmatch
 import logging
 import warnings
 
-from lsl.common.color import uncolorfy
-
 __version__ = '0.1'
 __all__ = ['LSL_LOGGER', 'LSL_LOG_FORMAT', 'LSL_LOG_QUEUE', 'set_log_level',
            'get_log_level', 'ThreadedHandler', 'add_handler', 'remove_handler',
@@ -125,6 +123,8 @@ class _WarningHandler(logging.Handler):
     
     def emit(self, record):
         global LSL_LOGGER
+        
+        from lsl.common.color import uncolorfy
         
         record.msg = uncolorfy(record.msg)
         LSL_LOGGER.handle(record)
