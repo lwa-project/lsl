@@ -1539,11 +1539,15 @@ class TBXFile(LDPFileBase):
             self.mapper = tbx.get_first_channel(self.fh, all_frames=True)
             
             # Check for contiguous frequency coverage
-            chan_steps = np.diff(self.mapper)
-            channel_count = int(np.round(np.median(chan_steps)))
-            if not all(chan_steps == channel_count):
-                bad_steps = np.where(chan_steps != channel_count)[0]
-                warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
+            if len(self.mapper) > 1:
+                chan_steps = np.diff(self.mapper)
+                channel_count = int(np.round(np.median(chan_steps)))
+                if not all(chan_steps == channel_count):
+                    bad_steps = np.where(chan_steps != channel_count)[0]
+                    warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
+            else:
+                ## Must be TBS
+                channel_count = junkFrame.payload.data.shape[0]
                 
             # Find the "real" starttime
             while junkFrame.header.frame_count != firstFrameCount:

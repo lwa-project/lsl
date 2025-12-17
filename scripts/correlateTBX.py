@@ -188,7 +188,7 @@ def main(args):
             
         jd = idf.get_info('start_time').jd
         date = idf.get_info('start_time').datetime
-        nFpO = idf.get_info('nchan') // 12
+        nFpO = idf.get_info('nchan') // idf.get_info('frame_channel_count')
         sample_rate = idf.get_info('sample_rate')
         nInts = idf.get_info('nframe') // nFpO
         
