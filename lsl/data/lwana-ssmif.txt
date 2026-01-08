@@ -1,6 +1,7 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2026 Jan 8 by J. Dowell - update for new "only NDP" MCS
 # 2024 May 13 by J. Dowell - updated for new diffuse sky model calibration
 #                C. Taylor - updated list of bad antennas
 # 2024 Jan 29 by J. Dowell - replace the outrigger with the real stand #64
