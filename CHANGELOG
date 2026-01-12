@@ -6,6 +6,7 @@
  * Added support for Tikhonov regularization to the various `lsl.imaging.selfcal` functions
  * Fixed a formatting problem in the SOURCE table of a measurement set
  * Updated possm.py to support a maximum baseline length filter
+ * Add support for storing the integration time for a `lsl.imaging.data.VisibilityDataSet`
 
 3.0.7:
  * Updated ldp.DRXFile and DRX8File to check for large (>5 minute) gaps at the beginning of the file

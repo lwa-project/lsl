@@ -432,6 +432,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 # Pull out the raw data from the table
                 bl = uvData.data['BASELINE'][selection]
                 jd = uvData.data['DATE'][selection] + uvData.data['TIME'][selection]
+                ac = uvData.data['INTTIM'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
@@ -513,7 +514,8 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[:,select,:].transpose(1,0,2), 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKES[l]
                     polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
@@ -725,6 +727,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
                     jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
                 except KeyError:
                     jd = uvData.data['DATE'][selection]
+                ac = uvData.data['INTTIM'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
@@ -787,7 +790,8 @@ class CorrelatedDataUV(CorrelatedDataBase):
                 dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[:,select,:].transpose(1,0,2), 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKES[l]
                     polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
@@ -1040,6 +1044,7 @@ try:
                 
                 # Pull out the data
                 targetData = data.query('TIME == %.16f AND FLAG_ROW == false' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
+                ac = targetData.getcol('EXPOSURE')
                 uvw  = targetData.getcol('UVW')
                 try:
                     wgt  = None
@@ -1102,7 +1107,8 @@ try:
                 dataSet = VisibilityDataSet(targetJD, self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[selectU,:,:], 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKESMS[l]
                     subvis = vis[select,:,p]
