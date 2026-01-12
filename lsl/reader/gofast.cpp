@@ -81,7 +81,7 @@ written in C++");
 */
 
 static int gofast_exec(PyObject *module) {
-    import_array();
+    import_array1(-1);
     
     if( !luts_loaded ) {
         // Initialize the look-up tables

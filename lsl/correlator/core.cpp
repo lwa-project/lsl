@@ -1157,7 +1157,7 @@ static int correlator_exec(PyObject *module) {
     if( pModule != NULL ) {
         PyObject* pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
-            char* pathname = PyUnicode_AsUTF8(pDataPath);
+            const char* pathname = PyUnicode_AsUTF8(pDataPath);
             char* filename = (char*) malloc(strlen(pathname)+strlen("/fftwf_wisdom.txt")+1);
             if( filename != NULL ) {
                 strcpy(filename, pathname);
