@@ -112,7 +112,6 @@ PyObject *read_drx8(PyObject *self, PyObject *args) {
     cFrame.payload.flags = __bswap_32(cFrame.payload.flags);
     
     // Fill the data array
-    const int8_t *fp;
     T *a;
     a = (T *) PyArray_DATA(data);
     for(i=0; i<4096; i+=4) {
