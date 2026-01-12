@@ -152,7 +152,7 @@ PyObject *read_cor_impl(PyObject *self, PyObject *args) {
     // Fill the data array
     std::complex<float> *a;
     a = (std::complex<float> *) PyArray_DATA(data);
-    memcpy(a, &cFrame.payload.vis, sizeof(std::complex<float>)*NCHAN*4);
+    memcpy(a, reinterpret_cast<std::complex<float> *>(&cFrame.payload.vis), sizeof(std::complex<float>)*NCHAN*4);
     if( cFrame.payload.stand0 == cFrame.payload.stand1 ) {
         // Deal with the edge of the triangular matrix that ADP outputs
         // so that we do not get strange values in the output.  These are
