@@ -980,24 +980,28 @@ class ARX(object):
             data = from_dB(data)
             
         # Return or raise an error
-        if filter == 0 or filter == 'split':
-            return (freq, data[:,mapper[0]])
-        elif filter == 1 or filter == 'full':
-            return (freq, data[:,mapper[1]])
-        elif filter == 2 or filter == 'reduced':
-            return (freq, data[:,mapper[2]])
-        elif filter == 3:
-            return (freq, data[:,mapper[3]])
-        elif filter == 4 or filter == 'split@3MHz':
-            return (freq, data[:,mapper[4]])
-        elif filter == 5 or filter == 'full@3MHz':
-            return (freq, data[:,mapper[5]])
-        elif filter == 6:
-            return (freq, data[:,mapper[6]])
-        elif filter == 7:
-            return (freq, data[:,mapper[7]])
-        else:
-            raise ValueError(f"Unknown ARX filter '{filter}'")
+        try:
+            if filter == 0 or filter == 'split':
+                return (freq, data[:,mapper[0]])
+            elif filter == 1 or filter == 'full':
+                return (freq, data[:,mapper[1]])
+            elif filter == 2 or filter == 'reduced':
+                return (freq, data[:,mapper[2]])
+            elif filter == 3:
+                return (freq, data[:,mapper[3]])
+            elif filter == 4 or filter == 'split@3MHz':
+                return (freq, data[:,mapper[4]])
+            elif filter == 5 or filter == 'full@3MHz':
+                return (freq, data[:,mapper[5]])
+            elif filter == 6:
+                return (freq, data[:,mapper[6]])
+            elif filter == 7:
+                return (freq, data[:,mapper[7]])
+            else:
+                raise ValueError(f"Unknown ARX filter '{filter}'")
+                
+        except KeyError:
+            raise ValueError(f"ARX filter '{filter}' is not supported for revision {self.revision()} boards")
 
 
 class LSLInterface(object):
