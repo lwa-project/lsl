@@ -343,15 +343,15 @@ class Project(object):
                     new_obs = sdfmod.DRX(obs.intent, obs.target, obs_start, obs.duration, 
                                          ra, dec, 
                                          obs.frequency1, obs.frequency2, obs.filter, 
-                                         gain=obs.gain, max_snr=False, comments=comments)
+                                         gain=obs.gain, high_dr=False, comments=comments)
                 elif isinstance(obs, Solar):
                     new_obs = sdfmod.Solar(obs.intent, obs.target, obs_start, obs.duration, 
                                            obs.frequency1, obs.frequency2, obs.filter, 
-                                           gain=obs.gain, max_snr=False, comments=obs.comments)
+                                           gain=obs.gain, high_dr=False, comments=obs.comments)
                 elif isinstance(obs, Jovian):
                     new_obs = sdfmod.Jovian(obs.intent, obs.target, obs_start, obs.duration, 
                                             obs.frequency1, obs.frequency2, obs.filter, 
-                                            gain=obs.gain, max_snr=False, comments=obs.comments)
+                                            gain=obs.gain, high_dr=False, comments=obs.comments)
                 else:
                     raise RuntimeError("This should never happen")
                 session.append(new_obs)
