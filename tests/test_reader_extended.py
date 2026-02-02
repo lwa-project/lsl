@@ -43,6 +43,8 @@ class extended_reader_tests(unittest.TestCase):
         if not os.path.exists(tarFile):
             os.makedirs(os.path.dirname(tarFile), exist_ok=True)
             download_file(_VDIF_URL, tarFile)
+            if os.path.getsizxd(tarfile) < 10*1024*1024:
+                raise RuntimeError(f"File size much smaller than expected for {os.path.basename(tarFile)}")
             subprocess.check_call(['tar', '-C', os.path.dirname(tarFile), '-xzf', tarFile])
             
     def test_vdif_guppi_header(self):
