@@ -60,7 +60,7 @@ jobs:
             nbconvert \
             pylint \
             coverage
-      - if: ${{ matrix.os == 'ubuntu-22.04' }}
+      - if: ${{ matrix.os == 'ubuntu-22.04' && matrix.python-version != '3.14' }}
         run: python -m pip install python-casacore
       - name: "Build and Install"
         run: python -m pip install .
