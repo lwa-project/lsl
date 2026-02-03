@@ -1,11 +1,14 @@
 3.0.8:
  * Updated the filenames for the USTEC ionospheric product
  * Fixed false alarms from the LSL configuration change tracker
- * Better handling of optional fields i the LSL configuration manager
+ * Better handling of optional fields in the LSL configuration manager
  * Exposed the `loop_gain` parameter in the various `lsl.imaging.selfcal` functions
  * Added support for Tikhonov regularization to the various `lsl.imaging.selfcal` functions
  * Fixed a formatting problem in the SOURCE table of a measurement set
- * Updated possm.py to support a maximum baseline length filter
+ * Updated `possm.py` to support a maximum baseline length filter
+ * Updated for removal of `scipy.special.sph_harm from scipy >= 1.17
+ * Added `lsl.common.data_access.check_url` to allow polling of URL size and mtime
+ * Various documentation improvements
 
 3.0.7:
  * Updated ldp.DRXFile and DRX8File to check for large (>5 minute) gaps at the beginning of the file
