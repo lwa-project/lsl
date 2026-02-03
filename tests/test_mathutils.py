@@ -273,7 +273,7 @@ class mathutils_tests(unittest.TestCase):
             alt[:,i] = 2*i
         
         # Setup a nice, easy problem
-        out = 10*sph_harm(2, -1, az*np.pi/180.0, alt*np.pi/180.0 + np.pi/2)
+        out = 10*sph_harm_y(2, -1, az*np.pi/180.0, alt*np.pi/180.0 + np.pi/2)
 
         # Evaluate the fit
         terms = mathutils.sphfit(az, alt, out, lmax=2, degrees=True)
