@@ -6,7 +6,13 @@ import math
 import warnings
 
 import numpy as np
-from scipy.special import sph_harm
+try:
+    from scipy.special import sph_harm_y
+except ImportError:
+    # Catch for scipy < 1.15.0
+    from scipy.special import sph_harm
+    def sph_harm_y(l, m, theta, phi, **kwargs):
+        return sph_harm(m, l, theta, phi, **kwargs)
 
 from lsl.common.color import colorfy
 
@@ -394,7 +400,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
         t = 0
         for l in range(lmax+1):
             for m in range(0, l+1):
-                Ylm = sph_harm(m, l, rAz, rAlt)
+                Ylm = sph_harm(l, m, rAz, rAlt)
                 terms[t] = (data*sinAlt*Ylm.conj()).sum() * (rAz[1,0]-rAz[0,0])*(rAlt[0,1]-rAlt[0,0])
                 t += 1
                 
@@ -405,7 +411,7 @@ def sphfit(az, alt, data, lmax=5, degrees=False, real_only=False):
         t = 0
         for l in range(lmax+1):
             for m in range(-l, l+1):
-                Ylm = sph_harm(m, l, rAz, rAlt)
+                Ylm = sph_harm(l, m, rAz, rAlt)
                 terms[t] = (data*sinAlt*Ylm.conj()).sum()
                 t += 1
                 
@@ -456,11 +462,11 @@ def sphval(terms, az, alt, degrees=False, real_only=False):
         t = 0
         out = np.zeros(az.shape, dtype=np.float32)
         for l in range(lmax+1):
-            Ylm = sph_harm(0, l, rAz, rAlt)
+            Ylm = sph_harm(l, 0, rAz, rAlt)
             out += np.real(terms[t]*Ylm)
             t += 1
             for m in range(1, l+1):
-                Ylm = sph_harm(m, l, rAz, rAlt)
+                Ylm = sph_harm(l, m, rAz, rAlt)
                 out += np.real(terms[t]*Ylm)
                 out += np.real(terms[t]*Ylm.conj()/(-1)**m)
                 t += 1
@@ -472,7 +478,7 @@ def sphval(terms, az, alt, degrees=False, real_only=False):
         out = np.zeros(az.shape, dtype=np.complex64)
         for l in range(lmax+1):
             for m in range(-l, l+1):
-                Ylm = sph_harm(m, l, rAz, rAlt)
+                Ylm = sph_harm(l, m, rAz, rAlt)
                 out += terms[t]*Ylm
                 t += 1
                 

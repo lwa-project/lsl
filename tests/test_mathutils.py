@@ -11,7 +11,13 @@ except ImportError:
 
 
 import numpy as np
-from scipy.special import sph_harm
+try:
+    from scipy.special import sph_harm_y
+except ImportError:
+    # Catch for scipy < 1.15.0
+    from scipy.special import sph_harm
+    def sph_harm_y(n, m, theta, phi, **kwargs):
+        return sph_harm(m, n, theta, phi, **kwargs)
 
 from lsl.misc import mathutils
 
@@ -267,7 +273,7 @@ class mathutils_tests(unittest.TestCase):
             alt[:,i] = 2*i
         
         # Setup a nice, easy problem
-        out = 10*sph_harm(-1, 2, az*np.pi/180.0, alt*np.pi/180.0 + np.pi/2)
+        out = 10*sph_harm(2, -1, az*np.pi/180.0, alt*np.pi/180.0 + np.pi/2)
 
         # Evaluate the fit
         terms = mathutils.sphfit(az, alt, out, lmax=2, degrees=True)
