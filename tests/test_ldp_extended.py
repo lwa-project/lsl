@@ -44,7 +44,7 @@ class extended_ldp_tests(unittest.TestCase):
             if not os.path.exists(filename):
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
                 download_file(url, filename, byte_range=[0, 250*1024*1024])
-            if os.path.getsize(tarfile) < 0.99*250*1024*1024:
+            if os.path.getsize(filename) < 0.99*250*1024*1024:
                 raise RuntimeError(f"File size mis-match on {os.path.basename(filename)}: expected {250*1024*1024} B found {os.path.getsize(filename)} B")
                 
     def test_tbn_estimate(self):
