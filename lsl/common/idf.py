@@ -18,7 +18,7 @@ of a interferometer definition file.  The hierarchy of classes is:
     
 Most class contain 'validate' attribute functions that can be used to determine if the 
 project/run/scan are valid or not given the constraints of
-the ADP system.
+the NDP system.
 
 In addition to providing the means for creating interferometer definition files from 
 scratch, this module also includes a simple parser for ID files.
@@ -287,7 +287,7 @@ class Project(object):
             fh.write(output)
             
     def generate_sdfs(self, starting_session_id=1, run=0, verbose=False):
-        """Convert the ID file into a collection of `lsl.common.sdfADP.Project` instances
+        """Convert the ID file into a collection of `lsl.common.sdf.Project` instances
         that can be used to write SD files."""
         
         if not self.validate(verbose=verbose) :
@@ -306,15 +306,7 @@ class Project(object):
         ## Go!
         sdfs = []
         for i,station in enumerate(ses.stations):
-            ### Session
-            if station.interface.sdf == 'lsl.common.sdfADP':
-                sdfmod = sdfADP
-            elif station.interface.sdf == 'lsl.common.sdfNDP':
-                sdfmod = sdfNDP
-            else:
-                sdfmod = sdf
-                
-            session = sdfmod.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
+            session = sdf.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
                                      starting_session_id, observations=[], station=station)
             session.drx_beam = 1
             session.ucf_username = 'eLWA/%s_%s_%s_%04i' % (self.id, start.strftime('%y%m%d'), start.strftime('%H%M'), ses.id)
@@ -322,7 +314,7 @@ class Project(object):
             session.include_station_smib = True
             
             ## Project Office
-            new_projoff = sdfmod.ProjectOffice(project=copy.deepcopy(self.project_office.project), 
+            new_projoff = sdf.ProjectOffice(project=copy.deepcopy(self.project_office.project), 
                                                sessions=copy.deepcopy([self.project_office.runs[run],]), 
                                                observations=copy.deepcopy([self.project_office.scans[run],]))
             
@@ -340,16 +332,16 @@ class Project(object):
                     if obs.pm[0] != 0.0 or obs.pm[1] != 0.0:
                         comments = comments+";;Applied proper motion of %+.1f mas/yr in RA and %+.1f mas/yr in dec" % (obs.pm[0], obs.pm[1])
                         
-                    new_obs = sdfmod.DRX(obs.intent, obs.target, obs_start, obs.duration, 
+                    new_obs = sdf.DRX(obs.intent, obs.target, obs_start, obs.duration, 
                                          ra, dec, 
                                          obs.frequency1, obs.frequency2, obs.filter, 
                                          gain=obs.gain, high_dr=False, comments=comments)
                 elif isinstance(obs, Solar):
-                    new_obs = sdfmod.Solar(obs.intent, obs.target, obs_start, obs.duration, 
+                    new_obs = sdf.Solar(obs.intent, obs.target, obs_start, obs.duration, 
                                            obs.frequency1, obs.frequency2, obs.filter, 
                                            gain=obs.gain, high_dr=False, comments=obs.comments)
                 elif isinstance(obs, Jovian):
-                    new_obs = sdfmod.Jovian(obs.intent, obs.target, obs_start, obs.duration, 
+                    new_obs = sdf.Jovian(obs.intent, obs.target, obs_start, obs.duration, 
                                             obs.frequency1, obs.frequency2, obs.filter, 
                                             gain=obs.gain, high_dr=False, comments=obs.comments)
                 else:
@@ -376,7 +368,7 @@ class Project(object):
                     new_projoff.observations[0][o] = "alttarget%i:%s;;altintent%i:%s;;altra%i:%.9f;;altdec%i:%+.9f;;%s" % (cid, alt_t, cid, alt_i, cid, alt_r, cid, alt_d, new_projoff.observations[0][o])
                     
             ## Project
-            project = sdfmod.Project(new_observer, "%s - %s (%i of %i)" % (self.name, station.id, i+1, len(ses.stations)), 
+            project = sdf.Project(new_observer, "%s - %s (%i of %i)" % (self.name, station.id, i+1, len(ses.stations)), 
                                      copy.deepcopy(self.id), sessions=[session,], comments=copy.deepcopy(self.comments), 
                                      project_office=new_projoff)
             if project.project_office.sessions[0] is None:

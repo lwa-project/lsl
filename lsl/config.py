@@ -54,9 +54,6 @@ DEFAULTS_OBS['project_id'] = {'value': None,
 
 ## lsl.reader.ldp
 DEFAULTS_LDP = OrderedDict()
-DEFAULTS_LDP['tbn_buffer_size'] = {'value': 20,
-                                   'help':  'TBN ring buffer size in timestamps',
-                                   'is_optional': False}
 DEFAULTS_LDP['drx_buffer_size'] = {'value': 20,
                                    'help':  'DRX ring buffer size in timestamps',
                                    'is_optional': False}

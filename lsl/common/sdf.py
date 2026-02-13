@@ -849,7 +849,7 @@ class TBT(Observation):
         
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
-        observations.  For TBW:
+        observations.  For TBT:
         
             bytes = samples / samplesPerFrame * 1224 bytes * 260 stands
         """
@@ -935,7 +935,7 @@ class TBS(Observation):
         otherwise.
         
         ..note::
-            This version of sdf allows for TBN tuning between 5 and 93 MHz.
+            This version of sdf allows for TBS tuning between 5 and 93 MHz.
         """
         
         self.update()

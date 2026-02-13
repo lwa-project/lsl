@@ -221,7 +221,7 @@ class SDM(object):
         if ndp is None:
             self.ndp  = SubSystemStatus('ndp')
         else:
-            self.dp = dp
+            self.ndp = ndp
         if dr is None:
             self.dr  = [SubSystemStatus('dr%i' % (n+1,)) for n in range(ME_MAX_NDR)]
         else:
