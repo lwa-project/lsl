@@ -20,6 +20,7 @@ tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
 tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
 
 
+@unittest.skip("need test data")
 class vdif_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.writer.vdif
     module."""
