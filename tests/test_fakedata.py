@@ -63,14 +63,14 @@ class fake_DRX_tests(unittest.TestCase):
         
         nFrames = os.path.getsize(drxFile) // drxReader.FRAME_SIZE
         
-        # Read in a TBN frame from the test file
+        # Read in a DRX frame from the test file
         fh = open(drxFile, 'rb')
         origFrames = []
         for i in range(nFrames):
             origFrames.append( drxReader.read_frame(fh) )
         fh.close()
         
-        # Write the data to a TBN test frame
+        # Write the data to a DRX test frame
         fh = open(testFile, 'wb')
         for origFrame in origFrames:
             rawFrame = drxWriter.frame_to_frame(origFrame)
@@ -110,14 +110,14 @@ class fake_DRX_tests(unittest.TestCase):
         
         nFrames = os.path.getsize(drxFile) // drxReader.FRAME_SIZE
         
-        # Read in a TBN frame from the test file
+        # Read in a DRX frame from the test file
         fh = open(drxFile, 'rb')
         origFrames = []
         for i in range(nFrames):
             origFrames.append( drxReader.read_frame_ci8(fh) )
         fh.close()
         
-        # Write the data to a TBN test frame
+        # Write the data to a DRX test frame
         fh = open(testFile, 'wb')
         for origFrame in origFrames:
             rawFrame = drxWriter.frame_to_frame(origFrame)
