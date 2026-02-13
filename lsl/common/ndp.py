@@ -21,11 +21,11 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX',
            'DRX_TUNING_WORD_MIN', 'DRX_TUNING_WORD_MAX', 'DRX_BEAMS_MAX', 
-           'freq_to_word', 'word_to_freq', 'delay_to_dpd', 'dpd_to_delay', 
-           'gain_to_dpg', 'dpg_to_gain', 'drx_filter']
+           'freq_to_word', 'word_to_freq', 'delay_to_ndpd', 'dpd_to_delay', 
+           'gain_to_ndpg', 'dpg_to_gain', 'drx_filter']
 
 #: Sample rate in Hz that is the basis for LWA time tags
 fS = 196.0e6	# Hz
@@ -67,7 +67,7 @@ _N_PTS = 1000 # Number of points to use in calculating the bandpasses
 
 def freq_to_word(freq):
     """
-    Given a frequency in Hz, convert it to the closest DP tuning word.
+    Given a frequency in Hz, convert it to the closest NDP tuning word.
     """
     
     return int(round(freq*2**32 / fS))
@@ -75,13 +75,13 @@ def freq_to_word(freq):
 
 def word_to_freq(word):
     """
-    Given a DP tuning word, convert it to a frequncy in Hz.
+    Given a NDP tuning word, convert it to a frequncy in Hz.
     """
     
     return word*fS / 2**32
 
 
-def delay_to_dpd(delay):
+def delay_to_ndpd(delay):
     """
     Given a delay in ns, convert it to a course and fine portion and into the 
     final format expected by NDP (big endian 16.12 unsigned integer)
@@ -120,7 +120,7 @@ def dpd_to_delay(combined):
     return delay
 
 
-def gain_to_dpg(gain):
+def gain_to_ndpg(gain):
     """
     Given a gain (between 0 and 1), convert it to a gain in the final form 
     expected by NDP (big endian 16.1 signed integer).

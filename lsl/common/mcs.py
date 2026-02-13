@@ -58,7 +58,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.4'
+__version__ = '0.5'
 __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEID_LENGTH', 'ME_MAX_RACK', 'ME_MAX_PORT', 
            'ME_MAX_NRPD', 'ME_MAX_RPDID_LENGTH', 'ME_MAX_NSEP', 'ME_MAX_SEPID_LENGTH', 'ME_MAX_SEPCABL_LENGTH', 
            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NSNAP', 'ME_MAX_NSNAPCH', 'ME_MAX_SNAPID_LENGTH', 
@@ -534,7 +534,7 @@ def delay_to_mcsd(delay):
     .. versionadded:: 0.6.3
     """
     
-    return _two_byte_swap( ndpCommon.delay_to_dpd(delay) )
+    return _two_byte_swap( ndpCommon.delay_to_ndpd(delay) )
 
 
 def mcsd_to_delay(delay):
@@ -557,7 +557,7 @@ def gain_to_mcsg(gain):
     .. versionadded::0.6.3
     """
     
-    return _two_byte_swap( ndpCommon.gain_to_dpg(gain) )
+    return _two_byte_swap( ndpCommon.gain_to_ndpg(gain) )
 
 
 def mcsg_to_gain(gain):
