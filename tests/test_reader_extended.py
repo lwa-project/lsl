@@ -40,7 +40,11 @@ class extended_reader_tests(unittest.TestCase):
         
         if not os.path.exists(tarFile):
             os.makedirs(os.path.dirname(tarFile), exist_ok=True)
-            download_file(_VDIF_URL, tarFile)
+            size_rmt, size_act, _ = download_file(_VDIF_URL, tarFile)
+            if size_act < 0.99*size_rmt:
+                if os.path.exists(tarFile):
+                    os.unlink(tarFile)
+                raise RuntimeError(f"File size mis-match on {os.path.basename(tarFile)}: expected {size_rmt} B found {size_act} B")
             subprocess.check_call(['tar', '-C', os.path.dirname(tarFile), '-xzf', tarFile])
             
     def test_vdif_guppi_header(self):

@@ -20,8 +20,49 @@ from lsl.common.color import colorfy
 from lsl.config import LSL_CONFIG
 DOWN_CONFIG = LSL_CONFIG.view('download')
 
-__version__ = '0.3'
-__all__ = ['download_file', 'DataAccess']
+__version__ = '0.4'
+__all__ = ['check_url', 'download_file', 'DataAccess']
+
+
+def check_url(url, byte_range=None, verbose=True):
+    """
+    Given a URL poll the server for the corresponding file's size and last
+    modification time and return those as a two-element tuple:
+     * the remote size as reported by 'Content-Length',
+     * the URL modification time as reported by the 'Last-Modified' HTTP header.
+    Both will be 0 if there was a problem polling the file.
+    
+    .. note::  If `byte_range` is not None then only the portion of the file
+               between [start_byte, end_byte] is downloaded.
+    """
+    
+    req = Request(url, method='HEAD')
+    if byte_range is not None:
+        if not isinstance(byte_range, (tuple, list)):
+            byte_range = [0, byte_range]
+        else:
+            if len(byte_range) != 2:
+                raise ValueError("Expected byte_range to be either an integer, two-element list, or None")
+        req.add_header("Range", f"bytes={int(byte_range[0])}-{int(byte_range[1])}")
+        
+    try:
+        mtime = 0.0
+        remote_size = 0
+        with urlopen(req, timeout=DOWN_CONFIG.get('timeout')) as uh:
+            remote_size = int(uh.headers["Content-Length"])
+            mtime = uh.headers['Last-Modified']
+            if mtime is not None:
+                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
+                mtime = calendar.timegm(mtime.timetuple())
+            else:
+                if verbose:
+                    warnings.warn(f"Cannot find a 'Last-Modified' time for {url}, modification time will be set to zero")
+                mtime = 0.0
+    except Exception as e:
+        if verbose:
+            warnings.warn(colorfy("{{%%yellow Error polling metadata from %s: %s}}" % (url, str(e))), RuntimeWarning)
+            
+    return remote_size, mtime
 
 
 def download_file(url, filename_or_fh, byte_range=None, verbose=True):
@@ -186,20 +227,8 @@ class _DataAccess(object):
             url = self._BACKUP_URL+'/'+relative_url
             
         mtime = 0
-        try:
-            with urlopen(url, timeout=DOWN_CONFIG.get('timeout')) as uh:
-                mtime = uh.headers['Last-Modified']    
-                
-                mtime = datetime.strptime(mtime, "%a, %d %b %Y %H:%M:%S GMT")
-                mtime = calendar.timegm(mtime.timetuple())
-        except IOError as e:
-            if verbose:
-                warnings.warn(colorfy("{{%%yellow Error finding modification time of file from %s: %s}}" % (url, str(e))), RuntimeWarning)
-        except (socket.timeout, TimeoutError):
-            pass
-        except HTTPError:
-            pass
-            
+        _, mtime = check_url(url, verbose=verbose)
+        
         return mtime
         
     def _download_worker(self, relative_url, filename, use_backup=False, verbose=True):

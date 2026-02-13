@@ -41,8 +41,12 @@ class extended_ldp_tests(unittest.TestCase):
         for filename,url in zip((drxFile, drspecFile), (_DRX_URL,_SPC_URL)):
             if not os.path.exists(filename):
                 os.makedirs(os.path.dirname(filename), exist_ok=True)
-                download_file(url, filename, byte_range=[0, 250*1024*1024])
-                
+                size_rmt, size_act, _ = download_file(url, filename, byte_range=[0, 250*1024*1024])
+                if size_act < 0.99*250*1024*1024:
+                    if os.path.exists(filename):
+                        os.unlink(filename)
+                    raise RuntimeError(f"File size mis-match on {os.path.basename(filename)}: expected {250*1024*1024} B found {size_act} B")
+                    
     def test_drx_estimate(self):
         """Test estimating power levels in a DRX file."""
         
