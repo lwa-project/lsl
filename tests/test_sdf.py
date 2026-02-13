@@ -127,7 +127,7 @@ class sdf_tests(unittest.TestCase):
         """Test SDF member type control."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=[targ,])
         sess.drx_beam = 1
         proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
@@ -158,7 +158,7 @@ class sdf_tests(unittest.TestCase):
         """Test string representations of SDF objects."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=[targ,])
         sess.drx_beam = 1
         proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
@@ -174,7 +174,7 @@ class sdf_tests(unittest.TestCase):
         """Test single session/observations SDFs."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=targ)
         sess.drx_beam = 1
         proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=sess)
@@ -184,7 +184,7 @@ class sdf_tests(unittest.TestCase):
         """Test setting the UCF username for auto-copy support."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=targ)
         sess.drx_beam = 1
         sess.data_return_method = 'UCF'
@@ -194,7 +194,7 @@ class sdf_tests(unittest.TestCase):
         self.assertTrue(out.find('ucfuser:test') >= 0)
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=targ, comments='This is a comment')
         sess.drx_beam = 1
         sess.data_return_method = 'UCF'
