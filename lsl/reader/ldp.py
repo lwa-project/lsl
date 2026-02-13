@@ -4,13 +4,11 @@ new analysis software easier.  These functions wrap the nitty gritty of the
 file reading and unpacking behind Python objects.
 
 Data format objects included are:
-  * TBWFile
-  * TBNFile
   * DRXFile
   * DRX8File
   * DRSpecFile
-  * TBFFile
-  * CORFILE
+  * TBXFile
+  * CORFile
 
 Also included is the LWADataFile function that takes a filename and tries to
 determine the correct data format object to use.
@@ -1452,7 +1450,7 @@ class TBXFile(LDPFileBase):
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * offset - Offset a specified number of seconds into the file
-     * read_frame - Read and return a single `lsl.reader.tbw.Frame` instance
+     * read_frame - Read and return a single `lsl.reader.tbx.Frame` instance
      * read - Read in the capture and return it as a numpy array
     """
     
@@ -1806,7 +1804,7 @@ class CORFile(LDPFileBase):
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * offset - Offset a specified number of seconds into the file
-     * read_frame - Read and return a single `lsl.reader.tbw.Frame` instance
+     * read_frame - Read and return a single `lsl.reader.cor.Frame` instance
      * read - Read in the capture and return it as a numpy array
     """
     

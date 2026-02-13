@@ -98,7 +98,7 @@ class FrameBufferBase(object):
     
     __metaclass__ = abc.ABCMeta
     
-    def __init__(self, mode='TBN', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nsegments=6, reorder=False):
+    def __init__(self, mode='DRX', stands=[], beams=[], tunes=[], pols=[], chans=[], threads=[], nsegments=6, reorder=False):
         """
         Initialize the buffer with a list of:
           * DRX/DRX8

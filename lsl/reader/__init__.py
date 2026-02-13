@@ -1,11 +1,10 @@
 """
 lsl.reader - Modular readers for the various LWA data formats:
- * tbw
- * tbn
+ * tbx
  * drx
+ * drx8
  * drspec
  * vdif
- * tbf
  * cor
 
 A ring buffer for re-ordering TBN data is included in the 'buffer'
