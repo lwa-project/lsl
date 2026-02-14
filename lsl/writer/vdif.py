@@ -1,6 +1,6 @@
 """
 Module to write VDIF frames.  The implementation of this module is similar
-to that of lsl.sim.tbw in that the primary element defined in this module is
+to that of lsl.sim.drx in that the primary element defined in this module is
 a Frame object which as attribute functions that can create a numpy 
 representation of the raw frame and write that raw frame to an open file-
 handle.
