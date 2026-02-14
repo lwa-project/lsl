@@ -1,7 +1,7 @@
 """
 Module to allow for post-acquisition delay-and-sum beamforming with integer 
-sample delays for TBW time series data (int_delay_and_sum) and phase-and-sum 
-beamforming for TBN time series data (delayAndSum).
+sample delays for time series data (int_delay_and_sum) and phase-and-sum 
+beamforming for frequency domain data (delayAndSum).
 """
 
 import os
@@ -126,9 +126,7 @@ def int_delay_and_sum(antennas, data, sample_rate=ndp_common.fS, freq=49e6, azim
     associated with the formed beam.
     
     .. note:
-        This task is primarily intended for use with TBW data.  The time resolution of
-        TBN data, even at the highest bandwidth, has an integer sample delay of zero
-        samples for all pointings.
+        This task is primarily intended for use with time domain data.
         
     .. note:
         "Bad" antennas (those with antenna.combined_status != 33) are automatically
@@ -325,7 +323,7 @@ def phase_and_sum(antennas, data, sample_rate=ndp_common.fS, central_freq=49.0e6
     of the time series data associated with the formed beam.
     
     .. note:
-        This task is intended to be used with TBN data streams.
+        This task is intended to be used with frequency domain data streams.
         
     .. note:
         "Bad" antennas (those with antenna.combined_status != 33) are automatically

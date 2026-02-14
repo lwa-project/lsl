@@ -7,7 +7,7 @@ lsl.reader - Modular readers for the various LWA data formats:
  * vdif
  * cor
 
-A ring buffer for re-ordering TBN data is included in the 'buffer'
+A ring buffer for re-ordering DRX data is included in the 'buffer'
 module.
 
 Also include as part of this module are the LWA Development

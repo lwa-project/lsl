@@ -24,8 +24,8 @@ telemetry.track_module()
 __version__ = '0.2'
 __all__ = ['fS', 'fC', 'T', 'T2', 'N_MAX',
            'DRX_TUNING_WORD_MIN', 'DRX_TUNING_WORD_MAX', 'DRX_BEAMS_MAX', 
-           'freq_to_word', 'word_to_freq', 'delay_to_ndpd', 'dpd_to_delay', 
-           'gain_to_ndpg', 'dpg_to_gain', 'drx_filter']
+           'freq_to_word', 'word_to_freq', 'delay_to_ndpd', 'ndpd_to_delay', 
+           'gain_to_ndpg', 'ndpg_to_gain', 'drx_filter']
 
 #: Sample rate in Hz that is the basis for LWA time tags
 fS = 196.0e6	# Hz
@@ -102,7 +102,7 @@ def delay_to_ndpd(delay):
     return combined
 
 
-def dpd_to_delay(combined):
+def ndpd_to_delay(combined):
     """
     Given a delay value in the final format expect by NDP, return the delay in ns.
     """
@@ -135,7 +135,7 @@ def gain_to_ndpg(gain):
     return combined
 
 
-def dpg_to_gain(combined):
+def ndpg_to_gain(combined):
     """
     Given a gain value in the final format expected by NDP, return the gain
     as a decimal value (0 to 1).
