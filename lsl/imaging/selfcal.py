@@ -1,5 +1,5 @@
 """
-Simple self-calibration module for correlated TBW and TBN data.  The 
+Simple self-calibration module for correlated LWA data.  The 
 supported self-calibration methods are:
  * phase-only
  * amplitude and phase
