@@ -216,19 +216,35 @@ def get_asp_configuration(tarname, which='beginning'):
                 
                 if values[0] == 3:
                     ## Filter
-                    aspConfig['asp_filter'][values[1]-1] = int(aspMIB[key].value)
+                    try:
+                        aspConfig['asp_filter'][values[1]-1] = int(aspMIB[key].value)
+                    except IndexError:
+                        # Catch for transition metadata files
+                        continue
                     
                 elif values[0] == 4:
                     ## Attenuators
                     if values[1] == 1:
                         ### AT1
-                        aspConfig['asp_atten_1'][values[2]-1] = int(aspMIB[key].value)
+                        try:
+                            aspConfig['asp_atten_1'][values[2]-1] = int(aspMIB[key].value)
+                        except IndexError:
+                            # Catch for transition metadata files
+                            continue
                     elif values[1] == 2:
                         ### AT2
-                        aspConfig['asp_atten_2'][values[2]-1] = int(aspMIB[key].value)
+                        try:
+                            aspConfig['asp_atten_2'][values[2]-1] = int(aspMIB[key].value)
+                        except IndexError:
+                            # Catch for transition metadata files
+                            continue
                     elif values[1] == 3:
                         ### AT3
-                        aspConfig['asp_atten_3'][values[2]-1] = int(aspMIB[key].value)
+                        try:
+                            aspConfig['asp_atten_3'][values[2]-1] = int(aspMIB[key].value)
+                        except IndexError:
+                            # Catch for transition metadata files
+                            continue
                     else:
                         pass
                         
