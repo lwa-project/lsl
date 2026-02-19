@@ -91,10 +91,10 @@ def _get_equinox_equation(jd):
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
-_EST = zoneinfo.ZoneInfo('US/Eastern')
-_CST = zoneinfo.ZoneInfo('US/Central')
-_MST = zoneinfo.ZoneInfo('US/Mountain')
-_PST = zoneinfo.ZoneInfo('US/Pacific')
+_EST = zoneinfo.ZoneInfo('America/New_York')
+_CST = zoneinfo.ZoneInfo('America/Chicago')
+_MST = zoneinfo.ZoneInfo('America/Denver')
+_PST = zoneinfo.ZoneInfo('America/Los_Angeles')
 
 
 def parse_time(s, station=lwa1):
