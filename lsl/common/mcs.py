@@ -545,7 +545,7 @@ def mcsd_to_delay(delay):
     .. versionadded:: 0.6.3
     """
     
-    return ndpCommon.dpd_to_delay( _two_byte_swap(delay) )
+    return ndpCommon.ndpd_to_delay( _two_byte_swap(delay) )
 
 
 def gain_to_mcsg(gain):
@@ -568,7 +568,7 @@ def mcsg_to_gain(gain):
     .. versionadded:: 0.6.3
     """
     
-    return ndpCommon.dpg_to_gain( _two_byte_swap(gain) )
+    return ndpCommon.ndpg_to_gain( _two_byte_swap(gain) )
 
 
 def mjdmpm_to_datetime(mjd, mpm, tz=None):
