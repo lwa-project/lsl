@@ -21,6 +21,11 @@ NDP Data
 .. automodule:: lsl.sim.ndp
    :members:
 
+Beam Response
++++++++++++++
+.. automodule:: lsl.sim.beam
+   :members:
+
 Visibility Data
 +++++++++++++++
 .. automodule:: lsl.sim.vis
