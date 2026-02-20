@@ -2527,28 +2527,40 @@ def parse_sdf(filename, verbose=False):
                     for n in range(len(obs_temp['aspFlt'])):
                         obs_temp['aspFlt'][n] = int(value)
                 else:
-                    obs_temp['aspFlt'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspFlt'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_ASP_AT1':
                 if ids[0] == 0:
                     for n in range(len(obs_temp['aspAT1'])):
                         obs_temp['aspAT1'][n] = int(value)
                 else:
-                    obs_temp['aspAT1'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspAT1'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_ASP_AT2':
                 if ids[0] == 0:
                     for n in range(len(obs_temp['aspAT2'])):
                         obs_temp['aspAT2'][n] = int(value)
                 else:
-                    obs_temp['aspAT2'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspAT2'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_ASP_AT3':
                 if ids[0] == 0:
                     for n in range(len(obs_temp['aspAT3'])):
                         obs_temp['aspAT3'][n] = int(value)
                 else:
-                    obs_temp['aspAT3'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspAT3'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_TBT_SAMPLES':
                 obs_temp['tbtSamples'] = int(value)
