@@ -31,7 +31,7 @@ astrostatus.py
   :Usage: astrostatus.py [options]
 
   :Options: -h, --help            show this help message and exit
-          
+
             -s SITE, --site=SITE  site name (default LWA-1)
 
 driftcurve.py
@@ -67,7 +67,7 @@ getIonosphericRM.py
 
           Stop:   YYYY/MM/DD HH:MM:SS stop time in UTC
 
-  
+
   :Options: -h, --help             Display this help information
 
             -n, --n-samples        Number of samples to take between the start and stop times (default = 11)
@@ -109,7 +109,7 @@ plotStands.py
 
   :Options: -h, --help             Display this help information
 
-            -m, --metadata         Name of SSMIF or metadata tarball file to use for 
+            -m, --metadata         Name of SSMIF or metadata tarball file to use for
                                    mappings
 
             -l, --label            Label the stands with their ID numbers
@@ -121,7 +121,7 @@ plotStands.py
 
 plotUVCoverage.py
   :Description: Randomly select 20 antennae from LWA-1 and plot the uv-plane coverage for
-                a zenith snapshot and the expected beam.  Alternatively, select some 
+                a zenith snapshot and the expected beam.  Alternatively, select some
                 FRACTION of the stands with installed FEEs to use or use the specified
                 list of stands.
 
@@ -129,33 +129,16 @@ plotUVCoverage.py
 
   :Options: -h, --help             Display this help information
 
-            -f, --frequency        Frequency in MHz to compute the uv coverage (default 
+            -f, --frequency        Frequency in MHz to compute the uv coverage (default
                                    50 MHz)
 
-            -m, --metadata         Name of SSMIF or metadata tarball file to use for 
+            -m, --metadata         Name of SSMIF or metadata tarball file to use for
                                    mappings
 
             -o, --output           Filename to save the plot to (default = do not save)
 
 Data Reading and Writing
 ========================
-splitTBN.py
-  :Description: Split a TBN file containing multiple seconds into several files
-
-  :Usage: splitTBN.py [options] file
-
-  :Options: -h, --help             	Display this help information
-
-            -c, --count            	Number of seconds to keep
-
-            -o, --offset           	Number of seconds to skip before splitting
-
-            -d, --date             	Label the split files with a date rather than a squence number
-
-  .. note::
-	This script does not use a :mod:`lsl.reader.buffer` buffer to try to re-order or verify all
-	packets and simply splits files based on size.
-
 splitDRX.py
   :Description: Split a DRX file containing multiple seconds into several files
 
@@ -187,64 +170,23 @@ plotMapper.py
 
 Data Analysis
 =============
-tbwSpectra.py
-  :Description: Given a TBW file, plot the time averaged spectra for each digitizer input.
+tbxSpectra.py
+  :Description: Given a TBT/TBS file, plot the time averaged spectra for each digitizer input.
 
-  :Usage: tbwSpectra.py [OPTIONS] file
+  :Usage: tbxSpectra.py [OPTIONS] file
 
   :Options: -h, --help                  Display this help information
 
-            -m, --metadata              Name of SSMIF or metadata tarball file to use for 
+            -m, --metadata              Name of SSMIF or metadata tarball file to use for
                                         mappings
 
-            -t, --bartlett              Apply a Bartlett window to the data
+            -a, --average               Number of seconds of data to average for spectra (default = 1)
 
-            -b, --blackman              Apply a Blackman window to the data
-
-            -n, --hanning               Apply a Hanning window to the data
-
-            -q, --quiet                 Run tbwSpectra in silent mode
-
-            -l, --fft-length            Set FFT length (default = 4096)
+            -q, --quiet                 Run tbxSpectra in silent mode
 
             -g, --gain-correct          Correct signals for the cable losses
 
-            -s, --stack                 Stack spectra in groups of 6 (if '-g' is enabled only)
-
-            -d, --disable-chunks        Display plotting chunks in addition to the global average
-
-            -o, --output                Output file name for spectra imag
-
-  .. warning::
-	tbwSpectra.py currently assumed that the system it is running on has enough memory to read in
-	a full TBW capture.  Due to data representation and processing overheads this amounts to about
-	16 GB.
-
-tbnSpectra.py
-  :Description: Given a TBN file, plot the time averaged spectra for each digitizer input.
-
-  :Usage: tbnSpectra.py [OPTIONS] file
-
-  :Options: -h, --help                  Display this help information
-
-            -m, --metadata              Name of SSMIF or metadata tarball file to use for 
-                                        mappings
-
-            -t, --bartlett              Apply a Bartlett window to the data
-
-            -b, --blackman              Apply a Blackman window to the data
-
-            -n, --hanning               Apply a Hanning window to the data
-
-            -s, --skip                  Skip the specified number of seconds at the beginning of the file (default = 0)
-
-            -a, --average               Number of seconds of data to average for spectra (default = 10)
-
-            -q, --quiet                 Run tbwSpectra in silent mode
-
-            -l, --fft-length            Set FFT length (default = 4096)
-
-            -d, --disable-chunks        Display plotting chunks in addition to the global average
+            -k, --keep                  Comma-separated list of stands to keep
 
             -o, --output                Output file name for spectra image
 
@@ -265,7 +207,7 @@ drxSpectra.py
 
             -a, --average               Number of seconds of data to average for spectra (default = 10)
 
-            -q, --quiet                 Run tbwSpectra in silent mode
+            -q, --quiet                 Run drxSpectra in silent mode
 
             -l, --fft-length            Set FFT length (default = 4096)
 
@@ -279,62 +221,43 @@ drSpecSpectra.py
   :Usage: drSpecSpectra.py [OPTIONS] file
 
   :Options: -h, --help                  Display this help information
-            
+
             -s, --skip                  Skip the specified number of seconds at the beginning
                                         of the file (default = 0)
 
-            -a, --average               Number of seconds of data to average for spectra 
+            -a, --average               Number of seconds of data to average for spectra
                                         (default = 10)
 
             -q, --quiet                 Run drSpecSpectra in silent mode
 
-            -d, --disable-chunks        Display plotting chunks in addition to the global 
+            -d, --disable-chunks        Display plotting chunks in addition to the global
                                         average
 
             -o, --output                Output file name for spectra image
 
-correlateTBW.py
-  :Description: Cross-correlate data in a TBW file
+correlateTBX.py
+  :Description: Cross-correlate data in a TBT/TBS file and save the results in FITS IDI format.
 
-  :Usage: correlateTBW.py [OPTIONS] file
+  :Usage: correlateTBX.py [OPTIONS] file
 
   :Options: -h, --help             Display this help information
 
-            -m, --metadata         Name of SSMIF or metadata tarball file to use for 
+            -m, --metadata         Name of SSMIF or metadata tarball file to use for
                                    mappings
 
-            -l, --fft-length       Set FFT length (default = 2048)
-
-            -q, --quiet            Run correlateTBW in silent mode
-
-            -x, --xx               Compute only the XX polarization product (default)
-
-            -y, --yy               Compute only the YY polarization product
-
-            -2, --two-products     Compute both the XX and YY polarization products
-
-correlateTBN.py
-  :Description: Example script that reads in TBN data and runs a cross-correlation on it.
-                The results are saved in the Miriad UV format.
-
-  :Usage: correlateTBN.py [OPTIONS] file
-  
-  :Options: -h, --help             Display this help information
-
-            -m, --metadata         Name of SSMIF or metadata tarball file to use for 
-                                   mappings
-
-            -f, --fft-length       Set FFT length (default = 256)
-
-            -t, --avg-time         Window to average visibilities in time (seconds; 
-                                   default = 6 s)
+            -t, --avg-time         Window to average visibilities in time (seconds;
+                                   default = 0 s)
 
             -s, --samples          Number of average visibilities to generate
-                                   (default = 10)
+                                   (default = 1)
 
             -o, --offset           Seconds to skip from the beginning of the file
 
-            -q, --quiet            Run correlateTBN in silent mode
+            -q, --quiet            Run correlateTBX in silent mode
+
+            -a, --all              Correlate all dipoles, regardless of status
+
+            -d, --decimate         Frequency decimation factor (default = 1)
 
             -x, --xx               Compute only the XX polarization product (default)
 
@@ -342,8 +265,10 @@ correlateTBN.py
 
             -2, --two-products     Compute both the XX and YY polarization products
 
-            -4, --four-products    Compute all for polariation products:  XX, YY, XY, 
+            -4, --four-products    Compute all four polarization products:  XX, YY, XY,
                                    and YX.
+
+            --casa                 Write output as a measurement set instead of FITS IDI
 
 possm.py
   :Description:  Script that takes a FITS IDI file and mimics the AIPS task POSSM by plotting
@@ -366,7 +291,7 @@ imageIDI.py
 
             -s, --dataset          Data set to image (Default = All)
 
-            -m, --uv-min           Minimun baseline uvw length to include 
+            -m, --uv-min          Minimun baseline uvw length to include
                                    (Default = 0 lambda at midpoint frequency)
 
             -n, --no-labels        Disable source and grid labels

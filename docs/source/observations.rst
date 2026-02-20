@@ -7,13 +7,13 @@ Session Definition Files
 
 Session Structure
 +++++++++++++++++
-:mod:`lsl.common.sdf` (DP-based stations) and :mod:`lsl.common.sdfADP` (ADP-based stations) provide means to represent a set of observations as Python objects.  For each
+:mod:`lsl.common.sdf` provides means to represent a set of observations as Python objects.  For each
 :class:`lsl.common.sdf.Project`, there is:
 
   1) An observer (:class:`lsl.common.sdf.Observer`)
   2) The project office comments (:class:`lsl.common.sdf.ProjectOffice`)
   3) A single session that defines the SDF (:class:`lsl.common.sdf.Session`)
-  
+
 The session contains one or more observerions (:class:`lsl.common.sdf.Observation`).  Each observing mode supported
 by the LWA is sub-classed (see below).
 
@@ -30,9 +30,9 @@ by the LWA is sub-classed (see below).
 
 Observing Modes
 +++++++++++++++
-.. autoclass:: lsl.common.sdf.TBW
+.. autoclass:: lsl.common.sdf.TBT
    :members:
-.. autoclass:: lsl.common.sdf.TBN
+.. autoclass:: lsl.common.sdf.TBS
    :members:
 .. autoclass:: lsl.common.sdf.DRX
    :members:
@@ -41,7 +41,7 @@ Observing Modes
 .. autoclass:: lsl.common.sdf.Jovian
    :members:
 .. autoclass:: lsl.common.sdf.Stepped
-   :members: 
+   :members:
 .. autoclass:: lsl.common.sdf.BeamStep
    :members:
 
@@ -63,7 +63,7 @@ milliseconds past midnight (MPM) pairs.
 
 Specifiying Delay and Gains for the Digital Processor
 +++++++++++++++++++++++++++++++++++++++++++++++++++++
-These functions are intended to help define observations that are run in Stepped mode with 
+These functions are intended to help define observations that are run in Stepped mode with
 the beamforming method set to "SPEC_DELAYS_GAINS".
 
 .. autofunction:: lsl.common.mcs.delay_to_mcsd

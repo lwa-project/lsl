@@ -30,7 +30,7 @@ FX Correlator Core
 .. automodule:: lsl.correlator._core
    :members:
 
-DP-Style Signal Processing
---------------------------
+NDP Signal Processing
+---------------------
 .. automodule:: lsl.common._fir
    :members:
