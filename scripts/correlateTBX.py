@@ -19,7 +19,6 @@ from lsl.reader.ldp import LWADataFile, TBXFile
 from lsl.common import stations, metabundle
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
-from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi, measurementset
 from lsl.misc import parser as aph
 
@@ -101,12 +100,6 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             data = data.view(np.int8)
             data = data.reshape(data.shape[:-1]+(-1,2))
             
-        ## Split the polarizations
-        antennasX, antennasY = [a for i,a in enumerate(antennas) if a.pol == 0 and i in toKeep], [a for i,a in enumerate(antennas) if a.pol == 1 and i in toKeep]
-        dataX, dataY = data[0::2,...], data[1::2,...]
-        validX = np.ones((dataX.shape[0],dataX.shape[2]), dtype=np.uint8)
-        validY = np.ones((dataY.shape[0],dataY.shape[2]), dtype=np.uint8)
-        
         setTime = t
         if s == 0:
             ref_time = setTime
@@ -118,31 +111,10 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         # Loop over polarization products
         for pol in pols:
             print(f"->  {pol}")
-            if pol[0] == 'x':
-                a1, d1, v1 = antennasX, dataX, validX
-            else:
-                a1, d1, v1 = antennasY, dataY, validY
-            if pol[1] == 'x':
-                a2, d2, v2 = antennasX, dataX, validX
-            else:
-                a2, d2, v2 = antennasY, dataY, validY
-                
-            ## Get the baselines
-            baselines = uvutils.get_baselines(a1, antennas2=a2, include_auto=True)
+            baselines, vis = fxc.XMaster(freq_flat, data, mapper, pol=pol,
+                                         include_auto=True, gain_correct=True,
+                                         return_baselines=True)
             
-            ## Run the cross multiply and accumulate
-            vis = XEngine2(d1, d2, v1, v2)
-            
-            ## Apply the cable delays as phase rotations
-            for k,(ant1,ant2) in enumerate(baselines):
-                gain1 = np.sqrt( ant1.cable.gain(freq_flat) )
-                phaseRot1 = np.exp(2j*np.pi*freq_flat*(ant1.cable.delay(freq_flat) \
-                                                       -ant1.stand.z/speedOfLight))
-                gain2 = np.sqrt( ant2.cable.gain(freq_flat) )
-                phaseRot2 = np.exp(2j*np.pi*freq_flat*(ant2.cable.delay(freq_flat) \
-                                                       -ant2.stand.z/speedOfLight))
-                vis[k,:] *= phaseRot2.conj()*phaseRot1 / gain2 / gain1
-                
             # If we are in the first polarization product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
