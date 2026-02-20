@@ -2520,7 +2520,10 @@ def parse_sdf(filename, verbose=False):
                     for n in range(len(obs_temp['obsFEE'])):
                         obs_temp['obsFEE'][n][ids[1]-1] = int(value)
                 else:
-                    obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
+                    try:
+                        obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_ASP_FLT':
                 if ids[0] == 0:
