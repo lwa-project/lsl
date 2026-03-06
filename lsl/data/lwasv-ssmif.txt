@@ -1,6 +1,8 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2026 Mar 6 by J. Dowell
+#  -- Update ARX board IDs
 # 2026 Feb 12 by J. Dowell
 #  -- Add in DR5 and fix the NDP power ports
 #  -- Reset the ANT_STAT fields
@@ -3598,38 +3600,39 @@ N_ARBCH 16
 
 # ARB_ID[] will be set to "UNK" (no identification) for any ARX board #'s <= N_ARB not identified
 # *** ARB_ID[arb#] goes here:
-ARB_ID[1]  0210
-ARB_ID[2]  0202
-ARB_ID[3]  0203
-ARB_ID[4]  0204
-ARB_ID[5]  0205
-ARB_ID[6]  0206
-ARB_ID[7]  0207
-ARB_ID[8]  0208
-ARB_ID[9]  0209
-ARB_ID[10] 0221
-ARB_ID[11] 0217
-ARB_ID[12] 0212
-ARB_ID[13] 0213
-ARB_ID[14] 0214
-ARB_ID[15] 0215
-ARB_ID[16] 0216
-ARB_ID[17] 0211
-ARB_ID[18] 0218
-ARB_ID[19] 0219
-ARB_ID[20] 0220
-ARB_ID[21] 0226
-ARB_ID[22] 0222
-ARB_ID[23] 0223
-ARB_ID[24] 0201
-ARB_ID[25] 0224
-ARB_ID[26] 0225
-ARB_ID[27] 0227
-ARB_ID[28] 0228
-ARB_ID[29] 0231
-ARB_ID[30] 0232
-ARB_ID[31] 0233
-ARB_ID[32] 0234
+ARB_ID[1]  307
+ARB_ID[2]  306
+ARB_ID[3]  309
+ARB_ID[4]  305
+ARB_ID[5]  304
+ARB_ID[6]  302
+ARB_ID[7]  303
+ARB_ID[8]  301
+ARB_ID[9]  337
+ARB_ID[10] 338
+ARB_ID[11] 327
+ARB_ID[12] 336
+ARB_ID[13] 333
+ARB_ID[14] 324
+ARB_ID[15] 329
+ARB_ID[16] 318
+ARB_ID[17] 310
+ARB_ID[18] 311
+ARB_ID[19] 312
+ARB_ID[20] 313
+ARB_ID[21] 314
+ARB_ID[22] 315
+ARB_ID[23] 316
+ARB_ID[24] 328
+ARB_ID[25] 331
+ARB_ID[26] 330
+ARB_ID[27] 326
+ARB_ID[28] 323
+ARB_ID[29] 322
+ARB_ID[30] 308
+ARB_ID[31] 319
+ARB_ID[32] 321
+
 
 # ARB_SLOT[] will be set to 0 (not known/not applicable) for any ARX board #'s <= N_ARB not identified
 # *** ARB_SLOT[arb#] goes here:
