@@ -800,8 +800,13 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
                 bSrcs[nm] = RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=mdl[i,j], index=0, epoch=aa.date)
                 
         ## Model the visibilities
-        simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
-        
+        try:
+            simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
+        except Exception as e:
+            ### An interesting case that I hadn't considered before
+            exitStatus = 'nothing_to_model'
+            break
+            
         ## Form the simulated image
         simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
         simImg = simImg.image(center=(imgSize//2,imgSize//2))

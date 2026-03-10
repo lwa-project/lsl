@@ -753,7 +753,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         with lsl.testing.SilentVerbose():
             # Build an image
@@ -771,7 +771,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         with lsl.testing.SilentVerbose():
             # Build an image
@@ -789,14 +789,14 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         with lsl.testing.SilentVerbose():
             # Build an image
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.lsq(out, img, max_iter=2, verbose=False, plot=run_plotting_tests)
+            deconv.lsq(out, img, max_iter=2, verbose=False, plot=True)#run_plotting_tests)
             
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting(self):
@@ -808,7 +808,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)
@@ -849,7 +849,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)
@@ -871,7 +871,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)
@@ -893,7 +893,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)
