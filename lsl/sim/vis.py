@@ -1036,10 +1036,13 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         srcs_sh.append( shp )
         
     # Build the simulation cache
-    aa.sim_cache( np.concatenate(srcs_eq, axis=1), 
-                jys=np.concatenate(srcs_jy, axis=0),
-                mfreqs=np.concatenate(srcs_fq, axis=0),
-                srcshapes=np.concatenate(srcs_sh, axis=1) )
+    if not srcs_eq:
+        raise RuntimeError("No sources above the horizon to model")
+        
+    aa.sim_cache(np.concatenate(srcs_eq, axis=1), 
+                    jys=np.concatenate(srcs_jy, axis=0),
+                    mfreqs=np.concatenate(srcs_fq, axis=0),
+                    srcshapes=np.concatenate(srcs_sh, axis=1) )
     aa._cache['s_top'] = np.concatenate(srcs_tp, axis=0)
     aa._cache['s_ha'] = np.concatenate(srcs_ha, axis=0)
     aa._cache['s_dec'] = np.concatenate(srcs_dc, axis=0)
