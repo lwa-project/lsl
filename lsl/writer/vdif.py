@@ -85,7 +85,7 @@ class Frame(object):
         except TypeError:
             seconds_i = int(self.time)
             seconds_f = self.time - seconds_i
-                
+            
         # Seconds since the UNIX epoch
         curEpoch = AstroTime(seconds_i, seconds_f, format='unix', scale='utc')
         # Seconds since the VDIF epoch
