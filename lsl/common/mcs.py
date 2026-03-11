@@ -48,6 +48,7 @@ import ctypes
 import struct
 from functools import reduce
 from datetime import datetime, timezone
+from lsl.misc.datetimeutils import utcfromtimestamp
 
 from astropy import units as astrounits
 from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
@@ -992,7 +993,7 @@ class MIBEntry(object):
         self._tv = (0, 0)
         
         # Additional information determined from the basic information
-        self.updateTime = datetime.utcfromtimestamp(0)
+        self.updateTime = utcfromtimestamp(0)
         
     def __str__(self):
         """
@@ -1149,6 +1150,6 @@ class MIBEntry(object):
         mibe._tv = (int(record.tv[0]), int(record.tv[1]))
         
         # Time
-        mibe.updateTime = datetime.utcfromtimestamp(record.tv[0] + record.tv[1]/1e9)
+        mibe.updateTime = utcfromtimestamp(record.tv[0] + record.tv[1]/1e9)
         
         return mibe

@@ -7,6 +7,7 @@ import math
 import ephem
 import unittest
 from datetime import datetime
+from lsl.misc.datetimeutils import utcfromtimestamp
 
 from astropy.time import Time as AstroTime
 from astropy.coordinates import SkyCoord, PrecessedGeocentric, GeocentricTrueEcliptic, Galactic, FK4
@@ -63,7 +64,7 @@ class transform_tests(unittest.TestCase):
         t7 = transform.Time(1357608226*196000000, format='DP')
         self.assertEqual(t7.utc_str, '2013-01-08 01:23:46.000')
         
-        t8 = transform.Time(datetime.utcfromtimestamp(1357608226.0), format='PY_DATE')
+        t8 = transform.Time(utcfromtimestamp(1357608226.0), format='PY_DATE')
         self.assertEqual(t8.utc_str, '2013-01-08 01:23:46.000')
         
         t0 = transform.Time(56300.05840509292, format='MJD', timesys='TAI')

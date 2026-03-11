@@ -22,6 +22,7 @@ import numpy as np
 import warnings
 from functools import total_ordering
 from datetime import datetime
+from lsl.misc.datetimeutils import utcfromtimestamp
 from collections import OrderedDict
 
 from astropy import units as astrounits
@@ -188,7 +189,7 @@ class WriterBase(object):
         timeRE = re.compile(r'\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}:\d{2}(\.\d+)?')
         
         if isinstance(ref_time, (int, float)):
-            refDateTime = datetime.utcfromtimestamp(ref_time)
+            refDateTime = utcfromtimestamp(ref_time)
             ref_time = refDateTime.strftime("%Y-%m-%dT%H:%M:%S")
         elif isinstance(ref_time, (FrameTimestamp, AstroTime)):
             try:

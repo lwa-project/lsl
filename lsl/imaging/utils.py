@@ -44,6 +44,7 @@ import tempfile
 import warnings
 from calendar import timegm
 from datetime import datetime
+from lsl.misc.datetimeutils import utcfromtimestamp
 
 from astropy import units as astrounits
 from astropy.constants import c as vLight
@@ -978,7 +979,7 @@ try:
             # Data set times
             self._times = np.unique(data.getcol('TIME'))
             jd = self._times[0] / 86400.0 + astro.MJD_OFFSET
-            self.date_obs = datetime.utcfromtimestamp(astro.utcjd_to_unix(jd))
+            self.date_obs = utcfromtimestamp(astro.utcjd_to_unix(jd))
             self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
                                 - astro.DJD_OFFSET
             

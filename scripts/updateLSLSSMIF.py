@@ -14,6 +14,7 @@ import hashlib
 import argparse
 import calendar
 from datetime import datetime
+from lsl.misc.datetimeutils import utcfromtimestamp, utcnow
 
 from lsl.common.data_access import DataAccess
 from lsl.common.progress import DownloadBar
@@ -206,8 +207,8 @@ def main(args):
     # Summarize the SSMIF
     ## Filesystem information
     size = DataAccess.getsize(_ssmif)
-    mtime = datetime.utcfromtimestamp(DataAccess.stat(_ssmif)[8])
-    age = datetime.utcnow() - mtime
+    mtime = utcfromtimestamp(DataAccess.stat(_ssmif)[8])
+    age = utcnow() - mtime
     
     ## MD5 checksum
     with DataAccess.open(_ssmif, 'rb') as fh:
