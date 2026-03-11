@@ -97,11 +97,16 @@ class metabundle_tests(unittest.TestCase):
         
         md = metabundle.get_beamformer_min_delay(mdbFile)
         
+    def test_mcs_hostname(self):
+        """Test reading the MCS hostname."""
+        
+        host = metabundle.get_mcs_hostname(mdbFile)
+        
     def test_station(self):
         """Test building a station from a tarball."""
         
         station = metabundle.get_station(mdbFile, apply_sdm=False)
-        station = metabundle.get_station(mdbFile)
+        station = metabundle.get_station(mdbFile, apply_sdm=True)
         
     def test_sdm(self):
         """Test the station dynamic MIB utilties."""
