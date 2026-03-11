@@ -200,7 +200,7 @@ def parse_time(s, station=lwa1):
                 elif tzName in ['LST',]:
                     tz = 'LST'
                 else:
-                    ## Exhaustive search through pytz.  This may yield strange matches...
+                    ## Exhaustive search through zoneinfo.  This may yield strange matches...
                     warnings.warn(colorfy("{{%%yellow Entering zoneinfo search mode for '%s'}}" % tzName), RuntimeWarning)
                     
                     tzFound = False

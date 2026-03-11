@@ -6,8 +6,13 @@ Script for making and displaying images of correlated data files.
 
 import os
 import sys
-import pytz
 import numpy as np
+from datetime import timezone
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
+    
 import argparse
 
 from astropy.io import fits as astrofits
@@ -26,10 +31,6 @@ from matplotlib.ticker import NullFormatter
 
 from lsl.misc import telemetry
 telemetry.track_script()
-
-
-MST = pytz.timezone('US/Mountain')
-UTC = pytz.UTC
 
 
 

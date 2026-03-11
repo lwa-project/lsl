@@ -5,12 +5,16 @@ Unit test for the lsl.common.sdf module.
 import os
 import re
 import copy
-import pytz
 import ephem
 import tempfile
 import unittest
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -52,15 +56,14 @@ class sdf_tests(unittest.TestCase):
     def test_time(self):
         """Test the sdf.parse_time() function."""
         
-        _UTC = pytz.utc
-        _EST = pytz.timezone('US/Eastern')
+        _EST = zoneinfo.ZoneInfo('America/New_York')
         
         # Different realizations of the same thing
         s1 = "EST 2011-01-01 12:13:14.567"
         s2 = "EST 2011 01 01 12:13:14.567"
         s3 = "EST 2011 Jan 01 12:13:14.567"
-        s4 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
-        s5 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567123))
+        s4 = datetime(2011, 1, 1, 12, 13, 14, 567000, tzinfo=_EST)
+        s5 = datetime(2011, 1, 1, 12, 13, 14, 567123, tzinfo=_EST)
         
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s2))
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s3))
@@ -77,14 +80,14 @@ class sdf_tests(unittest.TestCase):
         for n,m in enumerate(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']):
             s1 = "UTC 2011-%s-14 12:13:14.000" % m
             s2 = "UTC 2011-%02i-14 12:13:14.000" % (n+1)
-            s3 = _UTC.localize(datetime(2011, n+1, 14, 12, 13, 14, 0))
+            s3 = datetime(2011, n+1, 14, 12, 13, 14, 0, tzinfo=timezone.utc)
             self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s2))
             self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s3))
             
         # Time zone agreement - UTC
         s1 = "2011-01-01 12:13:14.567"
         s2 = "2011 01 01 12:13:14.567"
-        s3 = _UTC.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
+        s3 = datetime(2011, 1, 1, 12, 13, 14, 567000, tzinfo=timezone.utc)
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s2))
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s3))
         self.assertEqual(sdf.parse_time(s2), sdf.parse_time(s3))
@@ -1229,9 +1232,9 @@ class sdf_tests(unittest.TestCase):
         
         # Part 4 - frequency and start time (timedelta)
         project = sdf.parse_sdf(drxFile)
-        _MST = pytz.timezone('US/Mountain')
+        _MST = zoneinfo.ZoneInfo('America/Denver')
         project.sessions[0].observations[1].frequency2 = 75e6
-        project.sessions[0].observations[1].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
+        project.sessions[0].observations[1].start = datetime(2011, 2, 23, 17, 00, 30, 1000, tzinfo=_MST)
 
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
         fh.write(project.render())
