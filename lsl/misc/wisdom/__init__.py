@@ -9,7 +9,7 @@ from __future__ import print_function, division, absolute_import
 
 import os
 import numpy
-from lsl.misc.datetimeutils import utcfromtimestamp
+from datetime import datetime, timezone
 
 from lsl.common.paths import WISDOM as wisdomPath
 from lsl.common.busy import BusyIndicator
@@ -58,6 +58,6 @@ def show():
     print("LSL FFTW Wisdom:")
     print(" Lines: %i" % len(lines))
     print(" Size: %i bytes" % os.path.getsize(_WISDOM_FFTW))
-    print(" Last Modified: %s" % utcfromtimestamp(os.stat(_WISDOM_FFTW)[8]))
+    print(" Last Modified: %s" % datetime.fromtimestamp(os.stat(_WISDOM_FFTW)[8], tz=timezone.utc))
     
     return True

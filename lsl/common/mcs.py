@@ -48,7 +48,6 @@ import ctypes
 import struct
 from functools import reduce
 from datetime import datetime, timezone
-from lsl.misc.datetimeutils import utcfromtimestamp
 
 from astropy import units as astrounits
 from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
@@ -574,9 +573,8 @@ def mcsg_to_gain(gain):
 
 def mjdmpm_to_datetime(mjd, mpm, tz=None):
     """
-    Convert a MJD, MPM pair to a naive datetime instance.  If `tz` is not None
-    the value is converted to a time zone-aware instance in the specified time
-    zone.
+    Convert a MJD, MPM pair to a timezone-aware datetime instance in UTC.  If
+    `tz` is not None the value is converted to the specified time zone.
     
     .. versionchanged:: 2.0.1
         Added the `tz` keyword and fixed the documentation.
@@ -993,7 +991,7 @@ class MIBEntry(object):
         self._tv = (0, 0)
         
         # Additional information determined from the basic information
-        self.updateTime = utcfromtimestamp(0)
+        self.updateTime = datetime.fromtimestamp(0, tz=timezone.utc)
         
     def __str__(self):
         """
@@ -1150,6 +1148,6 @@ class MIBEntry(object):
         mibe._tv = (int(record.tv[0]), int(record.tv[1]))
         
         # Time
-        mibe.updateTime = utcfromtimestamp(record.tv[0] + record.tv[1]/1e9)
+        mibe.updateTime = datetime.fromtimestamp(record.tv[0] + record.tv[1]/1e9, tz=timezone.utc)
         
         return mibe

@@ -6,6 +6,5 @@ lsl.misc - Miscellaneous modules including:
  * dedispersion   - dedispersion module,
  * scattering     - multi-path scattering module,
  * rfutils        - convert RF engineering lingo into radio astronomy lingo,
- * wisdom         - build LSL-specific FFTW wisdom, and
- * datetimeutils  - functions to help with Python's transition to timezone-aware datetimes.
+ * wisdom         - build LSL-specific FFTW wisdom.
 """

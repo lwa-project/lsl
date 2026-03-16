@@ -18,8 +18,7 @@
  * Updated LWA1, LWA-SV, and LWA-NA SSMIFs
  * Replaced pytz usage with datetime.timezone
  * Added backports.zoneinfo dependency for Python < 3.9
- * Added lsl.misc.datetimeutils with utcfromtimestamp() and utcnow() replacements
-   for the deprecated datetime.utcfromtimestamp() and datetime.utcnow() functions
+ * All datetime objects returned by LSL are now timezone-aware (UTC)
  * Updated tutorial notebooks for NDP-era data and fixed various issues
  * Removed unused TBW/TBN/TBF test data files
 

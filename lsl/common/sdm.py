@@ -3,7 +3,7 @@ Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM)
 files (as defined in MCS0031, v5).
 """
 
-from lsl.misc.datetimeutils import utcfromtimestamp
+from datetime import datetime, timezone
 
 from lsl.common.mcs import SummaryCode, parse_c_struct, flat_to_multi, \
                         STATION_SETTINGS_STRUCT, SUBSYSTEM_STATUS_STRUCT, SUBSUBSYSTEM_STATUS_STRUCT, \
@@ -31,7 +31,7 @@ class SubSystemStatus(object):
         self.time = float(time)
         
     def __str__(self):
-        return "%s at %s: %s [%i = %s]" % (self.name, utcfromtimestamp(self.time), self.info, self.summary, self.summary.description)
+        return "%s at %s: %s [%i = %s]" % (self.name, datetime.fromtimestamp(self.time, tz=timezone.utc), self.info, self.summary, self.summary.description)
         
     def binary_read(self, fh):
         """

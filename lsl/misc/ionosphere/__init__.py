@@ -9,8 +9,7 @@ import ephem
 import numpy as np
 import warnings
 from functools import lru_cache
-from datetime import datetime, timedelta
-from lsl.misc.datetimeutils import utcnow
+from datetime import datetime, timedelta, timezone
 
 from scipy.special import lpmv
 try:
@@ -231,7 +230,7 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     
     # Get the current time if mjd is None
     if mjd is None:
-        mjd, mpm = datetime_to_mjdmpm( utcnow() )
+        mjd, mpm = datetime_to_mjdmpm( datetime.now(tz=timezone.utc) )
         mjd = mjd + mpm/1000.0/3600.0/24.0
         
     # Convert the MJD to a decimal year.  This is a bit tricky

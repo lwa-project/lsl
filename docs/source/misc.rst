@@ -41,19 +41,6 @@ FFTW Wisdom Management
 .. automodule:: lsl.misc.wisdom
    :members:
 
-UTC Datetime Utilities
-======================
-.. versionadded:: 4.0.0
-
-Python 3.12 deprecated ``datetime.utcfromtimestamp()`` and ``datetime.utcnow()``
-as part of the transition toward timezone-aware datetime objects.  The
-``lsl.misc.datetimeutils`` module provides drop-in replacements that avoid the
-deprecation warnings while maintaining compatibility with existing code that
-uses naive UTC datetimes.
-
-.. automodule:: lsl.misc.datetimeutils
-   :members:
-
 Conversion Helper Functions for argparse
 ========================================
 .. versionadded:: 1.2.4
