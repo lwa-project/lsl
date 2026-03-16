@@ -19,6 +19,7 @@
  * Replaced pytz usage with datetime.timezone
  * Added backports.zoneinfo dependency for Python < 3.9
  * All datetime objects returned by LSL are now timezone-aware (UTC)
+ * Added timezone-aware utc_date_obs attribute to CorrelatedData, CorrelatedDataUV, and CorrelatedDataMS alongside the existing naive date_obs
  * Updated tutorial notebooks for NDP-era data and fixed various issues
  * Removed unused TBW/TBN/TBF test data files
 
