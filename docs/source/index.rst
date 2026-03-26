@@ -74,6 +74,7 @@ Miscellaneous
    :maxdepth: 2
 
    config
+   logger
    misc
 
    genindex

@@ -12,6 +12,7 @@ from lsl.common import ndp as ndp_common
 from lsl.common import stations as lwa_common
 from lsl.sim import drx
 from lsl.reader.drx import FILTER_CODES as DRXFilters
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -43,13 +44,15 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     lowerSpike2 = -sample_rate / 3.0
 
     if verbose:
-        print("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % \
-            (nframes, sample_rate/1e6, len(stands), ntuning))
+        print(f"Simulating {nframes} frames of DRX Data @ {sample_rate/1e6:.2f} MHz for {len(stands)} beams, {ntuning} tunings each:")
+    LSL_LOGGER.info(f"Simulating {nframes} frames of DRX Data @ {sample_rate/1e6:.2f} MHz for {len(stands)} beams, {ntuning} tunings each:")
 
     beams = stands
     for i in range(nframes):
         if i % 1000 == 0 and verbose:
-            print(" frame %i" % i)
+            print(f" frame {i}")
+        if i % 1000 == 0:
+            LSL_LOGGER.debug(f" frame {i}")
         t = int(start_time*ndp_common.fS) + int(i*ndp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/ndp_common.fS - start_time + np.arange(samplesPerFrame, dtype=np.float32) / sample_rate
         for beam in beams:

@@ -1,3 +1,9 @@
+"""
+Centralized logging for LSL, built on Python's logging module.
+Provides a shared logger instance, threaded handler support for GUI
+integration, and convenience functions for console/file logging.
+"""
+
 import sys
 import queue
 import fnmatch

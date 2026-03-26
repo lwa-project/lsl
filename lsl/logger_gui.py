@@ -1,59 +1,8 @@
 """
-GUI for displaying LSL logger messages in real-time.
-
-This module provides a Tkinter-based GUI for monitoring log messages from the
-LSL logger. It's designed to be integrated into applications that use LSL,
-particularly those where console output might be hidden or inconvenient.
-
-Usage Examples
---------------
-Basic integration into an LSL script::
-    
-    from lsl.logger_gui import LoggerGUI
-    from lsl.common import sdf
-    
-    # Create and start the GUI
-    gui = LoggerGUI()
-    
-    # Your LSL processing code - log messages will appear in the GUI
-    station = sdf.parse_sdf('myfile.sdf')
-    # ... do work ...
-    
-    # Run the GUI event loop (this blocks until window is closed)
-    gui.mainloop()
-
-Running in a separate thread (non-blocking)::
-    
-    import threading
-    from lsl.logger_gui import LoggerGUI
-    from lsl.imaging import selfcal
-    
-    # Start GUI in background thread
-    gui = LoggerGUI()
-    gui_thread = threading.Thread(target=gui.mainloop, daemon=True)
-    gui_thread.start()
-    
-    # Continue with LSL work while GUI runs
-    # All log messages will appear in the GUI window
-    gains, delays = selfcal.self_cal(...)
-    
-    # Keep script running
-    input("Press Enter to exit...")
-
-Using individual components::
-    
-    import tkinter as tk
-    from lsl.logger_gui import LoggerFrame, FilterFrame
-    
-    # Create custom window with logger components
-    root = tk.Tk()
-    frame = tk.Frame(root)
-    frame.pack()
-    
-    logger_display = LoggerFrame(frame)
-    logger_display.start()
-    
-    root.mainloop()
+Tk-based GUI widgets for displaying LSL logger messages in real-time.
+Provides LoggerFrame for embedding in existing Tk applications,
+FilterFrame for controlling log display, and LoggerGUI for standalone
+use.
 """
 
 import queue
@@ -76,11 +25,8 @@ except ImportError:
 
 class LoggerFrame(object):
     """
-    Simple frame to show log messages from the LSL logger/ThreadedHandler for
-    easy inspection outside of a terminal.
-    
-    .. note:: Initializing this class will attach a new ThreadedHandler to the
-              main LSL logger.
+    Tk frame to show log messages from the LSL logger.  Attaches a
+    ThreadedHandler to the main LSL logger on initialization.
     """
     
     def __init__(self, frame, update_interval_ms=100, max_lines=10000):
@@ -106,9 +52,7 @@ class LoggerFrame(object):
         lsl_logger.add_handler(self._handler)
         
     def _display(self, record):
-        """
-        Method to take a LogRecord, format it, and display it in the text area.
-        """
+        """Format and display a LogRecord in the text area."""
         
         # Format
         msg = self._handler.format(record)
@@ -137,10 +81,7 @@ class LoggerFrame(object):
         self._text.yview(tk.END)
         
     def _poll_log_queue(self):
-        """
-        Method to poll the main LSL logger queue for new LogRecords and update
-        the text area.  You only need to call this once since it reschedules itself.
-        """
+        """Poll the log queue and reschedule."""
         
         while True:
             try:
@@ -153,18 +94,12 @@ class LoggerFrame(object):
         self._id = self._frame.after(self._update_interval_ms, self._poll_log_queue)
         
     def start(self):
-        """
-        Start up the background poller.
-        """
-        
-        # Start up the poller
+        """Start the background queue poller."""
+
         self._id = self._frame.after(self._update_interval_ms, self._poll_log_queue)
-        
+
     def stop(self):
-        """
-        Stop the background poller and remove the ThreadedHandler handler from
-        the main LSL logger.
-        """
+        """Stop the poller and remove the handler from the LSL logger."""
         
         # Stop the polling
         try:
@@ -179,14 +114,7 @@ class LoggerFrame(object):
             pass
             
     def show_at_level(self, level):
-        """
-        Show/hide log messages at different levels by eliding text tags.
-        
-        Parameters
-        ----------
-        level : str
-            The minimum level to display ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL').
-        """
+        """Show/hide log messages by eliding text tags below `level`."""
         
         found = False
         for l in ('DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL'):
@@ -199,9 +127,7 @@ class LoggerFrame(object):
                 print(str(e))
                 
     def clear(self):
-        """
-        Clear all text from the display buffer.
-        """
+        """Clear the display buffer."""
         
         self._text.configure(state='normal')
         try:
@@ -214,9 +140,8 @@ class LoggerFrame(object):
 
 class FilterFrame(object):
     """
-    Simple frame that can be combined with LoggerFrame to control what kinds of
-    log levels are displayed going forward, enable file logging, console output,
-    and pattern-based filtering.
+    Tk frame for controlling log level, console/file output, and
+    module pattern filtering.  Designed to pair with a LoggerFrame.
     """
     
     _values = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
@@ -283,10 +208,7 @@ class FilterFrame(object):
         self._filters_label.grid(column=1, row=2, columnspan=4, sticky=tk.W, padx=5)
         
     def _on_level_change(self, event):
-        """
-        Method to propagate the change in the log level to both the logger and
-        the display filtering.
-        """
+        """Propagate the level change to the logger and display."""
         
         level_name = self._combobox.get()
         level_index = self._values.index(level_name)
@@ -299,9 +221,7 @@ class FilterFrame(object):
         self._logger_frame.show_at_level(level_name)
         
     def _on_console_toggle(self):
-        """
-        Enable or disable console logging based on checkbox state.
-        """
+        """Toggle console logging."""
         
         if self._console_enabled.get():
             lsl_logger.enable_console_logging()
@@ -309,9 +229,7 @@ class FilterFrame(object):
             lsl_logger.disable_console_logging()
             
     def _on_file_logging(self):
-        """
-        Enable or disable file logging with file dialog.
-        """
+        """Toggle file logging via a save dialog."""
         
         if self._logging_file is None:
             filename = filedialog.asksaveasfilename(
@@ -329,9 +247,7 @@ class FilterFrame(object):
             self._file_button.config(text="Log to File...")
             
     def _on_add_filter(self):
-        """
-        Add a module pattern filter to the logger.
-        """
+        """Add a module pattern filter."""
         
         pattern = self._pattern_var.get().strip()
         if pattern and pattern not in self._active_patterns:
@@ -341,18 +257,14 @@ class FilterFrame(object):
             self._pattern_var.set('')
             
     def _on_clear_filters(self):
-        """
-        Clear all active filters from the logger.
-        """
+        """Clear all active filters."""
         
         lsl_logger.clear_filters()
         self._active_patterns.clear()
         self._update_filters_display()
         
     def _update_filters_display(self):
-        """
-        Update the display of active filters.
-        """
+        """Update the active filters label."""
         
         if self._active_patterns:
             filters_text = ', '.join(self._active_patterns)
@@ -361,84 +273,22 @@ class FilterFrame(object):
             self._filters_label.config(text='None', foreground='gray')
             
     def _on_clear(self):
-        """
-        Method to clear the LoggerFrame via its clear() method.
-        """
+        """Clear the LoggerFrame display."""
         
         self._logger_frame.clear()
         
     def start(self):
-        """
-        Stub function to make FilterFrame look like LoggerFrame.
-        """
-        
         pass
-        
+
     def stop(self):
-        """
-        Stub function to make FilterFrame look like LoggerFrame.
-        """
-        
         pass
 
 
 class LoggerGUI(object):
     """
-    Tk GUI to help display messages from the main LSL logger in a "not on the
-    console" way.
-
-    Features
-    --------
-    - Real-time display of log messages with color-coded levels
-    - Adjustable logger level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-    - Optional console output toggle
-    - File logging with save dialog
-    - Module-based pattern filtering (e.g., 'lsl.imaging.*')
-    - Automatic buffer management (max 10,000 lines)
-    - Clear buffer button
-
-    Parameters
-    ----------
-    title : str, optional
-        Title for the window. Defaults to "LSL Logger".
-
-    Examples
-    --------
-    Simple usage with blocking GUI::
-
-        from lsl.logger_gui import LoggerGUI
-        gui = LoggerGUI()
-        # ... do LSL work that generates log messages ...
-        gui.mainloop()
-
-    Non-blocking background GUI::
-
-        import threading
-        from lsl.logger_gui import LoggerGUI
-
-        gui = LoggerGUI()
-        threading.Thread(target=gui.mainloop, daemon=True).start()
-        # ... continue with other work ...
-
-    As part of another GUI application as a child window::
-
-        import tkinter as tk
-        from lsl.logger_gui import LoggerGUI
-
-        root = tk.Tk()
-        # ... create your main GUI widgets ...
-        gui = LoggerGUI()  # Automatically becomes a child window
-        root.mainloop()
-
-    Notes
-    -----
-    The GUI attaches a ThreadedHandler to the main LSL logger, allowing it to
-    capture messages from any thread. When the GUI is closed, the handler is
-    automatically removed.
-
-    The LoggerGUI automatically detects if a Tk root window already exists:
-    - If no root exists, it creates a new root window (tk.Tk())
-    - If a root exists, it creates a child window (tk.Toplevel())
+    Standalone Tk window combining a LoggerFrame and FilterFrame for
+    displaying LSL logger messages.  Creates a new Tk root or a
+    Toplevel if one already exists.
     """
 
     def __init__(self, title='LSL Logger'):
@@ -492,16 +342,10 @@ class LoggerGUI(object):
         self._filter.start()
         
     def mainloop(self):
-        """
-        Call the mainloop of Tk.
-        """
-        
         self._root.mainloop()
-        
+
     def quit(self, *args):
-        """
-        Quit out of the Tk window.
-        """
+        """Close the window and clean up handlers."""
         
         self._filter.stop()
         self._display.stop()
