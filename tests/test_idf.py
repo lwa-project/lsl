@@ -5,13 +5,17 @@ Unit test for the lsl.common.idf module.
 import os
 import re
 import copy
-import pytz
 import ephem
 import tempfile
 import unittest
 import shutil
 from math import pi
 from datetime import datetime, timedelta
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -721,9 +725,9 @@ class idf_tests(unittest.TestCase):
         
         # Part 4 - frequency and start time (timedelta)
         project = idf.parse_idf(drxFile)
-        _MST = pytz.timezone('US/Mountain')
+        _MST = zoneinfo.ZoneInfo('America/Denver')
         project.runs[0].scans[0].frequency2 = 75e6
-        project.runs[0].scans[0].start = _MST.localize(datetime(2011, 2, 23, 14, 00, 30, 1000))
+        project.runs[0].scans[0].start = datetime(2011, 2, 23, 14, 00, 30, 1000, tzinfo=_MST)
         
         fh = open(os.path.join(self.testPath, 'idf.txt'), 'w')		
         fh.write(project.render())

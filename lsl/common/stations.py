@@ -19,7 +19,7 @@ from astropy.constants import c as speedOfLight
 
 from lsl.astro import DJD_OFFSET
 from lsl.common.paths import DATA as DATA_PATH
-from lsl.common import dp, mcs as mcsDP, adp, mcsADP, ndp, mcsNDP
+from lsl.common import ndp, mcs as mcs_mod
 from lsl.misc.mathutils import to_dB, from_dB
 from lsl.common.data_access import DataAccess
 
@@ -27,7 +27,7 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '2.6'
+__version__ = '2.7'
 __all__ = ['geo_to_ecef', 'ecef_to_geo', 'LWAStation', 'Antenna', 'Stand', 'FEE', 'Cable', 'ARX',
            'LSLInterface', 'parse_ssmif', 'lwa1', 'lwavl', 'lwana', 'lwasv', 'ovrolwa', 'lwaov',
            'get_all_stations', 'get_full_stations', 'get_mini_stations',]
@@ -408,9 +408,9 @@ class Antenna(object):
     Object to store the information about an antenna.  Stores antenna:
      * ID number (id)
      * ARX instance the antenna is attached to (arx)
-     * DP1/ROACH/SNAP board number (board)
-     * DP1/ROACH/SNAP  digitizer number (digitizer)
-     * DP/ADP/NDP rack input connector (input)
+     * SNAP2/ZCU102 board number (board)
+     * SNAP2/ZCU102  digitizer number (digitizer)
+     * SNAP2/ZCU102 rack input connector (input)
      * Stand instance the antenna is part of (stand)
      * Polarization (0 == N-S; pol)
      * Antenna vertical mis-alignment in degrees (theta)
@@ -916,8 +916,10 @@ class ARX(object):
         try:
             if self.id >= 100 and self.id < 200:
                 revision = 'D'
-            elif self.id >= 200 and self.id <= 300:
+            elif self.id >= 200 and self.id < 300:
                 revision = 'G'
+            elif self.id >= 300 and self.id < 500:
+                revision = 'I'
             elif self.id >= 8200 and self.id <= 8300:
                 revision = 'H'
         except ValueError:
@@ -928,19 +930,21 @@ class ARX(object):
     def response(self, filter='split', dB=True):
         """
         Return a two-element tuple (freq in Hz, S21 magnitude in dB) for 
-        the ARX response for the current board/channel from the "ARX0026" 
-        memo on the "LWA Engineering Documents" wiki.  For ARX boards at 
-        LWA-SV, data from the production tests are used.
+        the ARX response for the current board/channel from the production
+        test runs.
         
         Filter options are:
-         * 0 or 'split'
-         * 1 or 'full'
-         * 2 or 'reduced'
-         * 4 or 'split@3MHz'
-         * 5 of 'full@3MHz'
+         * 0 or 'split' (H: narrow HPF + narrow LPF, I: HPF30 + LPF83)
+         * 1 or 'full' (H: narrow HPF + wide LPF, I HPF10 + LPF83)
+         * 2 or 'reduced' (H: same as 'split', I: HPF30 + LPF73)
+         * 3 (H: ---, I: HPF3 + LPF73)
+         * 4 or 'split@3MHz' (H: wide HPF + narrow LPF, I: HPF20 + LPF83)
+         * 5 or 'full@3MHz' (H: wide HPF + wide LPF, I: HPF3 + LPF83)
+         * 6 (H: ---, I: HPF10 + LPF73)
+         * 7 (H: ---, I: HPF20 + LPF73)
         
-        .. note:: If 'split@3MHz' or 'full@3MHz' are requested for LWA1, the
-                  values for 'split' and 'full' are returned instead.
+        .. note:: If 3, 5, 6, or 7 are requested for Rev H board an exception
+            is raised.
         
         .. versionchanged:: 1.2.1
             Switched the filter numbers over to match what ASP uses 
@@ -954,7 +958,10 @@ class ARX(object):
         
         # Find the filename to use
         filename = f"arx/ARX_board_{self.id:04d}_filters.npz"
-        
+        mapper = mapper = {0: 0, 1: 1, 2: 2, 4: 3}
+        if self.revision() == 'I':
+            mapper = {0: 3, 1: 1, 2: 7, 3: 4, 4: 2, 5: 0, 6: 5, 7: 2}
+            
         # Read in the file and convert it to a numpy array
         with DataAccess.open(filename, 'rb') as fh:
             try:
@@ -973,26 +980,28 @@ class ARX(object):
             data = from_dB(data)
             
         # Return or raise an error
-        if filter == 0 or filter == 'split':
-            return (freq, data[:,0])
-        elif filter == 1 or filter == 'full':
-            return (freq, data[:,1])
-        elif filter == 2 or filter == 'reduced':
-            return (freq, data[:,2])
-        elif filter == 4 or filter == 'split@3MHz':
-            try:
-                return (freq, data[:,3])
-            except IndexError:
-                ## Catch LWA1 boards
-                return (freq, data[:,0])
-        elif filter == 5 or filter == 'full@3MHz':
-            try:
-                return (freq, data[:,4])
-            except IndexError:
-                ## Catch LWA1 boards
-                return (freq, data[:,1])
-        else:
-            raise ValueError(f"Unknown ARX filter '{filter}'")
+        try:
+            if filter == 0 or filter == 'split':
+                return (freq, data[:,mapper[0]])
+            elif filter == 1 or filter == 'full':
+                return (freq, data[:,mapper[1]])
+            elif filter == 2 or filter == 'reduced':
+                return (freq, data[:,mapper[2]])
+            elif filter == 3:
+                return (freq, data[:,mapper[3]])
+            elif filter == 4 or filter == 'split@3MHz':
+                return (freq, data[:,mapper[4]])
+            elif filter == 5 or filter == 'full@3MHz':
+                return (freq, data[:,mapper[5]])
+            elif filter == 6:
+                return (freq, data[:,mapper[6]])
+            elif filter == 7:
+                return (freq, data[:,mapper[7]])
+            else:
+                raise ValueError(f"Unknown ARX filter '{filter}'")
+                
+        except KeyError:
+            raise ValueError(f"ARX filter '{filter}' is not supported for revision {self.revision()} boards")
 
 
 class LSLInterface(object):
@@ -1017,18 +1026,10 @@ class LSLInterface(object):
         
         # Create a cache and preload it for the backend and mcs
         self._cache = {}
-        if backend == 'lsl.common.dp':
-            self._cache['backend'] = dp
-        elif backend == 'lsl.common.adp':
-            self._cache['backend'] = adp
-        elif backend == 'lsl.common.ndp':
+        if backend == 'lsl.common.ndp':
             self._cache['backend'] = ndp
         if mcs == 'lsl.common.mcs':
-            self._cache['mcs'] = mcsDP
-        elif mcs == 'lsl.common.mcsADP':
-            self._cache['mcs'] = mcsADP
-        elif mcs == 'lsl.common.mcsNDP':
-            self._cache['mcs'] = mcsNDP
+            self._cache['mcs'] = mcs_mod
             
     def __str__(self):
         return f"LSL Interfaces:\n Backend: {self.backend}\n MCS: {self.mcs}\n SDF: {self.sdf}\n Metadata: {self.metabundle}\n SDM: {self.sdm}"
@@ -1098,6 +1099,15 @@ def _parse_ssmif_text(filename_or_fh):
                     ids[i] = int(mtch.group('id%i' % (i+1)))
                 except TypeError:
                     pass
+                    
+            #
+            # Version
+            #
+            
+            if keyword == 'FORMAT_VERSION':
+                version = int(value, 10)
+                if version != 10:
+                    raise RuntimeError(f"Invalid SSMIF format version '{version}'")
                     
             #
             # Station Data
@@ -1387,133 +1397,54 @@ def _parse_ssmif_text(filename_or_fh):
                 
                 
             #
-            # DP 1 & 2 Data - LWA1
+            # SNAP2/ZCU102 & Server Data
             #
             
-            if keyword == 'N_DP1':
-                nDP1 = int(value)
-                
-                dp1ID = ["UNK" for n in range(nDP1)]
-                dp1Slot = [0 for n in range(nDP1)]
-                dp1Desi = [1 for n in range(nDP1)]
-                
-                continue
-                
-            if keyword == 'N_DP1CH':
-                nChanDP1 = int(value)
-                
-                dp1Stat = [[3 for c in range(nChanDP1)] for n in range(nDP1)]
-                dp1InR = [["UNK" for c in range(nChanDP1)] for n in range(nDP1)]
-                dp1InC = [["UNK" for c in range(nChanDP1)] for n in range(nDP1)]
-                dp1Ant = [[n*nChanDP1+c+1 for c in range(nChanDP1)] for n in range(nDP1)]
-                
-                continue
-                
-            if keyword == 'DP1_ID':
-                dp1ID[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP1_SLOT':
-                dp1Slot[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP1_DESI':
-                dp1Desi[ids[0]-1] = int(value)
-                continue
-                
-            if keyword == 'DP1_STAT':
-                dp1Stat[ids[0]-1][ids[1]-1] = int(value)
-                continue
-                
-            if keyword == 'DP1_INR':
-                dp1InR[ids[0]-1][ids[1]-1] = value
-                continue
-                
-            if keyword == 'DP1_INC':
-                dp1InC[ids[0]-1][ids[1]-1] = value
-                continue
-                
-            if keyword == 'DP1_ANT':
-                dp1Ant[ids[0]-1][ids[1]-1] = int(value)
-                continue
-                
-            if keyword == 'N_DP2':
-                nDP2 = int(value)
-                
-                dp2ID = ["UNK" for n in range(nDP2)]
-                dp2Slot = ["UNK" for n in range(nDP2)]
-                dp2Stat = [3 for n in range(nDP2)]
-                dp2Desi = [1 for n in range(nDP2)]
-                
-                continue
-                
-            if keyword == 'DP2_ID':
-                dp2ID[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP2_SLOT':
-                dp2Slot[ids[0]-1] = value
-                continue
-                
-            if keyword == 'DP2_STAT':
-                dp2Stat[ids[0]-1] = int(value)
-                continue
-                
-            if keyword == 'DP2_DESI':
-                dp2Desi[ids[0]-1] = int(value)
-                continue
-                
-            #
-            # ROACH & Server Data - LWA-SV
-            #             and
-            # SNAP & Server Data - LWA-NA
-            #
-            
-            if keyword in ('N_ROACH', 'N_SNAP'):
+            if keyword ==  'N_SNAP':
                 nRoach = int(value)
                 
-                roachID = ["UNK" for n in range(nRoach)]
-                roachSlot = [0 for n in range(nRoach)]
-                roachDesi = [1 for n in range(nRoach)]
+                snapID = ["UNK" for n in range(nRoach)]
+                snapSlot = [0 for n in range(nRoach)]
+                snapDesi = [1 for n in range(nRoach)]
                 
                 continue
                 
-            if keyword in ('N_ROACHCH', 'N_SNAPCH'):
+            if keyword == 'N_SNAPCH':
                 nChanRoach = int(value)
                 
-                roachStat = [[3 for c in range(nChanRoach)] for n in range(nRoach)]
-                roachInR = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
-                roachInC = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
-                roachAnt = [[n*nChanRoach+c+1 for c in range(nChanRoach)] for n in range(nRoach)]
+                snapStat = [[3 for c in range(nChanRoach)] for n in range(nRoach)]
+                snapInR = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
+                snapInC = [["UNK" for c in range(nChanRoach)] for n in range(nRoach)]
+                snapAnt = [[n*nChanRoach+c+1 for c in range(nChanRoach)] for n in range(nRoach)]
                 
                 continue
                 
-            if keyword in ('ROACH_ID', 'SNAP_ID'):
-                roachID[ids[0]-1] = value
+            if keyword == 'SNAP_ID':
+                snapID[ids[0]-1] = value
                 continue
                 
-            if keyword in ('ROACH_SLOT', 'SNAP_SLOT'):
-                roachSlot[ids[0]-1] = value
+            if keyword == 'SNAP_SLOT':
+                snapSlot[ids[0]-1] = value
                 continue
                 
-            if keyword in ('ROACH_DESI', 'SNAP_DESI'):
-                roachDesi[ids[0]-1] = int(value)
+            if keyword == 'SNAP_DESI':
+                snapDesi[ids[0]-1] = int(value)
                 continue
                 
-            if keyword in ('ROACH_STAT', 'SNAP_STAT'):
-                roachStat[ids[0]-1][ids[1]-1] = int(value)
+            if keyword == 'SNAP_STAT':
+                snapStat[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
-            if keyword in ('ROACH_INR', 'SNAP_INR'):
-                roachInR[ids[0]-1][ids[1]-1] = value
+            if keyword == 'SNAP_INR':
+                snapInR[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword in ('ROACH_INC', 'SNAP_INC'):
-                roachInC[ids[0]-1][ids[1]-1] = value
+            if keyword == 'SNAP_INC':
+                snapInC[ids[0]-1][ids[1]-1] = value
                 continue
                 
-            if keyword in ('ROACH_ANT', 'SNAP_ANT'):
-                roachAnt[ids[0]-1][ids[1]-1] = int(value)
+            if keyword == 'SNAP_ANT':
+                snapAnt[ids[0]-1][ids[1]-1] = int(value)
                 continue
                 
             if keyword == 'N_SERVER':
@@ -1554,7 +1485,7 @@ def _parse_ssmif_text(filename_or_fh):
                 drID = ["UNK" for n in range(nDR)]
                 drShlf = [0 for n in range(nDR)]
                 drPC = ["UNK" for n in range(nDR)]
-                drDP = [0 for n in range(nDR)]
+                drNDP = [0 for n in range(nDR)]
                 
                 continue
                 
@@ -1574,8 +1505,8 @@ def _parse_ssmif_text(filename_or_fh):
                 drPC[ids[0]-1] = value
                 continue
                 
-            if keyword == 'DR_DP':
-                drDP[ids[0]-1] = int(value)
+            if keyword == 'DR_NDP':
+                drNDP[ids[0]-1] = int(value)
                 continue
                 
     except Exception as e:
@@ -1609,22 +1540,12 @@ def _parse_ssmif_binary(filename_or_fh):
         # Read in the first four bytes to get the version code and go from there
         version = fh.read(4)
         version = struct.unpack('<i', version)[0]
+        if version != 10:
+            raise RuntimeError(f"Invalid SSMIF format version '{version}'")
         fh.seek(0)
         
-        overrides = {}
-        if version == 10:
-            ## NDP
-            mode = mcsNDP
-        elif version in (8,9):
-            ## ADP
-            mode = mcsADP
-            if version == 8:
-                overrides['ME_MAX_NDR'] = 3
-        else:
-            ## DP
-            mode = mcsDP
-        bssmif = mode.parse_c_struct(mode.SSMIF_STRUCT, char_mode='int', endianness='little', overrides=overrides)
-        bsettings = mode.parse_c_struct(mode.STATION_SETTINGS_STRUCT, endianness='little', overrides=overrides)
+        bssmif = mcs_mod.parse_c_struct(mcs_mod.SSMIF_STRUCT, char_mode='int', endianness='little')
+        bsettings = mcs_mod.parse_c_struct(mcs_mod.STATION_SETTINGS_STRUCT, endianness='little')
         
         fh.readinto(bssmif)
         
@@ -1651,7 +1572,7 @@ def _parse_ssmif_binary(filename_or_fh):
         #
         # FEE, Cable, & SEP Data
         #
-        feeID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
+        feeID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sFEEID], *bssmif.dims['sFEEID'])
         feeID   = [''.join([k for k in i if k != '\x00']) for i in feeID]
         feeStat = list(bssmif.iFEEStat)
         feeDesi = list(bssmif.eFEEDesi)
@@ -1660,7 +1581,7 @@ def _parse_ssmif_binary(filename_or_fh):
         feeAnt1 = list(bssmif.iFEEAnt1)
         feeAnt2 = list(bssmif.iFEEAnt2)
         
-        rpdID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
+        rpdID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sRPDID], *bssmif.dims['sRPDID'])
         rpdID   = [''.join([k for k in i if k != '\x00']) for i in rpdID]
         rpdStat = list(bssmif.iRPDStat)
         rpdDesi = list(bssmif.eRPDDesi)
@@ -1673,7 +1594,7 @@ def _parse_ssmif_binary(filename_or_fh):
         rpdStr  = list(bssmif.fRPDStr)
         rpdAnt  = list(bssmif.iRPDAnt)
         
-        sepCbl  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
+        sepCbl  = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSEPCabl], *bssmif.dims['sSEPCabl'])
         sepCbl  = [''.join([k for k in i if k != '\x00']) for i in sepCbl]
         sepLeng = list(bssmif.fSEPLeng)
         sepDesi = list(bssmif.eSEPDesi)
@@ -1684,97 +1605,51 @@ def _parse_ssmif_binary(filename_or_fh):
         # ARX (ARB) Data
         #
         nChanARX = bssmif.nARBCH
-        arxID    = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
+        arxID    = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sARBID], *bssmif.dims['sARBID'])
         arxID    = [''.join([k for k in i if k != '\x00']) for i in arxID]
         arxSlot  = list(bssmif.iARBSlot)
         arxDesi  = list(bssmif.eARBDesi)
         arxRack  = list(bssmif.iARBRack)
         arxPort  = list(bssmif.iARBPort)
-        arxStat  = mcsDP.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
-        arxAnt   = mcsDP.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
-        arxIn    = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
+        arxStat  = mcs_mod.flat_to_multi(bssmif.eARBStat, *bssmif.dims['eARBStat'])
+        arxAnt   = mcs_mod.flat_to_multi(bssmif.iARBAnt, *bssmif.dims['iARBAnt'])
+        arxIn    = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sARBIN], *bssmif.dims['sARBIN'])
         arxIn    = [[''.join(i) for i in j] for j in arxIn]
-        arxOut   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
+        arxOut   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sARBOUT], *bssmif.dims['sARBOUT'])
         arxOut   = [[''.join(i) for i in j] for j in arxOut]
         
-        try:
-            #
-            # DP 1 & 2 Data
-            #
-            dp1ID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1ID], *bssmif.dims['sDP1ID'])
-            dp1ID   = [''.join([k for k in i if k != '\x00']) for i in dp1ID]
-            dp1Slot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1Slot], *bssmif.dims['sDP1Slot'])
-            dp1Slot = [''.join([k for k in i if k != '\x00']) for i in dp1Slot]
-            dp1Desi = list(bssmif.eDP1Desi)
-            dp1Stat = list(bssmif.eDP1Stat)
-            dp1InR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1INR], *bssmif.dims['sDP1INR'])
-            dp1InR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InR]
-            dp1InC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP1INC], *bssmif.dims['sDP1INC'])
-            dp1InC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in dp1InC]
-            dp1Ant  = mcsDP.flat_to_multi(bssmif.iDP1Ant, *bssmif.dims['iDP1Ant'])
-            
-            dp2ID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP2ID], *bssmif.dims['sDP2ID'])
-            dp2ID   = [''.join([k for k in i if k != '\x00']) for i in dp2ID]
-            dp2Slot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDP2Slot], *bssmif.dims['sDP2Slot'])
-            dp2Slot = [''.join([k for k in i if k != '\x00']) for i in dp2Slot]
-            dp2Stat = list(bssmif.eDP2Stat)
-            dp2Desi = list(bssmif.eDP2Desi)
-        except AttributeError:
-            try:
-                #
-                # ROACH & Server Data
-                #
-                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachID], *bssmif.dims['sRoachID'])
-                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachSlot], *bssmif.dims['sRoachSlot'])
-                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
-                roachDesi = list(bssmif.eRoachDesi)
-                roachStat = list(bssmif.eRoachStat)
-                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINR], *bssmif.dims['sRoachINR'])
-                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sRoachINC], *bssmif.dims['sRoachINC'])
-                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-                roachAnt  = mcsDP.flat_to_multi(bssmif.iRoachAnt, *bssmif.dims['iRoachAnt'])
-                
-                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
-                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
-                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
-                serverStat = list(bssmif.eServerStat)
-                serverDesi = list(bssmif.eServerDesi)
-            except AttributeError:
-                #
-                # SNAP & Server Data
-                #
-                roachID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
-                roachID   = [''.join([k for k in i if k != '\x00']) for i in roachID]
-                roachSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
-                roachSlot = [''.join([k for k in i if k != '\x00']) for i in roachSlot]
-                roachDesi = list(bssmif.eSnapDesi)
-                roachStat = list(bssmif.eSnapStat)
-                roachInR  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
-                roachInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInR]
-                roachInC  = mcsDP.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
-                roachInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in roachInC]
-                roachAnt  = mcsDP.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
-                
-                serverID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
-                serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
-                serverSlot = mcsDP.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
-                serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
-                serverStat = list(bssmif.eServerStat)
-                serverDesi = list(bssmif.eServerDesi)
-                
+        #
+        # SNAP & Server Data
+        #
+        snapID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapID], *bssmif.dims['sSnapID'])
+        snapID   = [''.join([k for k in i if k != '\x00']) for i in snapID]
+        snapSlot = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapSlot], *bssmif.dims['sSnapSlot'])
+        snapSlot = [''.join([k for k in i if k != '\x00']) for i in snapSlot]
+        snapDesi = list(bssmif.eSnapDesi)
+        snapStat = list(bssmif.eSnapStat)
+        snapInR  = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapINR], *bssmif.dims['sSnapINR'])
+        snapInR  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInR]
+        snapInC  = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sSnapINC], *bssmif.dims['sSnapINC'])
+        snapInC  = [[''.join([k for k in i if k != '\x00']) for i in j] for j in snapInC]
+        snapAnt  = mcs_mod.flat_to_multi(bssmif.iSnapAnt, *bssmif.dims['iSnapAnt'])
+        
+        serverID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sServerID], *bssmif.dims['sServerID'])
+        serverID   = [''.join([k for k in i if k != '\x00']) for i in serverID]
+        serverSlot = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sServerSlot], *bssmif.dims['sServerSlot'])
+        serverSlot = [''.join([k for k in i if k != '\x00']) for i in serverSlot]
+        serverStat = list(bssmif.eServerStat)
+        serverDesi = list(bssmif.eServerDesi)
+        
         #
         # DR Data
         #
         drStat = list(bssmif.eDRStat)
-        drID   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
+        drID   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sDRID], *bssmif.dims['sDRID'])
         drID   = [''.join([k for k in i if k != '\x00']) for i in drID]
         drShlf = [0 for i in range(bssmif.nDR)]
-        drPC   = mcsDP.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
+        drPC   = mcs_mod.flat_to_multi([chr(i) for i in bssmif.sDRPC], *bssmif.dims['sDRPC'])
         drPC   = [''.join([k for k in i if k != '\x00']) for i in drPC]
-        drDP   = list(bssmif.iDRDP)
+        drNDP   = list(bssmif.iDRNDP)
         
         fh.readinto(bsettings)
         
@@ -1847,19 +1722,9 @@ def parse_ssmif(filename_or_fh):
     arxAnt   = ssmifDataDict['arxAnt']
     arxIn    = ssmifDataDict['arxIn']
     arxOut   = ssmifDataDict['arxOut']
-    ### DP/ADP/NDP
-    try:
-        isDP = True
-        dp1Ant = ssmifDataDict['dp1Ant']
-        dp1InR = ssmifDataDict['dp1InR']
-    except KeyError:
-        isDP = False
-        try:
-            roachAnt = ssmifDataDict['roachAnt']
-            roachInR = ssmifDataDict['roachInR']
-        except KeyError:
-            roachAnt = ssmifDataDict['snapAnt']
-            roachInR = ssmifDataDict['snapInR']
+    ### NDP
+    snapAnt = ssmifDataDict['snapAnt']
+    snapInR = ssmifDataDict['snapInR']
     # Build up a list of Stand instances and load them with data
     i = 1
     stands = []
@@ -1918,51 +1783,26 @@ def parse_ssmif(filename_or_fh):
             channel = j + 1
             antennas[ant-1].arx = ARX(boardID, channel=channel, asp_channel=i*nChanARX + j + 1, input=arxIn[i][j], output=arxOut[i][j])
             
-    if isDP:
-        # Associate DP 1 board and digitizer numbers with Antennas - DP1 boards are 2-14 and 16-28 
-        # with DP2 boards at 1 and 15.
-        i = 1
-        j = 1
-        for brd,inp in zip(dp1Ant,dp1InR):
-            for ant,con in zip(brd,inp):
-                antennas[ant-1].board = i + 1 + (i//14)
-                antennas[ant-1].digitizer = j
-                antennas[ant-1].input = con
-                j += 1
-            i += 1
-    else:
-        # Associate ROACH board and digitizer numbers with Antennas.
-        i = 1
-        j = 1
-        for brd,inp in zip(roachAnt,roachInR):
-            for ant,con in zip(brd,inp):
-                antennas[ant-1].board = i
-                antennas[ant-1].digitizer = j
-                antennas[ant-1].input = con
-                j += 1
-            i += 1
-            
+    # Associate SNAP2/ZCU102 board and digitizer numbers with Antennas.
+    i = 1
+    j = 1
+    for brd,inp in zip(snapAnt,snapInR):
+        for ant,con in zip(brd,inp):
+            antennas[ant-1].board = i
+            antennas[ant-1].digitizer = j
+            antennas[ant-1].input = con
+            j += 1
+        i += 1
+        
     # Build a Station
     try:
         ## LSL interface support
-        if idn in ('VL',):
-            interface = LSLInterface(backend='lsl.common.dp', 
+        if idn in ('VL', 'SV', 'NA', 'CS', 'MC'):
+            interface = LSLInterface(backend='lsl.common.ndp', 
                                      mcs='lsl.common.mcs', 
                                      sdf='lsl.common.sdf', 
-                                     metabundle='lsl.common.metabundleDP', 
-                                     sdm='lsl.common.sdmDP')
-        elif idn in ('SV',):
-            interface = LSLInterface(backend='lsl.common.adp', 
-                                     mcs='lsl.common.mcsADP', 
-                                     sdf='lsl.common.sdfADP', 
-                                     metabundle='lsl.common.metabundleADP', 
-                                     sdm='lsl.common.sdmADP')
-        elif idn in ('NA',):
-            interface = LSLInterface(backend='lsl.common.ndp', 
-                                     mcs='lsl.common.mcsNDP', 
-                                     sdf='lsl.common.sdfNDP', 
-                                     metabundle='lsl.common.metabundleNDP', 
-                                     sdm='lsl.common.sdmNDP')
+                                     metabundle='lsl.common.metabundle', 
+                                     sdm='lsl.common.sdm')
         else:
             interface = None
             
@@ -1992,8 +1832,8 @@ with DataAccess.open('lwasv-ssmif.txt', 'r') as fh:
 #: OVROLWA
 ovrolwa = LWAStation('OVRO-LWA', 37.23977727, -118.2816667, 1183.48, id='OV',
                      interface=LSLInterface(backend='lsl.common.ndp',
-                                            mcs='lsl.common.mcsNDP',
-                                            sdf='lsl.common.sdfNDP'))
+                                            mcs='lsl.common.mcs',
+                                            sdf='lsl.common.sdf'))
 
 #: OVROLWA would also be LWAOV
 lwaov = ovrolwa

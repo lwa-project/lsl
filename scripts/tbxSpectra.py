@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Given a TBF file, plot the time averaged spectra for each digitizer input.
+Given a TBT/TBS file, plot the time averaged spectra for each digitizer input.
 """
     
 import os
@@ -11,7 +11,7 @@ import numpy as np
 import argparse
 
 from lsl.common import stations, metabundle
-from lsl.reader.ldp import LWADataFile, TBFFile
+from lsl.reader.ldp import LWADataFile, TBXFile
 from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
@@ -55,13 +55,15 @@ def main(args):
             station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwana:
         station = stations.lwana
-    else:
+    elif args.lwasv:
         station = stations.lwasv
+    else:
+        station = stations.lwa1
     antennas = station.antennas
     
     idf = LWADataFile(args.filename)
-    if not isinstance(idf, TBFFile):
-        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBF file")
+    if not isinstance(idf, TBXFile):
+        raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBT or TBS file")
         
     nFrames = idf.get_info('nframe')
     antpols = len(antennas)
@@ -70,17 +72,14 @@ def main(args):
     # of the frame.  This is needed to get the list of stands.
     beginDate = idf.get_info('start_time').datetime
     
-    # Make sure the TBF stand count is consistent with how many antennas we have
+    # Make sure the TBX stand count is consistent with how many antennas we have
     if antpols != idf.get_info('nantenna'):
         raise RuntimeError(f"Number of stands in the station ({antpols//2}) does not match what is in the data ({idf.get_info('nantenna')//2})")
         
     # Figure out how many frames there are per observation and the number of
     # channels that are in the file
     nchannels = idf.get_info('nchan')
-    nFpO = nchannels // 12
-    
-    # Figure out how many chunks we need to work with
-    nChunks = 1
+    nFpO = nchannels // idf.get_info('frame_channel_count')
     
     # Calculate the frequencies
     freq = idf.get_info('freq1')
@@ -91,6 +90,13 @@ def main(args):
     central_freq = central_freq.reshape(nif, -1)
     central_freq = central_freq[:,central_freq.shape[1]//2]
     
+    # Figure out how many chunks we need to work with
+    nChunks = 1
+    tFile = nFrames/nFpO/sample_rate
+    args.average = min(tFile, args.average)
+    if args.average > 0.5:
+        nChunks = int(np.ceil(args.average/0.5))
+        
     # File summary
     print(f"Filename: {args.filename}")
     print(f"Date of First Frame: {str(beginDate)}")
@@ -105,15 +111,19 @@ def main(args):
         print(f"Working on chunk #{i+1} of {nChunks}")
         
         try:
-            readT, t, data = idf.read(return_ci8=True)
+            readT, t, data = idf.read(args.average/nChunks, return_ci8=True)
         except Exception as e:
             print(f"Error: {str(e)}")
             continue
             
         # Detect power and integrate
         data = data['re']**2 + data['im']**2
-        spec = data.mean(axis=2)
-        
+        try:
+            spec += data.mean(axis=2)
+        except NameError:
+            spec = data.mean(axis=2)
+    spec /= nChunks
+    
     # Apply the cable loss corrections, if requested
     if args.gain_correct:
         for s in range(spec.shape[0]):
@@ -180,15 +190,20 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-            description='read in a TBF file and create a collection of time-averaged spectra', 
+            description='read in a TBT or TBS file and create a collection of time-averaged spectra', 
             formatter_class=argparse.ArgumentDefaultsHelpFormatter
             )
     parser.add_argument('filename', type=str, 
                         help='filename to process')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of the SSMIF or metadata tarball file to use for mappings')
-    parser.add_argument('-n', '--lwana', action='store_true', 
-                        help='use LWA-NA instead of LWA-SV')
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-s', '--lwasv', action='store_true', 
+                        help='use LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true', 
+                        help='use LWA-NA instead of LWA1')
+    parser.add_argument('-a', '--average', type=aph.positive_float, default=1.0, 
+                        help='number of seconds of data to average for spectra')
     parser.add_argument('-q', '--quiet', dest='verbose', action='store_false',
                         help='run %(prog)s in silent mode')
     parser.add_argument('-g', '--gain-correct', action='store_true',

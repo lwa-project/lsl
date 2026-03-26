@@ -28,7 +28,7 @@ REQUIREMENTS
  * astropy >= 5.2
  * pyephem >= 3.7.5.3
  * aipy >= 3.0.1
- * pytz >= 2012c
+ * backports.zoneinfo (for Python <3.9)
  * h5py
  * matplotlib >= 1.1 (required for some of the scripts)
  * BeautifulSoup (required for some of the scripts)

@@ -13,8 +13,8 @@ is:
                    includes a variety of attributes that are used to convert human-
                    readable inputs to SDF data values.  The observation class is 
                    further subclasses into:
-                     - TBW - class for TBW observations
-                     - TBN - class for TBN observations
+                     - TBT - class for triggered transient buffer observations
+                     - TBS - class for streaming transient buffer observations
                      - DRX - class for general DRX observation, with sub-classes:
                        * Solar - class for solar tracking
                        * Jovian - class for Jovian tracking
@@ -47,13 +47,12 @@ import os
 import re
 import copy
 import math
-import pytz
 import ephem
 import logging
 import weakref
 import warnings
 from functools import total_ordering
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from astropy import units as astrounits
 from astropy.coordinates import Angle as AstroAngle
@@ -64,12 +63,9 @@ from lsl.common._sdf_utils import *
 from lsl.common.color import colorfy
 
 from lsl.common.mcs import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.dp import freq_to_word, word_to_freq
+from lsl.common.ndp import freq_to_word, word_to_freq, fS
 from lsl.common.stations import lwa1
-from lsl.reader.tbn import FILTER_CODES as TBNFilters
 from lsl.reader.drx import FILTER_CODES as DRXFilters
-from lsl.reader.tbw import FRAME_SIZE as TBWSize
-from lsl.reader.tbn import FRAME_SIZE as TBNSize
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 
 from lsl.config import LSL_CONFIG
@@ -81,15 +77,14 @@ from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '1.2'
-__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBW', 'TBN', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
+__version__ = '1.4'
+__all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBT', 'TBS', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
-_UTC = pytz.utc
 _DRSUCapacityTB = 10
-# Factors for computing the time it takes to read out a TBW from the number 
+# Factors for computing the time it takes to read out a TBT from the number 
 # of samples
-_TBW_TIME_SCALE = 196000
-_TBW_TIME_GAIN = 2500
+_TBT_TIME_SCALE = 196000
+_TBT_TIME_GAIN = 150
 
 
 # UCF Username RE
@@ -338,14 +333,14 @@ class Project(object):
             output += "SESSION_CRA      %i\n" % (ses.configuration_authority,)
         if ses.drx_beam != -1:
             output += "SESSION_DRX_BEAM %i\n" % (ses.drx_beam,)
-        if ses.spcSetup[0] != 0 and ses.spcSetup[1] != 0:
-            output += "SESSION_SPC      %i %i%s\n" % (ses.spcSetup[0], ses.spcSetup[1], '' if ses.spcMetatag is None else ses.spcMetatag)
-        for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-            if ses.recordMIB[component] != -1:
-                output += "SESSION_MRP_%s  %i\n" % (component, ses.recordMIB[component])
-        for component in ['ASP', 'DP_', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
-            if ses.updateMIB[component] != -1:
-                output += "SESSION_MUP_%s  %i\n" % (component, ses.updateMIB[component])
+        if ses.spc_setup[0] != 0 and ses.spc_setup[1] != 0:
+            output += "SESSION_SPC      %i %i%s\n" % (ses.spc_setup[0], ses.spc_setup[1], '' if ses.spc_metatag is None else ses.spc_metatag)
+        for component in ['ASP', 'NDP', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
+            if ses.record_mib[component] != -1:
+                output += "SESSION_MRP_%s  %i\n" % (component, ses.record_mib[component])
+        for component in ['ASP', 'NDP', 'DR1', 'DR2', 'DR3', 'DR4', 'DR5', 'SHL', 'MCS']:
+            if ses.update_mib[component] != -1:
+                output += "SESSION_MUP_%s  %i\n" % (component, ses.update_mib[component])
         if ses.include_mcssch_log:
             output += "SESSION_LOG_SCH  %i\n" % (ses.include_mcssch_log,)
         if ses.include_mcsexe_log:
@@ -373,7 +368,7 @@ class Project(object):
             output += "OBS_MODE         %s\n" % (obs.mode,)
             if obs.beamDipole is not None:
                 output += "OBS_BDM          %i %6.4f %6.4f %s\n" % (tuple(obs.beamDipole))
-            if obs.mode == 'TBN':
+            if obs.mode == 'TBS':
                 output += "OBS_FREQ1        %i\n" % (obs.freq1,)
                 output += "OBS_FREQ1+       %.9f MHz\n" % (obs.frequency1/1e6,)
                 output += "OBS_BW           %i\n" % (obs.filter,)
@@ -491,26 +486,22 @@ class Project(object):
                     
                     if at2 != -1:
                         output += "OBS_ASP_AT2[%i]  %i\n" % (at2ID, at2)
-            ## Second attenuator setting
-            if all(j == obs.asp_atten_split[0] for j in obs.asp_atten_split):
+            ## Third attenuator setting
+            if all(j == obs.asp_atten_3[0] for j in obs.asp_atten_3):
                 ### All the same
-                if obs.asp_atten_split[0] != -1:
-                    output += "OBS_ASP_ATS[%i]  %i\n" % (0, obs.asp_atten_split[0])
+                if obs.asp_atten_3[0] != -1:
+                    output += "OBS_ASP_AT3[%i]  %i\n" % (0, obs.asp_atten_3[0])
             else:
                 ### Some different
-                for j,ats in enumerate(obs.asp_atten_split):
-                    atsID = j + 1
+                for j,at3 in enumerate(obs.asp_atten_3):
+                    at3ID = j + 1
                     
-                    if ats != -1:
-                        output += "OBS_ASP_ATS[%i]  %i\n" % (atsID, ats)
-            ## TBW settings
-            if obs.mode == 'TBW':
-                output += "OBS_TBW_BITS     %i\n" % (obs.bits,)
-                output += "OBS_TBW_SAMPLES  %i\n" % (obs.samples,)
-            ## TBN gain
-            elif obs.mode == 'TBN':
-                if obs.gain != -1:
-                    output += "OBS_TBN_GAIN     %i\n" % (obs.gain,)
+                    if at3 != -1:
+                        output += "OBS_ASP_AT3[%i]  %i\n" % (at3ID, at3)
+            ## TBT settings
+            if obs.mode == 'TBT':
+
+                output += "OBS_TBT_SAMPLES  %i\n" % (obs.samples,)
             ## DRX gain
             else:
                 if obs.gain != -1:
@@ -535,7 +526,7 @@ class Project(object):
 class Observation(object):
     """
     Class to hold the specifics of an observations.  It currently
-    handles TBW, TBN, TRK_RADEC, TRK_SOL, TRK_JOV, TRK_LUN and Stepped
+    handles TBT, TBS, TRK_RADEC, TRK_SOL, TRK_JOV, TRK_LUN and Stepped
     
     .. versionchanged:: 1.0.0
         Added support for RA/dec values as ephem.hours/ephem.degrees instances
@@ -546,7 +537,7 @@ class Observation(object):
     id = 1
     dur = 0
     
-    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
+    def __init__(self, name, target, start, duration, mode, ra, dec, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
         self.name = name
         self.target = target
         self.ra = ra
@@ -558,7 +549,7 @@ class Observation(object):
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
         self.filter = int(filter)
-        self.max_snr = bool(max_snr)
+        self.high_dr = bool(high_dr)
         self.comments = comments
         
         self.beam = None
@@ -568,7 +559,7 @@ class Observation(object):
         self.asp_filter = [-1 for n in range(LWA_MAX_NSTD)]
         self.asp_atten_1 = [-1 for n in range(LWA_MAX_NSTD)]
         self.asp_atten_2 = [-1 for n in range(LWA_MAX_NSTD)]
-        self.asp_atten_split = [-1 for n in range(LWA_MAX_NSTD)]
+        self.asp_atten_3 = [-1 for n in range(LWA_MAX_NSTD)]
 
         self.gain = int(gain)
         
@@ -705,8 +696,8 @@ class Observation(object):
         """Return a valid value for beam type based on whether maximum S/N beam 
         forming has been requested."""
         
-        if self.max_snr:
-            return 'MAX_SNR'
+        if self.high_dr:
+            return 'HIGH_DR'
         else:
             return 'SIMPLE'
     
@@ -743,7 +734,6 @@ class Observation(object):
         station = lwa1
         if self._parent is not None:
             station = self._parent.station
-        is_dp = station.interface.backend == 'dp'
         nstand = station.interface.get_module('mcs').LWA_MAX_NSTD
                 
         failures = 0
@@ -774,10 +764,10 @@ class Observation(object):
             if is_dp and filt > 3:
                 pid_print(f"ASP filter {filt} is degenerate with {filt-4} for DP-based stations", level=logging.WARNING, logging_only=(not verbose))
 
-            if filt not in (-1, 0, 1, 2, 3, 4, 5):
+            if filt not in (-1, 0, 1, 2, 3, 4, 5, 6, 7):
                 failures += 1
                 pid_print(f"Invalid ASP filter setting on stand {f} '{filt}'", level=logging.ERROR, logging_only=(not verbose))
-        ## AT1/AT2/ATS
+        ## AT1/AT2/AT3
         if len(self.asp_atten_1) < nstand:
             failures += 1
             pid_print(f"Invalid number of ASP attenuator 1 settings ({len(self.asp_atten_1)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
@@ -792,14 +782,14 @@ class Observation(object):
             if atten < -1 or atten > 15:
                 failures += 1
                 pid_print(f"Invalid ASP attenuator 2 setting on stand {f} '{atten}'", level=logging.ERROR, logging_only=(not verbose))
-        if len(self.asp_atten_split) < nstand:
+        if len(self.asp_atten_3) < nstand:
             failures += 1
-            pid_print(f"Invalid number of ASP attenuator split settings (({len(self.asp_atten_split)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
-        for f,atten in enumerate(self.asp_atten_split):
-            if atten < -1 or atten > 15:
+            pid_print(f"Invalid number of ASP attenuator 3 settings (({len(self.asp_atten_3)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
+        for f,atten in enumerate(self.asp_atten_3):
+            if atten < -1 or atten > 31:
                 failures += 1
-                pid_print(f"Invalid ASP attenuator split setting on stand {f} '{atten}'", level=logging.ERROR, logging_only=(not verbose))
-                    
+                pid_print(f"Invalid ASP attenuator 3 setting on stand {f} '{atten}'", level=logging.ERROR, logging_only=(not verbose))
+                
         # Any failures indicates a bad FEE/ASP configuration
         if failures == 0:
             return True
@@ -823,13 +813,13 @@ class Observation(object):
             raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
-class TBW(Observation):
-    """Sub-class of Observation specifically for TBW observations.  It features a
+class TBT(Observation):
+    """Sub-class of Observation specifically for TBT observations.  It features a
     reduced number of parameters needed to setup the observation and provides extra
     information about the number of data bits and the number of samples.
     
     .. note::
-        TBW read-out times in ms are calculated using (samples/196000+1)*5000 per
+        TBT read-out times in ms are calculated using (samples/196000+1)*5000 per
         MCS
     
     Required Arguments:
@@ -839,31 +829,26 @@ class TBW(Observation):
      * integer number of samples
     
     Optional Keywords:
-     * bits - number of data bits (4 or 12)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, samples, bits=12, comments=None):
+    def __init__(self, name, target, start, samples, comments=None):
         self.samples = int(samples)
-        self.bits = int(bits)
-        assert(self.bits in (4, 12))
         
-        duration = (self.samples / _TBW_TIME_SCALE + 1)*_TBW_TIME_GAIN
+        duration = (self.samples / _TBT_TIME_SCALE + 1)*_TBT_TIME_GAIN
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
-        Observation.__init__(self, name, target, start, durStr, 'TBW', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
+        Observation.__init__(self, name, target, start, durStr, 'TBT', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
         
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
-        observations.  For TBW:
+        observations.  For TBT:
         
             bytes = samples / samplesPerFrame * 1224 bytes * 260 stands
         """
         
-        SamplesPerFrame = 400
-        if self.bits == 4:
-            SamplesPerFrame = 1200
+        SamplesPerFrame = 1
         nFrames = self.samples / SamplesPerFrame
-        nBytes = nFrames * TBWSize * LWA_MAX_NSTD
+        nBytes = nFrames * 16 * LWA_MAX_NSTD * 2
         return nBytes
         
     def validate(self, verbose=False):
@@ -872,16 +857,16 @@ class TBW(Observation):
         
         self.update()
         
+        station = lwa1
+        if self._parent is not None:
+            station = self._parent.station
+        backend = station.interface.get_module('backend')
+        be_name = station.interface.backend.rsplit('.', 1)[1].upper()
+        
         failures = 0
-        # Basic - Sample size and data bits agreement
-        if self.bits not in [4, 12]:
-            pid_print(f"Invalid number of data bits '{self.bits}'", level=logging.ERROR, logging_only=(not verbose))
-            failures += 1
-        if self.bits == 12 and self.samples > 12000000:
-            pid_print(f"Invalid number of samples for 12-bit data ({self.samples} > 12000000)", level=logging.ERROR, logging_only=(not verbose))
-            failures += 1
-        if self.bits == 4 and self.samples > 36000000:
-            pid_print(f"Invalid number of samples for 4-bit data ({self.samples} > 36000000)", level=logging.ERROR, logging_only=(not verbose))
+        # Basic - Sample size
+        if self.samples > 5*196000000:
+            pid_print(f"Invalid number of samples ({self.samples} > {5*196000000})", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
         # Advanced - Data Volume
@@ -899,8 +884,8 @@ class TBW(Observation):
             return False
 
 
-class TBN(Observation):
-    """Sub-class of Observation specifically for TBN observations.   It features a
+class TBS(Observation):
+    """Sub-class of Observation specifically for TBS observations.   It features a
     reduced number of parameters needed to setup the observation.
     
     Required Arguments:
@@ -916,23 +901,23 @@ class TBN(Observation):
      * comments - comments about the observation
     """
     
-    filter_codes = TBNFilters
+    filter_codes = {8: 200000}
     
-    def __init__(self, name, target, start, duration, frequency, filter, gain=-1, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TBN', 0.0, 0.0, frequency, 0.0, filter, gain=gain, comments=comments)
+    def __init__(self, name, target, start, duration, frequency, filter, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TBS', 0.0, 0.0, frequency, 0.0, filter, comments=comments)
         
     def estimate_bytes(self):
         """Estimate the data volume for the specified type and duration of 
-        observations.  For TBN:
+        observations.  For TBS:
         
-            bytes = duration * sample_rate / 512 * 1048 bytes * 260 stands * 2 pols.
+            bytes = duration * sample_rate / 512 * 1048 bytes * 256 stands * 2 pols.
         """
         
         try:
-            nFrames = self.dur/1000.0 * self.filter_codes[self.filter] / 512
+            nFrames = self.dur/1000.0 * fS / 8192
         except KeyError:
             nFrames = 0
-        nBytes = nFrames * TBNSize * LWA_MAX_NSTD * 2
+        nBytes = nFrames * (32 + 8 * LWA_MAX_NSTD * 2)
         return nBytes
         
     def validate(self, verbose=False):
@@ -940,7 +925,7 @@ class TBN(Observation):
         otherwise.
         
         ..note::
-            This version of sdf allows for TBN tuning between 5 and 93 MHz.
+            This version of sdf allows for TBS tuning between 5 and 93 MHz.
         """
         
         self.update()
@@ -956,10 +941,10 @@ class TBN(Observation):
         if self.dur < 1:
             pid_print("Specified a duration of length zero", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
-        if self.freq1 < backend.TBN_TUNING_WORD_MIN or self.freq1 > backend.TBN_TUNING_WORD_MAX:
+        if self.freq1 < backend.TBS_TUNING_WORD_MIN or self.freq1 > backend.TBS_TUNING_WORD_MAX:
             pid_print(f"Specified frequency is outside of the {be_name} tuning range", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
-        if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
+        if self.filter not in [8,]:
             pid_print(f" Invalid filter code '{self.filter}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
             
@@ -994,15 +979,15 @@ class DRX(Observation):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if a high dynamic range beam output is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
     filter_codes = DRXFilters
     
-    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, ra, dec, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_RADEC', ra, dec, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     def set_beamdipole_mode(self, stand, beam_gain=0.04, dipole_gain=1.0, pol='X'):
         """Convert the current observation to a 'beam-dipole mode' 
@@ -1032,7 +1017,7 @@ class DRX(Observation):
             ## Disable beam-dipole mode
             self.beamDipole = None
         else:
-            ## Stand -> DP Stand
+            ## Stand -> NDP Stand
             station = lwa1
             if self._parent is not None:
                 station = self._parent.station
@@ -1057,8 +1042,8 @@ class DRX(Observation):
             
         data_rate = DRXSize * 4 * sample_rate / 4096
         if self._parent is not None:
-            nchan, nwin = self._parent.spcSetup
-            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            nchan, nwin = self._parent.spc_setup
+            nprod = 4 if self._parent.spc_metatag in ('{Stokes=IQUV}',) else 2
             SPCSize = 76 + nchan*2*nprod*4
             try:
                 data_rate = SPCSize * sample_rate / (nchan*nwin)
@@ -1172,13 +1157,13 @@ class Solar(DRX):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if a high dynamic range beam output is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_SOL', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     @property
     def fixed_body(self):
@@ -1203,13 +1188,13 @@ class Jovian(DRX):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if a high dynamic range beam output is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_JOV', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     @property
     def fixed_body(self):
@@ -1234,13 +1219,13 @@ class Lunar(DRX):
      * integer filter code
     
     Optional Keywords:
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if a high dynamic range beam output is to be used
                  (default = False)
      * comments - comments about the observation
     """
     
-    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, max_snr=False, comments=None):
-        Observation.__init__(self, name, target, start, duration, 'TRK_LUN', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, max_snr=max_snr, comments=comments)
+    def __init__(self, name, target, start, duration, frequency1, frequency2, filter, gain=-1, high_dr=False, comments=None):
+        Observation.__init__(self, name, target, start, duration, 'TRK_LUN', 0.0, 0.0, frequency1, frequency2, filter, gain=gain, high_dr=high_dr, comments=comments)
         
     @property
     def fixed_body(self):
@@ -1277,7 +1262,7 @@ class Stepped(Observation):
                 self.steps.extend(steps)
             else:
                 self.steps.append(steps)
-        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, max_snr=False, comments=comments)
+        Observation.__init__(self, name, target, start, 'please_dont_warn_me', 'STEPPED', 0.0, 0.0, 0.0, 0.0, filter, gain=gain, high_dr=False, comments=comments)
         
     def update(self):
         """Update the computed parameters from the string values."""
@@ -1355,7 +1340,7 @@ class Stepped(Observation):
             ## Disable beam-dipole mode
             self.beamDipole = None
         else:
-            ## Stand -> DP Stand
+            ## Stand -> NDP Stand
             station = lwa1
             if self._parent is not None:
                 station = self._parent.station
@@ -1384,8 +1369,8 @@ class Stepped(Observation):
             
         data_rate = DRXSize * 4 * sample_rate / 4096
         if self._parent is not None:
-            nchan, nwin = self._parent.spcSetup
-            nprod = 4 if self._parent.spcMetatag in ('{Stokes=IQUV}',) else 2
+            nchan, nwin = self._parent.spc_setup
+            nprod = 4 if self._parent.spc_metatag in ('{Stokes=IQUV}',) else 2
             SPCSize = 76 + nchan*2*nprod*4
             try:
                 data_rate = SPCSize * sample_rate / (nchan*nwin)
@@ -1495,21 +1480,21 @@ class BeamStep(object):
     
     Optional Keywords:
      * is_radec - whether the coordinates are in RA/Dec or Az/El pairs (default=RA/Dec)
-     * max_snr - specifies if maximum signal-to-noise beam forming is to be used
+     * high_dr - specifies if a high dynamic range beam output is to be used
                  (default = False)
      * spec_delays - 520 list of delays to apply for each antenna
      * spec_gains - 260 by 2 by 2 list of gains ([[XY, XY], [YX, YY]]) to apply for each antenna
     
     .. note::
         If `spec_delays` is specified, `spec_gains` must also be specified.
-        Specifying both `spec_delays` and `spec_gains` overrides the `max_snr` keyword.
+        Specifying both `spec_delays` and `spec_gains` overrides the `high_dr` keyword.
     
     .. versionchanged:: 1.0.0
         Added support for azimuth/altitude and RA/dec values as ephem.hours/ephem.degrees 
         instances
     """
     
-    def __init__(self, c1, c2, duration, frequency1, frequency2, is_radec=True, max_snr=False, spec_delays=None, spec_gains=None):
+    def __init__(self, c1, c2, duration, frequency1, frequency2, is_radec=True, high_dr=False, spec_delays=None, spec_gains=None):
         self.is_radec = bool(is_radec)
         if self.is_radec:
             convFactor = 12.0/math.pi
@@ -1524,7 +1509,7 @@ class BeamStep(object):
         self.duration = duration
         self.frequency1 = float(frequency1)
         self.frequency2 = float(frequency2)
-        self.max_snr = bool(max_snr)
+        self.high_dr = bool(high_dr)
         self.delays = spec_delays
         self.gains = spec_gains
         
@@ -1672,8 +1657,8 @@ class BeamStep(object):
         if self.delays is not None and self.gains is not None:
             return 'SPEC_DELAYS_GAINS'
         else:
-            if self.max_snr:
-                return 'MAX_SNR'
+            if self.high_dr:
+                return 'HIGH_DR'
             else:
                 return 'SIMPLE'
                 
@@ -1752,7 +1737,7 @@ class BeamStep(object):
 class Session(object):
     """Class to hold all of the observations in a session."""
     
-    _allowed_modes = (TBW, TBN, DRX, Stepped)
+    _allowed_modes = (TBT, TBS, DRX, Stepped)
     
     _parent = None
     
@@ -1771,11 +1756,11 @@ class Session(object):
         
         self.configuration_authority = 0
         self.drx_beam = -1
-        self.spcSetup = [0, 0]
-        self.spcMetatag = None
+        self.spc_setup = [0, 0]
+        self.spc_metatag = None
         
-        self.recordMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
-        self.updateMIB = {'ASP': -1, 'DP_': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.record_mib = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
+        self.update_mib = {'ASP': -1, 'NDP': -1, 'DR1': -1, 'DR2': -1, 'DR3': -1, 'DR4': -1, 'DR5': -1, 'SHL': -1, 'MCS': -1}
         
         self.include_mcssch_log = False
         self.include_mcsexe_log = False
@@ -1797,10 +1782,6 @@ class Session(object):
         .. versionadded:: 1.2.0
         """
         
-        if value.interface.sdf != 'lsl.common.sdf':
-            raise ValueError("Incompatible station: expected %s, got %s" % \
-                             (value.interface.sdf, 'lsl.common.sdf'))
-            
         self._station = value
         self.update()
         
@@ -1813,7 +1794,7 @@ class Session(object):
     def spectrometer_channels(self):
         """Number of spectrometer channesl to output, 0 is disables."""
         
-        return self.spcSetup[0]
+        return self.spc_setup[0]
         
     @spectrometer_channels.setter
     def spectrometer_channels(self, value):
@@ -1822,13 +1803,13 @@ class Session(object):
         value = int(value)
         if value not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
             raise ValueError(f"Invalid DR spectrometer channel count '{value}'")
-        self.spcSetup[0] = value
+        self.spc_setup[0] = value
         
     @property
     def spectrometer_integration(self):
         """Number of FFT windows per spectrometer integration, 0 to disable."""
         
-        return self.spcSetup[1]
+        return self.spc_setup[1]
         
     @spectrometer_integration.setter
     def spectrometer_integration(self, value):
@@ -1838,13 +1819,13 @@ class Session(object):
         value = int(value)
         if value not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
             raise ValueError(f"Invalid DR spectrometer integration count '{value}'")
-        self.spcSetup[1] = value
+        self.spc_setup[1] = value
         
     @property
     def spectrometer_metatag(self):
         """Spectrometer polarization selection."""
         
-        return self.spcMetatag
+        return self.spc_metatag
         
     @spectrometer_metatag.setter
     def spectrometer_metatag(self, value):
@@ -1861,7 +1842,7 @@ class Session(object):
                          '{Stokes=XXYY}', '{Stokes=CRCI}', '{Stokes=XXCRCIYY}', 
                          '{Stokes=I}', '{Stokes=IV}', '{Stokes=IQUV}'):
             raise ValueError(f"Invalid DR spectrometer mode '{value}'")
-        self.spcMetatag = value
+        self.spc_metatag = value
         
     def set_mib_record_interval(self, component, interval):
         """Set the record interval for one of the level-1 subsystems (ASP, DP_, etc.) to
@@ -1873,9 +1854,9 @@ class Session(object):
           * 0 = never record the MIB entries (the entries are still updated, however)
         """
         
-        if component not in self.recordMIB.keys():
+        if component not in self.record_mib.keys():
                raise KeyError(f"Unknown subsystem '{component}'")
-        self.recordMIB[component] = int(interval)
+        self.record_mib[component] = int(interval)
         
     def set_mib_update_interval(self, component, interval):
         """Set the update interval for one of the level-1 subsystems (ASP, DP_, etc.) to 
@@ -1887,9 +1868,9 @@ class Session(object):
          * 0 = request no updates to the MIB entries
         """
         
-        if component not in self.updateMIB.keys():
+        if component not in self.update_mib.keys():
                raise KeyError(f"Unknown subsystem '{component}'")
-        self.updateMIB[component] = int(interval)
+        self.update_mib[component] = int(interval)
         
     @property
     def data_return_method(self):
@@ -1932,27 +1913,33 @@ class Session(object):
         if self.drx_beam != -1 and self.drx_beam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
             pid_print(f"Invalid beam number '{self.drx_beam}'", level=logging.ERROR, logging_only=(not verbose))
             failures += 1
-        for key in list(self.recordMIB.keys()):
-            if self.recordMIB[key] < -1:
-                pid_print(f"Invalid recording interval for '{key}' MIB entry '{self.recordMIB[key]}'", level=logging.ERROR, logging_only=(not verbose))
+        for key in list(self.record_mib.keys()):
+            if self.record_mib[key] < -1:
+                if verbose:
+                    pid_print(f"Error: Invalid recording interval for '{key}' MIB entry '{self.record_mib[key]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
-            if self.updateMIB[key] < -1:
-                pid_print(f"Invalid update interval for '{key}' MIB entry '{self.updateMIB[key]}'", level=logging.ERROR, logging_only=(not verbose))
+            if self.update_mib[key] < -1:
+                if verbose:
+                    pid_print(f"Error: Invalid update interval for '{key}' MIB entry '{self.update_mib[key]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
                 
-        if self.spcSetup[0] > 0 or self.spcSetup[1] > 0 or self.spcMetatag not in (None, ''):
-            if self.spcSetup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
-                pid_print(f"Invalid DR spectrometer channel count '{self.spcSetup[0]}'", level=logging.ERROR, logging_only=(not verbose))
+        if self.spc_setup[0] > 0 or self.spc_setup[1] > 0 or self.spc_metatag not in (None, ''):
+            if self.spc_setup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
+                if verbose:
+                    pid_print(f"Error: Invalid DR spectrometer channel count '{self.spc_setup[0]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
-            if self.spcSetup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
-                pid_print(f"Invalid DR spectrometer integration count '{self.spcSetup[1]}'", level=logging.ERROR, logging_only=(not verbose))
+            if self.spc_setup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
+                if verbose:
+                    pid_print(f"Error: Invalid DR spectrometer integration count '{self.spc_setup[1]}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
-            if self.spcMetatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
-                pid_print(f"Invalid DR spectrometer mode '{self.spcMetatag}'", level=logging.ERROR, logging_only=(not verbose))
+            if self.spc_metatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
+                if verbose:
+                    pid_print(f"Error: Invalid DR spectrometer mode '{self.spc_metatag}'", level=logging.ERROR, logging_only=(not verbose))
                 failures += 1
             if len(self.observations) > 0:
-                if self.observations[0].mode in ('TBW', 'TBN'):
-                    pid_print(f"DR spectrometer incompatible with '{self.observations[0].mode}", level=logging.ERROR, logging_only=(not verbose))
+                if self.observations[0].mode in ('TBT', 'TBS'):
+                    if verbose:
+                        pid_print(f"Error: DR spectrometer incompatible with '{self.observations[0].mode}", level=logging.ERROR, logging_only=(not verbose))
                     failures += 1
                     
         observationCount = 1
@@ -2061,23 +2048,18 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     mode = obs_temp['mode']
     pid_print(f"Obs {obs_temp['id']} is mode {mode}", level=logging.INFO, logging_only=(not verbose))
         
-    if mode == 'TBW':
-        obsOut = TBW(obs_temp['name'], obs_temp['target'], utcString, 12000000, comments=obs_temp['comments'])
-        obsOut.bits = 1*obs_temp['tbwBits']
-        if obs_temp['tbwSamples'] > 0:
-            obsOut.samples = 1*obs_temp['tbwSamples']
-        else:
-            obsOut.samples = 12000000 if obsOut.bits == 12 else 36000000
-    elif mode == 'TBN':
-        obsOut = TBN(obs_temp['name'], obs_temp['target'], utcString, durString, f1, obs_temp['filter'], gain=obs_temp['gain'], comments=obs_temp['comments'])
+    if mode == 'TBT':
+        obsOut = TBT(obs_temp['name'], obs_temp['target'], utcString, obs_temp['tbtSamples'], comments=obs_temp['comments'])
+    elif mode == 'TBS':
+        obsOut = TBS(obs_temp['name'], obs_temp['target'], utcString, durString, f1, obs_temp['filter'], comments=obs_temp['comments'])
     elif mode == 'TRK_RADEC':
-        obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = DRX(obs_temp['name'], obs_temp['target'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
-        obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Solar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_JOV':
-        obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Jovian(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'TRK_LUN':
-        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], max_snr=obs_temp['MaxSNR'], comments=obs_temp['comments'])
+        obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
         pid_print(f"-> found {len(beam_temps)} steps", level=logging.INFO, logging_only=(not verbose))
             
@@ -2100,7 +2082,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
                 if len(beam_temp['gains']) != LWA_MAX_NSTD:
                     raise RuntimeError("Invalid number of gains for custom beamforming")
                     
-            obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['MaxSNR'], beam_temp['delays'], beam_temp['gains']) )
+            obsOut.append( BeamStep(beam_temp['c1'], beam_temp['c2'], durString, f1, f2, obs_temp['stpRADec'], beam_temp['HighDR'], beam_temp['delays'], beam_temp['gains']) )
     else:
         raise RuntimeError(f"Invalid mode encountered: {mode}")
         
@@ -2113,7 +2095,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     obsOut.asp_filter = copy.deepcopy(obs_temp['aspFlt'])
     obsOut.asp_atten_1 = copy.deepcopy(obs_temp['aspAT1'])
     obsOut.asp_atten_2 = copy.deepcopy(obs_temp['aspAT2'])
-    obsOut.asp_atten_split = copy.deepcopy(obs_temp['aspATS'])
+    obsOut.asp_atten_3 = copy.deepcopy(obs_temp['aspAT3'])
     
     # Force the observation to be updated
     obsOut.update()
@@ -2146,12 +2128,12 @@ def parse_sdf(filename, verbose=False):
     project.project_office.observations = [[],]
     
     obs_temp = {'id': 0, 'name': '', 'target': '', 'ra': 0.0, 'dec': 0.0, 'start': '', 'duration': '', 'mode': '', 
-                'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'MaxSNR': False, 'comments': None, 
-                'stpRADec': True, 'tbwBits': 12, 'tbwSamples': 0, 'gain': -1, 
+                'beamDipole': None, 'freq1': 0, 'freq2': 0, 'filter': 0, 'HighDR': False, 'comments': None, 
+                'stpRADec': True, 'tbtSamples': 0, 'gain': -1, 
                 'obsFEE': [[-1,-1] for n in range(LWA_MAX_NSTD)], 
                 'aspFlt': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT1': [-1 for n in range(LWA_MAX_NSTD)], 
-                'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspATS': [-1 for n in range(LWA_MAX_NSTD)]}
-    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+                'aspAT2': [-1 for n in range(LWA_MAX_NSTD)], 'aspAT3': [-1 for n in range(LWA_MAX_NSTD)]}
+    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'HighDR': False, 'delays': None, 'gains': None}
     beam_temps = []
     
     # Loop over the file
@@ -2244,11 +2226,11 @@ def parse_sdf(filename, verbose=False):
                 continue
             if keyword[0:12] == 'SESSION_MRP_':
                 component = keyword[12:]
-                project.sessions[0].recordMIB[component] = int(value)
+                project.sessions[0].record_mib[component] = int(value)
                 continue
             if keyword[0:12] == 'SESSION_MUP_':
                 component = keyword[12:]
-                project.sessions[0].updateMIB[component] = int(value)
+                project.sessions[0].update_mib[component] = int(value)
                 continue
             if keyword == 'SESSION_LOG_SCH':
                 project.sessions[0].include_mcssch_log = bool(value)
@@ -2276,20 +2258,20 @@ def parse_sdf(filename, verbose=False):
                 else:
                     metatag = None
                     
-                project.sessions[0].spcSetup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
-                project.sessions[0].spcMetatag = metatag
-                # If the input field is '' the value of spcSetup is [].  This
+                project.sessions[0].spc_setup = [int(i) for i in value.lstrip().rstrip().split(None, 1)]
+                project.sessions[0].spc_metatag = metatag
+                # If the input field is '' the value of spc_setup is [].  This
                 # isn't good for the SDF render so reset [] to [0, 0]
-                if project.sessions[0].spcSetup == []:
-                    project.sessions[0].spcSetup = [0, 0]
-                    project.sessions[0].spcMetatag = None
+                if project.sessions[0].spc_setup == []:
+                    project.sessions[0].spc_setup = [0, 0]
+                    project.sessions[0].spc_metatag = None
                 continue
                 
             # Observation Info
             if keyword == 'OBS_ID':
                 if obs_temp['id'] != 0:
                     project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
-                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'MaxSNR': False, 'delays': None, 'gains': None}
+                    beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'HighDR': False, 'delays': None, 'gains': None}
                     beam_temps = []
                 obs_temp['id'] = int(value)
                 project.project_office.observations[0].append( None )
@@ -2337,7 +2319,7 @@ def parse_sdf(filename, verbose=False):
                 continue
             if keyword == 'OBS_B':
                 if value != 'SIMPLE':
-                    obs_temp['MaxSNR'] = True
+                    obs_temp['HighDR'] = True
                 continue
             if keyword == 'OBS_FREQ1':
                 obs_temp['freq1'] = int(value)
@@ -2420,8 +2402,8 @@ def parse_sdf(filename, verbose=False):
                     beam_temps.append( copy.deepcopy(beam_temp) )
                     beam_temps[-1]['id'] = ids[0]
                 
-                    if value in ('MAX_SNR', '2'):
-                        beam_temps[-1]['MaxSNR'] = True
+                    if value in ('HIGH_DR', '2'):
+                        beam_temps[-1]['HighDR'] = True
                     
                     elif value in ('SPEC_DELAYS_GAINS', '3'):
                         beam_temps[-1]['delays'] = []
@@ -2432,14 +2414,14 @@ def parse_sdf(filename, verbose=False):
                                 beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                     else:
-                        beam_temps[-1]['MaxSNR'] = False
+                        beam_temps[-1]['HighDR'] = False
                 else:
                     if beam_temps[-1]['id'] != ids[0]:
                         beam_temps.append( copy.deepcopy(beam_temps[-1]) )
                         beam_temps[-1]['id'] = ids[0]
                     
-                    if value in ('MAX_SNR', '2'):
-                        beam_temps[-1]['MaxSNR'] = True
+                    if value in ('HIGH_DR', '2'):
+                        beam_temps[-1]['HighDR'] = True
                     
                     elif value in ('SPEC_DELAYS_GAINS', '3'):
                         beam_temps[-1]['delays'] = []
@@ -2450,7 +2432,7 @@ def parse_sdf(filename, verbose=False):
                                 beam_temps[-1]['gains'].append( [[0, 0], [0, 0]] )
                             
                     else:
-                        beam_temps[-1]['MaxSNR'] = False
+                        beam_temps[-1]['HighDR'] = False
                 continue
             
             if keyword == 'OBS_BEAM_DELAY':
@@ -2495,51 +2477,60 @@ def parse_sdf(filename, verbose=False):
                     for n in range(len(obs_temp['obsFEE'])):
                         obs_temp['obsFEE'][n][ids[1]-1] = int(value)
                 else:
-                    obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
+                    try:
+                        obs_temp['obsFEE'][ids[0]-1][ids[1]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_ASP_FLT':
                 if ids[0] == 0:
                     for n in range(len(obs_temp['aspFlt'])):
                         obs_temp['aspFlt'][n] = int(value)
                 else:
-                    obs_temp['aspFlt'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspFlt'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_ASP_AT1':
                 if ids[0] == 0:
                     for n in range(len(obs_temp['aspAT1'])):
                         obs_temp['aspAT1'][n] = int(value)
                 else:
-                    obs_temp['aspAT1'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspAT1'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
             if keyword == 'OBS_ASP_AT2':
                 if ids[0] == 0:
                     for n in range(len(obs_temp['aspAT2'])):
                         obs_temp['aspAT2'][n] = int(value)
                 else:
-                    obs_temp['aspAT2'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspAT2'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
-            if keyword == 'OBS_ASP_ATS':
+            if keyword == 'OBS_ASP_AT3':
                 if ids[0] == 0:
-                    for n in range(len(obs_temp['aspATS'])):
-                        obs_temp['aspATS'][n] = int(value)
+                    for n in range(len(obs_temp['aspAT3'])):
+                        obs_temp['aspAT3'][n] = int(value)
                 else:
-                    obs_temp['aspATS'][ids[0]-1] = int(value)
+                    try:
+                        obs_temp['aspAT3'][ids[0]-1] = int(value)
+                    except IndexError:
+                        pass
                 continue
-            if keyword == 'OBS_TBW_BITS':
-                obs_temp['tbwBits'] = int(value)
-                continue
-            if keyword == 'OBS_TBW_SAMPLES':
-                obs_temp['tbwSamples'] = int(value)
-                continue
-            if keyword == 'OBS_TBN_GAIN':
-                obs_temp['gain'] = int(value)
+            if keyword == 'OBS_TBT_SAMPLES':
+                obs_temp['tbtSamples'] = int(value)
                 continue
             if keyword == 'OBS_DRX_GAIN':
                 obs_temp['gain'] = int(value)
                 continue
             
             # Keywords that might indicate this is for ADP-based stations/actually an IDF
-            if keyword in ('OBS_TBF_SAMPLES', 'RUN_ID'):
+            if keyword in ('OBS_TBW_BITS', 'OBS_TBW_SAMPLES', 'OBS_TBF_SAMPLES', 'OBS_TBN_GAIN', 'RUN_ID'):
                 raise RuntimeError(f"Invalid keyword encountered: {keyword}")
             
         # Create the final observation
@@ -2567,8 +2558,8 @@ def get_observation_start_stop(obs):
     tStop = tStart +  obs.dur / 1000.0
     
     # Conversion to a timezone-aware datetime instance
-    tStart = _UTC.localize( datetime.utcfromtimestamp(tStart) )
-    tStop  = _UTC.localize( datetime.utcfromtimestamp(tStop ) )
+    tStart = datetime.fromtimestamp(tStart, tz=timezone.utc)
+    tStop  = datetime.fromtimestamp(tStop, tz=timezone.utc)
     
     # Make sure we have an integer number of milliseconds
     ## Start

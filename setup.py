@@ -357,8 +357,7 @@ coreExtraLibs = []
 
 # Create the list of extension modules.  We do this here so that we can turn 
 # off the DRSU direct module for non-linux system
-ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/reader/tbw.cpp', 'lsl/reader/tbn.cpp', 'lsl/reader/drx.cpp', 'lsl/reader/drx8.cpp', 'lsl/reader/drspec.cpp', 'lsl/reader/vdif.cpp', 'lsl/reader/tbf.cpp', 'lsl/reader/cor.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
-            Extension('common._fir', ['lsl/common/fir.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
+ExtensionModules = [Extension('reader._gofast', ['lsl/reader/gofast.cpp', 'lsl/reader/drx.cpp', 'lsl/reader/drx8.cpp', 'lsl/reader/drspec.cpp', 'lsl/reader/vdif.cpp', 'lsl/reader/cor.cpp', 'lsl/reader/tbx.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._spec', ['lsl/correlator/spec.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
             Extension('correlator._stokes', ['lsl/correlator/stokes.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs),
             Extension('correlator._core', ['lsl/correlator/core.cpp'], include_dirs=[numpy.get_include()], libraries=['m'], extra_compile_args=coreExtraFlags, extra_link_args=coreExtraLibs), 
@@ -396,7 +395,7 @@ setup(
     scripts = glob.glob('scripts/*.py'), 
     python_requires='>=3.8', 
     setup_requires = ['numpy>=1.7'], 
-    install_requires = ['astropy>=5.2', 'jplephem', 'healpy', 'h5py', 'numpy>=1.7', 'scipy>=0.19', 'ephem>=3.7.5.3', 'aipy>=3.0.1', 'pytz>=2012c'],
+    install_requires = ['astropy>=5.2', 'jplephem', 'healpy', 'h5py', 'numpy>=1.7', 'scipy>=0.19', 'ephem>=3.7.5.3', 'aipy>=3.0.1', 'backports.zoneinfo; python_version<"3.9"'],
     include_package_data = True,  
     ext_package = 'lsl', 
     ext_modules = ExtensionModules,

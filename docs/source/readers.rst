@@ -11,36 +11,32 @@ LSL Developer Primitives
 
 .. autoclass:: lsl.reader.base.FrameTimestamp
    :members:
-   
-Low-Level TBW -- DP
--------------------
-.. automodule:: lsl.reader.tbw
+
+Low-Level TBX
+-------------
+.. versionadded:: 4.0
+.. automodule:: lsl.reader.tbx
    :members:
 
-Low-Level TBF -- ADP
---------------------
-.. versionadded:: 1.2
-.. automodule:: lsl.reader.tbf
-   :members:
-
-Low-Level TBN -- DP and ADP
----------------------------
-.. automodule:: lsl.reader.tbn
-   :members:
-
-Low-Level COR -- ADP
---------------------
+Low-Level COR
+-------------
 .. versionadded:: 1.2
 .. automodule:: lsl.reader.cor
    :members:
 
-Low-Level DRX -- DP and ADP
----------------------------
+Low-Level DRX
+-------------
 .. automodule:: lsl.reader.drx
    :members:
 
-Low-Level DR Spectrometer -- DP and ADP
----------------------------------------
+Low-Level DRX8
+--------------
+.. versionadded:: 4.0
+.. automodule:: lsl.reader.drx8
+   :members:
+
+Low-Level DR Spectrometer
+-------------------------
 .. versionadded:: 0.5
 .. automodule:: lsl.reader.drspec
    :members:

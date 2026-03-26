@@ -531,7 +531,7 @@ See the inidividual functions for more details.\n\
 */
 
 static int spec_exec(PyObject *module) {
-    import_array();
+    import_array1(-1);
     
     // Version and revision information
     PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.7"));
@@ -547,7 +547,7 @@ static int spec_exec(PyObject *module) {
     if( pModule != NULL ) {
         PyObject* pDataPath = PyObject_GetAttrString(pModule, "WISDOM");
         if( pDataPath != NULL ) {
-            char* pathname = PyString_AsString(pDataPath);
+            const char* pathname = PyUnicode_AsUTF8(pDataPath);
             char* filename = (char*) malloc(strlen(pathname)+strlen("/fftwf_wisdom.txt")+1);
             if( filename != NULL ) {
                 strcpy(filename, pathname);

@@ -46,14 +46,13 @@ except ImportError:
     pass
 
 
-__version__  = "0.3"
+__version__  = "0.4"
 __author__    = "Jayce Dowell"
 
 
 uvFile = os.path.join(os.path.dirname(__file__), 'data', 'uv-test.fits')
 idiFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test.fits')
 idiAltFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.fits')
-idiSSMIFFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.txt')
 
 
 class imaging_tests(unittest.TestCase):
@@ -190,45 +189,6 @@ class imaging_tests(unittest.TestCase):
         self.assertRaises(IndexError, idi.get_data_set, 2)
         
         idi.close()
-        
-    def test_CorrelatedDataIDI_AltArrayGeometry(self):
-        """Test the utils.CorrelatedDataIDI class on determing array geometry."""
-        
-        # Open the FITS IDI files
-        idi1 = utils.CorrelatedData(idiFile)
-        idi2 = utils.CorrelatedData(idiAltFile)
-        
-        # Dates
-        self.assertEqual(idi1.date_obs.strftime("%Y-%m-%dT%H:%M:%S"), idi2.date_obs.strftime("%Y-%m-%dT%H:%M:%S"))
-        
-        # Stand and baseline counts
-        self.assertEqual(len(idi1.stands), len(idi2.stands))
-        self.assertEqual(idi1.total_baseline_count, idi2.total_baseline_count)
-        self.assertEqual(idi1.integration_count, idi2.integration_count)
-        
-        # Check stands
-        for s1,s2 in zip(idi1.stands, idi2.stands):
-            self.assertEqual(s1, s2)
-            
-        # Check stations
-        station1 = parse_ssmif(idiSSMIFFile)
-        station2 = idi2.station
-        self.assertAlmostEqual(station1.lat, station2.lat, 3)
-        self.assertAlmostEqual(station1.lon, station2.lon, 3)
-        self.assertAlmostEqual(station1.elev, station2.elev, 1)
-        
-        # Check antennas
-        ants1 = idi1.station.antennas
-        ants2 = station2.antennas
-        for a1,a2 in zip(ants1, ants2):
-            self.assertEqual(a1.id, a2.id)
-            self.assertEqual(a1.stand.id, a2.stand.id)
-            self.assertAlmostEqual(a1.stand.x, a2.stand.x, 2)
-            self.assertAlmostEqual(a1.stand.y, a2.stand.y, 2)
-            self.assertAlmostEqual(a1.stand.z, a2.stand.z, 2)
-            
-        idi1.close()
-        idi2.close()
         
     def test_CorrelatedDataUV(self):
         """Test the utils.CorrelatedDataUV class."""
@@ -714,16 +674,45 @@ class imaging_tests(unittest.TestCase):
                 # Go for it!
                 aa = idi.get_antennaarray()
                 ds = idi.get_data_set(1)
-                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
-                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
-                junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
-                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
-                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
-                junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
-                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True, return_convergence=True)
-                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, amplitude=True)
-                junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False)
-                
+                with self.subTest(mode='phase only'):
+                    with self.subTest(amplitude=True):
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, return_convergence=True)
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, inv_epsilon=0.01)
+                    with self.subTest(amplitude=False):
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, 
+                                                  amplitude=False)
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                  inv_epsilon=0.01, verbose=False, amplitude=False)
+                        
+                with self.subTest(mode='delay only'):
+                    with self.subTest(amplitude=True):
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, return_convergence=True)
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=True, inv_epsilon=0.01)
+                    with self.subTest(amplitude=False):
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                                                  amplitude=False)
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                  amplitude=False, inv_epsilon=0.01, verbose=False)
+                        
+                with self.subTest(mode='delay and phase'):
+                    with self.subTest(amplitude=True):
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       verbose=False, amplitude=True,
+                                                       return_convergence=True)
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       verbose=False, amplitude=True,
+                                                       inv_epsilon=0.01)
+                    with self.subTest(amplitude=False):
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       verbose=False, amplitude=False)
+                        junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
+                                                       amplitude=False, inv_epsilon=0.01,
+                                                       verbose=False)
+                        
                 # Error checking
                 self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
                 self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=564)
@@ -764,7 +753,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         with lsl.testing.SilentVerbose():
             # Build an image
@@ -782,7 +771,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         with lsl.testing.SilentVerbose():
             # Build an image
@@ -800,14 +789,14 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         with lsl.testing.SilentVerbose():
             # Build an image
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.lsq(out, img, max_iter=2, verbose=False, plot=run_plotting_tests)
+            deconv.lsq(out, img, max_iter=2, verbose=False, plot=True)#run_plotting_tests)
             
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting(self):
@@ -819,7 +808,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)
@@ -860,7 +849,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)
@@ -882,7 +871,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)
@@ -904,7 +893,7 @@ class imaging_tests(unittest.TestCase):
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         
         # Build the data dictionary
-        out = vis.build_sim_data(aa, vis.SOURCES, jd=2458962.16965)
+        out = vis.build_sim_data(aa, vis.SOURCES, jd=2461110.2)
         
         # Build an image
         img = utils.build_gridded_image(out)

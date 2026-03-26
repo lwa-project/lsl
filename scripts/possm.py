@@ -46,7 +46,7 @@ def main(args):
             continue
             
         print(f"Set #{set} of {nSets}")
-        dataDict = idi.get_data_set(set, include_auto=args.include_auto, min_uv=args.uv_min)
+        dataDict = idi.get_data_set(set, include_auto=args.include_auto, min_uv=args.uv_min, max_uv=args.uv_max)
         
         # Prune out what needs to go
         if args.include != 'all' or args.exclude != 'none':
@@ -93,6 +93,10 @@ def main(args):
                     stnd2 = idi.stands[stnd2]
                     vis = getattr(dataDict, pols[0]).data[i]
                     i += 1
+                    
+                    if i == args.nbaseline + 1:
+                        raise IndexError
+                        
                 except IndexError:
                     plt.draw()
                     break
@@ -147,6 +151,8 @@ if __name__ == "__main__":
     parser.add_argument('-s', '--dataset', type=int, default=-1, 
                         help='data set to image')
     parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
+                        help='minimum baseline uvw length to include in lambda at the midpoint frequency')
+    parser.add_argument('-x', '--uv-max', type=float, default=1e6, 
                         help='minimum baseline uvw length to include in lambda at the midpoint frequency')
     parser.add_argument('-a', '--include-auto', action='store_true',
                         help='also plot auto-correlations')

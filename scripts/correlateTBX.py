@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 """
-Example script that reads in TBF data and runs a cross-correlation on it.  
+Example script that reads in TBT/TBS data and runs a cross-correlation on it.  
 The results are saved in the FITS IDI format.
 """
 
@@ -15,11 +15,10 @@ from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
 
 from lsl.reader.base import CI8
-from lsl.reader.ldp import LWADataFile, TBFFile
+from lsl.reader.ldp import LWADataFile, TBXFile
 from lsl.common import stations, metabundle
 from lsl.correlator import uvutils
 from lsl.correlator import fx as fxc
-from lsl.correlator._core import XEngine2
 from lsl.writer import fitsidi, measurementset
 from lsl.misc import parser as aph
 
@@ -29,7 +28,7 @@ telemetry.track_script()
 
 def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['xx',], chunk_size=100):
     """
-    Given a lsl.reader.ldp.TBFFile instances and various parameters for the
+    Given a lsl.reader.ldp.TBXFile instances and various parameters for the
     cross-correlation, write cross-correlate the data and save it to a file.
     """
     
@@ -101,12 +100,6 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
             data = data.view(np.int8)
             data = data.reshape(data.shape[:-1]+(-1,2))
             
-        ## Split the polarizations
-        antennasX, antennasY = [a for i,a in enumerate(antennas) if a.pol == 0 and i in toKeep], [a for i,a in enumerate(antennas) if a.pol == 1 and i in toKeep]
-        dataX, dataY = data[0::2,...], data[1::2,...]
-        validX = np.ones((dataX.shape[0],dataX.shape[2]), dtype=np.uint8)
-        validY = np.ones((dataY.shape[0],dataY.shape[2]), dtype=np.uint8)
-        
         setTime = t
         if s == 0:
             ref_time = setTime
@@ -118,31 +111,10 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
         # Loop over polarization products
         for pol in pols:
             print(f"->  {pol}")
-            if pol[0] == 'x':
-                a1, d1, v1 = antennasX, dataX, validX
-            else:
-                a1, d1, v1 = antennasY, dataY, validY
-            if pol[1] == 'x':
-                a2, d2, v2 = antennasX, dataX, validX
-            else:
-                a2, d2, v2 = antennasY, dataY, validY
-                
-            ## Get the baselines
-            baselines = uvutils.get_baselines(a1, antennas2=a2, include_auto=True)
+            baselines, vis = fxc.XMaster(freq_flat, data, mapper, pol=pol,
+                                         include_auto=True, gain_correct=True,
+                                         return_baselines=True)
             
-            ## Run the cross multiply and accumulate
-            vis = XEngine2(d1, d2, v1, v2)
-            
-            ## Apply the cable delays as phase rotations
-            for k,(ant1,ant2) in enumerate(baselines):
-                gain1 = np.sqrt( ant1.cable.gain(freq_flat) )
-                phaseRot1 = np.exp(2j*np.pi*freq_flat*(ant1.cable.delay(freq_flat) \
-                                                       -ant1.stand.z/speedOfLight))
-                gain2 = np.sqrt( ant2.cable.gain(freq_flat) )
-                phaseRot2 = np.exp(2j*np.pi*freq_flat*(ant2.cable.delay(freq_flat) \
-                                                       -ant2.stand.z/speedOfLight))
-                vis[k,:] *= phaseRot2.conj()*phaseRot1 / gain2 / gain1
-                
             # If we are in the first polarization product of the first iteration,  setup
             # the FITS IDI file.
             if s  == 0 and pol == pols[0]:
@@ -176,17 +148,19 @@ def main(args):
             station = metabundle.get_station(args.metadata, apply_sdm=True)
     elif args.lwana:
         station = stations.lwana
-    else:
+    elif args.lwasv:
         station = stations.lwasv
+    else:
+        station = stations.lwa1
     antennas = station.antennas
     
     with LWADataFile(args.filename) as idf:
-        if not isinstance(idf, TBFFile):
-            raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBF file")
+        if not isinstance(idf, TBXFile):
+            raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid TBT or TBS file")
             
         jd = idf.get_info('start_time').jd
         date = idf.get_info('start_time').datetime
-        nFpO = idf.get_info('nchan') // 12
+        nFpO = idf.get_info('nchan') // idf.get_info('frame_channel_count')
         sample_rate = idf.get_info('sample_rate')
         nInts = idf.get_info('nframe') // nFpO
         
@@ -276,15 +250,18 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='cross-correlate data in a TBF file', 
+        description='cross-correlate data in a TBX file', 
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
         )
     parser.add_argument('filename', type=str, 
                         help='filename to correlate')
     parser.add_argument('-m', '--metadata', type=str, 
                         help='name of SSMIF or metadata tarball file to use for mappings')
-    parser.add_argument('-n', '--lwana', action='store_true',
-                        help='use LWA-NA instead of LWA-SV')
+    sgroup = parser.add_mutually_exclusive_group(required=False)
+    sgroup.add_argument('-v', '--lwasv', action='store_true',
+                        help='use LWA-SV instead of LWA1')
+    sgroup.add_argument('-n', '--lwana', action='store_true',
+                        help='use LWA-NA instead of LWA1')
     parser.add_argument('-t', '--avg-time', type=aph.positive_or_zero_float, default=0.0, 
                         help='time window to average visibilities in seconds; 0 = integrate the entire file')
     parser.add_argument('-s', '--samples', type=aph.positive_int, default=1, 

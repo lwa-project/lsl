@@ -5,12 +5,16 @@ Unit test for the lsl.common.sdf module.
 import os
 import re
 import copy
-import pytz
 import ephem
 import tempfile
 import unittest
 import shutil
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
+
 try:
     from StringIO import StringIO
 except ImportError:
@@ -18,8 +22,8 @@ except ImportError:
 
 from astropy.coordinates import Angle as AstroAngle
 
-from lsl.common import sdf, sdfADP as other_sdf
-from lsl.common.stations import lwa1, lwasv
+from lsl.common import sdf
+from lsl.common.stations import lwa1, lwasv, lwana
 import lsl.testing
 
 
@@ -27,15 +31,14 @@ __version__  = "0.4"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-sdf.txt')
-tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-sdf.txt')
+tbtFile = os.path.join(os.path.dirname(__file__), 'data', 'tbt-sdf.txt')
+tbsFile = os.path.join(os.path.dirname(__file__), 'data', 'tbs-sdf.txt')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-sdf.txt')
 solFile = os.path.join(os.path.dirname(__file__), 'data', 'sol-sdf.txt')
 jovFile = os.path.join(os.path.dirname(__file__), 'data', 'jov-sdf.txt')
 lunFile = os.path.join(os.path.dirname(__file__), 'data', 'lun-sdf.txt')
 stpFile = os.path.join(os.path.dirname(__file__), 'data', 'stp-sdf.txt')
 spcFile = os.path.join(os.path.dirname(__file__), 'data', 'spc-sdf.txt')
-tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-sdf.txt')
 idfFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-idf.txt')
 
 
@@ -53,15 +56,14 @@ class sdf_tests(unittest.TestCase):
     def test_time(self):
         """Test the sdf.parse_time() function."""
         
-        _UTC = pytz.utc
-        _EST = pytz.timezone('US/Eastern')
+        _EST = zoneinfo.ZoneInfo('America/New_York')
         
         # Different realizations of the same thing
         s1 = "EST 2011-01-01 12:13:14.567"
         s2 = "EST 2011 01 01 12:13:14.567"
         s3 = "EST 2011 Jan 01 12:13:14.567"
-        s4 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
-        s5 = _EST.localize(datetime(2011, 1, 1, 12, 13, 14, 567123))
+        s4 = datetime(2011, 1, 1, 12, 13, 14, 567000, tzinfo=_EST)
+        s5 = datetime(2011, 1, 1, 12, 13, 14, 567123, tzinfo=_EST)
         
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s2))
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s3))
@@ -78,14 +80,14 @@ class sdf_tests(unittest.TestCase):
         for n,m in enumerate(['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']):
             s1 = "UTC 2011-%s-14 12:13:14.000" % m
             s2 = "UTC 2011-%02i-14 12:13:14.000" % (n+1)
-            s3 = _UTC.localize(datetime(2011, n+1, 14, 12, 13, 14, 0))
+            s3 = datetime(2011, n+1, 14, 12, 13, 14, 0, tzinfo=timezone.utc)
             self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s2))
             self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s3))
             
         # Time zone agreement - UTC
         s1 = "2011-01-01 12:13:14.567"
         s2 = "2011 01 01 12:13:14.567"
-        s3 = _UTC.localize(datetime(2011, 1, 1, 12, 13, 14, 567000))
+        s3 = datetime(2011, 1, 1, 12, 13, 14, 567000, tzinfo=timezone.utc)
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s2))
         self.assertEqual(sdf.parse_time(s1), sdf.parse_time(s3))
         self.assertEqual(sdf.parse_time(s2), sdf.parse_time(s3))
@@ -128,7 +130,7 @@ class sdf_tests(unittest.TestCase):
         """Test SDF member type control."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=[targ,])
         sess.drx_beam = 1
         proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
@@ -159,7 +161,7 @@ class sdf_tests(unittest.TestCase):
         """Test string representations of SDF objects."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=[targ,])
         sess.drx_beam = 1
         proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=[sess,])
@@ -175,7 +177,7 @@ class sdf_tests(unittest.TestCase):
         """Test single session/observations SDFs."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=targ)
         sess.drx_beam = 1
         proj = sdf.Project(obs, 'Test Project', 'COMTST', sessions=sess)
@@ -185,7 +187,7 @@ class sdf_tests(unittest.TestCase):
         """Test setting the UCF username for auto-copy support."""
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=targ)
         sess.drx_beam = 1
         sess.data_return_method = 'UCF'
@@ -195,7 +197,7 @@ class sdf_tests(unittest.TestCase):
         self.assertTrue(out.find('ucfuser:test') >= 0)
         
         obs = sdf.Observer('Test Observer', 99)
-        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, max_snr=False)
+        targ = sdf.DRX('Target', 'Target', '2019/1/1 00:00:00', '00:00:10', 0.0, 90.0, 40e6, 50e6, 7, high_dr=False)
         sess = sdf.Session('Test Session', 1, observations=targ, comments='This is a comment')
         sess.drx_beam = 1
         sess.data_return_method = 'UCF'
@@ -204,87 +206,78 @@ class sdf_tests(unittest.TestCase):
         out = proj.render()
         self.assertTrue(out.find('ucfuser:test/dir1') >= 0)
         
-    ### TBW ###
+    ### TBT ###
     
-    def test_tbw_parse(self):
-        """Test reading in a TBW SDF file."""
+    def test_tbt_parse(self):
+        """Test reading in a TBT SDF file."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
         self.assertEqual(len(project.sessions[0].observations), 2)
         
         # Observational setup - 1
-        self.assertEqual(project.sessions[0].observations[0].mode,  'TBW')
+        self.assertEqual(project.sessions[0].observations[0].mode,  'TBT')
         self.assertEqual(project.sessions[0].observations[0].mjd,   55616)
         self.assertEqual(project.sessions[0].observations[0].mpm,       0)
         
         # Observational setup - 2
-        self.assertEqual(project.sessions[0].observations[1].mode,  'TBW')
+        self.assertEqual(project.sessions[0].observations[1].mode,  'TBT')
         self.assertEqual(project.sessions[0].observations[1].mjd,   55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  700000)
         
-    def test_tbw_update(self):
+    def test_tbt_update(self):
         """Test updating TRK_SOL values."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:10:15"
         
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  615000)
         
-    def test_tbw_write(self):
-        """Test writing a TBW SDF file."""
+    def test_tbt_write(self):
+        """Test writing a TBT SDF file."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
-    def test_tbw_errors(self):
-        """Test various TBW SDF errors."""
+    def test_tbt_errors(self):
+        """Test various TBT SDF errors."""
         
-        project = sdf.parse_sdf(tbwFile)
+        project = sdf.parse_sdf(tbtFile)
         
-        # Bad number of TBW bits
-        project.sessions[0].observations[0].bits = 6
+        # Bad number of TBT samples
+        project.sessions[0].observations[0].samples = 6*196e6
         self.assertFalse(project.validate())
         
-        # Bad number of TBW samples
-        project.sessions[0].observations[0].bits = 4
-        project.sessions[0].observations[0].samples = 72000000
-        self.assertFalse(project.validate())
-        
-        project.sessions[0].observations[0].bits = 12
-        project.sessions[0].observations[0].samples = 72000000
-        self.assertFalse(project.validate())
-        
-    ### TBN ###
+    ### TBS ###
     
-    def test_tbn_parse(self):
-        """Test reading in a TBN SDF file."""
+    def test_tbs_parse(self):
+        """Test reading in a TBS SDF file."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         
         # Basic file structure
         self.assertEqual(len(project.sessions), 1)
         self.assertEqual(len(project.sessions[0].observations), 2)
         
         # Observational setup - 1
-        self.assertEqual(project.sessions[0].observations[0].mode, 'TBN')
+        self.assertEqual(project.sessions[0].observations[0].mode, 'TBS')
         self.assertEqual(project.sessions[0].observations[0].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[0].mpm,      0)
         self.assertEqual(project.sessions[0].observations[0].dur,  10000)
         self.assertEqual(project.sessions[0].observations[0].freq1, 438261968)
-        self.assertEqual(project.sessions[0].observations[0].filter,   7)
+        self.assertEqual(project.sessions[0].observations[0].filter,   8)
         
         # Observational setup - 2
-        self.assertEqual(project.sessions[0].observations[1].mode, 'TBN')
+        self.assertEqual(project.sessions[0].observations[1].mode, 'TBS')
         self.assertEqual(project.sessions[0].observations[1].mjd,  55616)
         self.assertEqual(project.sessions[0].observations[1].mpm,  10000)
         self.assertEqual(project.sessions[0].observations[1].dur,  10000)
         self.assertEqual(project.sessions[0].observations[1].freq1, 832697741)
-        self.assertEqual(project.sessions[0].observations[1].filter,   7)
+        self.assertEqual(project.sessions[0].observations[1].filter,   8)
         
         # Ordering
         self.assertFalse(project.sessions[0] > project.sessions[0])
@@ -301,10 +294,10 @@ class sdf_tests(unittest.TestCase):
         self.assertTrue(project.sessions[0].observations[0] != project.sessions[0].observations[1])
         self.assertFalse(project.sessions[0].observations[0] == project.sessions[0].observations[1])
         
-    def test_tbn_update(self):
-        """Test updating TBN values."""
+    def test_tbs_update(self):
+        """Test updating TBS values."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         project.sessions[0].observations[1].start = "MST 2011 Feb 23 17:00:15"
         project.sessions[0].observations[1].duration = timedelta(seconds=15)
         project.sessions[0].observations[1].frequency1 = 75e6
@@ -330,17 +323,17 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].mpm,  16000)
         self.assertEqual(project.sessions[0].observations[1].start, 'UTC 2011/02/25 00:00:16.000000')
         
-    def test_tbn_write(self):
-        """Test writing a TBN SDF file."""
+    def test_tbs_write(self):
+        """Test writing a TBS SDF file."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         with lsl.testing.SilentVerbose():
             out = project.render(verbose=True)
             
-    def test_tbn_errors(self):
-        """Test various TBN SDF errors."""
+    def test_tbs_errors(self):
+        """Test various TBS SDF errors."""
         
-        project = sdf.parse_sdf(tbnFile)
+        project = sdf.parse_sdf(tbsFile)
         
         with lsl.testing.SilentVerbose():
             # Bad project
@@ -360,12 +353,12 @@ class sdf_tests(unittest.TestCase):
             self.assertFalse(project.validate(verbose=True))
             
             # Bad frequency
-            project.sessions[0].observations[0].filter = 7
-            project.sessions[0].observations[0].frequency1 = 4.0e6
+            project.sessions[0].observations[0].filter = 8
+            project.sessions[0].observations[0].frequency1 = 2.0e6
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].filter = 7
+            project.sessions[0].observations[0].filter = 8
             project.sessions[0].observations[0].frequency1 = 95.0e6
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
@@ -382,29 +375,29 @@ class sdf_tests(unittest.TestCase):
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,1]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = 2
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_3', 'asp_filter'):
                 setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [30 for i in range(256)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(256)])
             
     ### DRX - TRK_RADEC ###
     
@@ -507,9 +500,9 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].observations[0].asp_atten_2[1] = 3
         out = project.render()
         
-        project.sessions[0].observations[0].asp_atten_split = [1 for i in project.sessions[0].observations[0].asp_filter]
-        project.sessions[0].observations[0].asp_atten_split[0] = 3
-        project.sessions[0].observations[0].asp_atten_split[1] = 3
+        project.sessions[0].observations[0].asp_atten_3 = [1 for i in project.sessions[0].observations[0].asp_filter]
+        project.sessions[0].observations[0].asp_atten_3[0] = 3
+        project.sessions[0].observations[0].asp_atten_3[1] = 3
         out = project.render()
         
     def test_drx_errors(self):
@@ -564,29 +557,29 @@ class sdf_tests(unittest.TestCase):
             project.sessions[0].observations[0].update()
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = [2,1]
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
             project.sessions[0].observations[0].fee_power[10] = 2
             self.assertFalse(project.validate(verbose=True))
             
-            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(260)]
-            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_split', 'asp_filter'):
+            project.sessions[0].observations[0].fee_power = [[1,1] for i in range(256)]
+            for attr in ('asp_atten_1', 'asp_atten_2', 'asp_atten_3', 'asp_filter'):
                 setattr(project.sessions[0].observations[0], attr, [1 for i in range(250)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [30 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [35 for i in range(256)])
                 project.sessions[0].observations[0].update()
                 self.assertFalse(project.validate(verbose=True))
                 
-                setattr(project.sessions[0].observations[0], attr, [1 for i in range(260)])
+                setattr(project.sessions[0].observations[0], attr, [1 for i in range(256)])
                 
     ### DRX - TRK_SOL ###
     
@@ -861,7 +854,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].asp_filter[0], 2)
         self.assertEqual(project.sessions[0].observations[0].asp_atten_1[0], 10)
         self.assertEqual(project.sessions[0].observations[0].asp_atten_2[0], 12)
-        self.assertEqual(project.sessions[0].observations[0].asp_atten_split[0], 14)
+        self.assertEqual(project.sessions[0].observations[0].asp_atten_3[0], 14)
         
         # Steps - 1
         self.assertEqual(len(project.sessions[0].observations[0].steps), 4)
@@ -886,7 +879,7 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[1].asp_filter[0], 1)
         self.assertEqual(project.sessions[0].observations[1].asp_atten_1[0], 11)
         self.assertEqual(project.sessions[0].observations[1].asp_atten_2[0], 13)
-        self.assertEqual(project.sessions[0].observations[1].asp_atten_split[0], 15)
+        self.assertEqual(project.sessions[0].observations[1].asp_atten_3[0], 15)
         
         # Steps - 2
         self.assertEqual(len(project.sessions[0].observations[1].steps), 2)
@@ -1026,11 +1019,11 @@ class sdf_tests(unittest.TestCase):
         self.assertEqual(project.sessions[0].observations[0].steps[0].dur, 60000)
         
         # Delays - 1
-        for i in range(260):
+        for i in range(256):
             self.assertEqual(project.sessions[0].observations[0].steps[0].delays[i], 0)
             
         # Gains - 1
-        for i in range(260):
+        for i in range(256):
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][0], 1)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][0][1], 0)
             self.assertEqual(project.sessions[0].observations[0].steps[0].gains[i][1][0], 0)
@@ -1051,11 +1044,11 @@ class sdf_tests(unittest.TestCase):
             for ints in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
                 for mode in (None, '', 'XXYY', 'IV', 'IQUV'):
                     ## Method 1
-                    project.sessions[0].spcSetup = [channels, ints]
+                    project.sessions[0].spc_setup = [channels, ints]
                     if mode in (None, ''):
-                        project.sessions[0].spcMetatag = mode
+                        project.sessions[0].spc_metatag = mode
                     else:
-                        project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+                        project.sessions[0].spc_metatag = '{Stokes=%s}' % mode
                     self.assertTrue(project.validate())
                     
                     ## Method 2
@@ -1065,23 +1058,23 @@ class sdf_tests(unittest.TestCase):
                         project.sessions[0].spectrometer_metatag = mode
                     else:
                         project.sessions[0].spectrometer_metatag = 'Stokes=%s' % mode
-                    self.assertEqual(project.sessions[0].spcSetup[0], channels)
-                    self.assertEqual(project.sessions[0].spcSetup[1], ints)
-                    self.assertEqual(project.sessions[0].spcMetatag, None if mode in (None, '') else '{Stokes=%s}' % mode)
+                    self.assertEqual(project.sessions[0].spc_setup[0], channels)
+                    self.assertEqual(project.sessions[0].spc_setup[1], ints)
+                    self.assertEqual(project.sessions[0].spc_metatag, None if mode in (None, '') else '{Stokes=%s}' % mode)
                     self.assertTrue(project.validate())
                     
         # Bad channel count
-        project.sessions[0].spcSetup = [31, 6144]
+        project.sessions[0].spc_setup = [31, 6144]
         self.assertFalse(project.validate())
         
         # Bad integration count
-        project.sessions[0].spcSetup = [32, 6145]
+        project.sessions[0].spc_setup = [32, 6145]
         self.assertFalse(project.validate())
         
         # Unsupported mode
         for mode in ('XX', 'XY', 'YX', 'YY', 'XXXYYXYY', 'I', 'Q', 'U', 'V'):
-            project.sessions[0].spcSetup = [32, 6144]
-            project.sessions[0].spcMetatag = '{Stokes=%s}' % mode
+            project.sessions[0].spc_setup = [32, 6144]
+            project.sessions[0].spc_metatag = '{Stokes=%s}' % mode
             self.assertFalse(project.validate())
             
     ### DRX - Beam/Dipole Mode ###
@@ -1192,21 +1185,6 @@ class sdf_tests(unittest.TestCase):
         self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='L')
         self.assertRaises(ValueError, project.sessions[0].observations[0].set_beamdipole_mode, 73, pol='R')
         
-    ### TBF ###
-    
-    def test_tbf_parse(self):
-        """Test reading in a TBF SDF file."""
-        
-        self.assertRaises(RuntimeError, sdf.parse_sdf, tbfFile)
-        
-    def test_tbf_append(self):
-        """Test appending a TBF observation to an LWA1 session."""
-        
-        project = sdf.parse_sdf(tbnFile)
-        
-        obs = other_sdf.TBF('TBF', 'TBF', '2020/4/30 01:23:45.5', 40e6, 75e6, 7, 196000)
-        self.assertRaises(TypeError, project.sessions[0].append, obs)
-        
     ### Misc. ###
     
     def test_auto_update(self):
@@ -1254,9 +1232,9 @@ class sdf_tests(unittest.TestCase):
         
         # Part 4 - frequency and start time (timedelta)
         project = sdf.parse_sdf(drxFile)
-        _MST = pytz.timezone('US/Mountain')
+        _MST = zoneinfo.ZoneInfo('America/Denver')
         project.sessions[0].observations[1].frequency2 = 75e6
-        project.sessions[0].observations[1].start = _MST.localize(datetime(2011, 2, 23, 17, 00, 30, 1000))
+        project.sessions[0].observations[1].start = datetime(2011, 2, 23, 17, 00, 30, 1000, tzinfo=_MST)
 
         fh = open(os.path.join(self.testPath, 'sdf.txt'), 'w')		
         fh.write(project.render())
@@ -1274,14 +1252,14 @@ class sdf_tests(unittest.TestCase):
         project.sessions[0].station = lwa1
         self.assertTrue(project.validate())
         
-        with self.assertRaises(ValueError):
-            project.sessions[0].station = lwasv
+        project.sessions[0].station = lwasv
+        self.assertTrue(project.validate())
             
     def test_is_valid(self):
         """Test whether or not is_valid works."""
         
-        self.assertTrue(sdf.is_valid(tbwFile))
-        self.assertTrue(sdf.is_valid(tbnFile))
+        self.assertTrue(sdf.is_valid(tbtFile))
+        self.assertTrue(sdf.is_valid(tbsFile))
         self.assertTrue(sdf.is_valid(drxFile))
         self.assertTrue(sdf.is_valid(solFile))
         self.assertTrue(sdf.is_valid(jovFile))
@@ -1289,9 +1267,8 @@ class sdf_tests(unittest.TestCase):
         self.assertTrue(sdf.is_valid(spcFile))
         
     def test_is_not_valid(self):
-        """Test whether or not is_valid works on LWA-SV and IDF files."""
+        """Test whether or not is_valid works on IDF files."""
         
-        self.assertFalse(sdf.is_valid(tbfFile))
         self.assertFalse(sdf.is_valid(idfFile))
         
     def test_username(self):

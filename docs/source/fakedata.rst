@@ -6,12 +6,6 @@ Writers
 -------
 .. versionadded:: 0.3
 
-TBN
-+++
-.. automodule:: lsl.sim.tbn
-   :show-inheritance:
-   :members:
-
 DRX
 +++
 .. automodule:: lsl.sim.drx
@@ -21,10 +15,15 @@ DRX
 Simulators
 ----------
 
-Digitial Processor Data
-+++++++++++++++++++++++
+NDP Data
+++++++++
 .. versionadded:: 0.3
-.. automodule:: lsl.sim.dp
+.. automodule:: lsl.sim.ndp
+   :members:
+
+Beam Response
++++++++++++++
+.. automodule:: lsl.sim.beam
    :members:
 
 Visibility Data

@@ -49,7 +49,7 @@ get_frames_per_obs
     Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_drx, read_drx_ci8
 from lsl.reader._gofast import SyncError as gSyncError
@@ -118,7 +118,7 @@ class FrameHeader(FrameHeaderBase):
         Return the sample rate of the data in samples/second.
         """
         
-        sample_rate = dp_common.fS / self.decimation
+        sample_rate = ndp_common.fS / self.decimation
         return sample_rate
         
     @property
@@ -155,7 +155,7 @@ class FramePayload(FramePayloadBase):
         Function to set the central frequency of the DRX data in Hz.
         """
 
-        return dp_common.word_to_freq(self.tuning_word)
+        return ndp_common.word_to_freq(self.tuning_word)
 
 
 class Frame(FrameBase):

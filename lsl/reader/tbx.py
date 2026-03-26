@@ -1,21 +1,21 @@
 """
-Python module to reading in data from TBF files.  TBF data are a complex
-frequency-domain product that contains blocks of 12 channels from all antennas
-in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and there
-may be up to 132 different blocks of channels within a single recording.  The
-stand ordering is based on the input into the digital system rather than the
-stand number in the array.
+Python module to reading in data from TBX files.  TBX data are a complex
+frequency-domain product that contains blocks of up to 16 channels from all
+antennas in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz)
+and there may be up to 224 different blocks of channels within a single
+recording.  The stand ordering is based on the input into the digital system
+rather than the stand number in the array.
 
-This module defines the following classes for storing the TBF data found in a
+This module defines the following classes for storing the TBX data found in a
 file:
 
 Frame
-  object that contains all data associated with a particular TBF frame.  The 
+  object that contains all data associated with a particular TBX frame.  The 
   primary consituents of each frame are:
-    * FrameHeader - the TBF frame header object and
-    * FramePayload   - the TBF frame data object.  
+    * FrameHeader - the TBX frame header object and
+    * FramePayload   - the TBX frame data object.  
 Combined, these two objects contain all of the information found in the 
-original TBF frame.
+original TBX frame.
 
 The functions defined in this module fall into two class:
   1. convert a frame in a file to a Frame object and
@@ -24,63 +24,54 @@ The functions defined in this module fall into two class:
 For reading in data, use the read_frame function.  It takes a python file-
 handle as an input and returns a fully-filled Frame object.
 
-..versionchanged:: 2.1.3
-    Added a new read_frame_ci8 function that returns 8-bit+8-bit complex integers
-    instead of numpy.complex64
-
-.. versionadded:: 1.2.0
+.. versionadded:: 3.1.0
 """
 
 import numpy as np
 
-from lsl.common import adp as adp_common
 from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
-from lsl.reader._gofast import read_tbf, read_tbf_ci8
+from lsl.reader._gofast import read_tbx, read_tbx_ci8
 from lsl.reader._gofast import SyncError as gSyncError
 from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
 from lsl.reader.utils import FilePositionSaver
-from lsl.reader.drx import FRAME_SIZE as DRX_FRAME_SIZE
 
 from lsl.misc import telemetry
 telemetry.track_module()
 
 
-__version__ = '0.2'
+__version__ = '0.1'
 __all__ = ['FrameHeader', 'FramePayload', 'Frame', 'read_frame', 'read_frame_ci8',
-           'FRAME_CHANNEL_COUNT', 'get_frame_size', 'get_frames_per_obs',
+           'get_frame_size', 'get_frames_per_obs',
            'get_first_frame_count', 'get_channel_count', 'get_first_channel']
-
-#: Number of frequency channels in a TBF packet
-FRAME_CHANNEL_COUNT = 12
 
 
 class FrameHeader(FrameHeaderBase):
     """
-    Class that stores the information found in the header of a TBF 
-    frame.  All three fields listed in the DP ICD version H are stored as 
-    well as the original binary header data.
+    Class that stores the information found in the header of a TBX
+    frame.
     """
     
-    _header_attrs = ['adp_id', 'frame_count', 'second_count', 'nstand', 'first_chan']
+    _header_attrs = ['frame_id', 'frame_count', 'second_count', 'nstand', 'nchan', 'first_chan']
     
-    def __init__(self, adp_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None):
-        self.adp_id = adp_id
+    def __init__(self, frame_id=None, frame_count=None, second_count=None, first_chan=None, nstand=None, nchan=None):
+        self.frame_id = frame_id
         self.frame_count = frame_count
         self.second_count = second_count
         self.first_chan = first_chan
         self.nstand = nstand
+        self.nchan = nchan
         FrameHeaderBase.__init__(self)
         
     @property
-    def is_tbf(self):
+    def is_tbx(self):
         """
-        Function to check if the data is really TBF.  Returns True if the 
-        data is TBF, false otherwise.
+        Function to check if the data is really TBX.  Returns True if the 
+        data is TBX, false otherwise.
         """
         
-        if self.adp_id == 0x01 or self.adp_id == 0x05:
+        if self.frame_id == 0x08:
             return True
         else:
             return False
@@ -92,17 +83,14 @@ class FrameHeader(FrameHeaderBase):
         each channel in the data.
         """
         
-        fC = adp_common.fC
-        if self.adp_id & 0x04:
-            fC = ndp_common.fC
-        
+        fC = ndp_common.fC
         return (np.arange(FRAME_CHANNEL_COUNT, dtype=np.float32)+self.first_chan) * fC
 
 
 class FramePayload(FramePayloadBase):
     """
-    Class that stores the information found in the data section of a TBF
-    frame.  Both fields listed in the DP ICD version H are stored.
+    Class that stores the information found in the data section of a TBX
+    frame.
     """
     
     _payload_attrs = ['timetag']
@@ -124,7 +112,7 @@ class FramePayload(FramePayloadBase):
 
 class Frame(FrameBase):
     """
-    Class that stores the information contained within a single TBF 
+    Class that stores the information contained within a single TBX
     frame.  It's properties are FrameHeader and FramePayload objects.
     """
     
@@ -132,12 +120,20 @@ class Frame(FrameBase):
     _payload_class = FramePayload
     
     @property
-    def adp_id(self):
+    def frame_id(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.adp_id property.
+        Convenience wrapper for the Frame.FrameHeader.frame_id property.
         """
         
-        return self.header.adp_id
+        return self.header.frame_id
+        
+    @property
+    def is_tbx(self):
+        """
+        Convenience wrapper for the Frame.FrameHeader.is_tbx property.
+        """
+        
+        return self.header.is_tbx
         
     @property
     def nstand(self):
@@ -148,12 +144,12 @@ class Frame(FrameBase):
         return self.header.nstand
         
     @property
-    def is_tbf(self):
+    def nchan(self):
         """
-        Convenience wrapper for the Frame.FrameHeader.is_tbf property.
+        Convenience wrapper for the Frame.FrameHeader.nchan property.
         """
         
-        return self.header.is_tbf
+        return self.header.nchan
         
     @property
     def channel_freqs(self):
@@ -174,13 +170,13 @@ class Frame(FrameBase):
 
 def read_frame(filehandle, verbose=False):
     """
-    Function to read in a single TBF frame (header+data) and store the 
+    Function to read in a single TBX frame (header+data) and store the 
     contents as a Frame object.
     """
     
     # New Go Fast! (TM) method
     try:
-        newFrame = read_tbf(filehandle, Frame())
+        newFrame = read_tbx(filehandle, Frame())
     except gSyncError:
         mark = filehandle.tell()
         raise SyncError(location=mark)
@@ -192,12 +188,12 @@ def read_frame(filehandle, verbose=False):
 
 def read_frame_ci8(filehandle, verbose=False):
     """
-    Function to read in a single TBF frame (header+data) and store the 
+    Function to read in a single TBX frame (header+data) and store the 
     contents as a Frame object.
     
     .. note::
         This function differs from `read_frame` in that it returns a
-        `lsl.reader.tbf.FramePayload` that contains a 4-D numpy.int8 array
+        `lsl.reader.tbx.FramePayload` that contains a 4-D numpy.int8 array
         (channels by stands by polarizations by by real/complex) rather than a
         3-D numpy.complex64 array.
     
@@ -206,7 +202,7 @@ def read_frame_ci8(filehandle, verbose=False):
     
     # New Go Fast! (TM) method
     try:
-        newFrame = read_tbf_ci8(filehandle, Frame())
+        newFrame = read_tbx_ci8(filehandle, Frame())
         newFrame.payload._data = newFrame.payload.data.view(CI8)
     except gSyncError:
         mark = filehandle.tell() - FRAME_SIZE
@@ -229,7 +225,7 @@ def get_frame_size(filehandle):
             try:
                 cPos = filehandle.tell()
                 cFrame = read_frame(filehandle)
-                if not cFrame.is_tbf:
+                if not cFrame.is_tbx:
                     continue
                 nPos = filehandle.tell()
                 break
@@ -247,7 +243,7 @@ def get_frame_size(filehandle):
 def get_frames_per_obs(filehandle):
     """
     Find out how many frames are present per time stamp by examining the 
-    first 2500 TBF records.  Return the number of frames per observation.
+    first 2500 TBX records.  Return the number of frames per observation.
     """
     
     with FilePositionSaver(filehandle):
@@ -257,12 +253,12 @@ def get_frames_per_obs(filehandle):
         for i in range(2500):
             try:
                 cFrame = read_frame(filehandle)
-                if not cFrame.is_tbf:
+                if not cFrame.is_tbx:
                     continue
             except EOFError:
                 break
             except SyncError:
-                filehandle.seek(DRX_FRAME_SIZE, 1)
+                filehandle.seek(0, 1)
                 continue
                 
             chan = cFrame.header.first_chan
@@ -275,7 +271,7 @@ def get_frames_per_obs(filehandle):
 
 def get_first_frame_count(filehandle):
     """
-    Find and return the lowest frame count encountered in a TBF file.
+    Find and return the lowest frame count encountered in a TBX file.
     """
     
     # Find out how many frames there are per observation
@@ -286,8 +282,8 @@ def get_first_frame_count(filehandle):
         freqs = []
         while len(freqs) < nFrames:
             cFrame = read_frame(filehandle)
-            if not cFrame.is_tbf:
-                continue
+            if not cFrame.is_tbx:
+                    continue
             freq = cFrame.header.first_chan
             
             if freq not in freqs:
@@ -302,14 +298,30 @@ def get_first_frame_count(filehandle):
 def get_channel_count(filehandle):
     """
     Find out the total number of channels that are present by examining 
-    the first 1000 TBF records.  Return the number of channels found.
+    the first 1000 TBX records.  Return the number of channels found.
     """
     
     # Find out how many frames there are per observation
     nFrames = get_frames_per_obs(filehandle)
     
+    # Find out how many channels are in each frame
+    with FilePositionSaver(filehandle):
+        for i in range(2500):
+            try:
+                cFrame = read_frame(filehandle)
+                if not cFrame.is_tbx:
+                    continue
+            except EOFError:
+                break
+            except SyncError:
+                filehandle.seek(0, 1)
+                continue
+                
+            channel_count = cFrame.header.nchan
+            break
+            
     # Convert to channels
-    nChannels = nFrames * FRAME_CHANNEL_COUNT
+    nChannels = nFrames * channel_count
     
     # Return the number of channels
     return nChannels
@@ -317,9 +329,9 @@ def get_channel_count(filehandle):
 
 def get_first_channel(filehandle, frequency=False, all_frames=False):
     """
-    Find and return the lowest frequency channel in a TBF file.  If the 
+    Find and return the lowest frequency channel in a TBX file.  If the 
     `frequency` keyword is True the returned value is in Hz.  If `all` is
-    True then the lowest frequency in each unique TBF frame is returned as
+    True then the lowest frequency in each unique TBX frame is returned as
     a list.
     """
     
@@ -331,8 +343,8 @@ def get_first_channel(filehandle, frequency=False, all_frames=False):
         freqs = []
         while len(freqs) < nFrames:
             cFrame = read_frame(filehandle)
-            if not cFrame.is_tbf:
-                continue
+            if not cFrame.is_tbx:
+                    continue
             if frequency:
                 freq = cFrame.channel_freqs[0]
             else:

@@ -7,9 +7,10 @@ import numpy as np
 import unittest
 from datetime import timedelta
 
-from lsl.reader import tbw
-from lsl.reader import tbn
+from lsl.reader import tbx
+from lsl.reader import cor
 from lsl.reader import drx
+from lsl.reader import drx8
 from lsl.reader import vdif
 from lsl.reader import drspec
 from lsl.reader import errors
@@ -20,9 +21,10 @@ __version__  = "0.9"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
-tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
+tbxFile = os.path.join(os.path.dirname(__file__), 'data', 'tbx-test.dat')
+corFile = os.path.join(os.path.dirname(__file__), 'data', 'cor-test.dat')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
+drx8File = os.path.join(os.path.dirname(__file__), 'data', 'drx8-sim-test.dat')
 vdifFile = os.path.join(os.path.dirname(__file__), 'data', 'vdif-test.dat')
 drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
 
@@ -188,217 +190,90 @@ class reader_tests(unittest.TestCase):
         v = f"{t0:d}"
         self.assertEqual(int(v), int(t0.unix))
         
-    ### TBW ###
+    ### TBX ###
     
-    def test_tbw_read(self):
-        """Test reading in a frame from a TBW file."""
+    def test_tbx_read(self):
+        """Test reading in a frame from a TBX file."""
         
-        fh = open(tbwFile, 'rb')
-        # First frame is really TBW and stores the correct stand ID
-        frame1 = tbw.read_frame(fh)
-        self.assertTrue(frame1.header.is_tbw)
-        self.assertEqual(frame1.id, 2)
+        fh = open(tbxFile, 'rb')
+        # First frame is really TBX and stores the first channel
+        frame1 = tbx.read_frame(fh)
+        self.assertTrue(frame1.header.is_tbx)
+        self.assertEqual(frame1.header.first_chan, 2176)
         # Second frame
-        frame2 = tbw.read_frame(fh)
-        self.assertTrue(frame2.header.is_tbw)
-        self.assertEqual(frame2.id, 1)
+        frame2 = tbx.read_frame(fh)
+        self.assertTrue(frame2.header.is_tbx)
+        self.assertEqual(frame2.header.first_chan, 2188)
         fh.close()
         
-    def test_tbw_bits(self):
-        """Test getting the data bits from a TBW file."""
+    def test_tbx_read_ci8(self):
+        """Test reading in a frame from a TBX file, ci8 style."""
         
-        fh = open(tbwFile, 'rb')
-        # File contains 12-bit data, two ways
-        self.assertEqual(tbw.get_data_bits(fh), 12)
-        frame1 = tbw.read_frame(fh)
-        self.assertEqual(frame1.data_bits, 12)
+        fh = open(tbxFile, 'rb')
+        frame1 = tbx.read_frame(fh)
+        frame2 = tbx.read_frame(fh)
         fh.close()
         
-    def test_tbw_errors(self):
-        """Test reading errors."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 8
-        for i in range(1,9):
-            frame = tbw.read_frame(fh)
-            
-        # Last frame should be an error (errors.EOFError)
-        self.assertRaises(errors.EOFError, tbw.read_frame, fh)
-        fh.close()
-        
-        # If we offset in the file by 1 byte, we should be a 
-        # sync error (errors.SyncError).
-        fh = open(tbwFile, 'rb')
-        fh.seek(1)
-        self.assertRaises(errors.SyncError, tbw.read_frame, fh)
-        fh.close()
-        
-    def test_tbw_comps(self):
-        """Test the TBW frame comparison operators (>, <, etc.) for time tags."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 3
-        frames = []
-        for i in range(1,4):
-            frames.append(tbw.read_frame(fh))
-        fh.close()
-        
-        self.assertTrue(0 < frames[0])
-        self.assertFalse(0 > frames[0])
-        self.assertTrue(frames[-1] >= frames[0])
-        self.assertFalse(frames[-1] <= frames[0])
-        self.assertTrue(frames[0] == frames[0])
-        self.assertFalse(frames[0] == frames[-1])
-        self.assertFalse(frames[0] != frames[0])
-        
-    def test_tbw_sort(self):
-        """Test sorting TBW frames by time tags."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 3
-        frames = []
-        for i in range(1,4):
-            frames.append(tbw.read_frame(fh))
-        fh.close()
-        
-        frames.sort()
-        frames = frames[::-1]
-        
-        for i in range(1,len(frames)):
-            self.assertTrue( frames[i-1] >= frames[i] )
-            
-    def test_tbw_math(self):
-        """Test mathematical operations on TBW frame data via frames."""
-        
-        fh = open(tbwFile, 'rb')
-        # Frames 1 through 3
-        frames = []
-        for i in range(1,4):
-            frames.append(tbw.read_frame(fh))
-        fh.close()
-        
-        # Multiplication
-        frameT = frames[0] * 2.0
-        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data)
-        frameT *= 2.0
-        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data)
-        frameT = frames[0] * frames[1]
-        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data)
-        
-        # Addition
-        frameA = frames[0] + 2.0
-        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data)
-        frameA += 2.0
-        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data)
-        frameA = frames[0] + frames[1]
-        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data)
-        
-    ### TBN ###
-    
-    def test_tbn_read(self):
-        """Test reading in a frame from a TBN file."""
-        
-        fh = open(tbnFile, 'rb')
-        # First frame is really TBN and stores the correct IDs
-        frame1 = tbn.read_frame(fh)
-        stand, pol = frame1.id
-        self.assertEqual(stand, 1)
-        self.assertEqual(pol, 0)
-        str(frame1)
-        repr(frame1)
-        # Second frame
-        frame2 = tbn.read_frame(fh)
-        stand, pol = frame2.id
-        self.assertEqual(stand, 1)
-        self.assertEqual(pol, 1)
-        str(frame2)
-        repr(frame2)
-        fh.close()
-        
-    def test_tbn_read_ci8(self):
-        """Test reading in a frame from a TBN file, ci8 style."""
-        
-        fh = open(tbnFile, 'rb')
-        frame1 = tbn.read_frame(fh)
-        frame2 = tbn.read_frame(fh)
-        fh.close()
-        
-        fh = open(tbnFile, 'rb')
-        frame3 = tbn.read_frame_ci8(fh)
-        frame4 = tbn.read_frame_ci8(fh)
+        fh = open(tbxFile, 'rb')
+        frame3 = tbx.read_frame_ci8(fh)
+        frame4 = tbx.read_frame_ci8(fh)
         fh.close()
         
         # Compare
         data1 = frame3.payload.data['re'] + 1j*frame3.payload.data['im']
         data2 = frame4.payload.data['re'] + 1j*frame4.payload.data['im']
-        for i in range(512):
-            self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
-            self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
+        for i in range(800):
+            c = i // 2 // 64
+            s = i // 2 % 64
+            p = i % 2
+            self.assertAlmostEqual(frame1.payload.data[c,s,p], data1[c,s,p], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[c,s,p], data2[c,s,p], 1e-6)
             
-    def test_tbn_errors(self):
-        """Test reading in all frames from a truncated TBN file."""
+    def test_tbx_errors(self):
+        """Test TBX reading errors."""
         
-        fh = open(tbnFile, 'rb')
-        # Frames 1 through 29
-        for i in range(1,30):
-            frame = tbn.read_frame(fh)
+        fh = open(tbxFile, 'rb')
+        # Frames 1 through 27
+        for i in range(1,27):
+            frame = tbx.read_frame(fh)
             
         # Last frame should be an error (errors.EOFError)
-        self.assertRaises(errors.EOFError, tbn.read_frame, fh)
+        self.assertRaises(errors.EOFError, tbx.read_frame, fh)
         fh.close()
         
         # If we offset in the file by 1 byte, we should be a 
         # sync error (errors.SyncError).
-        fh = open(tbnFile, 'rb')
+        fh = open(tbxFile, 'rb')
         fh.seek(1)
-        self.assertRaises(errors.SyncError, tbn.read_frame, fh)
+        self.assertRaises(errors.SyncError, tbx.read_frame, fh)
         fh.close()
         
-    def test_tbn_block(self):
-        """Test finding out how many stands are in a file."""
+    def test_tbx_comps(self):
+        """Test the TBX frame comparison operators (>, <, etc.) for time tags."""
         
-        fh = open(tbnFile, 'rb')
-        nx, ny = tbn.get_frames_per_obs(fh)
-        self.assertEqual(nx, 10)
-        self.assertEqual(ny, 10)
-        fh.close()
-        
-    def test_tbn_rate(self):
-        """Test finding out the sample rate of a TBN file."""
-        
-        fh = open(tbnFile, 'rb')
-        rate = tbn.get_sample_rate(fh)
-        self.assertEqual(rate, 100000)
-        code = tbn.get_sample_rate(fh, filter_code=True)
-        self.assertEqual(code, 7)
-        fh.close()
-        
-    def test_tbn_comps(self):
-        """Test the TBN frame comparison operators (>, <, etc.) for time tags."""
-        
-        fh = open(tbnFile, 'rb')
-        # Frames 1 through 29
+        fh = open(tbxFile, 'rb')
+        # Frames 1 through 4
         frames = []
-        for i in range(1,30):
-            frames.append(tbn.read_frame(fh))
+        for i in range(1,5):
+            frames.append(tbx.read_frame(fh))
         fh.close()
         
         self.assertTrue(0 < frames[0])
         self.assertFalse(0 > frames[0])
         self.assertTrue(frames[-1] >= frames[0])
-        self.assertFalse(frames[-1] <= frames[0])
+        self.assertTrue(frames[-1] <= frames[0])
         self.assertTrue(frames[0] == frames[0])
-        self.assertFalse(frames[0] == frames[-1])
+        self.assertTrue(frames[0] == frames[-1])
         self.assertFalse(frames[0] != frames[0])
         
-    def test_tbn_sort(self):
-        """Test sorting TBN frames by time tags."""
+    def test_tbx_sort(self):
+        """Test sorting TBX frames by time tags."""
         
-        fh = open(tbnFile, 'rb')
-        # Frames 1 through 29
+        fh = open(tbxFile, 'rb')
+        # Frames 1 through 3
         frames = []
-        for i in range(1,30):
-            frames.append(tbn.read_frame(fh))
+        for i in range(1,4):
+            frames.append(tbx.read_frame(fh))
         fh.close()
         
         frames.sort()
@@ -407,14 +282,14 @@ class reader_tests(unittest.TestCase):
         for i in range(1,len(frames)):
             self.assertTrue( frames[i-1] >= frames[i] )
             
-    def test_tbn_math(self):
-        """Test mathematical operations on TBN frame data via frames."""
+    def test_tbx_math(self):
+        """Test mathematical operations on TBX frame data via frames."""
         
-        fh = open(tbnFile, 'rb')
-        # Frames 1 through 29
+        fh = open(tbxFile, 'rb')
+        # Frames 1 through 3
         frames = []
-        for i in range(1,30):
-            frames.append(tbn.read_frame(fh))
+        for i in range(1,4):
+            frames.append(tbx.read_frame(fh))
         fh.close()
         
         # Multiplication
@@ -433,20 +308,127 @@ class reader_tests(unittest.TestCase):
         frameA = frames[0] + frames[1]
         np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
             
-    ### TBW/TBN Mix-up ###
+     ### COR ###
     
-    def test_tbw_tbn_catch(self):
-        """Test that tbw will not read tbn files and vice versa."""
+    def test_cor_read(self):
+        """Test reading in a frame from a COR file."""
         
-        fh = open(tbnFile, 'rb')
-        frame1 = tbw.read_frame(fh)
-        self.assertFalse(frame1.header.is_tbw)
+        fh = open(corFile, 'rb')
+        # First frame is really COR and check the basic metadata
+        frame1 = cor.read_frame(fh)
+        self.assertTrue(frame1.header.is_cor)
+        self.assertEqual(frame1.header.first_chan, 1584)
+        self.assertEqual(frame1.id, (1,1))
+        self.assertEqual(frame1.integration_time, 5)
+        self.assertEqual(frame1.gain, 1)
+        # Second frame
+        frame2 = cor.read_frame(fh)
+        self.assertTrue(frame2.header.is_cor)
+        self.assertEqual(frame2.header.first_chan, 1584)
+        self.assertEqual(frame2.id, (1,2))
+        self.assertEqual(frame2.integration_time, 5)
+        self.assertEqual(frame2.gain, 1)
         fh.close()
         
-        fh = open(tbwFile, 'rb')
-        frame1 = tbn.read_frame(fh)
-        self.assertFalse(frame1.header.is_tbn)
+    def test_cor_errors(self):
+        """Test COR reading errors."""
+        
+        fh = open(corFile, 'rb')
+        # Frames 1 through 65
+        for i in range(1,66):
+            frame = cor.read_frame(fh)
+            
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, cor.read_frame, fh)
         fh.close()
+        
+        # If we offset in the file by 1 byte, we should be a 
+        # sync error (errors.SyncError).
+        fh = open(corFile, 'rb')
+        fh.seek(1)
+        self.assertRaises(errors.SyncError, cor.read_frame, fh)
+        fh.close()
+        
+    def test_cor_frames(self):
+        """Test determing the number of frames per observation in a COR file."""
+        
+        fh = open(corFile, 'rb')
+        self.assertEqual(32896, cor.get_frames_per_obs(fh))
+        fh.close()
+        
+    def test_cor_channels(self):
+        """Test determing the number of channels in a COR observation."""
+        
+        fh = open(corFile, 'rb')
+        self.assertEqual(72, cor.get_channel_count(fh))
+        fh.close()
+        
+    def test_cor_baselines(self):
+        """Test determing the number of baselines in a COR observation."""
+        
+        fh = open(corFile, 'rb')
+        self.assertEqual(32896, cor.get_baseline_count(fh))
+        fh.close()
+        
+    def test_cor_comps(self):
+        """Test the COR frame comparison operators (>, <, etc.) for time tags."""
+        
+        fh = open(corFile, 'rb')
+        # Frames 1 through 29
+        frames = []
+        for i in range(1,30):
+            frames.append(cor.read_frame(fh))
+        fh.close()
+        
+        self.assertTrue(0 < frames[0])
+        self.assertFalse(0 > frames[0])
+        self.assertTrue(frames[-1] >= frames[0])
+        self.assertTrue(frames[-1] <= frames[0])
+        self.assertTrue(frames[0] == frames[0])
+        self.assertFalse(frames[0] != frames[-1])
+        self.assertFalse(frames[0] != frames[0])
+        
+    def test_cor_sort(self):
+        """Test sorting COR frames by time tags."""
+        
+        fh = open(corFile, 'rb')
+        # Frames 1 through 29
+        frames = []
+        for i in range(1,30):
+            frames.append(cor.read_frame(fh))
+        fh.close()
+        
+        frames.sort()
+        frames = frames[::-1]
+        
+        for i in range(1,len(frames)):
+            self.assertTrue( frames[i-1] >= frames[i] )
+            
+    def test_cor_math(self):
+        """Test mathematical operations on COR frame data via frames."""
+        
+        fh = open(corFile, 'rb')
+        # Frames 1 through 29
+        frames = []
+        for i in range(1,30):
+            frames.append(cor.read_frame(fh))
+        fh.close()
+        
+        # Multiplication
+        frameT = frames[0] * 2.0
+        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
+        frameT *= 2.0
+        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
+        frameT = frames[0] * frames[1]
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        
+        # Addition
+        frameA = frames[0] + 2.0
+        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
+        frameA += 2.0
+        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
+        frameA = frames[0] + frames[1]
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
         
     ### DRX ###
     
@@ -615,7 +597,175 @@ class reader_tests(unittest.TestCase):
         np.testing.assert_allclose(frameA.payload.data, -4+frames[0].payload.data, atol=1e-6)
         frameA = frames[0] - frames[1]
         np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data-frames[1].payload.data, atol=1e-6)
+        
+    ### DRX8 ###
+    
+    def test_drx8_read(self):
+        """Test reading in a frame from a DRX8 file."""
+        
+        fh = open(drx8File, 'rb')
+        # First frame is really DRX8 and stores the IDs
+        frame1 = drx8.read_frame(fh)
+        beam, tune, pol = frame1.id
+        self.assertEqual(beam, 4)
+        self.assertEqual(tune, 1)
+        self.assertEqual(pol,  1)
+        # Second frame
+        frame2 = drx8.read_frame(fh)
+        beam, tune, pol = frame2.id
+        self.assertEqual(beam, 4)
+        self.assertEqual(tune, 2)
+        self.assertEqual(pol,  0)
+        fh.close()
+        
+    def test_drx8_read_ci8(self):
+        """Test reading in a frame from a DRX8 file, ci8 style."""
+        
+        fh = open(drx8File, 'rb')
+        frame1 = drx8.read_frame(fh)
+        frame2 = drx8.read_frame(fh)
+        fh.close()
+        
+        fh = open(drx8File, 'rb')
+        frame3 = drx8.read_frame_ci8(fh)
+        frame4 = drx8.read_frame_ci8(fh)
+        fh.close()
+        
+        # Compare
+        data1 = frame3.payload.data['re'] + 1j*frame3.payload.data['im']
+        data2 = frame4.payload.data['re'] + 1j*frame4.payload.data['im']
+        for i in range(512):
+            self.assertAlmostEqual(frame1.payload.data[i], data1[i], 1e-6)
+            self.assertAlmostEqual(frame2.payload.data[i], data2[i], 1e-6)
             
+    def test_drx8_errors(self):
+        """Test reading in all frames from a truncated DRX8 file."""
+        
+        fh = open(drx8File, 'rb')
+        # Frames 1 through 32
+        for i in range(1,33):
+            frame = drx8.read_frame(fh)
+            
+        # Last frame should be an error (errors.EOFError)
+        self.assertRaises(errors.EOFError, drx8.read_frame, fh)
+        fh.close()
+        
+        # If we offset in the file by 1 byte, we should be a 
+        # sync error (errors.SyncError).
+        fh = open(drx8File, 'rb')
+        fh.seek(1)
+        self.assertRaises(errors.SyncError, drx8.read_frame, fh)
+        fh.close()
+        
+    def test_drx8_beam(self):
+        """Test finding out how many beams are present in a DRX8 file."""
+        
+        fh = open(drx8File, 'rb')
+        nBeam = drx8.get_beam_count(fh)
+        self.assertEqual(nBeam, 1)
+        fh.close()
+        
+    def test_drx8_block(self):
+        """Test finding out how many tunings/pols. per beam are in a DRX8 file."""
+        
+        fh = open(drx8File, 'rb')
+        b1, b2, b3, b4 = drx8.get_frames_per_obs(fh)
+        self.assertEqual(b1, 0)
+        self.assertEqual(b2, 0)
+        self.assertEqual(b3, 0)
+        self.assertEqual(b4, 4)
+        fh.close()
+        
+    def test_drx8_rate(self):
+        """Test finding out the DRX8 sample rate."""
+        
+        fh = open(drx8File, 'rb')
+        cFrame = drx8.read_frame(fh)
+        fh.seek(0)
+        
+        # Sample rate
+        self.assertEqual(cFrame.sample_rate, drx8.get_sample_rate(fh))
+        
+        # Filter code
+        self.assertEqual(cFrame.filter_code, drx8.get_sample_rate(fh, filter_code=True))
+        fh.close()
+        
+    def test_drx8_comps(self):
+        """Test the DRX8 frame comparison operators (>, <, etc.) for time tags."""
+        
+        fh = open(drx8File, 'rb')
+        # Frames 1 through 10
+        frames = []
+        for i in range(1,11):
+            frames.append(drx8.read_frame(fh))
+        fh.close()
+        
+        self.assertTrue(0 < frames[0])
+        self.assertFalse(0 > frames[0])
+        self.assertTrue(frames[-1] >= frames[0])
+        self.assertFalse(frames[-1] <= frames[0])
+        self.assertTrue(frames[0] == frames[0])
+        self.assertFalse(frames[0] == frames[-1])
+        self.assertFalse(frames[0] != frames[0])
+        
+    def test_drx8_sort(self):
+        """Test sorting DRX8 frames by time tags."""
+        
+        fh = open(drx8File, 'rb')
+        # Frames 1 through 10
+        frames = []
+        for i in range(1,11):
+            frames.append(drx8.read_frame(fh))
+        fh.close()
+        
+        frames.sort()
+        frames = frames[::-1]
+        
+        for i in range(1,len(frames)):
+            self.assertTrue( frames[i-1] >= frames[i] )
+            
+    def test_drx8_math(self):
+        """Test mathematical operations on DRX8 frame data via frames."""
+        
+        fh = open(drx8File, 'rb')
+        # Frames 1 through 10
+        frames = []
+        for i in range(1,11):
+            frames.append(drx8.read_frame(fh))
+        fh.close()
+        
+        # Multiplication
+        frameT = frames[0] * 2.0
+        np.testing.assert_allclose(frameT.payload.data, 2*frames[0].payload.data, atol=1e-6)
+        frameT *= 2.0
+        np.testing.assert_allclose(frameT.payload.data, 4*frames[0].payload.data, atol=1e-6)
+        frameT = frames[0] * frames[1]
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data*frames[1].payload.data, atol=1e-6)
+        
+        # Division
+        frameT = frames[0] / 2.0
+        np.testing.assert_allclose(frameT.payload.data, 0.5*frames[0].payload.data, atol=1e-6)
+        frameT /= 2.0
+        np.testing.assert_allclose(frameT.payload.data, 0.25*frames[0].payload.data, atol=1e-6)
+        frameT = frames[0] / frames[1]
+        np.testing.assert_allclose(frameT.payload.data, frames[0].payload.data/frames[1].payload.data, atol=1e-6)
+        
+        # Addition
+        frameA = frames[0] + 2.0
+        np.testing.assert_allclose(frameA.payload.data, 2+frames[0].payload.data, atol=1e-6)
+        frameA += 2.0
+        np.testing.assert_allclose(frameA.payload.data, 4+frames[0].payload.data, atol=1e-6)
+        frameA = frames[0] + frames[1]
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data+frames[1].payload.data, atol=1e-6)
+        
+        # Subtraction
+        frameA = frames[0] - 2.0
+        np.testing.assert_allclose(frameA.payload.data, -2+frames[0].payload.data, atol=1e-6)
+        frameA -= 2.0
+        np.testing.assert_allclose(frameA.payload.data, -4+frames[0].payload.data, atol=1e-6)
+        frameA = frames[0] - frames[1]
+        np.testing.assert_allclose(frameA.payload.data, frames[0].payload.data-frames[1].payload.data, atol=1e-6)
+        
     ### DR Spectrometer ###
     
     def test_drspec_read(self):

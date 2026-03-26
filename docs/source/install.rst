@@ -10,14 +10,15 @@ Requirements
  * astropy >= 5.2
  * ephem >= 3.7.5.3
  * aipy >= 3.0.1
- * pytz >= 2012c
+ * backports.zoneinfo [1]_
  * h5py
- * matplotlib >= 1.1 [1]_
- * BeautifulSoup [1]_
- * casacore [2]_
+ * matplotlib >= 1.1 [2]_
+ * BeautifulSoup [2]_
+ * casacore [3]_
 
-.. [1] Required for some of the included scripts
-.. [2] Required for measurement set support
+.. [1] Required for Python <3.9
+.. [2] Required for some of the included scripts
+.. [3] Required for measurement set support
 
 Installing
 ==========

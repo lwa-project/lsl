@@ -521,14 +521,14 @@ try:
             # Save these for later since we might need them
             self._sourceTable = nameList
             
-            col1  = tableutil.makearrcoldesc('DIRECTION', 0.0, 2, 
+            col1  = tableutil.makearrcoldesc('DIRECTION', 0.0, 1, 
                                              comment='Direction (e.g. RA, DEC).', 
                                              keywords={'QuantumUnits':['rad','rad'], 
                                                        'MEASINFO':{'type':'direction', 'Ref':'J2000'}
                                                        })
-            col2  = tableutil.makearrcoldesc('PROPER_MOTION', 0.0, 2, 
+            col2  = tableutil.makearrcoldesc('PROPER_MOTION', 0.0, 1, 
                                              comment='Proper motion', 
-                                             keywords={'QuantumUnits':['rad/s','rad/s']})
+                                             keywords={'QuantumUnits':['rad/s',]})
             col3  = tableutil.makescacoldesc('CALIBRATION_GROUP', 0, 
                                              comment='Number of grouping for calibration purpose.')
             col4  = tableutil.makescacoldesc('CODE', "none", 
@@ -569,8 +569,8 @@ try:
             tb = table("%s/SOURCE" % self.basename, desc, nrow=nSource, ack=False)
             
             for i in range(nSource):
-                tb.putcell('DIRECTION', i, np.array(posList[i]))
-                tb.putcell('PROPER_MOTION', i, np.array([[0.0, 0.0],]))
+                tb.putcell('DIRECTION', i, np.array(posList[i])[0])
+                tb.putcell('PROPER_MOTION', i, np.array([[0.0, 0.0],])[0])
                 tb.putcell('CALIBRATION_GROUP', i, 0)
                 tb.putcell('CODE', i, 'none')
                 tb.putcell('INTERVAL', i, 0.0)

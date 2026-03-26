@@ -12,7 +12,7 @@ from functools import total_ordering
 from astropy.time import Time as AstroTime
 
 from lsl import astro
-from lsl.common.dp import fS
+from lsl.common.ndp import fS
 
 from lsl.misc import telemetry
 telemetry.track_module()

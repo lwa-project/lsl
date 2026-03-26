@@ -1,6 +1,7 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
+# 2026 Jan 8 by J. Dowell - update for new "only NDP" MCS
 # 2024 May 13 by J. Dowell - updated for new diffuse sky model calibration
 #                C. Taylor - updated list of bad antennas
 # 2024 Jan 29 by J. Dowell - replace the outrigger with the real stand #64
@@ -1768,7 +1769,7 @@ SERVER_DESI[3]  2
 # --- DR ---------------
 # ----------------------
 # Maximum number of DR subsystems:
-N_DR 4
+N_DR 5
 
 # Status codes 0-3 summarized defined at end of this document (and in MCS0031)
 # This will be set to 3 ("OK") or any DRs not identified
@@ -1777,6 +1778,7 @@ DR_STAT[1] 3
 DR_STAT[2] 3
 DR_STAT[3] 3
 DR_STAT[4] 3
+DR_STAT[5] 3
 
 # DR_ID[] will be set to "UNK" (no identification) for any DRs not identified
 # *** DR_ID[dr#] goes here:
@@ -1784,6 +1786,7 @@ DR_ID[1] DR1
 DR_ID[2] DR2
 DR_ID[3] DR3
 DR_ID[4] DR4
+DR_ID[5] DR5
 
 # DR_SHLF[] will be set to 0 (not known/not applicable) for any DRs not identified
 # *** DR_SHLF[dr#] goes here:
@@ -1794,14 +1797,16 @@ DR_PC[1] DR1
 DR_PC[2] DR2
 DR_PC[3] DR1
 DR_PC[4] DR2
+DR_PC[5] DR5
 
-# 1-4 are the beam outputs, 5 is TBW/TBN
-# DR_DP[] will be set to 0 (no connection) for any DPs not identified
-# *** DR_DP[] goes here:
-DR_DP[1] 1
-DR_DP[2] 2
-DR_DP[3] 3
-DR_DP[4] 4
+# 1-4 are the beam outputs, 5 is TBT/TBS
+# DR_NDP[] will be set to 0 (no connection) for any DPs not identified
+# *** DR_NDP[] goes here:
+DR_NDP[1] 1
+DR_NDP[2] 2
+DR_NDP[3] 3
+DR_NDP[4] 4
+DR_NDP[5] 5
 
 
 # ----------------------
@@ -1821,7 +1826,7 @@ N_PWR_PORT[3] 2
 # Format (example) "PWR_NAME[2][3] MCS", assuming "PWR_SS[2][3] SHL", means power from Rack 2 Port 3 goes to SHL-MCS.
 #   For PWR SS[m][p] = SHL, valid values are MCS, others TBD
 #   For PWR SS[m][p] = ASP, valid values are MCS, FEE, ARX, FAN 
-#   For PWR SS[m][p] = NDP, valid values are MCS, DC1, DC2, FAN, SYN, SWI
+#   For PWR SS[m][p] = NDP, valid values are MCS, FPG, SVR, FAN, SYN, SWI
 #   For PWR SS[m][p] = MCS, valid values are SCH, EXE, TP, CH, and GW.
 #   For PWR SS[m][p] = DR1, DR2, DR3, DR4, and DR5; valid values are PC, DS1 (DRSU 1), and DS2 (DRSU 2)
 # PWR_SS[][] will be set to "UNK" (unknown) for any power output ports not identified.
@@ -1843,14 +1848,14 @@ PWR_SS[1][7] NDP
 PWR_NAME[1][7] MCS
 
 PWR_SS[2][3] NDP
-PWR_NAME[2][3] DC1
+PWR_NAME[2][3] SVR
 PWR_SS[2][4] NDP
-PWR_NAME[2][4] DC1
+PWR_NAME[2][4] SVR
 
 PWR_SS[2][5] NDP
-PWR_NAME[2][5] DC2
+PWR_NAME[2][5] SVR
 PWR_SS[2][6] NDP
-PWR_NAME[2][6] DC2
+PWR_NAME[2][6] SVR
 
 PWR_SS[2][7] ASP
 PWR_NAME[2][7] FAN
@@ -1874,7 +1879,6 @@ MCS_CRA 1
 #PC_ROT       -0.4 #   [deg] rotation (right hand rule) around axis
 
 # Default gain values for various data products
-TBF_GAIN 6   # FIXME
 DRX_GAIN 6   # FIXME
 
 

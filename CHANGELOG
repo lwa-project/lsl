@@ -1,14 +1,49 @@
+4.0.0:
+ * Unified all stations under the NDP framework; dropped DP and ADP backend support                                                                       
+  * Removed lsl.common.dp, lsl.common.adp
+  * Removed lsl.common.mcsADP, lsl.common.mcsNDP
+  * Removed lsl.common.sdfADP, lsl.common.sdfNDP
+  * Removed lsl.common.metabundleADP, lsl.common.metabundleDP, lsl.common.metabundleNDP
+  * Removed lsl.common.sdmADP and lsl.common.sdmDP
+  * Removed lsl.reader.tbw, lsl.reader.tbn, and lsl.reader.tbf
+ * Added lsl.reader.tbx for the new frequency-domain transient buffer format
+ * Replaced TBW and TBN observation types with TBT and TBS in lsl.common.sdf
+ * Added TBXFile to lsl.reader.ldp and TBXFrameBuffer to lsl.reader.buffer
+ * Renamed LWA1DataFile/LWASVDataFile/LWANADataFile to LWADataFile
+ * Removed lsl.sim.dp; lsl.sim.ndp is now the only NDP-level simulator
+ * Removed the lsl.common._fir C extension; FIR coefficients now live in lsl.common.ndp directly
+ * Converted ASP ATS attenuation commands to AT3
+ * Renamed MAX_SNR to HIGH_DR
+ * Updated MCS constants for NDP and SSMIF format 10
+ * Updated LWA1, LWA-SV, and LWA-NA SSMIFs
+ * Replaced pytz usage with datetime.timezone
+ * Added backports.zoneinfo dependency for Python < 3.9
+ * All datetime objects returned by LSL are now timezone-aware (UTC)
+ * Added timezone-aware utc_date_obs attribute to CorrelatedData, CorrelatedDataUV, and CorrelatedDataMS alongside the existing naive date_obs
+ * Updated tutorial notebooks for NDP-era data and fixed various issues
+ * Removed unused TBW/TBN/TBF test data files
+
+3.0.9:
+ * Add support for storing the integration time for a `lsl.imaging.data.VisibilityDataSet`
+
 3.0.8:
  * Updated the filenames for the USTEC ionospheric product
  * Fixed false alarms from the LSL configuration change tracker
- * Better handling of optional fields i the LSL configuration manager
+ * Better handling of optional fields in the LSL configuration manager
+ * Exposed the `loop_gain` parameter in the various `lsl.imaging.selfcal` functions
+ * Added support for Tikhonov regularization to the various `lsl.imaging.selfcal` functions
+ * Fixed a formatting problem in the SOURCE table of a measurement set
+ * Updated `possm.py` to support a maximum baseline length filter
+ * Updated for removal of `scipy.special.sph_harm from scipy >= 1.17
+ * Added `lsl.common.data_access.check_url` to allow polling of URL size and mtime
+ * Various documentation improvements
 
 3.0.7:
  * Updated ldp.DRXFile and DRX8File to check for large (>5 minute) gaps at the beginning of the file
  * Add functionality for converting Stokes VisibilityDataSets into the Circular Polarization basis
  * Improve state tracking for changes to the LSL configuration file
  * Add support for a LSLCONFIGDIR environment variable to control where the configuration/cache is stored
- * Fixed a bug that caused `lsl.imaging.utils.CorrelatedDataIDI to not detected ExtendedIDI files
+ * Fixed a bug that caused `lsl.imaging.utils.CorrelatedDataIDI` to not detected ExtendedIDI files
 
 3.0.6:
  * Updated to IGRF14

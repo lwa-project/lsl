@@ -1,6 +1,6 @@
 """
 Module to write VDIF frames.  The implementation of this module is similar
-to that of lsl.sim.tbw in that the primary element defined in this module is
+to that of lsl.sim.drx in that the primary element defined in this module is
 a Frame object which as attribute functions that can create a numpy 
 representation of the raw frame and write that raw frame to an open file-
 handle.
@@ -13,7 +13,7 @@ import numpy as np
 
 from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
 
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 import lsl.astro as astro
 
 from lsl.misc import telemetry
@@ -30,7 +30,7 @@ class Frame(object):
     frame (version 1, June 26, 2009).
     """
     
-    def __init__(self, stand=0, time=0, bits=8, data=None, sample_rate=dp_common.fS):
+    def __init__(self, stand=0, time=0, bits=8, data=None, sample_rate=ndp_common.fS):
         self.stand = stand
         self.time = time
         self.bits = bits
@@ -85,7 +85,7 @@ class Frame(object):
         except TypeError:
             seconds_i = int(self.time)
             seconds_f = self.time - seconds_i
-                
+            
         # Seconds since the UNIX epoch
         curEpoch = AstroTime(seconds_i, seconds_f, format='unix', scale='utc')
         # Seconds since the VDIF epoch

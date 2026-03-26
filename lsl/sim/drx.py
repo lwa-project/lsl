@@ -5,7 +5,7 @@ DRX frames to a file.
 
 import numpy as np
 
-from lsl.common.dp import fS
+from lsl.common.ndp import fS
 from lsl.reader import drx
 from lsl.reader.base import CI8
 

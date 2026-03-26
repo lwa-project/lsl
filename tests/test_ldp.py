@@ -8,6 +8,7 @@ import tempfile
 import shutil
 import numpy as np
 
+from lsl.common import ndp as ndp_common
 from lsl.reader import ldp
 from lsl.reader import errors
 from lsl.reader.utils import SplitFileWrapper
@@ -17,13 +18,10 @@ __version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
-tbwFile = os.path.join(os.path.dirname(__file__), 'data', 'tbw-test.dat')
-tbnFile = os.path.join(os.path.dirname(__file__), 'data', 'tbn-test.dat')
+tbxFile = os.path.join(os.path.dirname(__file__), 'data', 'tbx-test.dat')
+corFile = os.path.join(os.path.dirname(__file__), 'data', 'cor-test.dat')
 drxFile = os.path.join(os.path.dirname(__file__), 'data', 'drx-test.dat')
 drspecFile = os.path.join(os.path.dirname(__file__), 'data', 'drspec-test.dat')
-
-tbfFile = os.path.join(os.path.dirname(__file__), 'data', 'tbf-test.dat')
-
 
 class ldp_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.reader
@@ -34,115 +32,24 @@ class ldp_tests(unittest.TestCase):
 
         self.testPath = tempfile.mkdtemp(prefix='test-ldp-', suffix='.tmp')
         
-    ### TBW ###
     
-    def test_ldp_tbw(self):
-        """Test the LDP interface for a TBW file."""
-        
-        f = ldp.TBWFile(tbwFile)
-        
-        # File info
-        str(f)
-        repr(f)
-        self.assertEqual(f.get_info("sample_rate"), 196e6)
-        self.assertEqual(f.get_info("data_bits"), 12)
-        self.assertEqual(f.get_info('nframe'), 8)
-        
-        self.assertEqual(f.sample_rate, 196e6)
-        self.assertEqual(f.data_bits, 12)
-        self.assertEqual(f.nframe, 8)
-        
-        # Read a frame
-        frame = f.read_frame()
-        
-        # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-        
-        # Reset
-        f.reset()
-        
-        # Read more
-        tInt, tStart, data = f.read()
-        
-        # Close it out
-        f.close()
-        
-        # Now try it with a filehandle that is already open
-        fh = open(tbwFile, 'r')
-        f = ldp.TBWFile(fh=fh, ignore_timetag_errors=True)
-        
-        # File info
-        self.assertEqual(f.get_info("sample_rate"), 196e6)
-        self.assertEqual(f.get_info("data_bits"), 12)
-        self.assertEqual(f.get_info('nframe'), 8)
-        
-        self.assertEqual(f.sample_rate, 196e6)
-        self.assertEqual(f.data_bits, 12)
-        self.assertEqual(f.nframe, 8)
-        
-        # Read a frame
-        frame = f.read_frame()
-        
-        # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-        
-        # Reset
-        f.reset()
-        
-        # Read more
-        tInt, tStart, data = f.read()
-        
-        # Close it out
-        f.close()
-        fh.close()
-        
-    def test_ldp_tbw_nocheck(self):
-        """Test the LDP interface for a TBW file."""
-        
-        f = ldp.TBWFile(tbwFile, ignore_timetag_errors=True)
-        
-        # File info
-        self.assertEqual(f.get_info("sample_rate"), 196e6)
-        self.assertEqual(f.get_info("data_bits"), 12)
-        self.assertEqual(f.get_info('nframe'), 8)
-        
-        self.assertEqual(f.sample_rate, 196e6)
-        self.assertEqual(f.data_bits, 12)
-        self.assertEqual(f.nframe, 8)
-        
-        # Read a frame
-        frame = f.read_frame()
-        
-        # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-        
-        # Reset
-        f.reset()
-        
-        # Read more
-        tInt, tStart, data = f.read()
-        
-        # Close it out
-        f.close()
-        
-    ### TBN ###
+    ### TBX ###
     
-    def test_ldp_tbn(self):
-        """Test the LDP interface for a TBN file."""
+    def test_ldp_tbx(self):
+        """Test the LDP interface for a TBX file."""
         
-        f = ldp.TBNFile(tbnFile)
+        f = ldp.TBXFile(tbxFile)
         
         # File info
-        self.assertEqual(f.get_info("sample_rate"), 100e3)
-        self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info('nframe'), 29)
-        
-        self.assertEqual(f.sample_rate, 100e3)
-        self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframe, 29)
+        self.assertEqual(f.get_info("nantenna"), 128)
+        self.assertEqual(f.get_info("sample_rate"), ndp_common.fC)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info('nframe'), 26)
+
+        self.assertEqual(f.nantenna, 128)
+        self.assertEqual(f.sample_rate, ndp_common.fC)
+        self.assertEqual(f.data_bits, 4)
+        self.assertEqual(f.nframe, 26)
         
         # Read a frame
         frame = f.read_frame()
@@ -155,82 +62,32 @@ class ldp_tests(unittest.TestCase):
         f.reset()
         
         # Read a chunk - short
-        tInt, tStart, data = f.read(0.005)
-        
-        # Reset
-        f.reset()
-        
-        # Offset and read a chunk - short
-        tSkip = f.offset(0.005)
-        tInt, tStart, data = f.read(0.005)
-        
-        # Reset
-        f.reset()
-        
-        # Read a chunk - long
-        tInt, tStart, data = f.read(1.00)
-        
-        # Reset
-        f.reset()
-        
-        # Estimate levels
-        f.estimate_levels()
+        tInt, tStart, data = f.read(0.1)
         
         # Close it out
         f.close()
         
-        # 'with' statement support
-        with ldp.TBNFile(tbnFile) as f:
-            ## File info
-            self.assertEqual(f.get_info("sample_rate"), 100e3)
-            self.assertEqual(f.get_info("data_bits"), 8)
-            self.assertEqual(f.get_info('nframe'), 29)
-            
-            self.assertEqual(f.sample_rate, 100e3)
-            self.assertEqual(f.data_bits, 8)
-            self.assertEqual(f.nframe, 29)
-            
-            ## Read a frame
-            frame = f.read_frame()
-            
-            ## Get the remaining frame count
-            self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-            self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-            
-        # generator support
-        f = ldp.TBNFile(tbnFile)
-        i = 0
-        for (tInt2, tStart2, data2) in f.read_sequence(1.0):
-            self.assertEqual(tInt, tInt2)
-            self.assertEqual(tStart, tStart2)
-            self.assertEqual(data.shape, data2.shape)
-            i += 1
-        self.assertEqual(i, 1)
-        f.close()
+        # Do it all again but this time with return_ci8=True
+        f = ldp.TBXFile(tbxFile)
+        tInt, tStart, data2 = f.read(0.1, return_ci8=True)
+        data2 = data2['re'] + 1j*data2['im']
+        np.testing.assert_equal(data, data2)
         
-        # both at the same time
-        with ldp.TBNFile(tbnFile) as f:
-            i = 0
-            for (tInt2, tStart2, data2) in f.read_sequence(1.0):
-                self.assertEqual(tInt, tInt2)
-                self.assertEqual(tStart, tStart2)
-                self.assertEqual(data.shape, data2.shape)
-                i += 1
-            self.assertEqual(i, 1)
-            
-    def test_ldp_tbn_nocheck(self):
-        """Test the LDP interface for a TBN file."""
+    def test_ldp_tbx_nocheck(self):
+        """Test the LDP interface for a TBX file."""
         
-        f = ldp.TBNFile(tbnFile, ignore_timetag_errors=True)
+        f = ldp.TBXFile(tbxFile, ignore_timetag_errors=True)
         
         # File info
-        self.assertEqual(f.get_info("sample_rate"), 100e3)
-        self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info('nframe'), 29)
-        
-        self.assertEqual(f.sample_rate, 100e3)
-        self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframe, 29)
+        self.assertEqual(f.get_info("nantenna"), 128)
+        self.assertEqual(f.get_info("sample_rate"), ndp_common.fC)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info('nframe'), 26)
+
+        self.assertEqual(f.nantenna, 128)
+        self.assertEqual(f.sample_rate, ndp_common.fC)
+        self.assertEqual(f.data_bits, 4)
+        self.assertEqual(f.nframe, 26)
         
         # Read a frame
         frame = f.read_frame()
@@ -242,31 +99,24 @@ class ldp_tests(unittest.TestCase):
         # Reset
         f.reset()
         
-        # Read a chunk - short
-        tInt, tStart, data = f.read(0.005)
-        
-        # Reset
-        f.reset()
-        
-        # Read a chunk - long
-        tInt, tStart, data = f.read(1.00)
-        
         # Close it out
         f.close()
         
-    def test_ldp_tbn_ci8(self):
-        """Test the LDP interface for a TBN file, ci8 style."""
+    def test_ldp_tbx_ci8(self):
+        """Test the LDP interface for a TBX file, ci8 style."""
         
-        f = ldp.TBNFile(tbnFile)
+        f = ldp.TBXFile(tbxFile)
         
         # File info
-        self.assertEqual(f.get_info("sample_rate"), 100e3)
-        self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info('nframe'), 29)
-        
-        self.assertEqual(f.sample_rate, 100e3)
-        self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframe, 29)
+        self.assertEqual(f.get_info("nantenna"), 128)
+        self.assertEqual(f.get_info("sample_rate"), ndp_common.fC)
+        self.assertEqual(f.get_info("data_bits"), 4)
+        self.assertEqual(f.get_info('nframe'), 26)
+
+        self.assertEqual(f.nantenna, 128)
+        self.assertEqual(f.sample_rate, ndp_common.fC)
+        self.assertEqual(f.data_bits, 4)
+        self.assertEqual(f.nframe, 26)
         
         # Read a frame
         frame = f.read_frame(return_ci8=True)
@@ -279,29 +129,75 @@ class ldp_tests(unittest.TestCase):
         f.reset()
         
         # Read a chunk - short
-        tInt, tStart, data = f.read(0.005, return_ci8=True)
-        self.assertEqual(len(data.shape), 2)
-        
-        # Reset
-        f.reset()
-        
-        # Offset and read a chunk - short
-        tSkip = f.offset(0.005)
-        tInt, tStart, data = f.read(0.005, return_ci8=True)
-        self.assertEqual(len(data.shape), 2)
-        
-        # Reset
-        f.reset()
-        
-        # Read a chunk - long
-        tInt, tStart, data = f.read(1.00, return_ci8=True)
-        self.assertEqual(len(data.shape), 2)
+        tInt, tStart, data = f.read(0.1, return_ci8=True)
         
         # Go back and try it again without ci8 support
         f.reset()
-        _, _, data2 = f.read(1.00, return_ci8=False)
+        _, _, data2 = f.read(0.1, return_ci8=False)
         data = data['re'] + 1j*data['im']
-        np.testing.assert_equal(data, data)
+        np.testing.assert_equal(data, data2)
+        
+        # Close it out
+        f.close()
+        
+    ### COR ###
+    
+    def test_ldp_cor(self):
+        """Test the LDP interface for a COR file."""
+        
+        f = ldp.CORFile(corFile, ignore_timetag_errors=True)
+        
+        # File info
+        self.assertEqual(f.get_info('nchan'), 72)
+        self.assertEqual(f.get_info('nbaseline'), 32896)
+        self.assertEqual(f.get_info('nframe'), 65)
+        
+        self.assertEqual(f.nchan, 72)
+        self.assertEqual(f.nbaseline, 32896)
+        self.assertEqual(f.nframe, 65)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(5)
+        
+        # Close it out
+        f.close()
+        
+    def test_ldp_cor_nocheck(self):
+        """Test the LDP interface for a COR file."""
+        
+        f = ldp.CORFile(corFile)
+        
+        # File info
+        self.assertEqual(f.get_info('nchan'), 72)
+        self.assertEqual(f.get_info('nbaseline'), 32896)
+        self.assertEqual(f.get_info('nframe'), 65)
+        
+        self.assertEqual(f.nchan, 72)
+        self.assertEqual(f.nbaseline, 32896)
+        self.assertEqual(f.nframe, 65)
+        
+        # Read a frame
+        frame = f.read_frame()
+        
+        # Get the remaining frame count
+        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
+        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
+        
+        # Reset
+        f.reset()
+        
+        # Read a chunk - short
+        tInt, tStart, data = f.read(5)
         
         # Close it out
         f.close()
@@ -626,274 +522,29 @@ class ldp_tests(unittest.TestCase):
         
     ### File Type Discovery ###
     
-    def test_ldp_discover_tbw(self):
-        """Test the LDP LWA1DataFile function of TBW."""
-        # TBW
-        f = ldp.LWA1DataFile(tbwFile)
-        self.assertEqual(type(f), ldp.TBWFile)
+    def test_ldp_discover_tbx(self):
+        """Test the LDP LWADataFile function of TBX."""
+        # DRX
+        f = ldp.LWADataFile(tbxFile)
+        self.assertEqual(type(f), ldp.TBXFile)
         
-    def test_ldp_discover_tbn(self):
-        """Test the LDP LWA1DataFile function of TBN."""
-        # TBN
-        f = ldp.LWA1DataFile(tbnFile)
-        self.assertEqual(type(f), ldp.TBNFile)
+    def test_ldp_discover_cor(self):
+        """Test the LDP LWADataFile function of COR."""
+        # DRX
+        f = ldp.LWADataFile(corFile)
+        self.assertEqual(type(f), ldp.CORFile)
         
     def test_ldp_discover_drx(self):
-        """Test the LDP LWA1DataFile function of DRX."""
+        """Test the LDP LWADataFile function of DRX."""
         # DRX
-        f = ldp.LWA1DataFile(drxFile)
+        f = ldp.LWADataFile(drxFile)
         self.assertEqual(type(f), ldp.DRXFile)
         
     def test_ldp_discover_drspec(self):
-        """Test the LDP LWA1DataFile function of DR Spectrometer."""
+        """Test the LDP LWADataFile function of DR Spectrometer."""
         # DR Spectrometer
-        f = ldp.LWA1DataFile(drspecFile)
+        f = ldp.LWADataFile(drspecFile)
         self.assertEqual(type(f), ldp.DRSpecFile)
-        
-    def test_ldp_discover_tbf(self):
-        """Test the LDP LWA1DataFile function of TBF."""
-        # TBF
-        self.assertRaises(RuntimeError, ldp.LWA1DataFile, tbfFile)
-        
-    ### SplitFileWrapper ###
-    
-    def test_ldp_splitfilewrapper(self):
-        """Test the LDP interface for a SplitFileWrapper."""
-        
-        # Split up the TBN file into many many parts
-        size = os.path.getsize(tbnFile)
-        block = size // 16
-        
-        splitFiles = []
-        f = open(tbnFile, 'rb')
-        while size > 0:
-            splitFiles.append(os.path.join(self.testPath, 'filepart%03i' % len(splitFiles)))
-            with open(splitFiles[-1], 'wb') as w:
-                w.write(f.read(block))
-                size -= block
-        f.close()
-        
-        w = SplitFileWrapper(splitFiles)
-        f = ldp.TBNFile(fh=w)
-        
-        # File info
-        self.assertEqual(f.get_info("sample_rate"), 100e3)
-        self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info('nframe'), 29)
-        
-        self.assertEqual(f.sample_rate, 100e3)
-        self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframe, 29)
-        
-        # Read a frame
-        frame = f.read_frame()
-        
-        # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-        
-        # Reset
-        f.reset()
-        
-        # Read a chunk - short
-        tInt, tStart, data = f.read(0.005)
-        
-        # Reset
-        f.reset()
-        
-        # Read a chunk - long
-        tInt, tStart, data = f.read(1.00)
-        
-        # Close it out
-        f.close()
-        w.close()
-        
-        # 'with' statement support
-        with SplitFileWrapper(splitFiles) as w:
-            with ldp.TBNFile(fh=w) as f:
-                ## File info
-                self.assertEqual(f.get_info("sample_rate"), 100e3)
-                self.assertEqual(f.get_info("data_bits"), 8)
-                self.assertEqual(f.get_info('nframe'), 29)
-        
-                self.assertEqual(f.sample_rate, 100e3)
-                self.assertEqual(f.data_bits, 8)
-                self.assertEqual(f.nframe, 29)
-        
-                ## Read a frame
-                frame = f.read_frame()
-        
-                ## Get the remaining frame count
-                self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-                self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-                
-        # generator support
-        w = SplitFileWrapper(splitFiles)
-        f = ldp.TBNFile(fh=w)
-        i = 0
-        for (tInt2, tStart2, data2) in f.read_sequence(1.0):
-            self.assertEqual(tInt, tInt2)
-            self.assertEqual(tStart, tStart2)
-            self.assertEqual(data.shape, data2.shape)
-            i += 1
-        self.assertEqual(i, 1)
-        f.close()
-        w.close()
-        
-        # both at the same time
-        with SplitFileWrapper(splitFiles) as w:
-            with ldp.TBNFile(fh=w) as f:
-                i = 0
-                for (tInt2, tStart2, data2) in f.read_sequence(1.0):
-                    self.assertEqual(tInt, tInt2)
-                    self.assertEqual(tStart, tStart2)
-                    self.assertEqual(data.shape, data2.shape)
-                    i += 1
-                self.assertEqual(i, 1)
-                
-    def test_ldp_splitfilewrapper_single(self):
-        """Test the LDP interface for a SplitFileWrapper with a single file."""
-        
-        w = SplitFileWrapper([tbnFile,])
-        f = ldp.TBNFile(fh=w)
-        
-        # File info
-        self.assertEqual(f.get_info("sample_rate"), 100e3)
-        self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info('nframe'), 29)
-        
-        self.assertEqual(f.sample_rate, 100e3)
-        self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframe, 29)
-        
-        # Read a frame
-        frame = f.read_frame()
-        
-        # Get the remaining frame count
-        self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-        self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-        
-        # Reset
-        f.reset()
-        
-        # Read a chunk - short
-        tInt, tStart, data = f.read(0.005)
-        
-        # Reset
-        f.reset()
-        
-        # Read a chunk - long
-        tInt, tStart, data = f.read(1.00)
-        
-        # Close it out
-        f.close()
-        w.close()
-        
-        # 'with' statement support
-        with SplitFileWrapper([tbnFile,]) as w:
-            with ldp.TBNFile(fh=w) as f:
-                ## File info
-                self.assertEqual(f.get_info("sample_rate"), 100e3)
-                self.assertEqual(f.get_info("data_bits"), 8)
-                self.assertEqual(f.get_info('nframe'), 29)
-        
-                self.assertEqual(f.sample_rate, 100e3)
-                self.assertEqual(f.data_bits, 8)
-                self.assertEqual(f.nframe, 29)
-        
-                ## Read a frame
-                frame = f.read_frame()
-        
-                ## Get the remaining frame count
-                self.assertEqual(f.get_remaining_frame_count(), f.get_info('nframe')-1)
-                self.assertEqual(f.nframe_remaining, f.get_info('nframe')-1)
-                
-        # generator support
-        w = SplitFileWrapper([tbnFile,])
-        f = ldp.TBNFile(fh=w)
-        i = 0
-        for (tInt2, tStart2, data2) in f.read_sequence(1.0):
-            self.assertEqual(tInt, tInt2)
-            self.assertEqual(tStart, tStart2)
-            self.assertEqual(data.shape, data2.shape)
-            i += 1
-        self.assertEqual(i, 1)
-        f.close()
-        w.close()
-        
-        # both at the same time
-        with SplitFileWrapper([tbnFile,]) as w:
-            with ldp.TBNFile(fh=w) as f:
-                i = 0
-                for (tInt2, tStart2, data2) in f.read_sequence(1.0):
-                    self.assertEqual(tInt, tInt2)
-                    self.assertEqual(tStart, tStart2)
-                    self.assertEqual(data.shape, data2.shape)
-                    i += 1
-                self.assertEqual(i, 1)
-                
-    def test_ldp_splitfilewrapper_discover(self):
-        """Test the LDP interface for type discover with a SplitFileWrapper."""
-        
-        w = SplitFileWrapper([tbnFile,])
-        f = ldp.LWA1DataFile(fh=w)
-        
-        # File info
-        self.assertTrue(isinstance(f, ldp.TBNFile))
-        self.assertEqual(f.get_info("sample_rate"), 100e3)
-        self.assertEqual(f.get_info("data_bits"), 8)
-        self.assertEqual(f.get_info('nframe'), 29)
-        
-        self.assertEqual(f.sample_rate, 100e3)
-        self.assertEqual(f.data_bits, 8)
-        self.assertEqual(f.nframe, 29)
-        
-        # Read a frame
-        frame = f.read_frame()
-        
-        f.close()
-        w.close()
-        
-    def test_ldp_splitfilewrapper_mixed(self):
-        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
-        
-        w = SplitFileWrapper([tbwFile, tbnFile], sort=False)
-        f = ldp.LWA1DataFile(fh=w)
-        
-        # File info
-        self.assertTrue(isinstance(f, ldp.TBWFile))
-        
-        # Read some
-        frames = []
-        while True:
-            try:
-                frame = f.read_frame()
-                if frame.is_tbw:
-                    frames.append(frame)
-            except errors.SyncError:
-                continue
-            except errors.EOFError:
-                break
-        self.assertEqual(len(frames), 8+1)  # There is data at the end of the "file" now      
-        
-    def test_ldp_splitfilewrapper_mixed2(self):
-        """Test the LDP interface for a SplitFileWrapper in a contorted way."""
-        
-        w = SplitFileWrapper([tbnFile, tbwFile], sort=False)
-        f = ldp.TBWFile(fh=w)
-        
-        # Read some
-        frames = []
-        while True:
-            try:
-                frame = f.read_frame()
-                if frame.is_tbw:
-                    frames.append(frame)
-            except errors.SyncError:
-                continue
-            except errors.EOFError:
-                break
-        self.assertEqual(len(frames), 8-1)  # We lose part of the first frame to TBN   
         
     def tearDown(self):
         """Cleanup"""

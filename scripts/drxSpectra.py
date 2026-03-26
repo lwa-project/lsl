@@ -54,12 +54,12 @@ def main(args):
     if not isinstance(idf, (DRXFile, DRX8File)):
         raise RuntimeError(f"File '{os.path.basename(args.filename)}' does not appear to be a valid DRX file")
         
+    # Offset in frames for beampols beam/tuning/pol. sets
+    args.skip = idf.offset(args.skip)
+    
     nFramesFile = idf.get_info('nframe')
     srate = idf.get_info('sample_rate')
     beampols = idf.get_info('nbeampol')
-    
-    # Offset in frames for beampols beam/tuning/pol. sets
-    args.skip = idf.offset(args.skip)
     
     # Make sure that the file chunk size contains is an integer multiple
     # of the FFT length so that no data gets dropped.  This needs to

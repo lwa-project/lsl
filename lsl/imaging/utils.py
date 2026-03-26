@@ -44,7 +44,7 @@ import tarfile
 import tempfile
 import warnings
 from calendar import timegm
-from datetime import datetime
+from datetime import datetime, timezone
 
 from astropy import units as astrounits
 from astropy.constants import c as vLight
@@ -237,7 +237,8 @@ class CorrelatedDataIDI(CorrelatedDataBase):
      * freq - Numpy array of frequency channels in Hz
      * station - LSL :class:`lsl.common.stations.LWAStation` instance for the
                  array
-     * date_obs - Datetime object for the reference date of the FIT IDI file
+     * date_obs - Naive datetime object for the reference date of the FITS IDI file
+     * utc_date_obs - Timezone-aware datetime object for the reference date of the FITS IDI file
      * antennas - List of :class:`lsl.common.stations.Antenna` instances
     
     .. note::
@@ -303,7 +304,8 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 ## Catch for LEDA64-NM data
                 self.telescope = uvData.header['TELESCOP']
                 self.date_obs = datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
-                
+            self.utc_date_obs = self.date_obs.replace(tzinfo=timezone.utc)
+            
             ## Extract the site position
             geo = np.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
             site = stations.ecef_to_geo(*geo)
@@ -435,6 +437,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 # Pull out the raw data from the table
                 bl = uvData.data['BASELINE'][selection]
                 jd = uvData.data['DATE'][selection] + uvData.data['TIME'][selection]
+                ac = uvData.data['INTTIM'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
@@ -516,7 +519,8 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[:,select,:].transpose(1,0,2), 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKES[l]
                     polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
@@ -560,9 +564,10 @@ class CorrelatedDataUV(CorrelatedDataBase):
      * freq - Numpy array of frequency channels in Hz
      * station - LSL :class:`lsl.common.stations.LWAStation` instance for the
                  array
-     * date_obs - Datetime object for the reference date of the FIT IDI file
+     * date_obs - Naive datetime object for the reference date of the UVFITS file
+     * utc_date_obs - Timezone-aware datetime object for the reference date of the UVFITS file
      * antennas - List of :class:`lsl.common.stations.Antenna` instances
-    
+
     .. note::
         The CorrelatedDataUV.antennas attribute should be used over 
         CorrelatedDataUV.station.antennas since the mapping in the UVFITS
@@ -596,6 +601,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
             except ValueError:
                 ## Catch for AIPS UVFITS files which only have a date set
                 self.date_obs = datetime.strptime(dt, "%Y-%m-%d")
+            self.utc_date_obs = self.date_obs.replace(tzinfo=timezone.utc)
                 
             ## Extract the site position
             geo = np.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
@@ -728,6 +734,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
                     jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
                 except KeyError:
                     jd = uvData.data['DATE'][selection]
+                ac = uvData.data['INTTIM'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
@@ -790,7 +797,8 @@ class CorrelatedDataUV(CorrelatedDataBase):
                 dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[:,select,:].transpose(1,0,2), 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKES[l]
                     polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
@@ -842,9 +850,10 @@ try:
          * freq - Numpy array of frequency channels in Hz
          * station - LSL :class:`lsl.common.stations.LWAStation` instance for the
                      array
-         * date_obs - Datetime object for the reference date of the FIT IDI file
+         * date_obs - Naive datetime object for the reference date of the MS
+         * utc_date_obs - Timezone-aware datetime object for the reference date of the MS
          * antennas - List of :class:`lsl.common.stations.Antenna` instances
-        
+
         .. note::
             The CorrelatedDataMS.antennas attribute should be used over 
             CorrelatedDataMS.station.antennas since the mapping in the MS
@@ -977,8 +986,9 @@ try:
             # Data set times
             self._times = np.unique(data.getcol('TIME'))
             jd = self._times[0] / 86400.0 + astro.MJD_OFFSET
-            self.date_obs = datetime.utcfromtimestamp(astro.utcjd_to_unix(jd))
-            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+            self.utc_date_obs = datetime.fromtimestamp(astro.utcjd_to_unix(jd), tz=timezone.utc)
+            self.date_obs = self.utc_date_obs.replace(tzinfo=None)
+            self.station.date = astro.unix_to_utcjd(timegm(self.utc_date_obs.timetuple())) \
                                 - astro.DJD_OFFSET
             
             # Data set sources
@@ -1043,6 +1053,7 @@ try:
                 
                 # Pull out the data
                 targetData = data.query('TIME == %.16f AND FLAG_ROW == false' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
+                ac = targetData.getcol('EXPOSURE')
                 uvw  = targetData.getcol('UVW')
                 try:
                     wgt  = None
@@ -1105,7 +1116,8 @@ try:
                 dataSet = VisibilityDataSet(targetJD, self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[selectU,:,:], 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKESMS[l]
                     subvis = vis[select,:,p]

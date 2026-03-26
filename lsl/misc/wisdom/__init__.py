@@ -10,7 +10,7 @@ from __future__ import print_function, division, absolute_import
 import os
 import logging
 import numpy
-from datetime import datetime
+from datetime import datetime, timezone
 
 from lsl.common.paths import WISDOM as wisdomPath
 from lsl.common.busy import BusyIndicator
@@ -62,10 +62,10 @@ def show():
     print("LSL FFTW Wisdom:")
     print(f" Lines: {len(lines)}")
     print(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")
-    print(f" Last Modified: {datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8])}")
+    print(f" Last Modified: {datetime.fromtimestamp(os.stat(_WISDOM_FFTW)[8], tz=timezone.utc)}")
     LSL_LOGGER.info("LSL FFTW Wisdom:")
     LSL_LOGGER.info(f" Lines: {len(lines)}")
     LSL_LOGGER.info(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")
-    LSL_LOGGER.info(f" Last Modified: {datetime.utcfromtimestamp(os.stat(_WISDOM_FFTW)[8])}")
+    LSL_LOGGER.info(f" Last Modified: {datetime.fromtimestamp(os.stat(_WISDOM_FFTW)[8], tz=timezone.utc)}")
     
     return True
