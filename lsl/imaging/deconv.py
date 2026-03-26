@@ -539,6 +539,10 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
             except IndexError:
                 peakAlt = alt[peak_x, peak_y]
                 
+            # Safety check for sources on the edge of reasonable
+            if not np.isfinite(peakAlt):
+                peakAlt = 1e-3
+                
             if verbose:
                 currRA  = deg_to_hms(peakRA * 180/np.pi)
                 currDec = deg_to_dms(peakDec * 180/np.pi)
