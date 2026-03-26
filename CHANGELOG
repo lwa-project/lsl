@@ -20,6 +20,14 @@
  * Added backports.zoneinfo dependency for Python < 3.9
  * All datetime objects returned by LSL are now timezone-aware (UTC)
  * Added timezone-aware utc_date_obs attribute to CorrelatedData, CorrelatedDataUV, and CorrelatedDataMS alongside the existing naive date_obs
+ * Added lsl.logger module with centralized logging built on Python's logging module
+  * Shared LSL_LOGGER instance with console, file, and threaded handler support
+  * Warning capture, module pattern filtering, and log level control
+ * Added lsl.logger_gui module with Tk widgets for displaying log messages
+  * LoggerFrame for embedding in existing Tk applications
+  * FilterFrame for controlling log level, file logging, and module filtering
+  * LoggerGUI for standalone log display windows
+ * Converted SDF/IDF/metabundle validation, imaging, and simulation modules to use LSL_LOGGER
  * Updated tutorial notebooks for NDP-era data and fixed various issues
  * Removed unused TBW/TBN/TBF test data files
 
