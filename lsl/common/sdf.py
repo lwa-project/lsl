@@ -761,9 +761,6 @@ class Observation(object):
             failures += 1
             pid_print(f"Invalid number of ASP filter settings ({len(self.asp_filter)} < {nstand})", level=logging.ERROR, logging_only=(not verbose))
         for f,filt in enumerate(self.asp_filter):
-            if is_dp and filt > 3:
-                pid_print(f"ASP filter {filt} is degenerate with {filt-4} for DP-based stations", level=logging.WARNING, logging_only=(not verbose))
-
             if filt not in (-1, 0, 1, 2, 3, 4, 5, 6, 7):
                 failures += 1
                 pid_print(f"Invalid ASP filter setting on stand {f} '{filt}'", level=logging.ERROR, logging_only=(not verbose))
