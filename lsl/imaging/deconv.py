@@ -289,9 +289,8 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
                     
                 area = side1*side2
                 asum += area
-                #print('II', l, m, area, asum)
                 cleaned[l,m] += gain*area*peakV
-                
+
         if plot:
             pylab.subplot(2, 2, 1)
             pylab.imshow(working+toRemove, origin='lower')
@@ -572,9 +571,8 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                         
                     area = side1*side2
                     asum += area
-                    #print('II', l, m, area, asum)
                     cleaned[l,m] += gain*area*peakV
-                    
+
             if plot:
                 try:
                     pylab.subplot(2, 2, 1)

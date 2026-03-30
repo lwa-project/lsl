@@ -71,7 +71,6 @@ def _download_worker_cddis(url, filename):
     is_interactive = sys.__stdin__.isatty()
     
     # Attempt to download the data
-    print(f"Downloading {url}")
     LSL_LOGGER.info(f"Downloading {url}")
     ## Login
     ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))

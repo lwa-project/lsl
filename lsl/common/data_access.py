@@ -102,7 +102,6 @@ def download_file(url, filename_or_fh, byte_range=None, verbose=True):
         if filename_or_fh.mode.find('wb') == -1:
             raise RuntimeError("filename_or_fh appears to not be opened for binary writing")
             
-    print(f"Downloading {url}")
     LSL_LOGGER.info(f"Downloading {url}")
     try:
         received = 0

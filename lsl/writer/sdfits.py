@@ -68,7 +68,7 @@ class Sd(WriterBase):
         def time(self):
             return self.obsTime
             
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+    def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
         """
         Initialize a new SDFITS object using a filename and a reference time
         given in seconds since the UNIX 1970 epoch, a python datetime object, or a
@@ -81,7 +81,7 @@ class Sd(WriterBase):
         """
 
         # File-specific information
-        WriterBase.__init__(self, filename, ref_time=ref_time, verbose=verbose)
+        WriterBase.__init__(self, filename, ref_time=ref_time)
         
         # Observation-specific information
         self.site = lwa1

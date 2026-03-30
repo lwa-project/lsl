@@ -71,7 +71,7 @@ class Uv(WriterBase):
     AIPS via the UVLOD task.
     """
     
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+    def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
         """
         Initialize a new UVFITS object using a filename and a reference time
         given in seconds since the UNIX 1970 epoch, a python datetime object, or a
@@ -84,7 +84,7 @@ class Uv(WriterBase):
         """
         
         # File-specific information
-        WriterBase.__init__(self, filename, ref_time=ref_time, verbose=verbose)
+        WriterBase.__init__(self, filename, ref_time=ref_time)
         
         # Open the file and get going
         if os.path.exists(filename):
@@ -141,13 +141,9 @@ class Uv(WriterBase):
                 
         # If the mapper has been enabled, tell the user about it
         if enableMapper:
-            if self.verbose:
-                print("UVFITS: stand ID mapping enabled")
             LSL_LOGGER.info("UVFITS: stand ID mapping enabled")
             for key in mapper.keys():
                 value = mapper[key]
-                if self.verbose:
-                    print(f"UVFITS:  stand #{key} -> mapped #{value}")
                 LSL_LOGGER.info(f"UVFITS:  stand #{key} -> mapped #{value}")
                 
         self.nAnt = len(ants)

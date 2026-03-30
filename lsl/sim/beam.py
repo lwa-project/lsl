@@ -74,8 +74,7 @@ def _load_response_fitted(frequency, corrected=False):
                 cCorrs = corrDict['corrs'][...]
                 
             if frequency/1e6 < cFreqs.min() or frequency/1e6 > cFreqs.max():
-                print(f"WARNING: Input frequency of {frequency/1e6:.3f} MHz is out of range, skipping correction")
-                LSL_LOGGER.warning(f"WARNING: Input frequency of {frequency/1e6:.3f} MHz is out of range, skipping correction")
+                LSL_LOGGER.warning(f"Input frequency of {frequency/1e6:.3f} MHz is out of range, skipping correction")
                 corrFnc = None
             else:
                 fCors = cAlts*0.0

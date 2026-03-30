@@ -83,11 +83,8 @@ def list_error_codes(errno=None):
             list_error_codes(errno=i)
     else:
         if errno == 1:
-            print("1: End of file encountered during filehandle read")
             LSL_LOGGER.info("1: End of file encountered during filehandle read")
         elif errno == 2:
-            print("2: Sync word differs from expected")
             LSL_LOGGER.info("2: Sync word differs from expected")
         else:
-            print(f"Unknown error code '{errno}'")
             LSL_LOGGER.info(f"Unknown error code '{errno}'")

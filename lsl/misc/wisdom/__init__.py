@@ -51,7 +51,6 @@ def show():
     """
     
     if not os.path.exists(_WISDOM_FFTW):
-        print("No LSL-specific FFTW wisdom file found, consider running 'python -m lsl.misc.wisdom'")
         LSL_LOGGER.warning("No LSL-specific FFTW wisdom file found, consider running 'python -m lsl.misc.wisdom'")
         return False
         
@@ -59,10 +58,6 @@ def show():
     lines = fh.readlines()
     fh.close()
     
-    print("LSL FFTW Wisdom:")
-    print(f" Lines: {len(lines)}")
-    print(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")
-    print(f" Last Modified: {datetime.fromtimestamp(os.stat(_WISDOM_FFTW)[8], tz=timezone.utc)}")
     LSL_LOGGER.info("LSL FFTW Wisdom:")
     LSL_LOGGER.info(f" Lines: {len(lines)}")
     LSL_LOGGER.info(f" Size: {os.path.getsize(_WISDOM_FFTW)} bytes")

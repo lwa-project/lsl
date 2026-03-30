@@ -69,7 +69,6 @@ def open_and_get_nec_freq(fname):
         if line.find('FREQUENCY') >= 0:
             break
     for line in fh:
-        #print(line)
         if line.find('FREQUENCY=') >= 0:
             freq = float(line[line.find('=')+1:].split()[0])
             break
@@ -167,7 +166,6 @@ class NECImpedance:
                     if line.find('FREQUENCY') >= 0:
                         break
                 for line in fh:
-                    #print(line.strip())
                     if line.find('FREQUENCY=') >= 0:
                         freq = float(line[line.find('=')+1:].split()[0])
                         break
@@ -175,7 +173,6 @@ class NECImpedance:
                         freq = float(line[line.find(':')+1:].split()[0])
                         break
                 else:
-                    #print("No more freqs...")
                     break
                 LSL_LOGGER.debug(f"Found frequency {freq} MHz")
                 for line in fh:
@@ -191,7 +188,6 @@ class NECImpedance:
                 for line in fh:
                     break
                 for line in fh:
-                    #print(line.strip())
                     break
                     
                 # Here we need to add a space before - signs that
@@ -325,11 +321,9 @@ class NECPattern:
                 continue
             powgain = float(cols[4])
             phsgain = float(cols[6])
-            #print phi, theta, powgain
             self.antenna_pat_dB[phi,theta] = powgain
             self.antenna_pat_complex[phi,theta] = 10**(powgain/10.0)*np.exp(1j*phsgain*180/np.pi)
             n += 1
-            #print("theta %d phi %d gain %f @ %f deg" % (theta, phi, powgain, phsgain))
             
     def _read_excitation(self, fh):
         """
@@ -362,11 +356,9 @@ class NECPattern:
                     powcurr = float(fieldsCurrent[8])
                     powcurr = 10.0*np.log10(powcurr)
                     phscurr = float(fieldsCurrent[9])
-                    #print phi, theta, powcurr
                     self.antenna_pat_dB[phi,theta] = powcurr
                     self.antenna_pat_complex[phi,theta] = 10**(powcurr/10.0)*np.exp(1j*phscurr*np.pi/180)
                     n += 1
-                    #print("theta %d phi %d current %f @ %f deg" % (theta, phi, powcurr, phscurr))
 
 
 def which_nec4():

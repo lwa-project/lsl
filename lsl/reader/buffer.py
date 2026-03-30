@@ -433,7 +433,6 @@ class FrameBufferBase(object):
         outString = '\n'.join([outString, "Missing frames:  %i" % self.missing])
         outString = '\n'.join([outString, "Dropped frames:  %i" % self.dropped])
         
-        print(outString)
         for line in outString.split('\n'):
             LSL_LOGGER.info(line)
 
