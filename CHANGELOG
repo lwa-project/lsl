@@ -28,6 +28,8 @@
   * FilterFrame for controlling log level, file logging, and module filtering
   * LoggerGUI for standalone log display windows
  * Converted SDF/IDF/metabundle validation, imaging, and simulation modules to use LSL_LOGGER
+ * Removed the `verbose` parameter from SDF/IDF/metabundle validation, imaging, and simulation APIs
+  * Diagnostic output is now controlled via LSL_LOGGER log level instead
  * Updated tutorial notebooks for NDP-era data and fixed various issues
  * Removed unused TBW/TBN/TBF test data files
 

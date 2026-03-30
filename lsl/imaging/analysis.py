@@ -103,7 +103,7 @@ def estimate_background(image, window=32):
     return background
 
 
-def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.0,1.0], background_size=16, verbose=True):
+def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.0,1.0], background_size=16):
     """
     Given a 2-D image, find all of the point sources in it that meet the
     selection criteria provided via the keywords.  These are:
@@ -255,28 +255,12 @@ def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-
             roundness[nStar] = cRoundness
             nStar += 1
             
-        ## Print out information, if requested
-        if verbose:
-            print(f"Source #{i+1}")
-            print(f"  Center:  {xcen:.3f}, {ycen:.3f}")
-            print(f"  Peak: {cPeak:.3f}")
-            print(f"  Sharpness: {cSharpness:.3f}{' (rejected)' if not validSharpness else ''}")
-            print(f"  Roundness: {cRoundness:.3f}{' (rejected)' if not validRoundness else ''}")
         LSL_LOGGER.info(f"Source #{i+1}")
         LSL_LOGGER.info(f"  Center:  {xcen:.3f}, {ycen:.3f}")
         LSL_LOGGER.info(f"  Peak: {cPeak:.3f}")
         LSL_LOGGER.info(f"  Sharpness: {cSharpness:.3f}{' (rejected)' if not validSharpness else ''}")
         LSL_LOGGER.info(f"  Roundness: {cRoundness:.3f}{' (rejected)' if not validRoundness else ''}")
             
-    # Print out a summary, if requested
-    if verbose:
-        print(" ")
-        print("Summary")
-        print(f"  Detections: {nGood}")
-        print(f"  Valid Detections: {nStar}")
-        print("  Number Rejected:")
-        print(f"    Sharpness: {bad['sharp']}")
-        print(f"    Roundness: {bad['round']}")
     LSL_LOGGER.info(" ")
     LSL_LOGGER.info("Summary")
     LSL_LOGGER.info(f"  Detections: {nGood}")

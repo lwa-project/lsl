@@ -620,7 +620,7 @@ class imaging_tests(unittest.TestCase):
                 
                 # Build the image
                 ds = idi.get_data_set(1)
-                junk = utils.build_gridded_image(ds, verbose=False)
+                junk = utils.build_gridded_image(ds)
                 
                 # Different weightings
                 for weighting in ('natural', 'uniform', 'briggs'):
@@ -639,7 +639,7 @@ class imaging_tests(unittest.TestCase):
                 
                 ds2 = VisibilityData()
                 ds2.append( ds )
-                junk = utils.build_gridded_image(ds, verbose=False)
+                junk = utils.build_gridded_image(ds)
                 
                 idi.close()
                 
@@ -652,7 +652,7 @@ class imaging_tests(unittest.TestCase):
                 
                 # Build the image
                 ds = uv.get_data_set(1)
-                junk = utils.build_gridded_image(ds, verbose=False)
+                junk = utils.build_gridded_image(ds)
                 
                 # Get image properties
                 junk.field_of_view
@@ -676,42 +676,41 @@ class imaging_tests(unittest.TestCase):
                 ds = idi.get_data_set(1)
                 with self.subTest(mode='phase only'):
                     with self.subTest(amplitude=True):
-                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1,
                                                   amplitude=True, return_convergence=True)
-                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1,
                                                   amplitude=True, inv_epsilon=0.01)
                     with self.subTest(amplitude=False):
-                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False, 
+                        junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1,
                                                   amplitude=False)
                         junk = selfcal.phase_only(aa, ds, ds, 173, 'XX', max_iter=1,
-                                                  inv_epsilon=0.01, verbose=False, amplitude=False)
+                                                  inv_epsilon=0.01, amplitude=False)
                         
                 with self.subTest(mode='delay only'):
                     with self.subTest(amplitude=True):
-                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1,
                                                   amplitude=True, return_convergence=True)
-                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1,
                                                   amplitude=True, inv_epsilon=0.01)
                     with self.subTest(amplitude=False):
-                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1, verbose=False,
+                        junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1,
                                                   amplitude=False)
                         junk = selfcal.delay_only(aa, ds, ds, 173, 'XX', max_iter=1,
-                                                  amplitude=False, inv_epsilon=0.01, verbose=False)
+                                                  amplitude=False, inv_epsilon=0.01)
                         
                 with self.subTest(mode='delay and phase'):
                     with self.subTest(amplitude=True):
                         junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
-                                                       verbose=False, amplitude=True,
+                                                       amplitude=True,
                                                        return_convergence=True)
                         junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
-                                                       verbose=False, amplitude=True,
+                                                       amplitude=True,
                                                        inv_epsilon=0.01)
                     with self.subTest(amplitude=False):
                         junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
-                                                       verbose=False, amplitude=False)
+                                                       amplitude=False)
                         junk = selfcal.delay_and_phase(aa, ds, ds, 173, 'XX', max_iter=1,
-                                                       amplitude=False, inv_epsilon=0.01,
-                                                       verbose=False)
+                                                       amplitude=False, inv_epsilon=0.01)
                         
                 # Error checking
                 self.assertRaises(RuntimeError, selfcal.phase_only, aa, ds, ds, 173, 'YX', ref_ant=0  )
@@ -739,7 +738,7 @@ class imaging_tests(unittest.TestCase):
                     s = np.exp(-(di**2+dj**2)/2.0/1.0**2)
                     img[i+di,j+dj] += f*s
         img = img - analysis.estimate_background(img)
-        cx, cy, pf, sh, ro = analysis.find_point_sources(img, threshold=10, verbose=False)
+        cx, cy, pf, sh, ro = analysis.find_point_sources(img, threshold=10)
         for x,y,f in zip(cx,cy,pf):
             self.assertTrue(int(round(x)) in sx)
             self.assertTrue(int(round(y)) in sy)
@@ -760,7 +759,7 @@ class imaging_tests(unittest.TestCase):
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.clean(out, img, max_iter=5, verbose=False, plot=run_plotting_tests)
+            deconv.clean(out, img, max_iter=5, plot=run_plotting_tests)
             
     def test_clean_sources(self):
         """Test CLEANing around specific sources"""
@@ -778,7 +777,7 @@ class imaging_tests(unittest.TestCase):
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.clean_sources(out, img, vis.SOURCES, max_iter=5, verbose=False, plot=run_plotting_tests)
+            deconv.clean_sources(out, img, vis.SOURCES, max_iter=5, plot=run_plotting_tests)
             
     def test_clean_leastsq(self):
         """Test CLEANing using least squares in the image plane"""
@@ -796,7 +795,7 @@ class imaging_tests(unittest.TestCase):
             img = utils.build_gridded_image(out)
             
             # CLEAN
-            deconv.lsq(out, img, max_iter=2, verbose=False, plot=True)#run_plotting_tests)
+            deconv.lsq(out, img, max_iter=2, plot=True)#run_plotting_tests)
             
     @unittest.skipUnless(run_plotting_tests, "requires the 'matplotlib' module")
     def test_plotting(self):

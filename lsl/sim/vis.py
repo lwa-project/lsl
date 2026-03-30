@@ -817,7 +817,7 @@ class AntennaArray(aipy.amp.AntennaArray):
         return Vij_f
 
 
-def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=False, force_gaussian=False, verbose=False):
+def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=False, force_gaussian=False):
     """
     Build a AIPY AntennaArray for simulation purposes.  Inputs are a station 
     object defined from the lwa_common module, a numpy array of stand 
@@ -878,14 +878,10 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
         xw *= np.pi/180
         yw *= np.pi/180
         
-        if verbose:
-            print(f"Using a 2-D Gaussian beam with sigmas {xw*180/np.pi:.1f} by {yw*180/np.pi:.1f} degrees")
         LSL_LOGGER.info(f"Using a 2-D Gaussian beam with sigmas {xw*180/np.pi:.1f} by {yw*180/np.pi:.1f} degrees")
         beam = Beam2DGaussian(freqs, xw, yw)
         
     elif force_flat:
-        if verbose:
-            print("Using flat beam model")
         LSL_LOGGER.info("Using flat beam model")
         beam = Beam(freqs)
         
@@ -904,8 +900,6 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
             except AttributeError:
                 pass
                 
-            if verbose:
-                print(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
             LSL_LOGGER.info(f"Using Alm beam model with {deg}-order freq. polynomial and {lmax}-order sph. harmonics")
             beam = BeamAlm(freqs, lmax=lmax, mmax=lmax, deg=deg, nside=128, coeffs=beamShapeDict)
             
@@ -947,7 +941,7 @@ def build_sim_array(station, antennas, freq, jd=None, pos_error=0.0, force_flat=
     return simAA
 
 
-def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None, verbose=False, count=None, max=None, flat_response=False, resolve_src=False):
+def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None, count=None, max=None, flat_response=False, resolve_src=False):
     """
     Helper function for build_sim_data so that build_sim_data can be called with 
     a list of Julian Dates and reconstruct the data appropriately.
@@ -980,12 +974,8 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         jd = aa.get_jultime()
     else:
         if count is not None and max is not None:
-            if verbose:
-                print(f"Setting Julian Date to {jd:.5f} ({count} of {max})")
             LSL_LOGGER.info(f"Setting Julian Date to {jd:.5f} ({count} of {max})")
         else:
-            if verbose:
-                print(f"Setting Julian Date to {jd:.5f}")
             LSL_LOGGER.info(f"Setting Julian Date to {jd:.5f}")
         aa.set_jultime(jd)
     Gij_sf = aa.passband(0,1)
@@ -1006,8 +996,6 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     srcs_jy = []
     srcs_fq = []
     srcs_sh = []
-    if verbose:
-        print("Sources Used for Simulation:")
     LSL_LOGGER.debug("Sources Used for Simulation:")
     for name in srcs:
         ## Update the source's coordinates
@@ -1018,13 +1006,9 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
         srcTop = src.get_crds(crdsys='top', ncrd=3)
         srcAzAlt = aipy.coord.top2azalt(srcTop)
         if srcAzAlt[1] < 0:
-            if verbose:
-                print(f"  {name}: below horizon")
             LSL_LOGGER.warning(f"  {name}: below horizon")
             continue
         else:
-            if verbose:
-                print(f"  {name}")
             LSL_LOGGER.debug(f"  {name}")
             
         ## Topocentric coordinates for the gain pattern calculations
@@ -1144,7 +1128,7 @@ def __build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None
     return UVData
 
 
-def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None,  flat_response=False, resolve_src=False, verbose=False):
+def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, phase_center='z', baselines=None, mask=None,  flat_response=False, resolve_src=False):
     """
     Given an AIPY AntennaArray object and a dictionary of sources from 
     aipy.src.get_catalog, returned a :class:`lsl.imaging.data.VisibilityDataSet` 
@@ -1179,7 +1163,7 @@ def build_sim_data(aa, srcs, pols=['xx', 'yy', 'xy', 'yx'], jd=None, chan=None, 
     # Loop over Julian days to fill in the simulated data set
     jdCounter = 1
     for juldate in jd:
-        oBlk = __build_sim_data(aa, srcs, pols=pols, jd=juldate, chan=chan, phase_center=phase_center, baselines=baselines, mask=mask, verbose=verbose, count=jdCounter, max=len(jd), flat_response=flat_response, resolve_src=resolve_src)
+        oBlk = __build_sim_data(aa, srcs, pols=pols, jd=juldate, chan=chan, phase_center=phase_center, baselines=baselines, mask=mask, count=jdCounter, max=len(jd), flat_response=flat_response, resolve_src=resolve_src)
         jdCounter = jdCounter + 1
         UVData.append( oBlk )
         

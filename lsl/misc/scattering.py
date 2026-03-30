@@ -142,7 +142,7 @@ def _figure_of_merit(t, raw, resids, cc):
     return (f + g)/2.0 + r - n
 
 
-def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, screen=thin, verbose=True):
+def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, screen=thin):
     """
     Multi-path scattering deconvolution method based on the method 
     presented in Bhat, N., Cordes, J., & Chatterjee, S.  2003, ApJ, 
@@ -225,11 +225,6 @@ def unscatter(t, raw, tScatMin, tScatMax, tScatStep, gain=0.05, max_iter=10000, 
     resids = residList[bestTau]
     
     # Report on the findings
-    if verbose:
-        print("Multi-path Scattering Results:")
-        print(f"  Iterations Used: {i} of {max_iter}")
-        print(f"  Best-fit Scattering time: {tScat*1000.0:.3f} ms")
-        print(f"  Figure-of-merit:  {merit:.5f}")
     LSL_LOGGER.info("Multi-path Scattering Results:")
     LSL_LOGGER.info(f"  Iterations Used: {i} of {max_iter}")
     LSL_LOGGER.info(f"  Best-fit Scattering time: {tScat*1000.0:.3f} ms")

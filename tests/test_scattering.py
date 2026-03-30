@@ -30,20 +30,20 @@ class scattering_tests(unittest.TestCase):
         """Test thin screen descattering"""
         
         tau, merit, profile = scattering.unscatter(self.t, self.scattered, 0.005, 0.030, 0.005, 
-                                                   screen=scattering.thin, verbose=False)
+                                                   screen=scattering.thin)
         self.assertAlmostEqual(tau, 0.015, 3)
         
     def test_thick(self):
         """Test thick screen descattering"""
         
         tau, merit, profile = scattering.unscatter(self.t, self.scattered, 0.005, 0.030, 0.005,
-                                                   screen=scattering.thick, verbose=False)
+                                                   screen=scattering.thick)
         
     def test_uniform(self):
         """Test uniforms screen descattering"""
         
         tau, merit, profile = scattering.unscatter(self.t, self.scattered, 0.005, 0.030, 0.005,
-                                                   screen=scattering.uniform, verbose=False)
+                                                   screen=scattering.uniform)
 
 
 class scattering_test_suite(unittest.TestSuite):

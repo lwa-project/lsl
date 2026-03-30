@@ -35,7 +35,7 @@ LSL_LOG_QUEUE = queue.Queue()
 
 
 # Basic setup of the logger and default logging level
-_LSL_LOG_HANDLER = logging.NullHandler()
+_LSL_LOG_HANDLER = logging.StreamHandler(sys.stderr)
 _LSL_LOG_HANDLER.setFormatter(LSL_LOG_FORMAT)
 LSL_LOGGER.addHandler(_LSL_LOG_HANDLER)
 LSL_LOGGER.setLevel(logging.INFO)
