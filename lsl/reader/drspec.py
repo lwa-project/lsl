@@ -513,7 +513,7 @@ class Frame(FrameBase):
         return self
 
 
-def read_frame(filehandle, gain=None, verbose=False):
+def read_frame(filehandle, gain=None):
     """
     Function to read in a single DR spectrometer/DRX frame (header+data) and 
     store the contents as a Frame object.

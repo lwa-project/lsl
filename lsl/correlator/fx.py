@@ -77,7 +77,7 @@ def null_window(L):
     return np.ones(L)
 
 
-def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
+def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     A more advanced version of calcSpectra that uses the _spec C extension 
     to handle all of the P.S.D. calculations in parallel.  Returns a two-
@@ -132,7 +132,7 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     return (freq, output)
 
 
-def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
+def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     Similar to SpecMaster, but accepts an array of signals and a list of 
     antennas in order to compute the PSDs for the four Stokes parameters: 
@@ -191,7 +191,7 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
+def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
     A more advanced version of FXCorrelator for time domain data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -352,7 +352,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     return returnValues
 
 
-def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
+def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
     A more advanced version of FXCorrelator for time domain data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
@@ -500,7 +500,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     return returnValues	
 
 
-def XMaster(freq, signals, antennas, include_auto=False, verbose=False, pol='XX', gain_correct=False, return_baselines=False, phase_center='z'):
+def XMaster(freq, signals, antennas, include_auto=False, pol='XX', gain_correct=False, return_baselines=False, phase_center='z'):
     """
     An X-engine wrapper for frequency domain data.  Given an array of frequencies
     in Hz, 3-D array of signals (stands, channels, time), and an array of stands,
@@ -615,7 +615,7 @@ def XMaster(freq, signals, antennas, include_auto=False, verbose=False, pol='XX'
     return returnValues
 
 
-def XStokes(freq, signals, antennas, include_auto=False, verbose=False, gain_correct=False, return_baselines=False, phase_center='z'):
+def XStokes(freq, signals, antennas, include_auto=False, gain_correct=False, return_baselines=False, phase_center='z'):
     """
     An X-engine wrapper for frequency domain data.  Given an array of frequencies
     in Hz, 3-D array of signals (stands, channels, time), and an array of stands,

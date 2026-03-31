@@ -8,6 +8,7 @@ The results are saved in the FITS IDI format.
 import os
 import sys
 import time
+import logging
 import numpy as np
 import argparse
 
@@ -22,6 +23,7 @@ from lsl.correlator import fx as fxc
 from lsl.writer import fitsidi, measurementset
 from lsl.misc import parser as aph
 
+from lsl.logger import set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -140,6 +142,9 @@ def process_chunk(idf, site, good, filename, freq_decim=1, int_time=5.0, pols=['
 
 
 def main(args):
+    if not args.verbose:
+        set_log_level(logging.WARNING)
+
     # Setup the LWA station information
     if args.metadata is not None:
         try:

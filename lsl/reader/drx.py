@@ -221,7 +221,7 @@ class Frame(FrameBase):
         return self.payload.central_freq
 
 
-def read_frame(filehandle, gain=None, verbose=False):
+def read_frame(filehandle, gain=None):
     """
     Function to read in a single DRX frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 
@@ -243,7 +243,7 @@ def read_frame(filehandle, gain=None, verbose=False):
     return newFrame
 
 
-def read_frame_ci8(filehandle, gain=None, verbose=False):
+def read_frame_ci8(filehandle, gain=None):
     """
     Function to read in a single DRX frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 

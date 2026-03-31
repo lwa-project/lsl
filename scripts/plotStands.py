@@ -6,6 +6,7 @@ of the site.
 """
 
 import sys
+import logging
 import numpy as np
 import argparse
 
@@ -14,11 +15,15 @@ from lsl.common import stations, metabundle
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
+from lsl.logger import set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
 
 def main(args):
+    if args.verbose:
+        set_log_level(logging.DEBUG)
+
     # Parse command line
     toMark = np.array(args.stand)-1
     

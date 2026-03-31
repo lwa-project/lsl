@@ -7,6 +7,7 @@ Given a TBT/TBS file, plot the time averaged spectra for each digitizer input.
 import os
 import sys
 import math
+import logging
 import numpy as np
 import argparse
 
@@ -16,6 +17,7 @@ from lsl.misc import parser as aph
 
 from matplotlib import pyplot as plt
 
+from lsl.logger import set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -47,6 +49,9 @@ def _best_freq_units(freq):
 
 
 def main(args):
+    if not args.verbose:
+        set_log_level(logging.WARNING)
+
     # Setup the LWA station information
     if args.metadata is not None:
         try:

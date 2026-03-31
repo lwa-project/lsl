@@ -25,6 +25,7 @@ from lsl.common.stations import geo_to_ecef
 from lsl.common.data_access import DataAccess
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc.ionosphere import _igs, _jpl, _emr, _uqr, _code, _ustec, _glotec
 
@@ -496,7 +497,7 @@ def get_tec_value(mjd, lat=None, lng=None, include_rms=False, type='IGS'):
         return tec
 
 
-def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
+def get_ionospheric_pierce_point(site, az, el, height=450e3):
     """
     Given a site and a pointing direction (azimuth and elevation in degrees),
     compute the location of the ionospheric pierce  point.  Since the height
@@ -551,7 +552,8 @@ def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
         el = el * 180/np.pi
         
     # Optimize
-    output = fmin(err2, x0, args=(np.array([az, el]), []), disp=verbose)
-    
+    output = fmin(err2, x0, args=(np.array([az, el]), []), disp=False)
+    LSL_LOGGER.debug(f"Ionospheric pierce point: lat={output[0]:.4f} deg, lon={output[1]:.4f} deg, height={height:.0f} m")
+
     # Done
     return output[0], output[1], height

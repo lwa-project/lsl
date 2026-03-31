@@ -168,7 +168,7 @@ class Frame(FrameBase):
         return self.payload.time
 
 
-def read_frame(filehandle, verbose=False):
+def read_frame(filehandle):
     """
     Function to read in a single TBX frame (header+data) and store the 
     contents as a Frame object.
@@ -186,7 +186,7 @@ def read_frame(filehandle, verbose=False):
     return newFrame
 
 
-def read_frame_ci8(filehandle, verbose=False):
+def read_frame_ci8(filehandle):
     """
     Function to read in a single TBX frame (header+data) and store the 
     contents as a Frame object.

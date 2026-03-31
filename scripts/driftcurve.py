@@ -7,6 +7,7 @@ Predict driftcurve for a given site using a given antenna model.
 import os
 import sys
 import math
+import logging
 import numpy as np
 import pylab
 import argparse
@@ -18,6 +19,7 @@ from lsl.common import stations
 from lsl.sim.beam import get_available_models, beam_response
 from lsl.misc import parser as aph
 
+from lsl.logger import LSL_LOGGER, set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -28,6 +30,9 @@ __maintainer__ = "Jayce Dowell"
 
 
 def main(args):
+    if args.verbose:
+        set_log_level(logging.DEBUG)
+
     # Validate
     if args.pol not in ('EW', 'NS'):
         raise ValueError("Invalid polarization: %s" % args.pol)
@@ -54,8 +59,7 @@ def main(args):
     else:
         smap = skymap.SkyMapLFSM(freq_MHz=args.frequency/1e6)
         smap_name = 'LFSM'
-    if args.verbose:
-        print(f"Read in {smap_name} map at {args.frequency/1e6:.2f} MHz of {len(smap.ra)} pixels; min={smap._power.min()}, max={smap._power.max()}")
+    LSL_LOGGER.debug(f"Read in {smap_name} map at {args.frequency/1e6:.2f} MHz of {len(smap.ra)} pixels; min={smap._power.min()}, max={smap._power.max()}")
         
     # Dipole beam pattern function
     model = 'llfss' if args.empirical else 'empirical'
@@ -97,13 +101,10 @@ def main(args):
         powerAnt = (pmap.visiblePower * gain).sum() / gain.sum()
         powListAnt.append(powerAnt)
 
-        if args.verbose:
-            lstH = int(lst)
-            lstM = int((lst - lstH)*60.0)
-            lstS = ((lst - lstH)*60.0 - lstM)*60.0
-            sys.stdout.write(f"LST: {lstH:02d}:{lstM:02d}:{lstS:04.1f}, Power_ant: {powerAnt:.1f} K\r")
-            sys.stdout.flush()
-    sys.stdout.write("\n")
+        lstH = int(lst)
+        lstM = int((lst - lstH)*60.0)
+        lstS = ((lst - lstH)*60.0 - lstM)*60.0
+        LSL_LOGGER.debug(f"LST: {lstH:02d}:{lstM:02d}:{lstS:04.1f}, Power_ant: {powerAnt:.1f} K")
             
     # plot results
     if args.do_plot:

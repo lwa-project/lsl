@@ -323,7 +323,7 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
     conv *= ((img-working).max() / conv.max())
 
     if plot:
-        # Make an image for comparison purposes if we are verbose
+        # Make an image for comparison purposes
         fig = plt.figure()
         ax1 = fig.add_subplot(2, 2, 1)
         ax2 = fig.add_subplot(2, 2, 2)
@@ -613,7 +613,7 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
     conv *= ((img-working).max() / conv.max())
     
     if plot:
-        # Make an image for comparison purposes if we are verbose
+        # Make an image for comparison purposes
         fig = plt.figure()
         ax1 = fig.add_subplot(2, 2, 1)
         ax2 = fig.add_subplot(2, 2, 2)
@@ -865,7 +865,7 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
     conv = np.ma.masked_array(conv, mask=convMask, dtype=conv.dtype)
     
     if plot:
-        # Make an image for comparison purposes if we are verbose
+        # Make an image for comparison purposes
         fig = plt.figure()
         ax1 = fig.add_subplot(2, 2, 1)
         ax2 = fig.add_subplot(2, 2, 2)
