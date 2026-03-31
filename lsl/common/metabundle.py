@@ -15,7 +15,7 @@ from lsl.common._metabundle_utils import *
 from lsl.common import stations, sdm, sdf
 from lsl.common.mcs import *
 from lsl.common.ndp import word_to_freq, fS
-from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -400,7 +400,7 @@ def get_command_script(tarname):
     return cs
 
 
-def is_valid(tarname, verbose=False):
+def is_valid(tarname):
     """
     Given a filename, see if it is valid metadata tarball or not.
     
@@ -412,37 +412,29 @@ def is_valid(tarname, verbose=False):
     try:
         get_session_spec(tarname)
         passes += 1
-        if verbose:
-            print(colorfy("Session specification - {{%green OK}}"))
+        LSL_LOGGER.info("Session specification - OK")
     except IOError as e:
         raise e
     except:
         failures += 1
-        if verbose:
-            print(colorfy("Session specification - {{%red {{%bold FAILED}}}}"))
-        
+        LSL_LOGGER.error("Session specification - FAILED")
+
     try:
         get_observation_spec(tarname)
         passes += 1
-        if verbose:
-            print(colorfy("Observation specification(s) - {{%green OK}}"))
+        LSL_LOGGER.info("Observation specification(s) - OK")
     except:
         failures += 1
-        if verbose:
-            print(colorfy("Observation specification(s) - {{%red {{%bold FAILED}}}}"))
-            
+        LSL_LOGGER.error("Observation specification(s) - FAILED")
+
     try:
         get_command_script(tarname)
         passes += 1
-        if verbose:
-            print(colorfy("Command script - {{%green OK}}"))
+        LSL_LOGGER.info("Command script - OK")
     except:
         failures += 1
-        if verbose:
-            print(colorfy("Command script - {{%red {{%bold FAILED}}}}"))
-            
-    if verbose:
-        print("---")
-        print("%i passed / %i failed" % (passes, failures))
-        
+        LSL_LOGGER.error("Command script - FAILED")
+
+    LSL_LOGGER.info(f"{passes} passed / {failures} failed")
+
     return False if failures else True

@@ -48,6 +48,7 @@ import re
 import copy
 import math
 import ephem
+import logging
 import weakref
 import warnings
 from functools import total_ordering
@@ -69,6 +70,8 @@ from lsl.reader.drx import FRAME_SIZE as DRXSize
 
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -233,28 +236,26 @@ class Project(object):
         for ses in self.sessions:
             ses.update()
             
-    def validate(self, verbose=False):
+    def validate(self):
         """Examine all of the sessions and all of their observations to check
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
-        
+
         self.update()
-        
+
         failures = 0
         sessionCount = 1
         if len(self.id) > 8:
-            if verbose:
-                pid_print("Project ID is too long")
+            LSL_LOGGER.error("Project ID is too long")
             failures += 1
-            
+
         for session in self.sessions:
-            if verbose:
-                pid_print(f"Validating session {sessionCount}")
-            if not session.validate(verbose=verbose):
+            LSL_LOGGER.info(f"Validating session {sessionCount}")
+            if not session.validate():
                 failures += 1
-                
+
             if session.station != self.sessions[0].station:
-                pid_print("Session station mis-match")
+                LSL_LOGGER.error("Session station mis-match")
                 failures += 1
                 
             sessionCount += 1
@@ -269,11 +270,11 @@ class Project(object):
         
         self.sessions.append(newSession)
         
-    def render(self, session=0, verbose=False):
-        """Create a session definition file that corresponds to the specified 
+    def render(self, session=0):
+        """Create a session definition file that corresponds to the specified
         session.  Returns the SD file's contents as a string."""
-        
-        if not self.validate(verbose=verbose) :
+
+        if not self.validate() :
             raise RuntimeError("Invalid session/observation parameters.  Aborting.")
         if session >= len(self.sessions):
             raise IndexError("Invalid session index")
@@ -509,14 +510,14 @@ class Project(object):
             
         return output
         
-    def writeto(self, filename, session=0, verbose=False, overwrite=False):
-        """Create a session definition file that corresponds to the specified 
+    def writeto(self, filename, session=0, overwrite=False):
+        """Create a session definition file that corresponds to the specified
         session and write it to the provided filename."""
-        
+
         if os.path.exists(filename) and not overwrite:
             raise RuntimeError(f"'{filename}' already exists")
-            
-        output = self.render(session=session, verbose=verbose)
+
+        output = self.render(session=session)
         with open(filename, 'w') as fh:
             fh.write(output)
 
@@ -720,13 +721,13 @@ class Observation(object):
         
         return 1.0
     
-    def validate(self, verbose=False):
-        """Place holder for functions that evaluate the observation and return True 
+    def validate(self):
+        """Place holder for functions that evaluate the observation and return True
         if it is valid, False otherwise."""
-        
+
         raise NotImplementedError
-        
-    def _validate_asp(self, verbose=False):
+
+    def _validate_asp(self):
         """Evaulate the FEE and ASP options associated with an observation and
         return True if valid, False otherwise."""
         
@@ -739,65 +740,53 @@ class Observation(object):
         # FEE
         if len(self.fee_power) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of FEE power settings ({len(self.fee_power)} != {nstand})")
+            LSL_LOGGER.error(f"Invalid number of FEE power settings ({len(self.fee_power)} != {nstand})")
         for f,fee in enumerate(self.fee_power):
             if not isinstance(fee, (tuple, list)):
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Expected a tuple or list for the FEE {f} power setting")
+                LSL_LOGGER.error(f"Expected a tuple or list for the FEE {f} power setting, not {type(fee).__name__}")
                 continue
             if len(fee) != 2:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid number of polarizations on FEE {f} ({len(fee)} != 2)")
+                LSL_LOGGER.error(f"Invalid number of polarizations on FEE {f} ({len(fee)} != 2)")
                 continue
             for p in (0, 1):
                 if fee[p] not in (-1, 0, 1):
                     failures += 1
-                    if verbose:
-                        pid_print(f"Error: Invalid power setting on FEE {f}, polarization {p} '{fee[p]}'")
+                    LSL_LOGGER.error(f"Invalid power setting on FEE {f}, polarization {p} '{fee[p]}'")
                         
         # ASP
         ## Filter
         if len(self.asp_filter) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP filter settings ({len(self.asp_filter)} < {nstand})")
+            LSL_LOGGER.error(f"Invalid number of ASP filter settings ({len(self.asp_filter)} < {nstand})")
         for f,filt in enumerate(self.asp_filter):
             if filt not in (-1, 0, 1, 2, 3, 4, 5, 6, 7):
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP filter setting on stand {f} '{filt}'")
+                LSL_LOGGER.error(f"Invalid ASP filter setting on stand {f} '{filt}'")
         ## AT1/AT2/AT3
         if len(self.asp_atten_1) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP attenuator 1 settings ({len(self.asp_atten_1)} < {nstand})")
+            LSL_LOGGER.error(f"Invalid number of ASP attenuator 1 settings ({len(self.asp_atten_1)} < {nstand})")
         for f,atten in enumerate(self.asp_atten_1):
             if atten < -1 or atten > 15:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP attenuator 1 setting on stand {f} '{atten}'")
+                LSL_LOGGER.error(f"Invalid ASP attenuator 1 setting on stand {f} '{atten}'")
         if len(self.asp_atten_2) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP attenuator 2 settings ({len(self.asp_atten_2)} < {nstand})")
+            LSL_LOGGER.error(f"Invalid number of ASP attenuator 2 settings ({len(self.asp_atten_2)} < {nstand})")
         for f,atten in enumerate(self.asp_atten_2):
             if atten < -1 or atten > 15:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP attenuator 2 setting on stand {f} '{atten}'")
+                LSL_LOGGER.error(f"Invalid ASP attenuator 2 setting on stand {f} '{atten}'")
         if len(self.asp_atten_3) < nstand:
             failures += 1
-            if verbose:
-                pid_print(f"Error: Invalid number of ASP attenuator 3 settings (({len(self.asp_atten_3)} < {nstand})")
+            LSL_LOGGER.error(f"Invalid number of ASP attenuator 3 settings (({len(self.asp_atten_3)} < {nstand})")
         for f,atten in enumerate(self.asp_atten_3):
             if atten < -1 or atten > 31:
                 failures += 1
-                if verbose:
-                    pid_print(f"Error: Invalid ASP attenuator 3 setting on stand {f} '{atten}'")
-                    
+                LSL_LOGGER.error(f"Invalid ASP attenuator 3 setting on stand {f} '{atten}'")
+                
         # Any failures indicates a bad FEE/ASP configuration
         if failures == 0:
             return True
@@ -859,7 +848,7 @@ class TBT(Observation):
         nBytes = nFrames * 16 * LWA_MAX_NSTD * 2
         return nBytes
         
-    def validate(self, verbose=False):
+    def validate(self):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
         
@@ -874,18 +863,16 @@ class TBT(Observation):
         failures = 0
         # Basic - Sample size
         if self.samples > 5*196000000:
-            if verbose:
-                pid_print(f"Error: Invalid number of samples ({self.samples} > {5*196000000})")
+            LSL_LOGGER.error(f"Invalid number of samples ({self.samples} > {5*196000000})")
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            LSL_LOGGER.error(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
             
         # Advanced - ASP
-        failures += not self._validate_asp(verbose=verbose)
+        failures += not self._validate_asp()
         
         # Any failures indicates a bad observation
         if failures == 0:
@@ -930,10 +917,10 @@ class TBS(Observation):
         nBytes = nFrames * (32 + 8 * LWA_MAX_NSTD * 2)
         return nBytes
         
-    def validate(self, verbose=False):
+    def validate(self):
         """Evaluate the observation and return True if it is valid, False
         otherwise.
-        
+
         ..note::
             This version of sdf allows for TBS tuning between 5 and 93 MHz.
         """
@@ -949,26 +936,22 @@ class TBS(Observation):
         failures = 0
         # Basic - Duration, frequency, and filter code values
         if self.dur < 1:
-            if verbose:
-                pid_print("Error: Specified a duration of length zero")
+            LSL_LOGGER.error("Specified a duration of length zero")
             failures += 1
         if self.freq1 < backend.TBS_TUNING_WORD_MIN or self.freq1 > backend.TBS_TUNING_WORD_MAX:
-            if verbose:
-                print(f"Error: Specified frequency is outside of the {be_name} tuning range")
+            LSL_LOGGER.error(f"Specified frequency is outside of the {be_name} tuning range")
             failures += 1
         if self.filter not in [8,]:
-            if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+            LSL_LOGGER.error(f" Invalid filter code '{self.filter}'")
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            LSL_LOGGER.error(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
             
         # Advanced - ASP
-        failures += not self._validate_asp(verbose=verbose)
+        failures += not self._validate_asp()
         
         # Any failures indicates a bad observation
         if failures == 0:
@@ -1109,7 +1092,7 @@ class DRX(Observation):
             
         return float(vis)/float(cnt)
         
-    def validate(self, verbose=False):
+    def validate(self):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
         
@@ -1124,36 +1107,30 @@ class DRX(Observation):
         failures = 0
         # Basic - Duration, frequency, and filter code values
         if self.dur < 1:
-            if verbose:
-                pid_print("Error: Specified a duration of length zero")
+            LSL_LOGGER.error("Specified a duration of length zero")
             failures += 1
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 1 is outside of the {be_name} tuning range")
+            LSL_LOGGER.error(f"Specified frequency for tuning 1 is outside of the {be_name} tuning range")
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 2 is outside of the {be_name} tuning range")
+            LSL_LOGGER.error(f"Specified frequency for tuning 2 is outside of the {be_name} tuning range")
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
-            if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+            LSL_LOGGER.error(f"Invalid filter code '{self.filter}'")
             failures += 1
             
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
-            if verbose:
-                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the observation")
+            LSL_LOGGER.error(f"Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the observation")
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            LSL_LOGGER.error(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
             
         # Advanced - ASP
-        failures += not self._validate_asp(verbose=verbose)
+        failures += not self._validate_asp()
         
         # Any failures indicates a bad observation
         if failures == 0:
@@ -1442,7 +1419,7 @@ class Stepped(Observation):
             
         return float(vis)/float(cnt)
         
-    def validate(self, verbose=False):
+    def validate(self):
         """Evaluate the observation and return True if it is valid, False
         otherwise."""
         
@@ -1451,38 +1428,33 @@ class Stepped(Observation):
         failures = 0
         # Basic - filter setup
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
-            if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+            LSL_LOGGER.error(f"Invalid filter code '{self.filter}'")
             failures += 1
             
         # Basic - steps
         stepCount = 1
         for step in self.steps:
-            if verbose:
-                pid_print(f"Validating step {stepCount}")
-            if not step.validate(verbose=verbose):
+            LSL_LOGGER.info(f"Validating step {stepCount}")
+            if not step.validate():
                 failures += 1
             if step.is_radec != self.is_radec:
-                if verbose:
-                    pid_print("Error: Step is not of the same coordinate type as observation")
+                LSL_LOGGER.error("Step is not of the same coordinate type as observation")
                 failures += 1
                 
             stepCount += 1
             
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
-            if verbose:
-                pid_print(f"Error: Target steps only above the horizon for {self.target_visibility*100.0:.1f}% of the observation")
+            LSL_LOGGER.error(f"Target steps only above the horizon for {self.target_visibility*100.0:.1f}% of the observation")
             failures += 1
             
         # Advanced - Data Volume
         if self.dataVolume >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            LSL_LOGGER.error(f"Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
             
         # Advanced - ASP
-        failures += not self._validate_asp(verbose=verbose)
+        failures += not self._validate_asp()
         
         # Any failures indicates a bad observation
         if failures == 0:
@@ -1703,7 +1675,7 @@ class BeamStep(object):
             
         return pnt
             
-    def validate(self, verbose=False):
+    def validate(self):
         """Evaluate the step and return True if it is valid, False otherwise."""
         
         self.update()
@@ -1721,44 +1693,35 @@ class BeamStep(object):
         if self.delays is not None:
             if len(self.delays) != 2*mandc.LWA_MAX_NSTD:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Specified delay list had the wrong number of antennas")
+                LSL_LOGGER.error("Specified delay list had the wrong number of antennas")
             if self.gains is None:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Delays specified but gains were not")
+                LSL_LOGGER.error("Delays specified but gains were not")
         if self.gains is not None:
             if len(self.gains) != mandc.LWA_MAX_NSTD:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Specified gain list had the wrong number of stands")
+                LSL_LOGGER.error("Specified gain list had the wrong number of stands")
             for g,gain in enumerate(self.gains):
                 if len(gain) != 2:
                     failures += 1
-                    if verbose:
-                        pid_print(f"Error: Expected a 2x2 matrix of gain values for stand {g}")
+                    LSL_LOGGER.error(f"Expected a 2x2 matrix of gain values for stand {g}")
                 else:
                     if len(gain[0]) != 2 or len(gain[1]) != 2:
                         failures += 1
-                        if verbose:
-                            pid_print(f"Error: Expected a 2x2 matrix of gain values for stand {g}")
+                        LSL_LOGGER.error(f"Expected a 2x2 matrix of gain values for stand {g}")
             if self.delays is None:
                 failures += 1
-                if verbose:
-                    pid_print("Error: Gains specified but delays were not")
+                LSL_LOGGER.error("Gains specified but delays were not")
         # Basic - Observation time
         if self.dur < 5:
-            if verbose:
-                pid_print(f"Error: step dwell time ({self.dur} ms) is too short" )
+            LSL_LOGGER.error(f"Step dwell time ({self.dur} ms) is too short")
             failures += 1
         # Basic - Frequency and filter code values
         if self.freq1 < backend.DRX_TUNING_WORD_MIN or self.freq1 > backend.DRX_TUNING_WORD_MAX:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 1 is outside of the {be_name} tuning range")
+            LSL_LOGGER.error(f"Specified frequency for tuning 1 is outside of the {be_name} tuning range")
             failures += 1
         if (self.freq2 < backend.DRX_TUNING_WORD_MIN or self.freq2 > backend.DRX_TUNING_WORD_MAX) and self.freq2 != 0:
-            if verbose:
-                pid_print(f"Error: Specified frequency for tuning 2 is outside of the {be_name} tuning range")
+            LSL_LOGGER.error(f"Specified frequency for tuning 2 is outside of the {be_name} tuning range")
             failures += 1
         # Any failures indicates a bad observation
         if failures == 0:
@@ -1926,81 +1889,71 @@ class Session(object):
         for obs in self.observations:
             obs.update()
             
-    def validate(self, verbose=False):
+    def validate(self):
         """Examine all of the observations associated with the session to check
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
-        
+
         self.update()
-        
+
         backend = self.station.interface.get_module('backend')
-        
+
         failures = 0
         totalData = 0.0
         if self.id < 1 or self.id > 9999:
-            if verbose:
-                pid_print(f"Error: Invalid session ID number '{self.id}'")
+            LSL_LOGGER.error(f"Invalid session ID number '{self.id}'")
             failures += 1
-            
+
         if self.configuration_authority < 0 or self.configuration_authority > 65535:
-            if verbose:
-                pid_print(f"Error: Invalid configuraton request authority '{self.configuration_authority}'")
+            LSL_LOGGER.error(f"Invalid configuraton request authority '{self.configuration_authority}'")
             failures += 1
         if self.drx_beam != -1 and self.drx_beam not in list(range(1, backend.DRX_BEAMS_MAX+1)):
-            if verbose:
-                pid_print(f"Error: Invalid beam number '{self.drx_beam}'" )
+            LSL_LOGGER.error(f"Invalid beam number '{self.drx_beam}'")
             failures += 1
         for key in list(self.record_mib.keys()):
             if self.record_mib[key] < -1:
-                if verbose:
-                    pid_print(f"Error: Invalid recording interval for '{key}' MIB entry '{self.record_mib[key]}'")
+                LSL_LOGGER.error(f"Error: Invalid recording interval for '{key}' MIB entry '{self.record_mib[key]}'")
                 failures += 1
             if self.update_mib[key] < -1:
-                if verbose:
-                    pid_print(f"Error: Invalid update interval for '{key}' MIB entry '{self.update_mib[key]}'")
+                LSL_LOGGER.error(f"Error: Invalid update interval for '{key}' MIB entry '{self.update_mib[key]}'")
                 failures += 1
-                
+
         if self.spc_setup[0] > 0 or self.spc_setup[1] > 0 or self.spc_metatag not in (None, ''):
             if self.spc_setup[0] not in (2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192):
-                if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer channel count '{self.spc_setup[0]}'")
+                LSL_LOGGER.error(f"Error: Invalid DR spectrometer channel count '{self.spc_setup[0]}'")
                 failures += 1
             if self.spc_setup[1] not in (384, 768, 1536, 3072, 6144, 12288, 24576, 49152, 98304, 196608):
-                if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer integration count '{self.spc_setup[1]}'")
+                LSL_LOGGER.error(f"Error: Invalid DR spectrometer integration count '{self.spc_setup[1]}'")
                 failures += 1
             if self.spc_metatag not in (None, '', '{Stokes=XXYY}', '{Stokes=IQUV}', '{Stokes=IV}'):
-                if verbose:
-                    pid_print(f"Error: Invalid DR spectrometer mode '{self.spc_metatag}'")
+                LSL_LOGGER.error(f"Error: Invalid DR spectrometer mode '{self.spc_metatag}'")
                 failures += 1
             if len(self.observations) > 0:
                 if self.observations[0].mode in ('TBT', 'TBS'):
-                    if verbose:
-                        pid_print(f"Error: DR spectrometer incompatible with '{self.observations[0].mode}")
+                    LSL_LOGGER.error(f"Error: DR spectrometer incompatible with '{self.observations[0].mode}")
                     failures += 1
-                    
+
         observationCount = 1
         for obs in self.observations:
-            if verbose:
-                pid_print(f"Validating observation {observationCount}")
-            
-            if not obs.validate(verbose=verbose):
+            LSL_LOGGER.info(f"Validating observation {observationCount}")
+
+            if not obs.validate():
                 failures += 1
             totalData += obs.dataVolume
-            
+
             observationCount += 1
 
         # Make sure that the observations don't overlap
         sObs = self.observations
-        
+
         for i in range(len(sObs)):
             maxOverlaps = 1
             overlaps = []
             nOverlaps = 0
 
             for j in range(len(sObs)):
-                if verbose and i != j:
-                    pid_print(f"Checking for overlap between observations {i+1} and {j+1}")
+                if i != j:
+                    LSL_LOGGER.info(f"Checking for overlap between observations {i+1} and {j+1}")
 
                 cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
                 cStop = cStart + int(sObs[j].dur)
@@ -2009,18 +1962,16 @@ class Session(object):
 
                 if pStart >= cStart and pStart < cStop:
                     nOverlaps += 1
-                    
+
                     if i != j:
                         overlaps.append(j)
-            
+
             if nOverlaps > maxOverlaps:
-                if verbose:
-                    pid_print(f"Error: Observation %i overlaps with {i+1}"+(','.join(["%i" % (j+1) for j in overlaps])))
+                LSL_LOGGER.error(f"Observation %i overlaps with {i+1}"+(','.join(["%i" % (j+1) for j in overlaps])))
                 failures += 1
-            
+
         if totalData >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Total data volume for session exceeds {_DRSUCapacityTB} TB DRSU limit")
+            LSL_LOGGER.error(f"Total data volume for session exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
         
         if failures == 0:
@@ -2051,7 +2002,7 @@ class Session(object):
             raise TypeError(f"Unsupported type: '{type(other).__name__}'")
 
 
-def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
+def _parse_create_obs_object(obs_temp, beam_temps=None):
     """Given a obs_temp dictionary of observation parameters and, optionally, a list of
     beam_temp step parameters, return a complete Observation object corresponding to 
     those values."""
@@ -2086,8 +2037,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
-    if verbose:
-        pid_print(f"Obs {obs_temp['id']} is mode {mode}")
+    LSL_LOGGER.info(f"Obs {obs_temp['id']} is mode {mode}")
         
     if mode == 'TBT':
         obsOut = TBT(obs_temp['name'], obs_temp['target'], utcString, obs_temp['tbtSamples'], comments=obs_temp['comments'])
@@ -2102,8 +2052,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     elif mode == 'TRK_LUN':
         obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
-        if verbose:
-            pid_print(f"-> found {len(beam_temps)} steps")
+        LSL_LOGGER.info(f"-> found {len(beam_temps)} steps")
             
         obsOut = Stepped(obs_temp['name'], obs_temp['target'], utcString, obs_temp['filter'], is_radec=obs_temp['stpRADec'], steps=[], gain=obs_temp['gain'], comments=obs_temp['comments'])
         for beam_temp in beam_temps:
@@ -2146,7 +2095,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None, verbose=False):
     return obsOut
 
 
-def parse_sdf(filename, verbose=False):
+def parse_sdf(filename):
     """
     Given a filename, read the file's contents into the SDM instance and return
     that instance.
@@ -2312,14 +2261,13 @@ def parse_sdf(filename, verbose=False):
             # Observation Info
             if keyword == 'OBS_ID':
                 if obs_temp['id'] != 0:
-                    project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+                    project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps) )
                     beam_temp = {'id': 0, 'c1': 0.0, 'c2': 0.0, 'duration': 0, 'freq1': 0, 'freq2': 0, 'HighDR': False, 'delays': None, 'gains': None}
                     beam_temps = []
                 obs_temp['id'] = int(value)
                 project.project_office.observations[0].append( None )
             
-                if verbose:
-                    pid_print(f"Started obs {int(value)}")
+                LSL_LOGGER.info(f"Started obs {int(value)}")
                 
                 continue
             if keyword == 'OBS_TITLE':
@@ -2578,7 +2526,7 @@ def parse_sdf(filename, verbose=False):
             
         # Create the final observation
         if obs_temp['id'] != 0:
-            project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps, verbose=verbose) )
+            project.sessions[0].observations.append( _parse_create_obs_object(obs_temp, beam_temps=beam_temps) )
             beam_temps = []
             
     # Return the project
@@ -2618,40 +2566,34 @@ def get_observation_start_stop(obs):
     return tStart, tStop
 
 
-def is_valid(filename, verbose=False):
+def is_valid(filename):
     """
     Given a filename, see if it is valid SDF file or not.
-    
+
     .. versionadded:: 1.2.0
     """
-    
+
     passes = 0
     failures = 0
     try:
         proj = parse_sdf(filename)
         passes += 1
-        if verbose:
-            print(colorfy("Parser - {{%green OK}}"))
-            
+        LSL_LOGGER.info("Parser - OK")
+
         valid = proj.validate()
         if valid:
             passes += 1
-            if verbose:
-                print(colorfy("Validator - {{%green OK}}"))
+            LSL_LOGGER.info("Validator - OK")
         else:
             failures += 1
-            if verbose:
-                print(colorfy("Validator -{{%red {{%bold FAILED}}}}"))
-                
+            LSL_LOGGER.error("Validator - FAILED")
+
     except IOError as e:
         raise e
     except:
         failures += 1
-        if verbose:
-            print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
-            
-    if verbose:
-        print("---")
-        print("%i passed / %i failed" % (passes, failures))
-        
+        LSL_LOGGER.error("Parser - FAILED")
+
+    LSL_LOGGER.info(f"{passes} passed / {failures} failed")
+
     return False if failures else True

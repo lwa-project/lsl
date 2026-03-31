@@ -36,6 +36,7 @@ import re
 import sys
 import aipy
 import ephem
+import logging
 import numpy as np
 import atexit
 import shutil
@@ -59,7 +60,7 @@ from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
 from lsl.common.color import colorfy
-from lsl.testing import SilentVerbose
+from lsl.logger import LSL_LOGGER
 
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
@@ -87,7 +88,7 @@ vLight = vLight.to('m/s').value
 _annameRE = re.compile(r'^.*?(?P<id>\d{1,3})$')
 
 
-def CorrelatedData(filename, verbose=False):
+def CorrelatedData(filename):
     """
     Read in and work with FITS IDI and UVFITS files.  Returns either a 
     CorrelateDataIDI or CorrelatedDataUV instance.
@@ -106,8 +107,7 @@ def CorrelatedData(filename, verbose=False):
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
-            if verbose:
-                print("MS - ERROR: %s" % str(e))
+            LSL_LOGGER.error(f"MS - ERROR: {str(e)}")
             raise RuntimeError(f"Directory '{filename}' does not appear to be a MeasurmentSet")
             
     else:
@@ -116,23 +116,17 @@ def CorrelatedData(filename, verbose=False):
         try:
             return CorrelatedDataIDI(filename)
         except Exception as e:
-            if verbose:
-                print("FITSIDI - ERROR: %s" % str(e))
-                
+            LSL_LOGGER.error(f"FITSIDI - ERROR: {str(e)}")
         ## UVFITS
         try:
             return CorrelatedDataUV(filename)
         except Exception as e:
-            if verbose:
-                print("UVFITS - ERROR: %s" % str(e))
-                
+            LSL_LOGGER.error(f"UVFITS - ERROR: {str(e)}")
         ## Measurment Set as a compressed entity
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
-            if verbose:
-                print("MS - ERROR: %s" % str(e))
-                
+            LSL_LOGGER.error(f"MS - ERROR: {str(e)}")
     if not valid:
         raise RuntimeError(f"File '{filename}' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet")
 
@@ -1626,7 +1620,7 @@ class ImgWPlus(aipy.img.ImgW):
                            'LATPOLE': 90.0})
 
 
-def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None, verbose=True):
+def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
@@ -1641,8 +1635,8 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
     # over them
     if isinstance(data_set, VisibilityData):
         for ds in data_set:
-            im = build_gridded_image(ds, size=size, res=res, im_size=im_size, im_res=im_res, wres=wres, 
-                                     pol=pol, chan=chan, im=im, verbose=verbose)
+            im = build_gridded_image(ds, size=size, res=res, im_size=im_size, im_res=im_res, wres=wres,
+                                     pol=pol, chan=chan, im=im)
         return im
 
     # Catch Input Shapes
@@ -1693,16 +1687,15 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
     vis = np.concatenate(vis)
     wgt = np.concatenate(wgt)
     
-    with SilentVerbose(stdout=not verbose):
-        uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
-        u,v,w = uvw
-        order = np.argsort(w)
-        u,v,w = u.take(order), v.take(order), w.take(order)
-        vis,wgt = vis.take(order), np.array([wg.take(order) for wg in wgt]).squeeze()
-        if wgt.dtype != np.complex64:
-            wgt = wgt.astype(np.complex64)
-            
-        im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, np.float64(res), np.float64(wres))
+    uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
+    u,v,w = uvw
+    order = np.argsort(w)
+    u,v,w = u.take(order), v.take(order), w.take(order)
+    vis,wgt = vis.take(order), np.array([wg.take(order) for wg in wgt]).squeeze()
+    if wgt.dtype != np.complex64:
+        wgt = wgt.astype(np.complex64)
+
+    im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, np.float64(res), np.float64(wres))
         
     # Update MJD, phase center, and antenna array information
     im.mjd = data_set.mjd

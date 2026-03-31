@@ -29,8 +29,11 @@ Buffer for dealing with out-of-order/missing frames.
 
 import abc
 import copy
+import logging
 from functools import cmp_to_key
 from collections import deque, OrderedDict
+
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -430,7 +433,8 @@ class FrameBufferBase(object):
         outString = '\n'.join([outString, "Missing frames:  %i" % self.missing])
         outString = '\n'.join([outString, "Dropped frames:  %i" % self.dropped])
         
-        print(outString)
+        for line in outString.split('\n'):
+            LSL_LOGGER.info(line)
 
 
 class DRXFrameBuffer(FrameBufferBase):

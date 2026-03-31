@@ -38,14 +38,14 @@ class VirtualWriter(WriterBase):
     to it in a way that is compatible with the :mod:`lsl.imaging.utils` module.
     """
     
-    def __init__(self, ref_time=0.0, verbose=False):
+    def __init__(self, ref_time=0.0):
         """
         Initialize a new virtual writer object using a reference time given in
         seconds since the UNIX 1970 epoch, a python datetime object, or a
         string in the format of 'YYYY-MM-DDTHH:MM:SS'.
         """
         
-        WriterBase. __init__(self, '', ref_time=ref_time, verbose=verbose)
+        WriterBase. __init__(self, '', ref_time=ref_time)
         self.visibility_data = VisibilityData()
         
     def set_frequency(self, freq):

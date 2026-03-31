@@ -18,6 +18,7 @@ functions defined in this module are based heavily off the lwda_fits library.
 import os
 import re
 import math
+import logging
 import numpy as np
 import warnings
 from functools import total_ordering
@@ -32,6 +33,7 @@ from astropy.io import fits as astrofits
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 from lsl.correlator.uvutils import compute_uvw
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl import astro
 from lsl.reader.base import FrameTimestamp
@@ -218,10 +220,9 @@ class WriterBase(object):
         dateStr = self.ref_time.replace('T', '-').replace(':', '-').split('-')
         return astro.date(int(dateStr[0]), int(dateStr[1]), int(dateStr[2]), int(dateStr[3]), int(dateStr[4]), float(dateStr[5]))
         
-    def __init__(self, filename, ref_time=0.0, verbose=False):
+    def __init__(self, filename, ref_time=0.0):
         # File-specific information
         self.filename = filename
-        self.verbose = verbose
         
         # Observatory-specific information
         self.siteName = 'Unknown'
@@ -385,7 +386,7 @@ class Idi(WriterBase):
     AIPS via the FITLD task.
     """
     
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+    def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
         """
         Initialize a new FITS IDI object using a filename and a reference time 
         given in seconds since the UNIX 1970 epoch, a python datetime object, or a 
@@ -398,7 +399,7 @@ class Idi(WriterBase):
         """
         
         # File-specific information
-        WriterBase.__init__(self, filename, ref_time=ref_time, verbose=verbose)
+        WriterBase.__init__(self, filename, ref_time=ref_time)
         
         # Open the file and get going
         if os.path.exists(filename):
@@ -455,11 +456,11 @@ class Idi(WriterBase):
                 mapper[stands[i]] = stands[i]
                 
         # If the mapper has been enabled, tell the user about it
-        if enableMapper and self.verbose:
-            print("FITS IDI: stand ID mapping enabled")
+        if enableMapper:
+            LSL_LOGGER.info("FITS IDI: stand ID mapping enabled")
             for key in mapper.keys():
                 value = mapper[key]
-                print("FITS IDI:  stand #%i -> mapped #%i" % (key, value))
+                LSL_LOGGER.info(f"FITS IDI:  stand #{key} -> mapped #{value}")
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

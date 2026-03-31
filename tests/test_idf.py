@@ -204,7 +204,7 @@ class idf_tests(unittest.TestCase):
         
         project = idf.parse_idf(drxFile)
         with lsl.testing.SilentVerbose():
-            out = project.render(verbose=True)
+            out = project.render()
         
     def test_drx_proper_motion(self):
         """Test proper motion handling in a TRK_RADEC IDF file."""
@@ -233,13 +233,13 @@ class idf_tests(unittest.TestCase):
             # Bad project
             old_id = project.id
             project.id = 'ThisIsReallyLong'
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad session
             project.id = old_id
             old_id = project.runs[0].id
             project.runs[0].id = 10001
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad interferometer
             project.runs[0].id = old_id
@@ -271,47 +271,47 @@ class idf_tests(unittest.TestCase):
             project.runs[0].scans[0].filter = 7
             project.runs[0].scans[1].filter = 7
             project.runs[0].scans[0].update()
-            self.assertTrue(project.validate(verbose=True))
+            self.assertTrue(project.validate())
             
             # Bad filter
             project.runs[0].scans[0].filter = 8
             project.runs[0].scans[0].filter = 6
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Mis-matches filter
             project.runs[0].scans[0].filter = 6
             project.runs[0].scans[1].filter = 7
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad frequency
             project.runs[0].scans[1].filter = 6
             project.runs[0].scans[0].frequency1 = 10.0e6
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             project.runs[0].scans[0].filter = 6
             project.runs[0].scans[0].frequency1 = 90.0e6
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             project.runs[0].scans[0].frequency1 = 38.0e6
             project.runs[0].scans[0].frequency2 = 90.0e6
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad duration
             project.runs[0].scans[0].frequency2 = 38.0e6
             project.runs[0].scans[0].duration = '96:00:00.000'
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad pointing
             project.runs[0].scans[0].duration = '00:00:01.000'
             project.runs[0].scans[0].dec = -72.0
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
     ### DRX - TRK_RADEC + Alternate phase centers###
     
@@ -435,36 +435,36 @@ class idf_tests(unittest.TestCase):
             project.runs[0].scans[0].intent = 'Target'
             project.runs[0].scans[0].filter = 8
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad frequency
             project.runs[0].scans[0].filter = 6
             project.runs[0].scans[0].frequency1 = 90.0e6
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             project.runs[0].scans[0].frequency1 = 38.0e6
             project.runs[0].scans[0].frequency2 = 90.0e6
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad duration
             project.runs[0].scans[0].frequency2 = 38.0e6
             project.runs[0].scans[0].duration = '96:00:00.000'
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad pointing
             project.runs[0].scans[0].duration = '00:00:01.000'
             project.runs[0].scans[0].dec = -72.0
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad alternate phase center
             project.runs[0].scans[0].dec = 40.733916000
             project.runs[0].scans[0].alt_phase_centers[0].dec = 45.0
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
             # Bad alternate phase center intent
             project.runs[0].scans[0].alt_phase_centers[0].dec = 40.733916000
@@ -476,7 +476,7 @@ class idf_tests(unittest.TestCase):
             for i in range(40):
                 project.runs[0].scans[0].add_alt_phase_center('test', 'Target', 19.991210200, 40.733916000)
             project.runs[0].scans[0].update()
-            self.assertFalse(project.validate(verbose=True))
+            self.assertFalse(project.validate())
             
     ### DRX - TRK_SOL ###
     

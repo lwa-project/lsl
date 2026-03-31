@@ -7,6 +7,7 @@ Given a DRX file, plot the time averaged spectra for each beam output.
 import os
 import sys
 import math
+import logging
 import numpy as np
 import argparse
 
@@ -16,6 +17,7 @@ from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 
+from lsl.logger import set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -47,6 +49,9 @@ def _best_freq_units(freq):
 
 
 def main(args):
+    if not args.verbose:
+        set_log_level(logging.WARNING)
+
     # Length of the FFT
     LFFT = args.fft_length
     
@@ -126,7 +131,7 @@ def main(args):
             
         # Calculate the spectra for this block of data and then weight the results by 
         # the total number of frames read.  This is needed to keep the averages correct.
-        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, verbose=args.verbose, sample_rate=srate, clip_level=0)
+        freq, tempSpec = fxc.SpecMaster(data, LFFT=LFFT, window=window, pfb=args.pfb, sample_rate=srate, clip_level=0)
         for stand in range(tempSpec.shape[0]):
             masterSpectra[i,stand,:] = tempSpec[stand,:]
             masterWeight[i,stand,:] = int(readT*srate/LFFT)

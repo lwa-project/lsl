@@ -116,15 +116,15 @@ try:
                 
                 return np.argsort(packed)
                 
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+        def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
             """
             Initialize a new Measurment Set object using a filename and a reference time
             given in seconds since the UNIX 1970 epoch, a python datetime object, or a
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
-            
+
             # File-specific information
-            WriterBase. __init__(self, filename, ref_time=ref_time, verbose=verbose)
+            WriterBase. __init__(self, filename, ref_time=ref_time)
             
             # Open the file and get going
             if os.path.exists(filename):
@@ -1107,11 +1107,11 @@ except ImportError:
         
         _STOKES_CODES = STOKES_CODES
         
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+        def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
             """
             Initialize a new Measurement Set object using a filename and a reference time
-            given in seconds since the UNIX 1970 epoch, a python datetime object, or a 
+            given in seconds since the UNIX 1970 epoch, a python datetime object, or a
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
-            
+
             raise RuntimeError("Cannot import casacore.tables, MS support disabled")

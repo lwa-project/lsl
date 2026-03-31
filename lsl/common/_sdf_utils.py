@@ -2,7 +2,6 @@
 Module that contains commmon routines for the SDF and IDF modules.
 """
 
-import os
 import re
 import math
 import warnings
@@ -18,13 +17,10 @@ from astropy.time import Time as AstroTime
 from lsl.astro import date as astroDate, get_date as astroGetDate
 from lsl.common.stations import lwa1
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 __version__ = '0.1'
-__all__ = ['pid_print', 'render_file_size', 'render_bandwidth', 'parse_time']
-
-
-def pid_print(*args, **kwds):
-    print(f"[{os.getpid()}]", *args, **kwds)
+__all__ = ['render_file_size', 'render_bandwidth', 'parse_time']
 
 
 def render_file_size(size):
@@ -201,7 +197,7 @@ def parse_time(s, station=lwa1):
                     tz = 'LST'
                 else:
                     ## Exhaustive search through zoneinfo.  This may yield strange matches...
-                    warnings.warn(colorfy("{{%%yellow Entering zoneinfo search mode for '%s'}}" % tzName), RuntimeWarning)
+                    LSL_LOGGER.warning(f"Entering zoneinfo search mode for '{tzName}'")
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)

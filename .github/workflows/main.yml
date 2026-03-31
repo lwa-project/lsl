@@ -69,6 +69,10 @@ jobs:
           PYDEVD_DISABLE_FILE_VALIDATION: 1
           KMP_DUPLICATE_LIB_OK: TRUE
         run: |
+          if [[ "$(uname)" == "Darwin" ]] && brew list --versions libomp 2>/dev/null | grep -q "^libomp 22\."; then
+            echo "Detected libomp 22.x on macOS — limiting OpenMP threads to avoid deadlock"
+            export OMP_NUM_THREADS=1
+          fi
           cd tests
           coverage run --source=lsl -m unittest discover
           coverage xml

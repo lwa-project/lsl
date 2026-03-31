@@ -12,6 +12,7 @@ from lsl.common import ndp as ndp_common
 from lsl.common import stations as lwa_common
 from lsl.sim import drx
 from lsl.reader.drx import FILTER_CODES as DRXFilters
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
 telemetry.track_module()
@@ -30,7 +31,6 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     start_time = kwargs['start_time']
     filter = kwargs['filter']
     ntuning = kwargs['ntuning']
-    verbose = kwargs['verbose']
     noise_strength = kwargs['noise_strength']
     sample_rate = DRXFilters[filter]
     decimation = int(round(ndp_common.fS / sample_rate))
@@ -42,14 +42,12 @@ def _basic_drx(fh, stands, nframes, **kwargs):
     upperSpike2 = sample_rate / 3.0
     lowerSpike2 = -sample_rate / 3.0
 
-    if verbose:
-        print("Simulating %i frames of DRX Data @ %.2f MHz for %i beams, %i tunings each:" % \
-            (nframes, sample_rate/1e6, len(stands), ntuning))
+    LSL_LOGGER.info(f"Simulating {nframes} frames of DRX Data @ {sample_rate/1e6:.2f} MHz for {len(stands)} beams, {ntuning} tunings each:")
 
     beams = stands
     for i in range(nframes):
-        if i % 1000 == 0 and verbose:
-            print(" frame %i" % i)
+        if i % 1000 == 0:
+            LSL_LOGGER.debug(f" frame {i}")
         t = int(start_time*ndp_common.fS) + int(i*ndp_common.fS*samplesPerFrame/sample_rate)
         tFrame = t/ndp_common.fS - start_time + np.arange(samplesPerFrame, dtype=np.float32) / sample_rate
         for beam in beams:
@@ -74,7 +72,7 @@ def _basic_drx(fh, stands, nframes, **kwargs):
                     cFrame.write_raw_frame(fh)
 
 
-def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filter=6, ntuning=2, start_time=0, noise_strength=0.1, verbose=False):
+def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filter=6, ntuning=2, start_time=0, noise_strength=0.1):
     """
     Generate a collection of frames with a basic test signal for DRX.  The 
     signals for the three modes are:
@@ -110,6 +108,6 @@ def basic_signal(fh, stands, nframes, station=lwa_common.lwa1, mode='DRX', filte
         start_time = time.time()
 
     if mode == 'DRX':
-        _basic_drx(fh, stands, nframes, filter=filter, ntuning=ntuning, start_time=start_time, noise_strength=noise_strength, verbose=verbose)
+        _basic_drx(fh, stands, nframes, filter=filter, ntuning=ntuning, start_time=start_time, noise_strength=noise_strength)
     else:
         raise RuntimeError(f"Unknown observations mode: {mode}")

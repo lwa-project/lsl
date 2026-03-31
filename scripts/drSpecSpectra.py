@@ -8,6 +8,7 @@ polarization product.
 import os
 import sys
 import math
+import logging
 import numpy as np
 import argparse
 
@@ -16,6 +17,7 @@ from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 
+from lsl.logger import set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
@@ -47,6 +49,9 @@ def _best_freq_units(freq):
 
 
 def main(args):
+    if not args.verbose:
+        set_log_level(logging.WARNING)
+
     idf = LWADataFile(args.filename)
     if not isinstance(idf, DRSpecFile):
         raise RuntimeError("File '%s' does not appear to be a valid DR spectrometer file" % os.path.basename(args.filename))

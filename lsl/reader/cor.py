@@ -195,7 +195,7 @@ class Frame(FrameBase):
         return self.payload.integration_time
 
 
-def read_frame(filehandle, verbose=False):
+def read_frame(filehandle):
     """
     Function to read in a single COR frame (header+data) and store the 
     contents as a Frame object.

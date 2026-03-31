@@ -597,7 +597,7 @@ class DRXFile(LDPFileBase):
                 cFrames = deque()
                 for i in range(self.description['nbeampol']):
                     try:
-                        cFrames.append( drx_rf(self.fh, verbose=False) )
+                        cFrames.append( drx_rf(self.fh) )
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
@@ -727,7 +727,7 @@ class DRXFile(LDPFileBase):
                 for j in range(self.description['nbeampol']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
-                        cFrame = drx.read_frame(self.fh, verbose=False)
+                        cFrame = drx.read_frame(self.fh)
                     except errors.EOFError:
                         break
                     except errors.SyncError:
@@ -1056,7 +1056,7 @@ class DRX8File(LDPFileBase):
                 cFrames = deque()
                 for i in range(self.description['nbeampol']):
                     try:
-                        cFrames.append( drx8_rf(self.fh, verbose=False) )
+                        cFrames.append( drx8_rf(self.fh) )
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
@@ -1186,7 +1186,7 @@ class DRX8File(LDPFileBase):
                 for j in range(self.description['nbeampol']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
-                        cFrame = drx8.read_frame(self.fh, verbose=False)
+                        cFrame = drx8.read_frame(self.fh)
                     except errors.EOFError:
                         break
                     except errors.SyncError:
@@ -1403,7 +1403,7 @@ class DRSpecFile(LDPFileBase):
         for i in range(frame_count):
             # Read in the next frame and anticipate any problems that could occur
             try:
-                cFrame = drspec.read_frame(self.fh, verbose=False)
+                cFrame = drspec.read_frame(self.fh)
             except errors.EOFError:
                 break
             except errors.SyncError:
@@ -1686,7 +1686,7 @@ class TBXFile(LDPFileBase):
             cFrames = deque()
             for i in range(framesPerObs):
                 try:
-                    cFrame = tbx_rf(self.fh, verbose=False)
+                    cFrame = tbx_rf(self.fh)
                     if not cFrame.is_tbx:
                         nSkip += 1
                         continue
@@ -2015,7 +2015,7 @@ class CORFile(LDPFileBase):
             cFrames = deque()
             for i in range(framesPerObs):
                 try:
-                    cFrame = cor.read_frame(self.fh, verbose=False)
+                    cFrame = cor.read_frame(self.fh)
                     if not cFrame.is_cor:
                         continue
                     cFrames.append( cFrame )
