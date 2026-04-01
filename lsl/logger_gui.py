@@ -11,6 +11,8 @@ import logging
 import threading
 
 from lsl import logger as lsl_logger
+from lsl.misc import telemetry
+telemetry.track_module()
 
 try:
     have_tk = True
