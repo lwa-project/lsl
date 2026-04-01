@@ -16,7 +16,7 @@ import inspect
 import warnings
 from urllib.request import urlopen
 from urllib.parse import urlencode
-from threading import RLock
+from threading import Thread, RLock
 from functools import wraps
 
 from lsl.version import version as lsl_version
@@ -87,14 +87,23 @@ class _TelemetryClient(object):
         # Telemetry cache
         self._cache = {}
         self._cache_count = 0
+        self._init_pid = os.getpid()
+        self._send_thread = None
         if not _IS_READONLY:
             # Reporting lockout
             self.active = TELE_CONFIG.get('enabled')
             
             # Try to send what we have now in a background thread
-            from threading import Thread
-            t = Thread(target=self.send, daemon=True)
-            t.start()
+            self._send_thread = Thread(target=self.send, daemon=True)
+            self._send_thread.start()
+            
+            # Register fork handlers so the send thread doesn't
+            # interfere with ProcessPoolExecutor/multiprocessing
+            os.register_at_fork(
+                before=self._before_fork,
+                after_in_child=self._after_fork_child,
+                after_in_parent=self._after_fork_parent,
+            )
             
             # Register the "write" method to be called by atexit... at exit
             atexit.register(self.write)
@@ -102,10 +111,38 @@ class _TelemetryClient(object):
         else:
             self.active = False
             
+    def _before_fork(self):
+        """
+        Wait for the send thread to finish before forking.
+        """
+        
+        if self._send_thread is not None:
+            self._send_thread.join(timeout=self.timeout)
+            
+    def _after_fork_child(self):
+        """
+        Re-initialize telemetry state in forked child processes.
+        """
+        
+        self._lock = RLock()
+        self._send_thread = None
+        self._init_pid = os.getpid()
+        self._session_start = time.time()
+        self._cache.clear()
+        self._cache_count = 0
+        
+    def _after_fork_parent(self):
+        """
+        Clean up the send thread reference in the parent after fork.
+        """
+        
+        if self._send_thread is not None and not self._send_thread.is_alive():
+            self._send_thread = None
+            
     def send(self):
         if not self.active:
             return
-
+            
         with self._lock:
             filenames = glob.glob(os.path.join(_CACHE_DIR, 'telemetry_*.log'))
             if not filenames:
@@ -132,7 +169,7 @@ class _TelemetryClient(object):
                 data = urlencode({'payload': json.dumps(payloads)})
                 with urlopen('https://fornax.phys.unm.edu/telemetry/log.php', data.encode(), timeout=self.timeout) as uh:
                     status = uh.read()
-
+                    
                 if status == b'':
                     for filename in filenames:
                         try:
@@ -170,6 +207,10 @@ class _TelemetryClient(object):
         Writes the cache of telemetry data to disk for latter.
         """
         
+        # Skip if we're in a forked child process
+        if os.getpid() != self._init_pid:
+            return False
+            
         success = False
         with self._lock:
             if self.active and self._cache_count > 0:
