@@ -54,8 +54,6 @@ from astropy.coordinates import SphericalRepresentation, CartesianRepresentation
 
 from lsl.common import ndp as ndpCommon
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.5'

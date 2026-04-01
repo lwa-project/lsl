@@ -16,8 +16,6 @@ from astropy.time import Time as AstroTime, TimeDelta as AstroDelta
 from lsl.common import ndp as ndp_common
 import lsl.astro as astro
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.2'

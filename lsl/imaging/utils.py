@@ -69,8 +69,6 @@ from scipy import fftpack
 fft2Function = fftpack.fft2
 ifft2Function = fftpack.ifft2
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '1.0'

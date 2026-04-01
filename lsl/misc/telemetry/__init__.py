@@ -6,6 +6,8 @@ Basic telemetry client for LSL to help establish usage patterns
 
 import os
 import sys
+import json
+import glob
 import time
 import uuid
 import atexit
@@ -25,9 +27,9 @@ from lsl.config import LSL_CONFIG
 TELE_CONFIG = LSL_CONFIG.view('telemetry')
 
 
-__version__ = '0.3'
+__version__ = '0.4'
 __all__ = ['is_active', 'enable', 'disable', 'ignore',
-           'track_script', 'track_module',
+           'track_script', 'track_module', 'track_class',
            'track_function', 'track_function_timed',
            'track_method', 'track_method_timed']
 
@@ -62,6 +64,7 @@ class _TelemetryClient(object):
     """
     LSL telemetry client to help understand usage of the LSL library.
     """
+    
     _lock = RLock()
     
     def __init__(self, key, version=lsl_version):
@@ -69,26 +72,76 @@ class _TelemetryClient(object):
         self.key = key
         self.version = version
         self.py_version = "%i.%i" % (sys.version_info.major, sys.version_info.minor)
+        self.py_platform = sys.platform
+        self.py_is_venv = sys.prefix != sys.base_prefix
         self.max_entries = TELE_CONFIG.get('max_entries')
         self.timeout = TELE_CONFIG.get('timeout')
         
         # Session reference
         self._session_start = time.time()
-        
+        self._session_tag = os.getenv('LSL_TELEMETRY_TAG', 'None')
+        if self._session_tag == 'None':
+            if sys.__stdin__.isatty():
+                self._session_tag = 'interactive'
+                
         # Telemetry cache
         self._cache = {}
         self._cache_count = 0
-        
         if not _IS_READONLY:
             # Reporting lockout
             self.active = TELE_CONFIG.get('enabled')
             
-            # Register the "send" method to be called by atexit... at exit
-            atexit.register(self.send, True)
-                
+            # Try to send what we have now in a background thread
+            from threading import Thread
+            t = Thread(target=self.send, daemon=True)
+            t.start()
+            
+            # Register the "write" method to be called by atexit... at exit
+            atexit.register(self.write)
+            
         else:
             self.active = False
             
+    def send(self):
+        if not self.active:
+            return
+
+        with self._lock:
+            filenames = glob.glob(os.path.join(_CACHE_DIR, 'telemetry_*.log'))
+            if not filenames:
+                return
+                
+            oldest = min(os.path.getmtime(f) for f in filenames)
+            if time.time() - oldest < 7*86400:
+                return
+                
+            payloads = []
+            for filename in filenames:
+                try:
+                    with open(filename, 'r') as lf:
+                        payload = json.loads(lf.read())
+                        payloads.append(payload)
+                except Exception:
+                    pass
+                    
+            if not payloads:
+                return
+                
+            try:
+                LSL_LOGGER.info('Uploading LSL telemetry data')
+                data = urlencode({'payload': json.dumps(payloads)})
+                with urlopen('https://fornax.phys.unm.edu/telemetry/log.php', data.encode(), timeout=self.timeout) as uh:
+                    status = uh.read()
+
+                if status == b'':
+                    for filename in filenames:
+                        try:
+                            os.unlink(filename)
+                        except OSError:
+                            pass
+            except Exception as e:
+                LSL_LOGGER.warning(f"Failed to upload telemetry data: {str(e)}")
+                
     def track(self, name, timing=0.0):
         """
         Add an entry to the telemetry cache with optional timing information.
@@ -108,39 +161,47 @@ class _TelemetryClient(object):
                 self._cache_count += 1
                 
             if self._cache_count >= self.max_entries:
-                self.send()
+                self.write()
                 
         return True
                 
-    def send(self, final=False):
+    def write(self):
         """
-        Send the current cache of telemetry data back to the maintainers for 
-        analysis.
+        Writes the cache of telemetry data to disk for latter.
         """
         
         success = False
         with self._lock:
             if self.active and self._cache_count > 0:
-                LSL_LOGGER.info('Sending LSL telemetry data')
+                
+                LSL_LOGGER.info('Writing LSL telemetry data')
                 try:
                     tNow = time.time()
-                    payload = ';'.join(["%s;%i;%i;%.6f" % (name,
-                                                           self._cache[name][0],
-                                                           self._cache[name][1],
-                                                           self._cache[name][2]) for name in self._cache])
-                    payload = urlencode({'timestamp'   : int(tNow),
-                                         'key'         : self.key, 
-                                         'version'     : self.version,
-                                         'py_version'  : self.py_version,
-                                         'session_time': "%.6f" % ((tNow-self._session_start) if final else 0.0,),
-                                         'payload'     : payload})
-                    with urlopen('https://fornax.phys.unm.edu/telemetry/log.php', payload.encode(), timeout=self.timeout) as uh:
-                        status = uh.read()
-                    if status == '':
-                        self.clear()
-                        success = True
+                    
+                    call_payload = {}
+                    for name,info in self._cache.items():
+                        call_payload[name] = {'total_count': info[0],
+                                              'timed_count': info[1],
+                                              'total_time':  info[2]
+                                             }
+                    payload = {'timestamp':    int(tNow),
+                               'install_key':  self.key,
+                               'lsl_version':  self.version,
+                               'py_version':   self.py_version,
+                               'py_platform':  self.py_platform,
+                               'py_is_venv':   self.py_is_venv,
+                               'session_tag':  self._session_tag,
+                               'elapsed_time': tNow-self._session_start,
+                               'calls':        call_payload}
+                    
+                    filename = os.path.join(_CACHE_DIR, 'telemetry_%i_%i.log' % (int(tNow), os.getpid()))
+                    with open(filename, 'w') as lf:
+                        lf.write(json.dumps(payload))
+                    self.clear()
+                    success = True
+                    
                 except Exception as e:
-                    LSL_LOGGER.warning(f"Failed to send telemetry data: {str(e)}")
+                    LSL_LOGGER.warning(f"Failed to write telemetry data: {str(e)}")
             else:
                 self.clear()
                 
@@ -259,6 +320,29 @@ def track_module():
     
     caller = inspect.currentframe().f_back
     _telemetry_client.track(caller.f_globals['__name__'])
+
+
+def track_class(user_class):
+    """
+    Record instantiation of a class in LSL.
+    """
+
+    global _telemetry_client
+
+    caller = inspect.currentframe().f_back
+    mod = caller.f_globals['__name__']
+    name = mod + '.' + user_class.__name__
+
+    original_init = user_class.__init__
+
+    @wraps(original_init)
+    def new_init(self, *args, **kwds):
+        global _telemetry_client
+        _telemetry_client.track(name)
+        original_init(self, *args, **kwds)
+
+    user_class.__init__ = new_init
+    return user_class
 
 
 def track_function(user_function):

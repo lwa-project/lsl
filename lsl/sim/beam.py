@@ -14,8 +14,6 @@ from lsl.common.data_access import DataAccess
 
 from lsl.logger import LSL_LOGGER
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 __version__ = '0.2'
 __all__ = ['mueller_matrix', 'beam_response', 'get_available_models']

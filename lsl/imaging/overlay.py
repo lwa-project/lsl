@@ -26,8 +26,6 @@ from astropy.coordinates import AltAz, SkyCoord
 from lsl import astro
 from lsl.imaging.utils import ImgWPlus
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = "0.3"

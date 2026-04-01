@@ -7,8 +7,6 @@ termainals.
 
 import re
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.2'

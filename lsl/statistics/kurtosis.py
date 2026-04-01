@@ -13,8 +13,6 @@ import numpy as np
 from scipy.special import erf
 from scipy.stats import betaprime
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.1'

@@ -36,10 +36,9 @@ from lsl.common.color import colorfy
 from lsl.logger import LSL_LOGGER
 
 from lsl import astro
+from lsl.misc import telemetry
 from lsl.reader.base import FrameTimestamp
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '1.0'
@@ -379,6 +378,7 @@ class WriterBase(object):
         raise NotImplementedError
 
 
+@telemetry.track_class
 class Idi(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array
@@ -1342,6 +1342,7 @@ class Idi(WriterBase):
         return (mapper, inverseMapper)
 
 
+@telemetry.track_class
 class Aips(Idi):
     """
     Sub-class of the FITS IDI writer for making files that *should* work 
@@ -1422,6 +1423,7 @@ class Aips(Idi):
         self.FITS.flush()
 
 
+@telemetry.track_class
 class ExtendedIdi(Idi):
     """
     Sub-class of the FITS IDI writer for making files that support up to

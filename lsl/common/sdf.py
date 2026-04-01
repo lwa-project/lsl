@@ -73,8 +73,6 @@ OBSV_CONFIG = LSL_CONFIG.view('observing')
 
 from lsl.logger import LSL_LOGGER
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '1.4'

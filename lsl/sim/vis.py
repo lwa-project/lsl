@@ -69,8 +69,6 @@ from lsl.sim._simfast import FastVis
 from lsl.common.color import colorfy
 from lsl.logger import LSL_LOGGER
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.6'

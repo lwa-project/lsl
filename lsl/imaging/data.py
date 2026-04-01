@@ -8,8 +8,6 @@ import numpy as np
 
 from lsl import astro
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = "0.1"

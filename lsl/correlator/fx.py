@@ -37,8 +37,6 @@ from lsl.reader.base import CI8
 from lsl.common import ndp as ndp_common
 from lsl.correlator import uvutils, _spec, _stokes, _core
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '1.2'

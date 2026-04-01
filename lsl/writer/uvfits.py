@@ -25,8 +25,6 @@ from lsl.writer.fitsidi import WriterBase
 from lsl.common.color import colorfy
 from lsl.logger import LSL_LOGGER
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.3'

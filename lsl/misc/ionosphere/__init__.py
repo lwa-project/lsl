@@ -29,8 +29,6 @@ from lsl.logger import LSL_LOGGER
 
 from lsl.misc.ionosphere import _igs, _jpl, _emr, _uqr, _code, _ustec, _glotec
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = "0.8"

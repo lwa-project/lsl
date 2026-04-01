@@ -23,8 +23,6 @@ from astropy.time import Time as AstroTime
 from lsl import astro
 from lsl.common.data_access import DataAccess
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__   = '0.5'

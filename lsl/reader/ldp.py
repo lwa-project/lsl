@@ -36,11 +36,10 @@ from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp, CI8
 from lsl.common.color import colorfy
 
+from lsl.misc import telemetry
 from lsl.config import LSL_CONFIG
 LDP_CONFIG = LSL_CONFIG.view('ldp')
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.7'
@@ -295,6 +294,7 @@ class LDPFileBase(object):
         raise NotImplementedError
 
 
+@telemetry.track_class
 class DRXFile(LDPFileBase):
     """
     Class to make it easy to interface with a DRX file.  DRX data consist of a
@@ -754,6 +754,7 @@ class DRXFile(LDPFileBase):
         return levels
 
 
+@telemetry.track_class
 class DRX8File(LDPFileBase):
     """
     Class to make it easy to interface with a DRX8 file.  DRX8 data consist of a
@@ -1213,6 +1214,7 @@ class DRX8File(LDPFileBase):
         return levels
 
 
+@telemetry.track_class
 class DRSpecFile(LDPFileBase):
     """
     Class to make it easy to interface with a DR Spectrometer file.  DR
@@ -1437,6 +1439,7 @@ class DRSpecFile(LDPFileBase):
         return duration, setTime, data
 
 
+@telemetry.track_class
 class TBXFile(LDPFileBase):
     """
     Class to make it easy to interface with a TBT/TBS file.  TBF data are a complex
@@ -1791,6 +1794,7 @@ class TBXFile(LDPFileBase):
         return duration, setTime, data
 
 
+@telemetry.track_class
 class CORFile(LDPFileBase):
     """
     Class to make it easy to interface with a COR file.  COR data contain full

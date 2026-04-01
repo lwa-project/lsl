@@ -10,8 +10,6 @@ import logging
 
 from lsl.logger import LSL_LOGGER
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.3'

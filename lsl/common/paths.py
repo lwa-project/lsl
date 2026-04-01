@@ -16,8 +16,6 @@ import importlib.util
 
 from lsl.config import LSL_CONFIG
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.3'

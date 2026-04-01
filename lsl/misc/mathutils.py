@@ -16,8 +16,6 @@ except ImportError:
 
 from lsl.common.color import colorfy
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__   = '0.6'

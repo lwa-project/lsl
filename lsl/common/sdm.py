@@ -10,8 +10,6 @@ from lsl.common.mcs import SummaryCode, parse_c_struct, flat_to_multi, \
                         ME_MAX_NSTD, ME_MAX_NFEE, ME_MAX_NRPD, ME_MAX_NSEP, ME_MAX_NARB, \
                         ME_MAX_NSNAP, ME_MAX_NSERVER, ME_MAX_NDR
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.1'

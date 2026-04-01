@@ -23,8 +23,6 @@ from lsl.common import ndp, mcs as mcs_mod
 from lsl.misc.mathutils import to_dB, from_dB
 from lsl.common.data_access import DataAccess
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '2.7'
