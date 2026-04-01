@@ -81,8 +81,11 @@ class _TelemetryClient(object):
         self._session_start = time.time()
         self._session_tag = os.getenv('LSL_TELEMETRY_TAG', 'None')
         if self._session_tag == 'None':
-            if sys.__stdin__.isatty():
-                self._session_tag = 'interactive'
+            try:
+                if sys.__stdin__.isatty():
+                    self._session_tag = 'interactive'
+            except ValueError:
+                pass
                 
         # Telemetry cache
         self._cache = {}
