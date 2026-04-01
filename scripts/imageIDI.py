@@ -173,7 +173,7 @@ def main(args):
                 ax.set_title(f"{pol} @ {str(utc)} UTC")
                 
             junk = img.image(center=(img.shape[0]//2,img.shape[1]//2))
-            print(f"{pol}: image is {junk.min():.4f} to {junk.max():.4f} with mean {junk.mean():.4f}")
+            print(f"{pol}: image is {junk.min():.4f} to {junk.max():.4f} with mean {junk.mean():.4f}; |max/min| is {abs(junk.max()/junk.min()):.4f}")
             
             # Turn off tick marks
             ax.xaxis.set_major_formatter( NullFormatter() )
