@@ -21,6 +21,7 @@ from datetime import datetime
 from functools import cmp_to_key
 
 from lsl import astro
+from lsl.misc import telemetry
 from lsl.reader.base import FrameTimestamp
 from lsl.common.stations import lwa1
 from lsl.writer.fitsidi import WriterBase
@@ -43,6 +44,7 @@ NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V',
                   -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
 
+@telemetry.track_class
 class Sd(WriterBase):
     """
     Class for storing spectrometer data and writing the data, along with array

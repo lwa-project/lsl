@@ -21,6 +21,7 @@ from astropy.io import fits as astrofits
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 
 from lsl import astro
+from lsl.misc import telemetry
 from lsl.writer.fitsidi import WriterBase
 from lsl.common.color import colorfy
 from lsl.logger import LSL_LOGGER
@@ -62,6 +63,7 @@ def split_baseline(baseline, shift=None):
     return ant1,ant2
 
 
+@telemetry.track_class
 class Uv(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array

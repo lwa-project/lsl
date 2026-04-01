@@ -62,6 +62,7 @@ from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
 from lsl.common.color import colorfy
 from lsl.logger import LSL_LOGGER
 
+from lsl.misc import telemetry
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 
@@ -205,6 +206,7 @@ class CorrelatedDataBase(object):
         pass
 
 
+@telemetry.track_class
 class CorrelatedDataIDI(CorrelatedDataBase):
     """
     Class to make accessing information about a FITS IDI easy.  This wraps 
@@ -532,6 +534,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         return dataSets
 
 
+@telemetry.track_class
 class CorrelatedDataUV(CorrelatedDataBase):
     """
     Class to make accessing information about a UVFITS file easy.  This wraps 
@@ -818,10 +821,11 @@ try:
                         5:'RR',  6:'RL',  7:'LR',  8:'LL',
                         9:'XX', 10:'XY', 11:'YX', 12:'YY'}
     
+    @telemetry.track_class
     class CorrelatedDataMS(CorrelatedDataBase):
         """
-        Class to make accessing information about a MS easy.  This wraps 
-        all of the "messy" machinery needed to extract both the metadata and data 
+        Class to make accessing information about a MS easy.  This wraps
+        all of the "messy" machinery needed to extract both the metadata and data
         from the file and return them as common LSL objects.
         
         This class has three main attributes to interact with:
@@ -842,7 +846,7 @@ try:
          * date_obs - Naive datetime object for the reference date of the MS
          * utc_date_obs - Timezone-aware datetime object for the reference date of the MS
          * antennas - List of :class:`lsl.common.stations.Antenna` instances
-
+        
         .. note::
             The CorrelatedDataMS.antennas attribute should be used over 
             CorrelatedDataMS.station.antennas since the mapping in the MS

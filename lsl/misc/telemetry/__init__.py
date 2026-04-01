@@ -379,7 +379,8 @@ def track_class(user_class):
     @wraps(original_init)
     def new_init(self, *args, **kwds):
         global _telemetry_client
-        _telemetry_client.track(name)
+        if type(self) is user_class:
+            _telemetry_client.track(name)
         original_init(self, *args, **kwds)
 
     user_class.__init__ = new_init

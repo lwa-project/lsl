@@ -18,6 +18,7 @@ from astropy.time import Time as AstroTime
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 
 from lsl import astro
+from lsl.misc import telemetry
 from lsl.reader.base import FrameTimestamp
 from lsl.writer.fitsidi import WriterBase
 from lsl.common.color import colorfy
@@ -59,14 +60,15 @@ def split_baseline(baseline, shift=16):
 try:
     from casacore.tables import table, tableutil
     
+    @telemetry.track_class
     class Ms(WriterBase):
         """
         Class for storing visibility data and writing the data, along with array
         geometry, frequency setup, etc., to a CASA measurement set.
         """
-        
+
         _STOKES_CODES = STOKES_CODES
-        
+
         class _MS_UVData(WriterBase._UVData):
             """
             Represents one MS UV visibility data set for a given observation time.
