@@ -2,7 +2,7 @@
 Standalone helper to upload old telemetry log files.
 
 Invoked as a subprocess by the telemetry client:
-    python -m lsl.misc.telemetry._send <cache_dir> <timeout>
+    python -m lsl.misc._telemetry_send <cache_dir> <timeout>
 
 Uses a file lock to ensure only one upload runs at a time across all
 processes.
