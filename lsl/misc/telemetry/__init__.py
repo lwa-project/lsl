@@ -109,7 +109,7 @@ class _TelemetryClient(object):
             return
             
         try:
-            subprocess.Popen([sys.executable, '-m', 'lsl.misc.telemetry._send',
+            subprocess.Popen([sys.executable, '-m', 'lsl.misc._telemetry_send',
                                               _CACHE_DIR, str(self.timeout)],
                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL, close_fds=True
