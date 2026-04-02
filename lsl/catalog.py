@@ -16,9 +16,7 @@ from lsl import astro
 from lsl import transform
 from lsl.common.data_access import DataAccess
 from lsl.logger import LSL_LOGGER
-
 from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__   = '0.2'
@@ -159,6 +157,7 @@ class Catalog(Mapping):
         return entry
 
 
+@telemetry.track_class
 class LWA_Catalog(Catalog):
     """
     Specific definition for LWA observation source catalogue data file.
@@ -217,6 +216,7 @@ class LWA_Catalog(Catalog):
                         self.alias_map[alias] = entry
 
 
+@telemetry.track_class
 class PSR_Catalog(Catalog):
     """
     Specific definition for ATNF Pulsar (PSRCAT) catalog.
@@ -333,6 +333,7 @@ class PSR_Catalog(Catalog):
                     bad = False
 
 
+@telemetry.track_class
 class PKS_Catalog(Catalog):
     """
     Specific definition for PKS source catalog.
@@ -396,6 +397,7 @@ class PKS_Catalog(Catalog):
                 lineNum += 1
 
 
+@telemetry.track_class
 class PKS90_Catalog(Catalog):
     """
     Specific definition for PKS90 source catalogue data file.
@@ -463,6 +465,7 @@ class PKS90_Catalog(Catalog):
                 lineNum += 1
 
 
+@telemetry.track_class
 class C3C_Catalog(Catalog):
     """
     Specific definition for Cambridge 3C source catalogue data file.
@@ -517,6 +520,7 @@ class C3C_Catalog(Catalog):
                 lineNum += 1      
 
 
+@telemetry.track_class
 class C4C_Catalog(Catalog):
     """
     Specific definition for Cambridge 4C source catalogue data file.
@@ -630,6 +634,7 @@ class Fermi_LAT_Catalog(Catalog):
                         pass
 
 
+@telemetry.track_class
 class F2FGL_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 2-year point source catalog.
@@ -639,6 +644,7 @@ class F2FGL_Catalog(Fermi_LAT_Catalog):
         Fermi_LAT_Catalog.__init__(self, '2FGL', 'gll_psc_v08.fit')
 
 
+@telemetry.track_class
 class F3FGL_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 4-year point source catalog.
@@ -648,6 +654,7 @@ class F3FGL_Catalog(Fermi_LAT_Catalog):
         Fermi_LAT_Catalog.__init__(self, '3FGL', 'gll_psc_v16.fit')
 
 
+@telemetry.track_class
 class F4FGL_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 8-year point source catalog.
@@ -657,6 +664,7 @@ class F4FGL_Catalog(Fermi_LAT_Catalog):
         Fermi_LAT_Catalog.__init__(self, '4FGL', 'gll_psc_v22.fit')
 
 
+@telemetry.track_class
 class F4FGLDR4_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 14-year point source catalog.

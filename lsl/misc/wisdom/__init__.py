@@ -19,7 +19,6 @@ from lsl.misc import _wisdom
 from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = "0.4"
@@ -30,6 +29,7 @@ __all__ = ["make", "show"]
 _WISDOM_FFTW = os.path.join(wisdomPath, 'fftw_wisdom.txt')
 
 
+@telemetry.track_function
 def make():
     """
     Build a new set of LSL-specific FFTW wisdom.

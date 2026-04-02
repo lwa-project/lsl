@@ -19,7 +19,6 @@ from lsl.misc.mathutils import gaussian2d
 from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.6'
@@ -120,6 +119,7 @@ def _fit_gaussian(data):
     return params
 
 
+@telemetry.track_function
 def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.2, max_iter=150, sigma=3.0, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
@@ -356,6 +356,7 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
     return conv
 
 
+@telemetry.track_function
 def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.1, max_iter=150, sigma=2.0, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, an AIPY ImgW 
@@ -676,6 +677,7 @@ def _minor_cycle(img, beam, gain=0.2, max_iter=150):
     return  cleaned + working
 
 
+@telemetry.track_function
 def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.05, max_iter=150, rtol=1e-9, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 

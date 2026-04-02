@@ -15,13 +15,13 @@ from scipy.interpolate import bisplrep, bisplev
 from lsl.logger import LSL_LOGGER
 
 from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = "0.1"
 __all__ = ['estimate_background', 'find_point_sources']
 
 
+@telemetry.track_function
 def estimate_background(image, window=32):
     """
     Given a 2-D image, estimate and return the background a la SExtractor.
@@ -103,6 +103,7 @@ def estimate_background(image, window=32):
     return background
 
 
+@telemetry.track_function
 def find_point_sources(image, threshold=4.0, fwhm=1.0, sharp=[0.2,1.0], round=[-1.0,1.0], background_size=16):
     """
     Given a 2-D image, find all of the point sources in it that meet the
