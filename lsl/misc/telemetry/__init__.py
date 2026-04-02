@@ -7,16 +7,13 @@ Basic telemetry client for LSL to help establish usage patterns
 import os
 import sys
 import json
-import glob
 import time
 import uuid
 import atexit
-import socket
 import inspect
 import warnings
-from urllib.request import urlopen
-from urllib.parse import urlencode
-from threading import Thread, RLock
+import subprocess
+from threading import RLock
 from functools import wraps
 
 from lsl.version import version as lsl_version
@@ -90,98 +87,36 @@ class _TelemetryClient(object):
         # Telemetry cache
         self._cache = {}
         self._cache_count = 0
-        self._init_pid = os.getpid()
-        self._send_thread = None
         if not _IS_READONLY:
             # Reporting lockout
             self.active = TELE_CONFIG.get('enabled')
             
-            # Try to send what we have now in a background thread
-            self._send_thread = Thread(target=self.send, daemon=True)
-            self._send_thread.start()
-            
-            # Register fork handlers so the send thread doesn't
-            # interfere with ProcessPoolExecutor/multiprocessing
-            os.register_at_fork(
-                before=self._before_fork,
-                after_in_child=self._after_fork_child,
-                after_in_parent=self._after_fork_parent,
-            )
+            # Try to send old telemetry data via a subprocess
+            self._try_send()
             
             # Register the "write" method to be called by atexit... at exit
             atexit.register(self.write)
-            
+
         else:
             self.active = False
             
-    def _before_fork(self):
+    def _try_send(self):
         """
-        Wait for the send thread to finish before forking.
-        """
-        
-        if self._send_thread is not None:
-            self._send_thread.join(timeout=self.timeout)
-            
-    def _after_fork_child(self):
-        """
-        Re-initialize telemetry state in forked child processes.
+        Spawn a fire-and-forget subprocess to upload old telemetry data.
         """
         
-        self._lock = RLock()
-        self._send_thread = None
-        self._init_pid = os.getpid()
-        self._session_start = time.time()
-        self._cache.clear()
-        self._cache_count = 0
-        
-    def _after_fork_parent(self):
-        """
-        Clean up the send thread reference in the parent after fork.
-        """
-        
-        if self._send_thread is not None and not self._send_thread.is_alive():
-            self._send_thread = None
-            
-    def send(self):
         if not self.active:
             return
             
-        with self._lock:
-            filenames = glob.glob(os.path.join(_CACHE_DIR, 'telemetry_*.log'))
-            if not filenames:
-                return
-                
-            oldest = min(os.path.getmtime(f) for f in filenames)
-            if time.time() - oldest < 7*86400:
-                return
-                
-            payloads = []
-            for filename in filenames:
-                try:
-                    with open(filename, 'r') as lf:
-                        payload = json.loads(lf.read())
-                        payloads.append(payload)
-                except Exception:
-                    pass
-                    
-            if not payloads:
-                return
-                
-            try:
-                LSL_LOGGER.info('Uploading LSL telemetry data')
-                data = urlencode({'payload': json.dumps(payloads)})
-                with urlopen('https://fornax.phys.unm.edu/telemetry/log.php', data.encode(), timeout=self.timeout) as uh:
-                    status = uh.read()
-                    
-                if status == b'':
-                    for filename in filenames:
-                        try:
-                            os.unlink(filename)
-                        except OSError:
-                            pass
-            except Exception as e:
-                LSL_LOGGER.warning(f"Failed to upload telemetry data: {str(e)}")
-                
+        try:
+            subprocess.Popen([sys.executable, '-m', 'lsl.misc.telemetry._send',
+                                              _CACHE_DIR, str(self.timeout)],
+                             stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL, close_fds=True
+                            )
+        except Exception:
+            pass
+            
     def track(self, name, timing=0.0):
         """
         Add an entry to the telemetry cache with optional timing information.
@@ -204,16 +139,12 @@ class _TelemetryClient(object):
                 self.write()
                 
         return True
-                
+        
     def write(self):
         """
         Writes the cache of telemetry data to disk for latter.
         """
         
-        # Skip if we're in a forked child process
-        if os.getpid() != self._init_pid:
-            return False
-            
         success = False
         with self._lock:
             if self.active and self._cache_count > 0:
@@ -250,7 +181,7 @@ class _TelemetryClient(object):
                 self.clear()
                 
         return success
-                
+        
     def clear(self):
         """
         Clear the current telemetry cache.
