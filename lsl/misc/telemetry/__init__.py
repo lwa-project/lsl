@@ -122,7 +122,7 @@ class _TelemetryClient(object):
         Add an entry to the telemetry cache with optional timing information.
         """
         
-        if name[:3] != 'lsl' or not self.active:
+        if not name.startswith('lsl') or not self.active:
             return False
             
         with self._lock:

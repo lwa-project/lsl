@@ -20,11 +20,14 @@ from urllib.parse import urlencode
 
 def main(cache_dir, timeout):
     lock_path = os.path.join(cache_dir, 'send.lock')
+    lock_fh = None
     try:
         lock_fh = open(lock_path, 'w')
         fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except (OSError, IOError):
-        # Another process is already sending
+        # Another process is already sending (or we couldn't open the lock file)
+        if lock_fh is not None:
+            lock_fh.close()
         return
 
     try:
