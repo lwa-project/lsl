@@ -16,13 +16,12 @@ telemetry.track_module()
 
 try:
     have_tk = True
-    
+
     import tkinter as tk
     from tkinter import ttk, filedialog
     from tkinter.scrolledtext import ScrolledText
 except ImportError:
     have_tk = False
-    lsl_logger.LSL_LOGGER.error("Cannot import tk")
 
 
 class LoggerFrame(object):
@@ -32,6 +31,8 @@ class LoggerFrame(object):
     """
     
     def __init__(self, frame, update_interval_ms=100, max_lines=10000):
+        if not have_tk:
+            raise RuntimeError("Cannot create LoggerFrame because tk module is not available")
         self._frame = frame
         self._update_interval_ms = update_interval_ms
         self._max_lines = max_lines
@@ -55,17 +56,11 @@ class LoggerFrame(object):
         
     def _display(self, record):
         """Format and display a LogRecord in the text area."""
-        
+
         # Format
         msg = self._handler.format(record)
         levelname = record.levelname
-        
-        # Deal with notes
-        if levelname == 'INFO' and record.msg.startswith('NOTE:'):
-            levelname = 'NOTE'
-            msg = msg.replace('NOTE:','')
-            msg = msg.replace('[INFO', '[NOTE')
-            
+
         # Add
         self._text.configure(state='normal')
         self._text.insert(tk.END, msg + '\n', levelname)
@@ -126,17 +121,17 @@ class LoggerFrame(object):
             try:
                 self._text.tag_config(l, elide=not found)
             except Exception as e:
-                print(str(e))
-                
+                lsl_logger.LSL_LOGGER.warning(f"Failed to update tag elide state: {e}")
+
     def clear(self):
         """Clear the display buffer."""
-        
+
         self._text.configure(state='normal')
         try:
             self._text.delete(1.0, tk.END)
             self._line_count = 0
         except Exception as e:
-            print(str(e))
+            lsl_logger.LSL_LOGGER.warning(f"Failed to clear display buffer: {e}")
         self._text.configure(state='disabled')
 
 
@@ -153,6 +148,8 @@ class FilterFrame(object):
                           3: logging.ERROR, 4: logging.CRITICAL}
     
     def __init__(self, frame, logger_frame):
+        if not have_tk:
+            raise RuntimeError("Cannot create FilterFrame because tk module is not available")
         self._frame = frame
         self._logger_frame = logger_frame
         self._logging_file = None
@@ -280,9 +277,11 @@ class FilterFrame(object):
         self._logger_frame.clear()
         
     def start(self):
+        """No-op; provided for interface parity with LoggerFrame."""
         pass
 
     def stop(self):
+        """No-op; provided for interface parity with LoggerFrame."""
         pass
 
 

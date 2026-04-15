@@ -13,12 +13,19 @@ import warnings
 from lsl.version import full_version
 
 __version__ = '0.1'
-__all__ = ['LSL_LOGGER', 'LSL_LOG_FORMAT', 'LSL_LOG_QUEUE', 'make_note',
+__all__ = ['LSL_LOGGER', 'LSL_LOG_FORMAT', 'LSL_LOG_QUEUE', 'NOTE', 'make_note',
            'set_log_level', 'get_log_level', 'ThreadedHandler', 'add_handler',
            'remove_handler', 'capture_warnings', 'enable_console_logging',
            'disable_console_logging', 'enable_file_logging',
            'disable_file_logging', 'add_filter', 'remove_filter',
            'clear_filters']
+
+
+#: Custom logging level for LSL notes.  Sits between INFO (20) and WARNING (30)
+#: so notes are visible at the default INFO log level but can be visually
+#: distinguished from routine INFO messages.
+NOTE = 25
+logging.addLevelName(NOTE, 'NOTE')
 
 
 #: The LSL logger instance that users should use
@@ -39,7 +46,7 @@ _LSL_LOG_HANDLER = logging.StreamHandler(sys.stderr)
 _LSL_LOG_HANDLER.setFormatter(LSL_LOG_FORMAT)
 LSL_LOGGER.addHandler(_LSL_LOG_HANDLER)
 LSL_LOGGER.setLevel(logging.INFO)
-LSL_LOGGER.info(f"LSL {full_version}")
+LSL_LOGGER.debug(f"LSL {full_version}")
 
 # Track console and file handlers
 _console_handler = None
@@ -49,47 +56,33 @@ _active_filters = {}
 
 def make_note(msg, *args, **kwds):
     """
-    Add a note to the LSL logger instance.
-    
-    Parameters
-    ----------
-    msg : str
-        Note to log
+    Add a note to the LSL logger instance at the custom NOTE level.  Extra
+    arguments are passed through to `logging.Logger.log`.
     """
-    
+
     global LSL_LOGGER
-    
-    msg = "NOTE:"+msg
-    LSL_LOGGER.info(msg, *args, **kwds)
+
+    LSL_LOGGER.log(NOTE, msg, *args, **kwds)
 
 
 def set_log_level(logging_level):
     """
-    Set the logging level for the LSL logger.
-
-    Parameters
-    ----------
-    logging_level : int
-        The logging level (e.g., logging.DEBUG, logging.INFO, logging.WARNING).
+    Set the logging level for the LSL logger (e.g., logging.DEBUG,
+    logging.INFO, logging.WARNING).
     """
-    
+
     global LSL_LOGGER
-    
+
     LSL_LOGGER.setLevel(logging_level)
 
 
 def get_log_level():
     """
-    Get the current logging level for the LSL logger.
-
-    Returns
-    -------
-    int
-        The current logging level.
+    Return the current logging level for the LSL logger.
     """
-    
+
     global LSL_LOGGER
-    
+
     return LSL_LOGGER.level
 
 
@@ -107,37 +100,25 @@ class ThreadedHandler(logging.Handler):
 
 def add_handler(logging_handler, formatter=LSL_LOG_FORMAT):
     """
-    Add a new handler to the LSL logger.  If the `formatter` keyword is not None
-    then the handler's formatter will be set before it is added.
-
-    Parameters
-    ----------
-    logging_handler : logging.Handler
-        The handler to add to the logger.
-    formatter : logging.Formatter, optional
-        The formatter to apply to the handler. If None, no formatter is set.
+    Add a new handler to the LSL logger.  If the `formatter` keyword is not
+    None then the handler's formatter will be set before it is added.
     """
-    
+
     global LSL_LOGGER
-    
+
     if formatter is not None:
         logging_handler.setFormatter(formatter)
-        
+
     LSL_LOGGER.addHandler(logging_handler)
 
 
 def remove_handler(logging_handler):
     """
     Remove the specified handler from the LSL logger.
-
-    Parameters
-    ----------
-    logging_handler : logging.Handler
-        The handler to remove from the logger.
     """
-    
+
     global LSL_LOGGER
-    
+
     LSL_LOGGER.removeHandler(logging_handler)
 
 
@@ -165,12 +146,8 @@ _warning_logger.addHandler(_warning_handler)
 
 def capture_warnings(enable_capture):
     """
-    Enable/disable capturing `warning.warn()` calls into the main LSL logger.
-
-    Parameters
-    ----------
-    enable_capture : bool
-        If True, capture warnings into the logger. If False, disable capture.
+    Enable (True) or disable (False) capturing `warnings.warn()` calls into
+    the main LSL logger.
     """
 
     logging.captureWarnings(enable_capture)
@@ -178,14 +155,9 @@ def capture_warnings(enable_capture):
 
 def enable_console_logging(level=None, stream=None):
     """
-    Enable logging to the console (stdout/stderr).
-
-    Parameters
-    ----------
-    level : int, optional
-        The logging level for console output. If None, inherits from the logger's level.
-    stream : file-like object, optional
-        The stream to write to. Defaults to sys.stderr.
+    Enable logging to the console, optionally at a handler-specific logging
+    `level` (defaults to the logger's level) and to a given `stream`
+    (defaults to sys.stderr).
     """
 
     global _console_handler, LSL_LOGGER
@@ -221,16 +193,9 @@ def disable_console_logging():
 
 def enable_file_logging(filename, level=None, mode='a'):
     """
-    Enable logging to a file.
-
-    Parameters
-    ----------
-    filename : str
-        The path to the log file.
-    level : int, optional
-        The logging level for file output. If None, inherits from the logger's level.
-    mode : str, optional
-        The file mode ('a' for append, 'w' for overwrite). Defaults to 'a'.
+    Enable logging to a file.  The handler uses a logging-level of `level`
+    (defaults to the logger's level) and opens the file with `mode` ('a' for
+    append, 'w' for overwrite).
     """
 
     global _file_handler, LSL_LOGGER
@@ -284,21 +249,10 @@ class _ModuleFilter(logging.Filter):
 
 def add_filter(pattern):
     """
-    Add a filter to the logger based on a module name pattern.
-
-    Only log records matching the pattern will be processed. Supports shell-style
-    wildcards: '*' matches any sequence, '?' matches one character.
-
-    Parameters
-    ----------
-    pattern : str
-        The module name pattern to filter on (e.g., 'lsl.imaging.*', 'lsl.sim.vis').
-
-    Examples
-    --------
-    >>> from lsl.logger import add_filter
-    >>> add_filter('lsl.imaging.*')  # Only show logs from imaging modules
-    >>> add_filter('lsl_logger')     # Only show logs from the main logger
+    Add a filter to the logger based on a module name pattern (e.g.,
+    'lsl.imaging.*', 'lsl.sim.vis').  Only log records whose name matches
+    the pattern will be processed.  Supports shell-style wildcards: '*'
+    matches any sequence, '?' matches one character.
     """
 
     global _active_filters, LSL_LOGGER
@@ -311,12 +265,7 @@ def add_filter(pattern):
 
 def remove_filter(pattern):
     """
-    Remove a filter from the logger.
-
-    Parameters
-    ----------
-    pattern : str
-        The module name pattern to remove.
+    Remove a previously added module-name-pattern filter from the logger.
     """
 
     global _active_filters, LSL_LOGGER
