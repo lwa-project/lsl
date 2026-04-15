@@ -371,7 +371,7 @@ def track_function_timed(user_function):
 
 def track_method(user_method):
     """
-    Record the use of a method in LSL with execution time information.
+    Record the use of a method in LSL without execution time information.
     """
     
     global _telemetry_client

@@ -17,7 +17,7 @@ Frame
 Combined, these two objects contain all of the information found in the 
 original TBX frame.
 
-The functions defined in this module fall into two class:
+The functions defined in this module fall into two classes:
   1. convert a frame in a file to a Frame object and
   2. describe the format of the data in the file.
 
@@ -192,7 +192,7 @@ def read_frame_ci8(filehandle):
     .. note::
         This function differs from `read_frame` in that it returns a
         `lsl.reader.tbx.FramePayload` that contains a 4-D numpy.int8 array
-        (channels by stands by polarizations by by real/complex) rather than a
+        (channels by stands by polarizations by real/complex) rather than a
         3-D numpy.complex64 array.
     
     .. versionadded:: 2.1.3
@@ -327,9 +327,9 @@ def get_channel_count(filehandle):
 
 def get_first_channel(filehandle, frequency=False, all_frames=False):
     """
-    Find and return the lowest frequency channel in a TBX file.  If the 
-    `frequency` keyword is True the returned value is in Hz.  If `all` is
-    True then the lowest frequency in each unique TBX frame is returned as
+    Find and return the lowest frequency channel in a TBX file.  If the
+    `frequency` keyword is True the returned value is in Hz.  If `all_frames`
+    is True then the lowest frequency in each unique TBX frame is returned as
     a list.
     """
     

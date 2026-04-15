@@ -1,5 +1,5 @@
 """
-Module for reading in an interpreting binary-packed Station Dynamic MIB (SDM) 
+Module for reading in and interpreting binary-packed Station Dynamic MIB (SDM) 
 files (as defined in MCS0031, v5).
 """
 

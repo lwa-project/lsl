@@ -919,7 +919,7 @@ class TBS(Observation):
         """Evaluate the observation and return True if it is valid, False
         otherwise.
 
-        ..note::
+        .. note::
             This version of sdf allows for TBS tuning between 5 and 93 MHz.
         """
         

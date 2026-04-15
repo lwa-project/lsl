@@ -96,7 +96,7 @@ def get_log_level():
 class ThreadedHandler(logging.Handler):
     """
     logging.Handler class that allows messages to be captured in one thread and
-    displayed in another.  Useful for powering a GUI a al the CASA logger.
+    displayed in another.  Useful for powering a GUI a la the CASA logger.
     """
     
     def emit(self, record):

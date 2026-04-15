@@ -10,6 +10,8 @@
  * Replaced TBW and TBN observation types with TBT and TBS in lsl.common.sdf
  * Added TBXFile to lsl.reader.ldp and TBXFrameBuffer to lsl.reader.buffer
  * Renamed LWA1DataFile/LWASVDataFile/LWANADataFile to LWADataFile
+ * Renamed scripts correlateTBF.py -> correlateTBX.py and tbfSpectra.py -> tbxSpectra.py
+ * Removed scripts correlateTBN.py, correlateTBW.py, splitTBN.py, tbnSpectra.py, and tbwSpectra.py
  * Removed lsl.sim.dp; lsl.sim.ndp is now the only NDP-level simulator
  * Removed the lsl.common._fir C extension; FIR coefficients now live in lsl.common.ndp directly
  * Converted ASP ATS attenuation commands to AT3

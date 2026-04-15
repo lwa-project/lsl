@@ -43,7 +43,7 @@ LDP_CONFIG = LSL_CONFIG.view('ldp')
 
 
 __version__ = '0.7'
-__all__ = ['DRXFile', 'DRX8File', 'DRSpecFile', 'TBXFile', 'LWADataFile']
+__all__ = ['DRXFile', 'DRX8File', 'DRSpecFile', 'TBXFile', 'CORFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):
@@ -176,7 +176,7 @@ class LDPFileBase(object):
     @abc.abstractmethod
     def _describe_file(self):
         """
-        Method for describing the contents of a file using.  This will 
+        Method for describing the contents of a file.  This will
         be over-ridden in the format-specific subclasses.
         """
         
@@ -1442,7 +1442,7 @@ class DRSpecFile(LDPFileBase):
 @telemetry.track_class
 class TBXFile(LDPFileBase):
     """
-    Class to make it easy to interface with a TBT/TBS file.  TBF data are a complex
+    Class to make it easy to interface with a TBT/TBS file.  TBX data are a complex
     frequency-domain product that contains blocks of channels from all antennas
     in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and
     there may be up to 3584 channels within a single recording.  The stand
@@ -1459,7 +1459,7 @@ class TBXFile(LDPFileBase):
     
     def _ready_file(self):
         """
-        Find the start of valid TBF data.  This function:
+        Find the start of valid TBX data.  This function:
         1) Aligns on the first valid Mark 5C frame.
         """
         
@@ -1471,7 +1471,7 @@ class TBXFile(LDPFileBase):
             except errors.SyncError:
                 self.fh.seek(1, 1)
                 
-        # Skip over any DRX frames the start of the file
+        # Skip over any DRX frames at the start of the file
         i = 0
         while True:
             try:
@@ -1490,7 +1490,7 @@ class TBXFile(LDPFileBase):
         
     def _describe_file(self):
         """
-        Describe the TBF file.
+        Describe the TBX file.
         """
         
         with FilePositionSaver(self.fh):
@@ -1572,7 +1572,7 @@ class TBXFile(LDPFileBase):
         
     def offset(self, offset):
         """
-        Offset a specified number of seconds in an open TBF file.  This function 
+        Offset a specified number of seconds in an open TBX file.  This function
         returns the exact offset time.
         """
         
@@ -1826,7 +1826,7 @@ class CORFile(LDPFileBase):
             except errors.SyncError:
                 self.fh.seek(1, 1)
                 
-        # Skip over any DRX frames the start of the file
+        # Skip over any DRX frames at the start of the file
         i = 0
         while True:
             try:
