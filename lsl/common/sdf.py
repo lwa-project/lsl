@@ -79,10 +79,16 @@ __version__ = '1.4'
 __all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Session', 'Observation', 'TBT', 'TBS', 'DRX', 'Solar', 'Jovian', 'Lunar', 'Stepped', 'BeamStep', 'parse_sdf',  'get_observation_start_stop', 'is_valid']
 
 _DRSUCapacityTB = 10
-# Factors for computing the time it takes to read out a TBT from the number 
-# of samples
+# Factors for computing the time it takes to read out a TBT from the number
+# of samples (cf. MCS tpss.c).  _TBT_TIME_SCALE is sampler-clock ticks per ms,
+# _TBT_TIME_GAIN is the ~150:1 read-out inverse duty cycle, and
+# _TBT_FILL_LAG accounts for the buffer fill lag in ms.
 _TBT_TIME_SCALE = 196000
 _TBT_TIME_GAIN = 150
+_TBT_FILL_LAG = 5000
+
+# Maximum OBS_TBT_SAMPLES accepted by MCS (cf. tpss5.c), in sampler-clock ticks
+_TBT_MAX_SAMPLES = 392000000
 
 
 # UCF Username RE
@@ -814,8 +820,10 @@ class TBT(Observation):
     information about the number of data bits and the number of samples.
     
     .. note::
-        TBT read-out times in ms are calculated using (samples/196000+1)*5000 per
-        MCS
+        TBT read-out times in ms are calculated using
+        ((samples/196000 + 1)*150 + 5000) per MCS (tpss.c), where samples are
+        in sampler-clock ticks, 196000 is ticks/ms, 150 is the inverse duty
+        cycle, and 5000 ms is the buffer fill lag.
     
     Required Arguments:
      * observation name
@@ -830,20 +838,27 @@ class TBT(Observation):
     def __init__(self, name, target, start, samples, comments=None):
         self.samples = int(samples)
         
-        duration = (self.samples / _TBT_TIME_SCALE + 1)*_TBT_TIME_GAIN
+        duration = (self.samples / _TBT_TIME_SCALE + 1)*_TBT_TIME_GAIN + _TBT_FILL_LAG
         durStr = '%02i:%02i:%06.3f' % (int(duration/1000.0)/3600, int(duration/1000.0)%3600/60, duration/1000.0%60)
         Observation.__init__(self, name, target, start, durStr, 'TBT', 0.0, 0.0, 0.0, 0.0, 1, comments=comments)
         
     def estimate_bytes(self):
-        """Estimate the data volume for the specified type and duration of 
-        observations.  For TBT:
-        
-            bytes = samples / samplesPerFrame * 1224 bytes * 260 stands
+        """Estimate the data volume for the specified type and duration of
+        observations.  For a full-band TBT dump:
+
+            bytes = (samples / ticksPerWindow) * (nchan / chanPerFrame) \\
+                    * (28 + chanPerFrame * nstand * npol)
+
+        where `samples` is in sampler-clock ticks, ticksPerWindow is the
+        F-engine FFT size (8192), chanPerFrame is 16, and a full station has
+        up to 3072 channels, 256 stands, and 2 pols.
         """
-        
-        SamplesPerFrame = 1
-        nFrames = self.samples / SamplesPerFrame
-        nBytes = nFrames * 16 * LWA_MAX_NSTD * 2
+
+        TicksPerWindow = 8192
+        ChanPerFrame = 16
+        FramesPerWindow = 3072 // ChanPerFrame
+        nWindows = self.samples / TicksPerWindow
+        nBytes = nWindows * FramesPerWindow * (28 + ChanPerFrame * LWA_MAX_NSTD * 2)
         return nBytes
         
     def validate(self):
@@ -860,8 +875,8 @@ class TBT(Observation):
         
         failures = 0
         # Basic - Sample size
-        if self.samples > 5*196000000:
-            LSL_LOGGER.error(f"Invalid number of samples ({self.samples} > {5*196000000})")
+        if self.samples > _TBT_MAX_SAMPLES:
+            LSL_LOGGER.error(f"Invalid number of samples ({self.samples} > {_TBT_MAX_SAMPLES})")
             failures += 1
             
         # Advanced - Data Volume
@@ -896,7 +911,7 @@ class TBS(Observation):
      * comments - comments about the observation
     """
     
-    filter_codes = {8: 200000}
+    filter_codes = {7: 100000, 8: 200000, 9: 300000}
     
     def __init__(self, name, target, start, duration, frequency, filter, comments=None):
         Observation.__init__(self, name, target, start, duration, 'TBS', 0.0, 0.0, frequency, 0.0, filter, comments=comments)
