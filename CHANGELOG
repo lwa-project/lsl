@@ -8,6 +8,7 @@
   * Removed lsl.reader.tbw, lsl.reader.tbn, and lsl.reader.tbf
  * Added lsl.reader.tbx for the new frequency-domain transient buffer format
  * Replaced TBW and TBN observation types with TBT and TBS in lsl.common.sdf
+ * Session validation now rejects mixing TBT/TBS with DRX beamforming modes (matching MCS behavior)
  * Added TBXFile to lsl.reader.ldp and TBXFrameBuffer to lsl.reader.buffer
  * Renamed LWA1DataFile/LWASVDataFile/LWANADataFile to LWADataFile
  * Renamed scripts correlateTBF.py -> correlateTBX.py and tbfSpectra.py -> tbxSpectra.py

@@ -399,8 +399,20 @@ class sdf_tests(unittest.TestCase):
                 
                 setattr(project.sessions[0].observations[0], attr, [1 for i in range(256)])
             
+    def test_mixed_mode_session(self):
+        """Test that sessions mixing TBT/TBS with DRX modes are rejected."""
+
+        project = sdf.parse_sdf(tbsFile)
+        drx_project = sdf.parse_sdf(drxFile)
+
+        # Append a DRX observation to a TBS session
+        project.sessions[0].observations.append(drx_project.sessions[0].observations[0])
+
+        with lsl.testing.SilentVerbose():
+            self.assertFalse(project.sessions[0].validate())
+
     ### DRX - TRK_RADEC ###
-    
+
     def test_drx_parse(self):
         """Test reading in a TRK_RADEC SDF file."""
         
