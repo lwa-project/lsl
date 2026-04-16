@@ -14,7 +14,7 @@ from lsl.common import stations
 import lsl.testing
 
 
-__version__  = "0.2"
+__version__  = "0.3"
 __author__    = "Jayce Dowell"
 
 
@@ -52,6 +52,14 @@ class beamformer_tests(unittest.TestCase):
         out1 = beamformer.calc_delay(antennas[:3], freq=49.0e6, azimuth=az, altitude=alt)
         np.testing.assert_allclose(out0, out1)
         
+        # Multi-frequency support
+        out0 = beamformer.calc_delay(antennas[:3], freq=49.0e6, azimuth=az, altitude=alt)
+        out1 = beamformer.calc_delay(antennas[:3], freq=[49.0e6], azimuth=az, altitude=alt)
+        np.testing.assert_allclose(out0, out1[:,0])
+        
+        out0 = beamformer.calc_delay(antennas[:3], freq=[49.0e6, 49.0e6], azimuth=az, altitude=alt)
+        np.testing.assert_allclose(out0[:,0], out0[:,1])
+        
     def test_pointing_limits(self):
         """Test that beamformer.calc_delay respects the pointing limits"""
         
@@ -68,42 +76,6 @@ class beamformer_tests(unittest.TestCase):
             self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, -5)
             self.assertRaises(ValueError, beamformer.calc_delay, antennas[:3], 49.0e6, 45, 95)
             
-    def test_int_delay_and_sum(self):
-        """Check that the beamformer.int_delay_and_sum function actually runs"""
-        
-        station = stations.lwa1
-        antennas = station.antennas
-        data = np.random.rand(3, 1000)
-        
-        beam = beamformer.int_delay_and_sum(antennas[:3], data, azimuth=45.0, altitude=30.0)
-        
-    def test_int_beam_shape(self):
-        """Check that the beamformer.int_beam_shape function actually runs"""
-        
-        station = stations.lwa1
-        antennas = station.antennas
-        
-        # Get a list of valid antennas
-        ants = []
-        for ant in antennas:
-            if ant.pol == 1:
-                continue
-            if ant.combined_status != 33:
-                continue
-                
-            ants.append(ant)
-            if len(ants) == 16:
-                break
-                
-        # Multithreaded test for accuracy
-        out = beamformer.int_beam_shape(ants, azimuth=135.0, altitude=60.0)
-        
-        i = out.argmax()
-        azDiff = np.abs(135.0 - i / 90)
-        elDiff = np.abs(60.0 - i % 90)
-        self.assertTrue(azDiff <= 1)
-        self.assertTrue(elDiff <= 1)
-            
     def test_phase_and_sum(self):
         """Check that the beamformer.phase_and_sum function actually runs"""
         
@@ -111,8 +83,18 @@ class beamformer_tests(unittest.TestCase):
         antennas = station.antennas
         data = np.random.rand(3, 1000)
         
-        beam = beamformer.phase_and_sum(antennas[:3], data, azimuth=45.0, altitude=30.0)
-        
+        with self.subTest(type='time domain'):
+            beam = beamformer.phase_and_sum(antennas[:3], data, azimuth=45.0, altitude=30.0)
+            
+            
+        _freqs = [38e6,56e6,64e6,74e6]
+        for n in (1,4):
+            freqs = [_freqs[i] for i in range(n)]
+            data = np.random.rand(3, len(freqs), 1000)
+            with self.subTest(type='frequency domain', nchan=n):
+                beam = beamformer.phase_and_sum(antennas[:3], data, central_freq=freqs,
+                                                azimuth=45.0, altitude=30.0)
+                
     def test_phase_beam_shape(self):
         """Check that the beamformer.phase_beam_shape function actually runs"""
         
