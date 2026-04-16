@@ -1956,6 +1956,12 @@ class Session(object):
 
             observationCount += 1
 
+        # MCS (tpss.c) rejects sessions that mix TBT/TBS with DRX-type modes
+        modes = {obs.mode for obs in self.observations}
+        if modes & {'TBT', 'TBS'} and modes & {'TRK_RADEC', 'TRK_SOL', 'TRK_JOV', 'TRK_LUN', 'STEPPED'}:
+            LSL_LOGGER.error("Session cannot mix TBT/TBS with DRX beamforming observations")
+            failures += 1
+
         # Make sure that the observations don't overlap
         sObs = self.observations
 
@@ -1980,7 +1986,7 @@ class Session(object):
                         overlaps.append(j)
 
             if nOverlaps > maxOverlaps:
-                LSL_LOGGER.error(f"Observation %i overlaps with {i+1}"+(','.join(["%i" % (j+1) for j in overlaps])))
+                LSL_LOGGER.error(f"Observation {i+1} overlaps with {','.join(str(j+1) for j in overlaps)}")
                 failures += 1
 
         if totalData >= (_DRSUCapacityTB*1024**4):
