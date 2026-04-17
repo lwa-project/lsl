@@ -40,6 +40,7 @@ from lsl.misc import telemetry
 from lsl.config import LSL_CONFIG
 LDP_CONFIG = LSL_CONFIG.view('ldp')
 
+from lsl.logger import LSL_LOGGER
 
 
 __version__ = '0.7'
@@ -540,7 +541,7 @@ class DRXFile(LDPFileBase):
         `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
         dimensions are input by samples.
         
-        ..note::
+        .. note::
             This function always returns an array with the first dimension
             holding four elements.  These elements contain, in order:
              * Tuning 1, polarization X
@@ -702,7 +703,7 @@ class DRXFile(LDPFileBase):
          2)  Tuning 2, X pol.
          3)  Tuning 2, Y pol.
         
-        ..note::
+        .. note::
             The returned list always has four items, regardless of whether 
             or not the input DRX file has one or two tunings.
         """
@@ -1000,7 +1001,7 @@ class DRX8File(LDPFileBase):
         `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
         dimensions are input by samples.
         
-        ..note::
+        .. note::
             This function always returns an array with the first dimension
             holding four elements.  These elements contain, in order:
              * Tuning 1, polarization X
@@ -1162,7 +1163,7 @@ class DRX8File(LDPFileBase):
          2)  Tuning 2, X pol.
          3)  Tuning 2, Y pol.
         
-        ..note::
+        .. note::
             The returned list always has four items, regardless of whether 
             or not the input DRX8 file has one or two tunings.
         """
@@ -1363,7 +1364,7 @@ class DRSpecFile(LDPFileBase):
         tags can be returns as samples at `lsl.common.ndp.fS` if the 
         `time_in_samples' keyword is set.
         
-        ..note::
+        .. note::
             This function always returns a 3-D array with the first dimension
             indexing over data product, the second over time and the third over
             frequency channel.
@@ -1624,7 +1625,7 @@ class TBXFile(LDPFileBase):
         tbx_rf = tbx.read_frame_ci8 if return_ci8 else tbx.read_frame
         return tbx_rf(self.fh)
         
-    def read(self, duration, time_in_samples=False, return_ci8=False):
+    def read(self, duration=None, time_in_samples=False, return_ci8=False):
         """
         Given an amount of data to read in in seconds, read in the data from a
         TBT/TBS capture.  This function returns a three-element tuple with
@@ -1632,7 +1633,7 @@ class TBXFile(LDPFileBase):
          0) the actual duration of data read in, 
          1) the time tag for the first sample, and
          2) a 3-D Numpy array of data.
-        32
+        
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
         tags can be returns as samples at `lsl.common..ndp.fS` if the 
@@ -1640,6 +1641,15 @@ class TBXFile(LDPFileBase):
         
         The sorting order of the output data array is by 
         digitizer number - 1.
+        
+        .. note::
+            This function always returns a 3-D array with the first dimension
+            indexing over input, the second over frequency channel and the third
+            over time.
+        
+        .. note::
+            To load in an entire file pass None for the duration.  This is
+            useful for small TBT dumps.
         """ 
         
         # Make sure there is file left to read
@@ -1664,10 +1674,16 @@ class TBXFile(LDPFileBase):
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
             
-        # Find out how many frames to read in
+        # Find out how many frames to read in... but make sure we don't read too much
         framesPerObs = self.description['nchan'] // self.description['frame_channel_count']
+        remaining_count = self.description['nframe'] - self.fh.tell() // self.description['frame_size']
+        max_frame_count = remaining_count // framesPerObs + len(self.buffer.buffer.keys())
+        if duration is None:
+            duration = max_frame_count / self.description['sample_rate']
+            LSL_LOGGER.debug(f"Requested duration is None, loading {duration:.3f} s of data")
         frame_count = int(round(1.0 * duration * self.description['sample_rate']))
-        frame_count = frame_count if frame_count else 1
+        frame_count = max(frame_count, 1)
+        frame_count = min(frame_count, max_frame_count)
         duration = frame_count / self.description['sample_rate']
         
         nFrameSets = 0
@@ -2002,6 +2018,7 @@ class CORFile(LDPFileBase):
         # Find out how many frames to read in
         if duration is None:
             duration = self.description['nframe'] / framesPerObs * self.description['tint']
+            LSL_LOGGER.debug(f"Requested duration is None, loading {duration:.1f} s of data")
         framesPerObs = self.description['nchan'] // self.description['frame_channel_count'] * self.description['nbaseline']
         frame_count = int(round(1.0 * duration / self.description['tint']))
         frame_count = frame_count if frame_count else 1
