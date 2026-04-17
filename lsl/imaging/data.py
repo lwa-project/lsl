@@ -338,12 +338,12 @@ class VisibilityDataSet(object):
         """
         
         # Validate
-        if include == 'all':
+        if isinstance(include, str) and include == 'all':
             include = None
         if include is not None:
             if not isinstance(include, (list, tuple)):
                 raise TypeError("Expected 'include' to by a list or tuple")
-        if exclude == 'none':
+        if isinstance(exclude, str) and exclude == 'none':
             exclude = None
         if exclude is not None:
             if isinstance(exclude, int):
