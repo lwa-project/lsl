@@ -179,7 +179,7 @@ def phase_and_sum(antennas, data, central_freq=49.0e6, azimuth=0.0, altitude=90.
     if len(pol0):
         output[0,...] = np.einsum('sc,sct->ct', bln[pol0], data[pol0], optimize=True) / len(pol0)
     if len(pol1):
-        output[1,...] = np.einsum('sc,sct->ct', bln[pol0], data[pol0], optimize=True) / len(pol1)
+        output[1,...] = np.einsum('sc,sct->ct', bln[pol1], data[pol1], optimize=True) / len(pol1)
         
     # Check for empty polarization data.  Always return a 3-D array for the data
     if len(pol0) == 0:
