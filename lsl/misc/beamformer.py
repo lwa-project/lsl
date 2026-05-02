@@ -17,6 +17,8 @@ from astropy.coordinates import Angle as AstroAngle
 from lsl.common.data_access import DataAccess
 from lsl.common import ndp as ndp_common
 
+from lsl.misc._beamformer import BEngine
+
 from lsl.misc import telemetry
 telemetry.track_module()
 
@@ -175,12 +177,19 @@ def phase_and_sum(antennas, data, central_freq=49.0e6, azimuth=0.0, altitude=90.
     pol1 = np.where( (pols == 1) & (stat == 33) )[0]
     
     # Loop over stands to compute the formed beam
-    output = np.zeros((2,)+data.shape[1:], dtype=np.complex64)
-    if len(pol0):
-        output[0,...] = np.einsum('sc,sct->ct', bln[pol0], data[pol0], optimize=True) / len(pol0)
-    if len(pol1):
-        output[1,...] = np.einsum('sc,sct->ct', bln[pol1], data[pol1], optimize=True) / len(pol1)
+    try:
+        p0 = ((pols == 0) & (stat == 33)).astype(np.uint8)
+        p1 = ((pols == 1) & (stat == 33)).astype(np.uint8)
+        output = BEngine(bln, data, p0, p1)
         
+    except Exception as e:
+        # Fallback although this should probably never happen
+        output = np.zeros((2,)+data.shape[1:], dtype=np.complex64)
+        if len(pol0):
+            output[0,...] = np.einsum('sc,sct->ct', bln[pol0], data[pol0], optimize=True) / len(pol0)
+        if len(pol1):
+            output[1,...] = np.einsum('sc,sct->ct', bln[pol1], data[pol1], optimize=True) / len(pol1)
+            
     # Check for empty polarization data.  Always return a 3-D array for the data
     if len(pol0) == 0:
         output = output[1,...]
@@ -262,7 +271,7 @@ def phase_beam_shape(antennas, sample_rate=ndp_common.fS, central_freq=49.0e6, a
         
     # Build up a base time array, load in the cable delays, and get the stand 
     # positions for geometric delay calculations.
-    t = np.arange(0,1500)/sample_rate
+    t = np.arange(0,1536)/sample_rate
     xyz = np.zeros((len(antennas),3))
     i = 0
     good = []

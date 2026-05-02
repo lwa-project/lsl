@@ -36,6 +36,7 @@
  * Updated tutorial notebooks for NDP-era data and fixed various issues
  * Removed unused TBW/TBN/TBF test data files
  * Updated lsl.misc.beamfomer to remove int_delay_and_sum and generalize phase_and_sum to multi-channel data
+ * Update lsl.misc.beamfomer to work with ci8 data
 
 3.0.9:
  * Add support for storing the integration time for a `lsl.imaging.data.VisibilityDataSet`
