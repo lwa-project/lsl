@@ -6,6 +6,7 @@ of the site.
 """
 
 import sys
+import logging
 import numpy as np
 import argparse
 
@@ -14,11 +15,15 @@ from lsl.common import stations, metabundle
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 
+from lsl.logger import set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
 
 def main(args):
+    if args.verbose:
+        set_log_level(logging.DEBUG)
+
     # Parse command line
     toMark = np.array(args.stand)-1
     
@@ -58,7 +63,7 @@ def main(args):
     ax1.set_xlim([-80, 80])
     ax1.set_ylabel('$\Delta$Y [N-S; m]')
     ax1.set_ylim([-80, 80])
-    ax1.set_title(f"{station.name} Site: {station.lat*180/np.pi:.3f}$^\circ$N, {-station.long*180/np.pi:.3f}$^\circ$W")
+    ax1.set_title(f"{station.name} Site: {station.lat*180/np.pi:.3f}$^\circ$N, {station.long*-180/np.pi:.3f}$^\circ$W")
     
     ax2.scatter(data[:,0], data[:,2], c=color, s=40.0)
     ax2.xaxis.set_major_formatter( NullFormatter() )

@@ -7,12 +7,10 @@ termainals.
 
 import re
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
-__version__ = '0.1'
-__all__ = ['colorfy',]
+__version__ = '0.2'
+__all__ = ['colorfy', 'uncolorfy']
 
 
 # Dictionary of ANSI color codes
@@ -142,5 +140,19 @@ def colorfy(text):
             ### Get the next match
             mtch = tagRE.search(text, pos)
             
+    # Done
+    return text
+
+
+def uncolorfy(text):
+    """
+    Given a string created by colorfy(), return a string that has all of the
+    embedded ANSI terminal codes removed.
+    """
+    
+    # Loop over the options
+    for code in _COLORS.values():
+        text = text.replace(code, '')
+        
     # Done
     return text

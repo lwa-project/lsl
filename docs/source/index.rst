@@ -5,9 +5,14 @@
 
 LWA Software Library Documentation
 ==================================
-This package contains a collection of tools for reading, format shifting, 
+This package contains a collection of tools for reading, format shifting,
 and analyzing LWA data.  It also contains the majority of the lwa_user
 library developed by NRL.
+
+.. note::
+   LSL 4.x targets post-upgrade (NDP) stations only.  If you need to work
+   with pre-upgrade data from the DP or ADP era (TBW, TBN, TBF formats),
+   please use `LSL 3.x <https://github.com/lwa-project/lsl/tree/lsl3>`_.
 
 Contents
 ========
@@ -69,6 +74,7 @@ Miscellaneous
    :maxdepth: 2
 
    config
+   logger
    misc
 
    genindex

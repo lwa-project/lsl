@@ -10,6 +10,7 @@ functions defined in this module are based heavily off the lwda_fits library.
 import os
 import gc
 import math
+import logging
 import numpy as np
 from datetime import datetime
 
@@ -20,11 +21,11 @@ from astropy.io import fits as astrofits
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 
 from lsl import astro
+from lsl.misc import telemetry
 from lsl.writer.fitsidi import WriterBase
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.3'
@@ -62,6 +63,7 @@ def split_baseline(baseline, shift=None):
     return ant1,ant2
 
 
+@telemetry.track_class
 class Uv(WriterBase):
     """
     Class for storing visibility data and writing the data, along with array
@@ -69,7 +71,7 @@ class Uv(WriterBase):
     AIPS via the UVLOD task.
     """
     
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+    def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
         """
         Initialize a new UVFITS object using a filename and a reference time
         given in seconds since the UNIX 1970 epoch, a python datetime object, or a
@@ -82,7 +84,7 @@ class Uv(WriterBase):
         """
         
         # File-specific information
-        WriterBase.__init__(self, filename, ref_time=ref_time, verbose=verbose)
+        WriterBase.__init__(self, filename, ref_time=ref_time)
         
         # Open the file and get going
         if os.path.exists(filename):
@@ -138,11 +140,11 @@ class Uv(WriterBase):
                 mapper[stands[i]] = stands[i]
                 
         # If the mapper has been enabled, tell the user about it
-        if enableMapper and self.verbose:
-            print("UVFITS: stand ID mapping enabled")
+        if enableMapper:
+            LSL_LOGGER.info("UVFITS: stand ID mapping enabled")
             for key in mapper.keys():
                 value = mapper[key]
-                print("UVFITS:  stand #%i -> mapped #%i" % (key, value))
+                LSL_LOGGER.info(f"UVFITS:  stand #{key} -> mapped #{value}")
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

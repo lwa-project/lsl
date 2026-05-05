@@ -1,3 +1,46 @@
+4.0.0:
+ * Unified all stations under the NDP framework; dropped DP and ADP backend support                                                                       
+  * Removed lsl.common.dp, lsl.common.adp
+  * Removed lsl.common.mcsADP, lsl.common.mcsNDP
+  * Removed lsl.common.sdfADP, lsl.common.sdfNDP
+  * Removed lsl.common.metabundleADP, lsl.common.metabundleDP, lsl.common.metabundleNDP
+  * Removed lsl.common.sdmADP and lsl.common.sdmDP
+  * Removed lsl.reader.tbw, lsl.reader.tbn, and lsl.reader.tbf
+ * Added lsl.reader.tbx for the new frequency-domain transient buffer format
+ * Replaced TBW and TBN observation types with TBT and TBS in lsl.common.sdf
+ * Session validation now rejects mixing TBT/TBS with DRX beamforming modes (matching MCS behavior)
+ * Added TBXFile to lsl.reader.ldp and TBXFrameBuffer to lsl.reader.buffer
+ * Renamed LWA1DataFile/LWASVDataFile/LWANADataFile to LWADataFile
+ * Renamed scripts correlateTBF.py -> correlateTBX.py and tbfSpectra.py -> tbxSpectra.py
+ * Removed scripts correlateTBN.py, correlateTBW.py, splitTBN.py, tbnSpectra.py, and tbwSpectra.py
+ * Removed lsl.sim.dp; lsl.sim.ndp is now the only NDP-level simulator
+ * Removed the lsl.common._fir C extension; FIR coefficients now live in lsl.common.ndp directly
+ * Converted ASP ATS attenuation commands to AT3
+ * Renamed MAX_SNR to HIGH_DR
+ * Updated MCS constants for NDP and SSMIF format 10
+ * Updated LWA1, LWA-SV, and LWA-NA SSMIFs
+ * Replaced pytz usage with datetime.timezone
+ * Added backports.zoneinfo dependency for Python < 3.9
+ * All datetime objects returned by LSL are now timezone-aware (UTC)
+ * Added timezone-aware utc_date_obs attribute to CorrelatedData, CorrelatedDataUV, and CorrelatedDataMS alongside the existing naive date_obs
+ * Added lsl.logger module with centralized logging built on Python's logging module
+  * Shared LSL_LOGGER instance with console, file, and threaded handler support
+  * Warning capture, module pattern filtering, and log level control
+ * Added lsl.logger_gui module with Tk widgets for displaying log messages
+  * LoggerFrame for embedding in existing Tk applications
+  * FilterFrame for controlling log level, file logging, and module filtering
+  * LoggerGUI for standalone log display windows
+ * Converted SDF/IDF/metabundle validation, imaging, and simulation modules to use LSL_LOGGER
+ * Removed the `verbose` parameter from SDF/IDF/metabundle validation, imaging, and simulation APIs
+  * Diagnostic output is now controlled via LSL_LOGGER log level instead
+ * Updated tutorial notebooks for NDP-era data and fixed various issues
+ * Removed unused TBW/TBN/TBF test data files
+ * Updated lsl.misc.beamfomer to remove int_delay_and_sum and generalize phase_and_sum to multi-channel data
+ * Update lsl.misc.beamfomer to work with ci8 data
+
+3.0.9:
+ * Add support for storing the integration time for a `lsl.imaging.data.VisibilityDataSet`
+
 3.0.8:
  * Updated the filenames for the USTEC ionospheric product
  * Fixed false alarms from the LSL configuration change tracker

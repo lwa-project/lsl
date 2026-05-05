@@ -9,7 +9,7 @@ import ephem
 import numpy as np
 import warnings
 from functools import lru_cache
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from scipy.special import lpmv
 try:
@@ -25,11 +25,10 @@ from lsl.common.stations import geo_to_ecef
 from lsl.common.data_access import DataAccess
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 from lsl.misc.ionosphere import _igs, _jpl, _emr, _uqr, _code, _ustec, _glotec
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = "0.8"
@@ -230,7 +229,7 @@ def get_magnetic_field(lat, lng, elev, mjd=None, ecef=False):
     
     # Get the current time if mjd is None
     if mjd is None:
-        mjd, mpm = datetime_to_mjdmpm( datetime.utcnow() )
+        mjd, mpm = datetime_to_mjdmpm( datetime.now(tz=timezone.utc) )
         mjd = mjd + mpm/1000.0/3600.0/24.0
         
     # Convert the MJD to a decimal year.  This is a bit tricky
@@ -496,7 +495,7 @@ def get_tec_value(mjd, lat=None, lng=None, include_rms=False, type='IGS'):
         return tec
 
 
-def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
+def get_ionospheric_pierce_point(site, az, el, height=450e3):
     """
     Given a site and a pointing direction (azimuth and elevation in degrees),
     compute the location of the ionospheric pierce  point.  Since the height
@@ -551,7 +550,8 @@ def get_ionospheric_pierce_point(site, az, el, height=450e3, verbose=False):
         el = el * 180/np.pi
         
     # Optimize
-    output = fmin(err2, x0, args=(np.array([az, el]), []), disp=verbose)
-    
+    output = fmin(err2, x0, args=(np.array([az, el]), []), disp=False)
+    LSL_LOGGER.debug(f"Ionospheric pierce point: lat={output[0]:.4f} deg, lon={output[1]:.4f} deg, height={height:.0f} m")
+
     # Done
     return output[0], output[1], height

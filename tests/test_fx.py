@@ -1009,6 +1009,158 @@ class FXStokes_tests(unittest.TestCase):
                 self.run_correlator_test_complex(dtype, nchan=259, window=wndw2)
 
 
+class XMaster_tests(unittest.TestCase):
+    """A unittest.TestCase collection of unit tests for the lsl.correlator.fx.XStokes function."""
+    
+    nAnt = 8
+    
+    def setUp(self):
+        """Turn off all numpy and python warnings."""
+        
+        np.seterr(all='ignore')
+        warnings.simplefilter('ignore')
+        np.random.seed(1234)
+        
+    def run_xengine_test_complex(self, dtype, nchan=256, gain_correct=False,
+                                       return_baselines=False, phase_center='z'):
+        _, fakeData_np = _make_complex_data((self.nAnt,1024), scale=16, offset=3+3j, dtype=dtype)
+        nFFT = 1024 // nchan
+        
+        with DataAccess.open(_SSMIF, 'r') as fh:
+            station = stations.parse_ssmif(fh)
+        antennas = station.antennas
+        
+        # Numpy comparison
+        for i in range(self.nAnt):
+            antennas[i].stand.x = 0.0
+            antennas[i].stand.y = 0.0
+            antennas[i].stand.z = 0.0
+            antennas[i].cable.length = 0.0
+            
+        freq = np.fft.fftshift(np.fft.fftfreq(nchan, d=19.6e6) + 38e6)
+        signalsF = np.zeros((self.nAnt,nchan,nFFT), dtype=fakeData_np.dtype)
+        for i in range(self.nAnt):
+            for j in range(nFFT):
+                signalsF[i,:,j] = np.fft.fftshift( np.fft.fft(fakeData_np[i,j*nchan:(j+1)*nchan]) )
+                
+        cps = fx.XMaster(freq, signalsF, antennas[:self.nAnt],
+                         gain_correct=gain_correct,
+                         return_baselines=return_baselines)
+        if return_baselines:
+            baselines, cps = cps
+            
+        cps2 = np.zeros_like(cps)
+        blc = 0
+        for i in range(0, self.nAnt):
+            if antennas[i].pol != 0:
+                continue
+            for j in range(i+1, self.nAnt):
+                if antennas[j].pol != 0:
+                    continue
+                    
+                for k in range(nFFT):
+                    f1 = signalsF[i,:,k]
+                    f2 = signalsF[j,:,k]
+                    
+                    cps2[blc,:] += f1*f2.conj()
+                blc += 1
+        cps2 /= nFFT
+        lsl.testing.assert_allclose(cps, cps2)
+        
+    def test_xengine_complex(self):
+        """Test the C-based X-engine on data."""
+        
+        for dtype in (np.complex64, np.complex128):
+            with self.subTest(dtype=dtype):
+                self.run_xengine_test_complex(dtype)
+                
+    def test_correlator_gaincorrect(self):
+        """Test appling gain correction to the correlator output."""
+        
+        self.run_xengine_test_complex(np.complex64, gain_correct=True)
+        
+    def test_xengine_baselines(self):
+        """Test that the return_baselines keyword works."""
+        
+        self.run_xengine_test_complex(np.complex64, return_baselines=True)
+
+
+class XStokes_tests(unittest.TestCase):
+    """A unittest.TestCase collection of unit tests for the lsl.correlator.fx.XStokes function."""
+    
+    nAnt = 8
+    
+    def setUp(self):
+        """Turn off all numpy and python warnings."""
+        
+        np.seterr(all='ignore')
+        warnings.simplefilter('ignore')
+        np.random.seed(1234)
+        
+    def run_xengine_test_complex(self, dtype, nchan=256, gain_correct=False,
+                                       return_baselines=False, phase_center='z'):
+        _, fakeData_np = _make_complex_data((self.nAnt,1024), scale=16, offset=3+3j, dtype=dtype)
+        nFFT = 1024 // nchan
+        
+        with DataAccess.open(_SSMIF, 'r') as fh:
+            station = stations.parse_ssmif(fh)
+        antennas = station.antennas
+                
+        # Numpy comparison
+        for i in range(self.nAnt):
+            antennas[i].stand.x = 0.0
+            antennas[i].stand.y = 0.0
+            antennas[i].stand.z = 0.0
+            antennas[i].cable.length = 0.0
+            
+        freq = np.fft.fftshift(np.fft.fftfreq(nchan, d=19.6e6) + 38e6)
+        signalsF = np.zeros((self.nAnt,nchan,nFFT), dtype=fakeData_np.dtype)
+        for i in range(self.nAnt):
+            for j in range(nFFT):
+                signalsF[i,:,j] = np.fft.fftshift( np.fft.fft(fakeData_np[i,j*nchan:(j+1)*nchan]) )
+                
+        cps = fx.XStokes(freq, signalsF, antennas[:self.nAnt],
+                         gain_correct=gain_correct,
+                         return_baselines=return_baselines)
+        if return_baselines:
+            baselines, cps = cps
+            
+        cps2 = np.zeros_like(cps)
+        blc = 0
+        for i in range(0, self.nAnt//2):
+            for j in range(i+1, self.nAnt//2):
+                for k in range(nFFT):
+                    f1X = signalsF[2*i+0,:,k]
+                    f1Y = signalsF[2*i+1,:,k]
+                    f2X = signalsF[2*j+0,:,k]
+                    f2Y = signalsF[2*j+1,:,k]
+                    
+                    cps2[0,blc,:] += f1X*f2X.conj() + f1Y*f2Y.conj()
+                    cps2[1,blc,:] += f1X*f2X.conj() - f1Y*f2Y.conj()
+                    cps2[2,blc,:] += f1X*f2Y.conj() + f1X.conj()*f2Y
+                    cps2[3,blc,:] += (f1X*f2Y.conj() - f1X.conj()*f2Y)/1j
+                blc += 1
+        cps2 /= nFFT
+        lsl.testing.assert_allclose(cps, cps2)
+        
+    def test_xengine_complex(self):
+        """Test the C-based X-engine on data."""
+        
+        for dtype in (np.complex64, np.complex128):
+            with self.subTest(dtype=dtype):
+                self.run_xengine_test_complex(dtype)
+                
+    def test_correlator_gaincorrect(self):
+        """Test appling gain correction to the correlator output."""
+        
+        self.run_xengine_test_complex(np.complex64, gain_correct=True)
+        
+    def test_xengine_baselines(self):
+        """Test that the return_baselines keyword works."""
+        
+        self.run_xengine_test_complex(np.complex64, return_baselines=True)
+            
+
 class _XEngine_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.correlator._core.XEngine2 and 3 functions on CI8 data."""
     
@@ -1066,6 +1218,8 @@ class fx_test_suite(unittest.TestSuite):
         self.addTests(loader.loadTestsFromTestCase(StokesMaster_tests))
         self.addTests(loader.loadTestsFromTestCase(FXMaster_tests))
         self.addTests(loader.loadTestsFromTestCase(FXStokes_tests))
+        self.addTests(loader.loadTestsFromTestCase(XMaster_tests))
+        self.addTests(loader.loadTestsFromTestCase(XStokes_tests))
         self.addTests(loader.loadTestsFromTestCase(_XEngine_tests))
 
 

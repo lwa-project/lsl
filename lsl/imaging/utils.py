@@ -36,6 +36,7 @@ import re
 import sys
 import aipy
 import ephem
+import logging
 import numpy as np
 import atexit
 import shutil
@@ -43,7 +44,7 @@ import tarfile
 import tempfile
 import warnings
 from calendar import timegm
-from datetime import datetime
+from datetime import datetime, timezone
 
 from astropy import units as astrounits
 from astropy.constants import c as vLight
@@ -59,8 +60,9 @@ from lsl.sim import vis as simVis
 from lsl.writer.fitsidi import NUMERIC_STOKES
 from lsl.writer.measurementset import NUMERIC_STOKES as NUMERIC_STOKESMS
 from lsl.common.color import colorfy
-from lsl.testing import SilentVerbose
+from lsl.logger import LSL_LOGGER
 
+from lsl.misc import telemetry
 from lsl.imaging._gridder import WProjection
 from lsl.imaging.data import PolarizationDataSet, VisibilityDataSet, VisibilityData
 
@@ -68,8 +70,6 @@ from scipy import fftpack
 fft2Function = fftpack.fft2
 ifft2Function = fftpack.ifft2
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '1.0'
@@ -87,7 +87,7 @@ vLight = vLight.to('m/s').value
 _annameRE = re.compile(r'^.*?(?P<id>\d{1,3})$')
 
 
-def CorrelatedData(filename, verbose=False):
+def CorrelatedData(filename):
     """
     Read in and work with FITS IDI and UVFITS files.  Returns either a 
     CorrelateDataIDI or CorrelatedDataUV instance.
@@ -106,8 +106,7 @@ def CorrelatedData(filename, verbose=False):
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
-            if verbose:
-                print("MS - ERROR: %s" % str(e))
+            LSL_LOGGER.error(f"MS - ERROR: {str(e)}")
             raise RuntimeError(f"Directory '{filename}' does not appear to be a MeasurmentSet")
             
     else:
@@ -116,23 +115,17 @@ def CorrelatedData(filename, verbose=False):
         try:
             return CorrelatedDataIDI(filename)
         except Exception as e:
-            if verbose:
-                print("FITSIDI - ERROR: %s" % str(e))
-                
+            LSL_LOGGER.error(f"FITSIDI - ERROR: {str(e)}")
         ## UVFITS
         try:
             return CorrelatedDataUV(filename)
         except Exception as e:
-            if verbose:
-                print("UVFITS - ERROR: %s" % str(e))
-                
+            LSL_LOGGER.error(f"UVFITS - ERROR: {str(e)}")
         ## Measurment Set as a compressed entity
         try:
             return CorrelatedDataMS(filename)
         except Exception as e:
-            if verbose:
-                print("MS - ERROR: %s" % str(e))
-                
+            LSL_LOGGER.error(f"MS - ERROR: {str(e)}")
     if not valid:
         raise RuntimeError(f"File '{filename}' does not appear to be either a FITS IDI file, UV FITS file, or MeasurmentSet")
 
@@ -213,6 +206,7 @@ class CorrelatedDataBase(object):
         pass
 
 
+@telemetry.track_class
 class CorrelatedDataIDI(CorrelatedDataBase):
     """
     Class to make accessing information about a FITS IDI easy.  This wraps 
@@ -234,7 +228,8 @@ class CorrelatedDataIDI(CorrelatedDataBase):
      * freq - Numpy array of frequency channels in Hz
      * station - LSL :class:`lsl.common.stations.LWAStation` instance for the
                  array
-     * date_obs - Datetime object for the reference date of the FIT IDI file
+     * date_obs - Naive datetime object for the reference date of the FITS IDI file
+     * utc_date_obs - Timezone-aware datetime object for the reference date of the FITS IDI file
      * antennas - List of :class:`lsl.common.stations.Antenna` instances
     
     .. note::
@@ -300,7 +295,8 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 ## Catch for LEDA64-NM data
                 self.telescope = uvData.header['TELESCOP']
                 self.date_obs = datetime.strptime(uvData.header['DATE-OBS'], "%Y-%m-%dT%H:%M:%S")
-                
+            self.utc_date_obs = self.date_obs.replace(tzinfo=timezone.utc)
+            
             ## Extract the site position
             geo = np.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
             site = stations.ecef_to_geo(*geo)
@@ -432,6 +428,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 # Pull out the raw data from the table
                 bl = uvData.data['BASELINE'][selection]
                 jd = uvData.data['DATE'][selection] + uvData.data['TIME'][selection]
+                ac = uvData.data['INTTIM'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
@@ -513,7 +510,8 @@ class CorrelatedDataIDI(CorrelatedDataBase):
                 dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[:,select,:].transpose(1,0,2), 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKES[l]
                     polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
@@ -536,6 +534,7 @@ class CorrelatedDataIDI(CorrelatedDataBase):
         return dataSets
 
 
+@telemetry.track_class
 class CorrelatedDataUV(CorrelatedDataBase):
     """
     Class to make accessing information about a UVFITS file easy.  This wraps 
@@ -557,9 +556,10 @@ class CorrelatedDataUV(CorrelatedDataBase):
      * freq - Numpy array of frequency channels in Hz
      * station - LSL :class:`lsl.common.stations.LWAStation` instance for the
                  array
-     * date_obs - Datetime object for the reference date of the FIT IDI file
+     * date_obs - Naive datetime object for the reference date of the UVFITS file
+     * utc_date_obs - Timezone-aware datetime object for the reference date of the UVFITS file
      * antennas - List of :class:`lsl.common.stations.Antenna` instances
-    
+
     .. note::
         The CorrelatedDataUV.antennas attribute should be used over 
         CorrelatedDataUV.station.antennas since the mapping in the UVFITS
@@ -593,6 +593,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
             except ValueError:
                 ## Catch for AIPS UVFITS files which only have a date set
                 self.date_obs = datetime.strptime(dt, "%Y-%m-%d")
+            self.utc_date_obs = self.date_obs.replace(tzinfo=timezone.utc)
                 
             ## Extract the site position
             geo = np.array([ag.header['ARRAYX'], ag.header['ARRAYY'], ag.header['ARRAYZ']])
@@ -725,6 +726,7 @@ class CorrelatedDataUV(CorrelatedDataBase):
                     jd = uvData.data['DATE'][selection] + uvData.data['_DATE'][selection]
                 except KeyError:
                     jd = uvData.data['DATE'][selection]
+                ac = uvData.data['INTTIM'][selection]
                 try:
                     u, v, w = uvData.data['UU'][selection], uvData.data['VV'][selection], uvData.data['WW'][selection]
                 except KeyError:
@@ -787,7 +789,8 @@ class CorrelatedDataUV(CorrelatedDataBase):
                 dataSet = VisibilityDataSet(jd[0], self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[:,select,:].transpose(1,0,2), 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKES[l]
                     polDataSet = PolarizationDataSet(name, data=vis[select,:,p], weight=wgt[select,:,p])
@@ -818,10 +821,11 @@ try:
                         5:'RR',  6:'RL',  7:'LR',  8:'LL',
                         9:'XX', 10:'XY', 11:'YX', 12:'YY'}
     
+    @telemetry.track_class
     class CorrelatedDataMS(CorrelatedDataBase):
         """
-        Class to make accessing information about a MS easy.  This wraps 
-        all of the "messy" machinery needed to extract both the metadata and data 
+        Class to make accessing information about a MS easy.  This wraps
+        all of the "messy" machinery needed to extract both the metadata and data
         from the file and return them as common LSL objects.
         
         This class has three main attributes to interact with:
@@ -839,7 +843,8 @@ try:
          * freq - Numpy array of frequency channels in Hz
          * station - LSL :class:`lsl.common.stations.LWAStation` instance for the
                      array
-         * date_obs - Datetime object for the reference date of the FIT IDI file
+         * date_obs - Naive datetime object for the reference date of the MS
+         * utc_date_obs - Timezone-aware datetime object for the reference date of the MS
          * antennas - List of :class:`lsl.common.stations.Antenna` instances
         
         .. note::
@@ -974,8 +979,9 @@ try:
             # Data set times
             self._times = np.unique(data.getcol('TIME'))
             jd = self._times[0] / 86400.0 + astro.MJD_OFFSET
-            self.date_obs = datetime.utcfromtimestamp(astro.utcjd_to_unix(jd))
-            self.station.date = astro.unix_to_utcjd(timegm(self.date_obs.timetuple())) \
+            self.utc_date_obs = datetime.fromtimestamp(astro.utcjd_to_unix(jd), tz=timezone.utc)
+            self.date_obs = self.utc_date_obs.replace(tzinfo=None)
+            self.station.date = astro.unix_to_utcjd(timegm(self.utc_date_obs.timetuple())) \
                                 - astro.DJD_OFFSET
             
             # Data set sources
@@ -1040,6 +1046,7 @@ try:
                 
                 # Pull out the data
                 targetData = data.query('TIME == %.16f AND FLAG_ROW == false' % targetTime, sortlist='DATA_DESC_ID,ANTENNA1,ANTENNA2')
+                ac = targetData.getcol('EXPOSURE')
                 uvw  = targetData.getcol('UVW')
                 try:
                     wgt  = None
@@ -1102,7 +1109,8 @@ try:
                 dataSet = VisibilityDataSet(targetJD, self.freq*1.0, baselines=baselines, 
                                             uvw=uvw[selectU,:,:], 
                                             antennaarray=aa, 
-                                            phase_center=phase_center)
+                                            phase_center=phase_center,
+                                            int_time=np.median(ac))
                 for p,l in enumerate(self.pols):
                     name = NUMERIC_STOKESMS[l]
                     subvis = vis[select,:,p]
@@ -1614,7 +1622,7 @@ class ImgWPlus(aipy.img.ImgW):
                            'LATPOLE': 90.0})
 
 
-def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None, verbose=True):
+def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, wres=0.10, pol='XX',chan=None, im=None):
     """
     Given a :class:`lsl.imaging.data.VisibilityDataSet` object, build an aipy.img.ImgW 
     object of gridded uv data which can be used for imaging.  The ImgW object 
@@ -1629,8 +1637,8 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
     # over them
     if isinstance(data_set, VisibilityData):
         for ds in data_set:
-            im = build_gridded_image(ds, size=size, res=res, im_size=im_size, im_res=im_res, wres=wres, 
-                                     pol=pol, chan=chan, im=im, verbose=verbose)
+            im = build_gridded_image(ds, size=size, res=res, im_size=im_size, im_res=im_res, wres=wres,
+                                     pol=pol, chan=chan, im=im)
         return im
 
     # Catch Input Shapes
@@ -1681,16 +1689,15 @@ def build_gridded_image(data_set, size=80, res=0.50, im_size=None, im_res=None, 
     vis = np.concatenate(vis)
     wgt = np.concatenate(wgt)
     
-    with SilentVerbose(stdout=not verbose):
-        uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
-        u,v,w = uvw
-        order = np.argsort(w)
-        u,v,w = u.take(order), v.take(order), w.take(order)
-        vis,wgt = vis.take(order), np.array([wg.take(order) for wg in wgt]).squeeze()
-        if wgt.dtype != np.complex64:
-            wgt = wgt.astype(np.complex64)
-            
-        im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, np.float64(res), np.float64(wres))
+    uvw, vis, wgt = im.append_hermitian(uvw, vis, wgts=wgt)
+    u,v,w = uvw
+    order = np.argsort(w)
+    u,v,w = u.take(order), v.take(order), w.take(order)
+    vis,wgt = vis.take(order), np.array([wg.take(order) for wg in wgt]).squeeze()
+    if wgt.dtype != np.complex64:
+        wgt = wgt.astype(np.complex64)
+
+    im.uv, im.bm[0], im.kern_corr = WProjection(u, v, w, vis, wgt, size, np.float64(res), np.float64(wres))
         
     # Update MJD, phase center, and antenna array information
     im.mjd = data_set.mjd

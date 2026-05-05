@@ -35,8 +35,6 @@ from astropy.coordinates import EarthLocation
 from lsl import astro
 from lsl.common.stations import lwa1, Antenna
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.7'

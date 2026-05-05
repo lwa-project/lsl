@@ -43,7 +43,7 @@ def main(args):
     #
     
     ## Required
-    for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy', 'pytz'):
+    for mod in ('numpy', 'scipy', 'astropy', 'ephem', 'aipy'):
         modSpec = importlib.util.find_spec(mod, [os.path.dirname(__file__)])
         if modSpec != None:
             modInfo = importlib.util.module_from_spec(modSpec)

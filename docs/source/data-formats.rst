@@ -1,93 +1,6 @@
 Data Format Descriptions
 ========================
 
-TBW
----
-TBW consist of a time series of real valued data sampled at f\ :sub:`S` (196 MHz) from
-all antennas in the array.  The stand numbering is based on the input into the
-digital system rather than the stand number in the array.  The data are divided
-into packets that contain either 400 samples (12-bit data) or 1200 samples 
-(4-bit data) per stand per polarization.
-
-.. note:: Fields are big endian
-
-+---------+-------------------+---------------------------------+
-| Byte(s) | Name              | Description                     |
-+=========+===================+=================================+
-| 0-3     | Sync Word         | 0xDECODE5C                      |
-+---------+-------------------+---------------------------------+
-| 4-6     | Frame Count       | Frame number within capture     |
-+---------+-------------------+---------------------------------+
-| 7       | ID                | Always zero                     |
-+---------+-------------------+---------------------------------+
-| 8-11    | Second count      | Always zero                     |
-+---------+-------------------+---------------------------------+
-| 12-13   | TBW ID            | Packed frame source ID          |
-+---------+-------------------+---------------------------------+
-| 14-15   | Unassigned        | Always zero                     |
-+---------+-------------------+---------------------------------+
-| 16-23   | Time tag          | Time tag [#F1]_                 |
-+---------+-------------------+---------------------------------+
-| 24-1223 | Data              | ``i4`` or ``i12`` data - [time,]|
-+---------+-------------------+---------------------------------+
-
-The packing on the ``TBW ID`` field is:
-
-+--------+-------------------------+
-| Bit(s) | Description             |
-+========+=========================+
-| 0-13   | Stand                   |
-+--------+-------------------------+
-| 14     | Sample Size (0 = 12-bit)|
-+--------+-------------------------+
-| 15     | Is TBW? (1 = Yes)       |
-+--------+-------------------------+
-
-Both the ``i4`` and ``i12`` versions of the data are stored as two's complement
-integers.
-
-TBN
----
-TBN data is similar to TBW data, except that the data are complex and have a
-variable sample rate of up to 100 kHz. The data are divided into packets with
-512 samples per stand per polarization.
-
-.. note:: Fields are big endian
-
-+---------+-------------------+---------------------------------+
-| Byte(s) | Name              | Description                     |
-+=========+===================+=================================+
-| 0-3     | Sync Word         | 0xDECODE5C                      |
-+---------+-------------------+---------------------------------+
-| 4-6     | Frame Count       | Always zero                     |
-+---------+-------------------+---------------------------------+
-| 7       | ID                | Always zero                     |
-+---------+-------------------+---------------------------------+
-| 8-11    | Tuning Word       | Tuning frequency [#F2]_         |
-+---------+-------------------+---------------------------------+
-| 12-13   | TBN ID            | Packed frame source ID          |
-+---------+-------------------+---------------------------------+
-| 14-15   | Gain              | TBN gain used                   |
-+---------+-------------------+---------------------------------+
-| 16-23   | Time tag          | Time tag [#F1]_                 |
-+---------+-------------------+---------------------------------+
-| 24-1047 | Data              | ``ci8`` data - [time,]          |
-+---------+-------------------+---------------------------------+
-
-The packing on the ``TBN ID`` field is:
-
-+--------+------------------+
-| Bit(s) | Description      |
-+========+==================+
-| 0-13   | Stand            |
-+--------+------------------+
-| 14     | Reserved         |
-+--------+------------------+
-| 15     | Is TBW? (1 = Yes)|
-+--------+------------------+
-
-``ci8`` is also known as "8+8-bit complex integer".
-
 DRX
 ---
 DRX data consist of a time series of complex data sampled at f\ :sub:`S` / ``Decimation Factor``
@@ -140,7 +53,7 @@ integers with the real part stored in the first four bits of the byte.
 DR Spectrometer
 ---------------
 DR Spectrometer data contain DRX data that has been transformed to the Fourier
-domain, converted to power, and integrated on-the-fly by the data recorder.  
+domain, converted to power, and integrated on-the-fly by the data recorder.
 The format allows for variable integration times, channel counts, and
 polarization products to be stored.
 
@@ -205,14 +118,13 @@ included in the packet data.  The fields are:
 
 The data are stored as little endian ``float`` values.
 
-TBF
+TBX
 ---
-TBF is similar to both TBW and TBN, but is a complex frequency domain product
-that contains blocks of 12 channels from all stands and polarizations.  Each
-channel has a bandwidth of f\ :sub:`C` (25 kHz) and there may be up to 132
-different values of ``First Channel`` within a single recording.  The stand
-ordering is based on the input into the digital system rather than the stand
-number in the array.  
+TBX is a complex frequency-domain product that contains blocks of up to 16
+channels from all stands and polarizations.  Each channel has a bandwidth of
+f\ :sub:`C` (25 kHz) and there may be up to 224 different values of
+``First Channel`` within a single recording.  The stand ordering is based on the
+input into the digital system rather than the stand number in the array.
 
 .. note:: Fields are big endian
 
@@ -223,7 +135,7 @@ number in the array.
 +---------+-------------------+---------------------------------+
 | 4-6     | Frame Count       | Frame number within capture     |
 +---------+-------------------+---------------------------------+
-| 7       | ADP ID            | Always one                      |
+| 7       | NDP ID            | Always 0x08                     |
 +---------+-------------------+---------------------------------+
 | 8-11    | Second Count      | Always zero                     |
 +---------+-------------------+---------------------------------+
@@ -233,7 +145,7 @@ number in the array.
 +---------+-------------------+---------------------------------+
 | 16-23   | Time tag          | Time tag [#F1]_                 |
 +---------+-------------------+---------------------------------+
-| 24-6167 | Data              | ``ci4`` data - [chan,stand,pol] |
+| 24-N    | Data              | ``ci4`` data - [chan,stand,pol] |
 +---------+-------------------+---------------------------------+
 
 The ``ci4`` aka "4+4-bit complex integer" data are stored as two's complement
@@ -257,7 +169,7 @@ stand number in the array.
 +---------+-------------------+-------------------------------------------+
 | 4-6     | Frame Count       | Server ID                                 |
 +---------+-------------------+-------------------------------------------+
-| 7       | ADP ID            | Always two                                |
+| 7       | NDP ID            | Always two                                |
 +---------+-------------------+-------------------------------------------+
 | 8-11    | Second Count      | Always zero                               |
 +---------+-------------------+-------------------------------------------+

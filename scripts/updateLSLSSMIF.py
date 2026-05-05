@@ -13,7 +13,7 @@ from urllib.request import urlopen
 import hashlib
 import argparse
 import calendar
-from datetime import datetime
+from datetime import datetime, timezone
 
 from lsl.common.data_access import DataAccess
 from lsl.common.progress import DownloadBar
@@ -206,8 +206,8 @@ def main(args):
     # Summarize the SSMIF
     ## Filesystem information
     size = DataAccess.getsize(_ssmif)
-    mtime = datetime.utcfromtimestamp(DataAccess.stat(_ssmif)[8])
-    age = datetime.utcnow() - mtime
+    mtime = datetime.fromtimestamp(DataAccess.stat(_ssmif)[8], tz=timezone.utc)
+    age = datetime.now(tz=timezone.utc) - mtime
     
     ## MD5 checksum
     with DataAccess.open(_ssmif, 'rb') as fh:

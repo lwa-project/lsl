@@ -18,12 +18,11 @@ from astropy.time import Time as AstroTime
 from astropy.coordinates import EarthLocation, AltAz, ITRS, FK5
 
 from lsl import astro
+from lsl.misc import telemetry
 from lsl.reader.base import FrameTimestamp
 from lsl.writer.fitsidi import WriterBase
 from lsl.common.color import colorfy
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.2'
@@ -61,14 +60,15 @@ def split_baseline(baseline, shift=16):
 try:
     from casacore.tables import table, tableutil
     
+    @telemetry.track_class
     class Ms(WriterBase):
         """
         Class for storing visibility data and writing the data, along with array
         geometry, frequency setup, etc., to a CASA measurement set.
         """
-        
+
         _STOKES_CODES = STOKES_CODES
-        
+
         class _MS_UVData(WriterBase._UVData):
             """
             Represents one MS UV visibility data set for a given observation time.
@@ -116,15 +116,15 @@ try:
                 
                 return np.argsort(packed)
                 
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+        def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
             """
             Initialize a new Measurment Set object using a filename and a reference time
             given in seconds since the UNIX 1970 epoch, a python datetime object, or a
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
-            
+
             # File-specific information
-            WriterBase. __init__(self, filename, ref_time=ref_time, verbose=verbose)
+            WriterBase. __init__(self, filename, ref_time=ref_time)
             
             # Open the file and get going
             if os.path.exists(filename):
@@ -1107,11 +1107,11 @@ except ImportError:
         
         _STOKES_CODES = STOKES_CODES
         
-        def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+        def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
             """
             Initialize a new Measurement Set object using a filename and a reference time
-            given in seconds since the UNIX 1970 epoch, a python datetime object, or a 
+            given in seconds since the UNIX 1970 epoch, a python datetime object, or a
             string in the format of 'YYYY-MM-DDTHH:MM:SS'.
             """
-            
+
             raise RuntimeError("Cannot import casacore.tables, MS support disabled")

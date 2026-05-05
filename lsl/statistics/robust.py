@@ -23,8 +23,6 @@ import math
 import numpy as np
 from numpy.polynomial.polynomial import polyfit as npp_polyfit, polyval as npp_polyval
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.5'

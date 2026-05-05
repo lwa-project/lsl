@@ -2,25 +2,25 @@
 Module that contains commmon routines for the SDF and IDF modules.
 """
 
-import os
 import re
 import math
-import pytz
 import warnings
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+
+try:
+    import zoneinfo
+except ImportError:
+    from backports import zoneinfo
 
 from astropy.time import Time as AstroTime
 
 from lsl.astro import date as astroDate, get_date as astroGetDate
 from lsl.common.stations import lwa1
 from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 __version__ = '0.1'
-__all__ = ['pid_print', 'render_file_size', 'render_bandwidth', 'parse_time']
-
-
-def pid_print(*args, **kwds):
-    print(f"[{os.getpid()}]", *args, **kwds)
+__all__ = ['render_file_size', 'render_bandwidth', 'parse_time']
 
 
 def render_file_size(size):
@@ -87,11 +87,10 @@ def _get_equinox_equation(jd):
 
 
 _dtRE = re.compile(r'^((?P<tz>[A-Z]{2,3}) )?(?P<year>\d{4})[ -/]((?P<month>\d{1,2})|(?P<mname>[A-Za-z]{3}))[ -/](?P<day>\d{1,2})[ T](?P<hour>\d{1,2}):(?P<minute>\d{1,2}):(?P<second>\d{1,2}(\.\d{1,6})?) ?(?P<tzOffset>[-+]\d{1,2}:?\d{1,2})?$')
-_UTC = pytz.utc
-_EST = pytz.timezone('US/Eastern')
-_CST = pytz.timezone('US/Central')
-_MST = pytz.timezone('US/Mountain')
-_PST = pytz.timezone('US/Pacific')
+_EST = zoneinfo.ZoneInfo('America/New_York')
+_CST = zoneinfo.ZoneInfo('America/Chicago')
+_MST = zoneinfo.ZoneInfo('America/Denver')
+_PST = zoneinfo.ZoneInfo('America/Los_Angeles')
 
 
 def parse_time(s, station=lwa1):
@@ -171,7 +170,7 @@ def parse_time(s, station=lwa1):
                     raise ValueError(f"Unknown month abbreviation: '{monthName}'")
                     
             if mtch.group('tz') is None and mtch.group('tzOffset') is None:
-                tz = _UTC
+                tz = timezone.utc
             elif mtch.group('tzOffset') is not None:
                 tzOffsetSign = 1
                 if mtch.group('tzOffset')[0] == '-':
@@ -179,11 +178,13 @@ def parse_time(s, station=lwa1):
                 tzOffsetHours = int( mtch.group('tzOffset').replace(':', '')[1:3] )
                 tzOffsetMinutes = int( mtch.group('tzOffset').replace(':', '')[3:5] )
                 
-                tz = pytz.FixedOffset(tzOffsetSign*(tzOffsetHours*60+tzOffsetMinutes), {})
+                tzOffsetSeconds = tzOffsetHours*3600 + tzOffsetMinutes*60
+                tzOffsetSeconds *= tzOffsetSign
+                tz = timezone(timedelta(seconds=tzOffsetSeconds))
             else:
                 tzName = mtch.group('tz')
                 if tzName in ['UT', 'UTC']:
-                    tz = _UTC
+                    tz = timezone.utc
                 elif tzName in ['EST', 'EDT']:
                     tz = _EST
                 elif tzName in ['CST', 'CDT']:
@@ -195,17 +196,17 @@ def parse_time(s, station=lwa1):
                 elif tzName in ['LST',]:
                     tz = 'LST'
                 else:
-                    ## Exhaustive search through pytz.  This may yield strange matches...
-                    warnings.warn(colorfy("{{%%yellow Entering pytz search mode for '%s'}}" % tzName), RuntimeWarning)
+                    ## Exhaustive search through zoneinfo.  This may yield strange matches...
+                    LSL_LOGGER.warning(f"Entering zoneinfo search mode for '{tzName}'")
                     
                     tzFound = False
                     tzNormal = datetime(year, month, day)
-                    for tzi in pytz.common_timezones[::-1]:
-                        tz = pytz.timezone(tzi)
+                    for tzi in list(zoneinfo.available_timezones()):
+                        tz = zoneinfo.ZoneInfo(tzi)
                         try:
-                            cTZName = tz.tzname(tzNormal, is_dst=False)
+                            cTZName = tzNormal.replace(tzinfo=tz).tzname()
                         except TypeError:
-                            cTZName = tz.tzname(tzNormal)
+                            continue
                         if cTZName == tzName:
                             tzFound = True
                             break
@@ -260,7 +261,7 @@ def parse_time(s, station=lwa1):
                 # quantities needed to build a datetime instance
                 dt = astroGetDate(jd)
                 
-                tz = _UTC
+                tz = timezone.utc
                 year = dt.years
                 month = dt.months
                 day = dt.days
@@ -272,7 +273,7 @@ def parse_time(s, station=lwa1):
                 microsecond = int(round(microsecond/1000.0))*1000
                 
             # Localize as the appropriate time zone
-            dtObject = tz.localize(datetime(year, month, day, hour, minute, second, microsecond))
+            dtObject = datetime(year, month, day, hour, minute, second, microsecond, tzinfo=tz)
             
     # Return as UTC
-    return dtObject.astimezone(_UTC)
+    return dtObject.astimezone(timezone.utc)

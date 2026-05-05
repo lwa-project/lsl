@@ -1,21 +1,25 @@
 """
-Python module to handle the channelization and cross-correlation of TBW and
-TBN data.  The main python functions in this module are:
-  * calcSpectra - calculate power spectra for a collection of signals
-  * FXCorrelator - calculate cross power spectra for a collection of signals
-  * FXStokes - calculate Stokes cross power spectra for a collection of signals
-               both of which have been deprecated in favor of the new C extension
-               based  routines listed below.
-
-The main python/C extension functions in this module are:
+Python module to handle the channelization and cross-correlation of time domain
+data, and the cross-correlation of frequency domain data.  The main python
+functions in this module are:
   * SpecMaster - similar to calcSpectra but uses the _spec module for all 
                  computations and does not support automatic sub-integration
   * StokesMaster - similar to SpecMaster but computes all four Stokes parameters
-  * FXMaster - calculate cross power spectra for a collection of signals
+  * FXMaster - calculate cross power spectra for a collection of time domain
+               signals
+  * FXStokes - calculate Stokes cross power spectra for a collection of time 
+               domain signals
+  * XMaster - calculate cross power spectra for a collection of frequency domain
+              signals
+  * XStokes - calculate Stokes cross power spectra for a collection of frequency
+              domain signals
 
-Each function is set up to process the signals in parallel using the 
-multiprocessing module and accepts a variety of options controlling the processing
-of the data, including various window functions and time averaging.
+Each function is set up to process the signals in parallel using OpenMP and
+accepts a variety of options controlling the processing of the data, including
+various window functions and time averaging.
+
+.. versionchanged:: 4.0.0
+    Added XMaster and XStokes.
 
 .. versionchanged:: 1.0.1
     Removed SpecMasterP.
@@ -30,15 +34,14 @@ from astropy.constants import c as speedOfLight
 from astropy.coordinates import AltAz, SkyCoord
 
 from lsl.reader.base import CI8
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 from lsl.correlator import uvutils, _spec, _stokes, _core
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
-__version__ = '1.1'
-__all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster', 'FXMaster', 'FXStokes']
+__version__ = '1.2'
+__all__ = ['pol_to_pols', 'null_window', 'SpecMaster', 'StokesMaster',
+           'FXMaster', 'FXStokes', 'XMaster', 'XStokes']
 
 
 speedOfLight = speedOfLight.to('m/s').value
@@ -72,7 +75,7 @@ def null_window(L):
     return np.ones(L)
 
 
-def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
+def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     A more advanced version of calcSpectra that uses the _spec C extension 
     to handle all of the P.S.D. calculations in parallel.  Returns a two-
@@ -105,9 +108,9 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     # because the real-valued signal only occupies the positive part of the 
     # frequency space.
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
-    # Deal with TBW and TBN data in the correct way
+    # Deal with real/complex data in the correct way
     if doFFTShift:
         freq += central_freq
         freq = np.fft.fftshift(freq)
@@ -127,7 +130,7 @@ def SpecMaster(signals, LFFT=64, window=null_window, pfb=False, verbose=False, s
     return (freq, output)
 
 
-def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verbose=False, sample_rate=None, central_freq=0.0, clip_level=0):
+def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, clip_level=0):
     """
     Similar to SpecMaster, but accepts an array of signals and a list of 
     antennas in order to compute the PSDs for the four Stokes parameters: 
@@ -164,9 +167,9 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     # because the real-valued signal only occupies the positive part of the 
     # frequency space.
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
-    # Deal with TBW and TBN data in the correct way
+    # Deal with real/complex data in the correct way
     if doFFTShift:
         freq += central_freq
         freq = np.fft.fftshift(freq)
@@ -186,9 +189,9 @@ def StokesMaster(signals, antennas, LFFT=64, window=null_window, pfb=False, verb
     return (freq, output)
 
 
-def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
+def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, pol='XX', gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
-    A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
+    A more advanced version of FXCorrelator for time domain data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
     the cross-correlation of the data for all baselines.  Return the frequencies 
     and visibilities as a two-elements tuple.
@@ -244,7 +247,7 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         doFFTShift = False
         
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
         freq += central_freq
@@ -347,9 +350,9 @@ def FXMaster(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     return returnValues
 
 
-def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
+def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, window=null_window, pfb=False, sample_rate=None, central_freq=0.0, gain_correct=False, return_baselines=False, clip_level=0, phase_center='z'):
     """
-    A more advanced version of FXCorrelator for TBW and TBN data.  Given an 
+    A more advanced version of FXCorrelator for time domain data.  Given an 
     2-D array of signals (stands, time-series) and an array of stands, compute 
     the cross-correlation of the data for all baselines.  Return the frequencies 
     and visibilities as a two-elements tuple.
@@ -400,7 +403,7 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
         doFFTShift = False
 
     if sample_rate is None:
-        sample_rate = dp_common.fS
+        sample_rate = ndp_common.fS
     freq = np.fft.fftfreq(lFactor*LFFT, d=1.0/sample_rate)
     if doFFTShift:
         freq += central_freq
@@ -492,4 +495,229 @@ def FXStokes(signals, antennas, LFFT=64, overlap=1, include_auto=False, verbose=
     else:
         returnValues = (freq, output)
 
+    return returnValues	
+
+
+def XMaster(freq, signals, antennas, include_auto=False, pol='XX', gain_correct=False, return_baselines=False, phase_center='z'):
+    """
+    An X-engine wrapper for frequency domain data.  Given an array of frequencies
+    in Hz, 3-D array of signals (stands, channels, time), and an array of stands,
+    compute  the cross-correlation of the data for all baselines.  Return the 
+    visibilities.
+    
+    .. versionadded:: 4.0.0
+    """
+    
+    # Decode the polarization product into something that we can use to figure 
+    # out which antennas to use for the cross-correlation
+    pol1, pol2 = pol_to_pols(pol)
+    
+    antennas1 = [a for a in antennas if a.pol == pol1]
+    signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == pol1]
+    antennas2 = [a for a in antennas if a.pol == pol2]
+    signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
+    
+    nStands = len(antennas1)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto)
+    nChan = freq.size
+    
+    # Get the location of the phase center in radians and create a 
+    # pointing vector
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
+        else:
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
+            
+    source = np.array([np.cos(altPC)*np.sin(azPC), 
+                       np.cos(altPC)*np.cos(azPC), 
+                       np.sin(altPC)])
+                    
+    # Define the cable/signal delay caches to help correlate along and compute 
+    # the delays that we need to apply to align the signals
+    dlyRef = len(freq)//2
+    delays1 = np.zeros((nStands,nChan))
+    delays2 = np.zeros((nStands,nChan))
+    for i in list(range(nStands)):
+        xyz1 = np.array(antennas1[i].stand.xyz)
+        xyz2 = np.array(antennas2[i].stand.xyz)
+        
+        delays1[i,:] = antennas1[i].cable.delay(freq) - np.dot(source, xyz1) / speedOfLight
+        delays2[i,:] = antennas2[i].cable.delay(freq) - np.dot(source, xyz2) / speedOfLight
+    if not np.isfinite(delays1.max()):
+        delays1[np.where( ~np.isfinite(delays1) )] = delays1[np.where( np.isfinite(delays1) )].max()
+    if not np.isfinite(delays2.max()):
+        delays2[np.where( ~np.isfinite(delays2) )] = delays2[np.where( np.isfinite(delays2) )].max()
+    if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
+        minDelay = delays1[:,dlyRef].min()
+    else:
+        minDelay = delays2[:,dlyRef].min()
+    delays1 -= minDelay
+    delays2 -= minDelay
+    delays1 = {antennas1[i].stand.id: delays1[i] for i in list(range(nStands))}
+    delays2 = {antennas2[i].stand.id: delays2[i] for i in list(range(nStands))}
+    
+    # Polarizaton split
+    signals1 = signals[signalsIndex1,...]
+    valid1 = np.ones((signals1.shape[0],signals1.shape[2]), dtype=np.uint8)
+    if pol2 == pol1:
+        signals2 = signals1
+        valid2 = valid1
+    else:
+        signals2 = signals[signalsIndex2,...]
+        valid2 = np.ones((signals2.shape[0],signals2.shape[2]), dtype=np.uint8)
+        
+    # X
+    output = _core.XEngine2(signals1, signals2, valid1, valid2)
+    if not include_auto:
+        # Remove auto-correlations from the output of the X engine if we don't 
+        # need them.  To do this we need to first build the full list of baselines
+        # (including auto-correlations) and then prune that.
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True)
+        fom = np.array([a1.stand != a2.stand for (a1,a2) in baselinesFull])
+        nonAuto = np.where(fom)[0]
+        output = output[nonAuto,:]
+        
+    # Apply delays and cable gain corrections (if needed)
+    for bl in range(output.shape[0]):
+        phaseRot1 = np.exp(2j*np.pi*freq*delays1[baselines[bl][0].stand.id])
+        phaseRot2 = np.exp(2j*np.pi*freq*delays2[baselines[bl][1].stand.id])
+        
+        output[bl,:] *= phaseRot2.conj()*phaseRot1
+            
+        if gain_correct:
+            cableGain1 = baselines[bl][0].cable.gain(freq)
+            cableGain2 = baselines[bl][1].cable.gain(freq)
+            
+            output[bl,:] /= np.sqrt(cableGain1*cableGain2)
+            
+    # Create antenna baseline list (if needed)
+    if return_baselines:
+        returnValues = (baselines, output)
+    else:
+        returnValues = output
+        
+    return returnValues
+
+
+def XStokes(freq, signals, antennas, include_auto=False, gain_correct=False, return_baselines=False, phase_center='z'):
+    """
+    An X-engine wrapper for frequency domain data.  Given an array of frequencies
+    in Hz, 3-D array of signals (stands, channels, time), and an array of stands,
+    compute  the cross-correlation of the data for all baselines.  Return the 
+    visibilities.
+    
+    .. versionadded:: 4.0.0
+    """
+    
+    # Since we want to compute Stokes parameters, we need both pols
+    pol1 = 0
+    pol2 = 1
+    
+    antennas1 = [a for a in antennas if a.pol == pol1]
+    signalsIndex1 = [i for (i, a) in enumerate(antennas) if a.pol == pol1]
+    antennas2 = [a for a in antennas if a.pol == pol2]
+    signalsIndex2 = [i for (i, a) in enumerate(antennas) if a.pol == pol2]
+    
+    nStands = len(antennas1)
+    baselines = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=include_auto)
+    nChan = freq.size
+    
+    # Get the location of the phase center in radians and create a 
+    # pointing vector
+    if isinstance(phase_center, str):
+        if phase_center == 'z':
+            azPC = 0.0
+            altPC = np.pi/2.0
+        else:
+            raise ValueError(f"Unrecognized source: {phase_center}")
+    elif isinstance(phase_center, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, SkyCoord) and isinstance(phase_center.frame, AltAz):
+        azPC = phase_center.az.rad
+        altPC = phase_center.alt.rad
+    elif isinstance(phase_center, ephem.Body):
+        azPC = phase_center.az * 1.0
+        altPC = phase_center.alt * 1.0
+    else:
+        azPC = phase_center[0]*np.pi/180.0
+        altPC = phase_center[1]*np.pi/180.0
+    source = np.array([np.cos(altPC)*np.sin(azPC), 
+                       np.cos(altPC)*np.cos(azPC), 
+                       np.sin(altPC)])
+                    
+    # Define the cable/signal delay caches to help correlate along and compute 
+    # the delays that we need to apply to align the signals
+    dlyRef = len(freq)//2
+    delays1 = np.zeros((nStands,nChan))
+    delays2 = np.zeros((nStands,nChan))
+    for i in list(range(nStands)):
+        xyz1 = np.array(antennas1[i].stand.xyz)
+        xyz2 = np.array(antennas2[i].stand.xyz)
+        
+        delays1[i,:] = antennas1[i].cable.delay(freq) - np.dot(source, xyz1) / speedOfLight
+        delays2[i,:] = antennas2[i].cable.delay(freq) - np.dot(source, xyz2) / speedOfLight
+    if not np.isfinite(delays1.max()):
+        delays1[np.where( ~np.isfinite(delays1) )] = delays1[np.where( np.isfinite(delays1) )].max()
+    if not np.isfinite(delays2.max()):
+        delays2[np.where( ~np.isfinite(delays2) )] = delays2[np.where( np.isfinite(delays2) )].max()
+    if delays1[:,dlyRef].min() < delays2[:,dlyRef].min():
+        minDelay = delays1[:,dlyRef].min()
+    else:
+        minDelay = delays2[:,dlyRef].min()
+    delays1 -= minDelay
+    delays2 -= minDelay
+    delays1 = {antennas1[i].stand.id: delays1[i] for i in list(range(nStands))}
+    delays2 = {antennas2[i].stand.id: delays2[i] for i in list(range(nStands))}
+    
+    # Polarization split
+    signals1 = signals[signalsIndex1,...]
+    valid1 = np.ones((signals1.shape[0],signals1.shape[2]), dtype=np.uint8)
+    signals2 = signals[signalsIndex2,...]
+    valid2 = np.ones((signals2.shape[0],signals2.shape[2]), dtype=np.uint8)
+    
+    # X
+    output = _stokes.XEngine3(signals1, signals2, valid1, valid2)
+    if not include_auto:
+        # Remove auto-correlations from the output of the X engine if we don't 
+        # need them.  To do this we need to first build the full list of baselines
+        # (including auto-correlations) and then prune that.
+        baselinesFull = uvutils.get_baselines(antennas1, antennas2=antennas2, include_auto=True)
+        fom = np.array([a1.stand != a2.stand for (a1,a2) in baselinesFull])
+        nonAuto = np.where(fom)[0]
+        output = output[:,nonAuto,:]
+        
+    # Apply cable gain corrections (if needed)
+    for bl in range(output.shape[1]):
+        phaseRot1 = np.exp(2j*np.pi*freq*delays1[baselines[bl][0].stand.id])
+        phaseRot2 = np.exp(2j*np.pi*freq*delays2[baselines[bl][1].stand.id])
+        
+        output[:,bl,:] *= phaseRot2.conj()*phaseRot1
+        
+        if gain_correct:
+            cableGain1 = baselines[bl][0].cable.gain(freq)
+            cableGain2 = baselines[bl][1].cable.gain(freq)
+            
+            output[:,bl,:] /= np.sqrt(cableGain1*cableGain2)
+            
+    # Create antenna baseline list (if needed)
+    if return_baselines:
+        returnValues = (baselines, output)
+    else:
+        returnValues = output
+        
     return returnValues	

@@ -6,10 +6,9 @@ tarball.
 """
 
 import sys
-import pytz
 import argparse
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from lsl.common import stations
 from lsl.astro import utcjd_to_unix, MJD_OFFSET
@@ -23,7 +22,6 @@ telemetry.track_script()
 __version__ = "0.3"
 
 # Date/time manipulation
-_UTC = pytz.utc
 _FORMAT_STRING = '%Y/%m/%d %H:%M:%S.%f %Z'
 
 
@@ -37,18 +35,7 @@ def main(args):
     fileInfo = metabundle.get_session_metadata(inputTGZ)
     aspConfigB = metabundle.get_asp_configuration_summary(inputTGZ, which='Beginning')
     aspConfigE = metabundle.get_asp_configuration_summary(inputTGZ, which='End')
-    mdStyle = metabundle.get_style(inputTGZ)
     site = metabundle.get_station(inputTGZ)
-    if site is None:
-        if mdStyle.endswith('ADP'):
-            # Assume LWA-SV
-            site = stations.lwasv
-        elif mdStyle.endswith('NDP'):
-            # Assume LWA-NA
-            site = stations.lwana
-        else:
-            # Assume LWA1
-            site = stations.lwa1
     observer = site.get_observer()
     
     nObs = len(project.sessions[0].observations)
@@ -56,8 +43,7 @@ def main(args):
     for i in range(nObs):
         tStart[i]  = utcjd_to_unix(project.sessions[0].observations[i].mjd + MJD_OFFSET)
         tStart[i] += project.sessions[0].observations[i].mpm / 1000.0
-        tStart[i]  = datetime.utcfromtimestamp(tStart[i])
-        tStart[i]  = _UTC.localize(tStart[i])
+        tStart[i]  = datetime.fromtimestamp(tStart[i], tz=timezone.utc)
     
     # Get the LST at the start
     observer.date = (min(tStart)).strftime('%Y/%m/%d %H:%M:%S')
@@ -67,7 +53,6 @@ def main(args):
     print(f"Filename: {inputTGZ}")
     print(f" Project ID: {project.id}")
     print(f" Session ID: {project.sessions[0].id}")
-    print(f" Metadata Style: {mdStyle}")
     print(f" Observations appear to start at {min(tStart).strftime(_FORMAT_STRING)}")
     print(f" -> LST at {site.name} for this date/time is {str(lst)}")
     
@@ -81,7 +66,7 @@ def main(args):
     print(f" -> Last observation ends at {(max(tStart) + lastDur).strftime(_FORMAT_STRING)}")
     if project.sessions[0].observations[0].mode not in ('TBW', 'TBN'):
         drspec = 'No'
-        if project.sessions[0].spcSetup[0] != 0 and project.sessions[0].spcSetup[1] != 0:
+        if project.sessions[0].spc_setup[0] != 0 and project.sessions[0].spc_setup[1] != 0:
             drspec = 'Yes'
         drxBeam = project.sessions[0].drx_beam
         if drxBeam < 1:
@@ -91,21 +76,21 @@ def main(args):
         print(f" DRX Beam: {drxBeam}")
         print(f" DR Spectrometer used? {drspec}")
         if drspec == 'Yes':
-            print(f" -> {project.sessions[0].spcSetup[0]} channels, {project.sessions[0].spcSetup[1]} windows/integration")
+            print(f" -> {project.sessions[0].spc_setup[0]} channels, {project.sessions[0].spc_setup[1]} windows/integration")
     else:
-        tbnCount = 0
-        tbwCount = 0
+        tbsCount = 0
+        tbtCount = 0
         for obs in project.sessions[0].observations:
-            if obs.mode == 'TBW':
-                tbwCount += 1
+            if obs.mode == 'TBT':
+                tbtCount += 1
             else:
-                tbnCount += 1
-        if tbwCount > 0 and tbnCount == 0:
-            print(" Transient Buffer Mode: TBW")
-        elif tbwCount == 0 and tbnCount > 0:
-            print(" Transient Buffer Mode: TBN")
+                tbsCount += 1
+        if tbtCount > 0 and tbsCount == 0:
+            print(" Transient Buffer Mode: TBT")
+        elif tbtCount == 0 and tbsCount > 0:
+            print(" Transient Buffer Mode: TBS")
         else:
-            print(" Transient Buffer Mode: both TBW and TBN")
+            print(" Transient Buffer Mode: both TBT and TBS")
     print(" ")
     print("File Information:")
     for obsID in fileInfo.keys():
@@ -147,18 +132,15 @@ def main(args):
         print(f"   Duration: {currDur}")
         
         ## DP setup
-        if project.sessions[0].observations[i].mode not in ('TBW',):
+        if project.sessions[0].observations[i].mode not in ('TBT',):
             print(f"   Tuning 1: {project.sessions[0].observations[i].frequency1/1e6:.3f} MHz")
-        if project.sessions[0].observations[i].mode not in ('TBW', 'TBN'):
+        if project.sessions[0].observations[i].mode not in ('TBT', 'TBS'):
             print(f"   Tuning 2: {project.sessions[0].observations[i].frequency2/1e6:.3f} MHz")
-        if project.sessions[0].observations[i].mode not in ('TBW',):
+        if project.sessions[0].observations[i].mode not in ('TBT',):
             print(f"   Filter code: {project.sessions[0].observations[i].filter}")
         if currObs is not None:
-            if project.sessions[0].observations[i].mode not in ('TBW',):
-                if project.sessions[0].observations[i].mode == 'TBN':
-                    print(f"   Gain setting: {currObs['tbn_gain']}")
-                else:
-                    print(f"   Gain setting: {currObs['drx_gain']}")
+            if project.sessions[0].observations[i].mode not in ('TBT', 'TBS'):
+                print(f"   Gain setting: {currObs['drx_gain']}")
         else:
             print("   WARNING: observation specification not found for this observation")
             

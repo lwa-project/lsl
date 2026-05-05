@@ -191,7 +191,7 @@ See the individual functions for more details.");
 */
 
 static int wisdom_exec(PyObject *module) {
-    import_array();
+    import_array1(-1);
     
     // Version and revision information
     PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.4"));

@@ -21,13 +21,12 @@ from datetime import datetime
 from functools import cmp_to_key
 
 from lsl import astro
+from lsl.misc import telemetry
 from lsl.reader.base import FrameTimestamp
 from lsl.common.stations import lwa1
 from lsl.writer.fitsidi import WriterBase
 from lsl.common.color import colorfy
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.5'
@@ -45,6 +44,7 @@ NUMERIC_STOKES = { 1: 'I',   2: 'Q',   3: 'U',   4: 'V',
                   -5: 'XX', -6: 'YY', -7: 'XY', -8: 'YX'}
 
 
+@telemetry.track_class
 class Sd(WriterBase):
     """
     Class for storing spectrometer data and writing the data, along with array
@@ -68,7 +68,7 @@ class Sd(WriterBase):
         def time(self):
             return self.obsTime
             
-    def __init__(self, filename, ref_time=0.0, verbose=False, memmap=None, overwrite=False):
+    def __init__(self, filename, ref_time=0.0, memmap=None, overwrite=False):
         """
         Initialize a new SDFITS object using a filename and a reference time
         given in seconds since the UNIX 1970 epoch, a python datetime object, or a
@@ -81,7 +81,7 @@ class Sd(WriterBase):
         """
 
         # File-specific information
-        WriterBase.__init__(self, filename, ref_time=ref_time, verbose=verbose)
+        WriterBase.__init__(self, filename, ref_time=ref_time)
         
         # Observation-specific information
         self.site = lwa1

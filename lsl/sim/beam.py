@@ -2,6 +2,7 @@ import os
 import sys
 import h5py
 import ephem
+import logging
 import numpy as np
 from functools import lru_cache
 from collections import OrderedDict
@@ -11,8 +12,8 @@ from astropy.coordinates import Angle as AstroAngle
 
 from lsl.common.data_access import DataAccess
 
-from lsl.misc import telemetry
-telemetry.track_module()
+from lsl.logger import LSL_LOGGER
+
 
 __version__ = '0.2'
 __all__ = ['mueller_matrix', 'beam_response', 'get_available_models']
@@ -71,7 +72,7 @@ def _load_response_fitted(frequency, corrected=False):
                 cCorrs = corrDict['corrs'][...]
                 
             if frequency/1e6 < cFreqs.min() or frequency/1e6 > cFreqs.max():
-                print("WARNING: Input frequency of %.3f MHz is out of range, skipping correction" % (frequency/1e6,))
+                LSL_LOGGER.warning(f"Input frequency of {frequency/1e6:.3f} MHz is out of range, skipping correction")
                 corrFnc = None
             else:
                 fCors = cAlts*0.0

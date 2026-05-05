@@ -42,8 +42,6 @@ from lsl.reader.errors import SyncError, EOFError
 from lsl.reader.utils import FilePositionSaver
 from lsl.common.color import colorfy
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.5'
@@ -401,7 +399,7 @@ def read_guppi_header(filehandle):
     return header
 
 
-def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
+def read_frame(filehandle, sample_rate=0.0, central_freq=0.0):
     """
     Function to read in a single VDIF frame (header+data) and store the 
     contents as a Frame object.  This function wraps the _readerHeader and 
@@ -420,7 +418,7 @@ def read_frame(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
     return newFrame
 
 
-def read_frame_i8(filehandle, sample_rate=0.0, central_freq=0.0, verbose=False):
+def read_frame_i8(filehandle, sample_rate=0.0, central_freq=0.0):
     """
     Function to read in a single VDIF frame (header+data) and store the 
     contents as a Frame object.  This function wraps the _readerHeader and 

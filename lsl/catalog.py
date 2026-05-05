@@ -15,9 +15,8 @@ except AttributeError:
 from lsl import astro
 from lsl import transform
 from lsl.common.data_access import DataAccess
-
+from lsl.logger import LSL_LOGGER
 from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__   = '0.2'
@@ -158,6 +157,7 @@ class Catalog(Mapping):
         return entry
 
 
+@telemetry.track_class
 class LWA_Catalog(Catalog):
     """
     Specific definition for LWA observation source catalogue data file.
@@ -216,6 +216,7 @@ class LWA_Catalog(Catalog):
                         self.alias_map[alias] = entry
 
 
+@telemetry.track_class
 class PSR_Catalog(Catalog):
     """
     Specific definition for ATNF Pulsar (PSRCAT) catalog.
@@ -235,7 +236,6 @@ class PSR_Catalog(Catalog):
         Read a source catalog data file.
         """
         
-        debug = False
         # open data file 
         fileName = os.path.join(self.get_directory(), 'psrcat.db')
         with DataAccess.open(fileName, 'r') as catFile:
@@ -259,8 +259,7 @@ class PSR_Catalog(Catalog):
                         (raHours, raMinutes) = sp
                         raSeconds = 0.0
                     else:
-                        if debug:
-                            print(f"Bad format for RAJ line: {line}")
+                        LSL_LOGGER.debug(f"Bad format for RAJ line: {line}")
                         bad = True
                     raHours = int(raHours)
                     raMinutes = int(raMinutes)
@@ -268,8 +267,7 @@ class PSR_Catalog(Catalog):
                     try:
                         ra = astro.hms(raHours, raMinutes, raSeconds)
                     except:
-                        if debug:
-                            print(f"PSRCAT: Bad RA for {psrj}: {rastr}")
+                        LSL_LOGGER.debug(f"PSRCAT: Bad RA for {psrj}: {rastr}")
                         bad = True
                 if line.startswith('DECJ'):
                     decstr = line.split()[1]
@@ -280,8 +278,7 @@ class PSR_Catalog(Catalog):
                         (decDegrees, decMinutes) = sp
                         decSeconds = 0.0
                     else:
-                        if debug:
-                            print(f"PSRCAT: Bad format for DECJ line: {line}")
+                        LSL_LOGGER.debug(f"PSRCAT: Bad format for DECJ line: {line}")
                         bad = True
                         continue
                     if decDegrees.startswith('-'):
@@ -295,8 +292,7 @@ class PSR_Catalog(Catalog):
                     try:
                         dec = astro.dms(sign, decDegrees, decMinutes, decSeconds)
                     except:
-                        if debug:
-                            print(f"PSRCAT: Bad DEC for {psrj}: {decstr}")
+                        LSL_LOGGER.debug(f"PSRCAT: Bad DEC for {psrj}: {decstr}")
                         bad = True
                         
                 if line.startswith('@-'):
@@ -321,15 +317,13 @@ class PSR_Catalog(Catalog):
                         sourcePos = astro.equ_posn(ra, dec) 
                         entry = CatalogEntry(name, transform.CelestialPosition(sourcePos, name=name))
                         self.source_map[name] = entry
-                        if debug:
-                            print('Added ', name)
+                        LSL_LOGGER.debug('Added ', name)
                         
                         if alias is not None:
                             alias = alias.rstrip()
                             self.alias_map[alias] = entry
                             entry.alias_list.append(alias)
-                            if debug:
-                                print('Alias : ', alias.rstrip())
+                            LSL_LOGGER.debug('Alias : ', alias.rstrip())
                                 
                     # Clear out vars for next source
                     psrb = None
@@ -339,6 +333,7 @@ class PSR_Catalog(Catalog):
                     bad = False
 
 
+@telemetry.track_class
 class PKS_Catalog(Catalog):
     """
     Specific definition for PKS source catalog.
@@ -402,6 +397,7 @@ class PKS_Catalog(Catalog):
                 lineNum += 1
 
 
+@telemetry.track_class
 class PKS90_Catalog(Catalog):
     """
     Specific definition for PKS90 source catalogue data file.
@@ -469,6 +465,7 @@ class PKS90_Catalog(Catalog):
                 lineNum += 1
 
 
+@telemetry.track_class
 class C3C_Catalog(Catalog):
     """
     Specific definition for Cambridge 3C source catalogue data file.
@@ -523,6 +520,7 @@ class C3C_Catalog(Catalog):
                 lineNum += 1      
 
 
+@telemetry.track_class
 class C4C_Catalog(Catalog):
     """
     Specific definition for Cambridge 4C source catalogue data file.
@@ -636,6 +634,7 @@ class Fermi_LAT_Catalog(Catalog):
                         pass
 
 
+@telemetry.track_class
 class F2FGL_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 2-year point source catalog.
@@ -645,6 +644,7 @@ class F2FGL_Catalog(Fermi_LAT_Catalog):
         Fermi_LAT_Catalog.__init__(self, '2FGL', 'gll_psc_v08.fit')
 
 
+@telemetry.track_class
 class F3FGL_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 4-year point source catalog.
@@ -654,6 +654,7 @@ class F3FGL_Catalog(Fermi_LAT_Catalog):
         Fermi_LAT_Catalog.__init__(self, '3FGL', 'gll_psc_v16.fit')
 
 
+@telemetry.track_class
 class F4FGL_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 8-year point source catalog.
@@ -663,6 +664,7 @@ class F4FGL_Catalog(Fermi_LAT_Catalog):
         Fermi_LAT_Catalog.__init__(self, '4FGL', 'gll_psc_v22.fit')
 
 
+@telemetry.track_class
 class F4FGLDR4_Catalog(Fermi_LAT_Catalog):
     """
     Specific definition for Fermi LAT 14-year point source catalog.

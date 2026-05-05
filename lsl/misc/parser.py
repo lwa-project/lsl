@@ -16,8 +16,6 @@ from astropy import units
 
 from lsl.common.mcs import datetime_to_mjdmpm, mjdmpm_to_datetime
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.1'

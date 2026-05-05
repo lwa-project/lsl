@@ -4,17 +4,14 @@ new analysis software easier.  These functions wrap the nitty gritty of the
 file reading and unpacking behind Python objects.
 
 Data format objects included are:
-  * TBWFile
-  * TBNFile
   * DRXFile
   * DRX8File
   * DRSpecFile
-  * TBFFile
-  * CORFILE
+  * TBXFile
+  * CORFile
 
-Also included are the LWA1DataFile, LWASVDataFile, LWANADataFile, and LWADataFile
-functions that take a filename and try to determine the correct data format
-object to use.
+Also included is the LWADataFile function that takes a filename and tries to
+determine the correct data format object to use.
 
 .. versionchanged:: 1.2.0
     Added support for LWA-SV ADP data
@@ -32,25 +29,22 @@ from textwrap import fill as tw_fill
 from scipy.stats import norm
 from collections import deque, defaultdict
 
-from lsl.common.dp import fS
-from lsl.common.adp import fC
-from lsl.common.ndp import fC as ndp_fC
-from lsl.reader import tbw, tbn, drx, drx8, drspec, tbf, cor, errors
-from lsl.reader.buffer import TBNFrameBuffer, DRXFrameBuffer, DRX8FrameBuffer, TBFFrameBuffer, CORFrameBuffer
+from lsl.common.ndp import fS, fC
+from lsl.reader import drx, drx8, drspec, cor, tbx, errors
+from lsl.reader.buffer import DRXFrameBuffer, DRX8FrameBuffer, CORFrameBuffer, TBXFrameBuffer
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp, CI8
 from lsl.common.color import colorfy
 
+from lsl.misc import telemetry
 from lsl.config import LSL_CONFIG
 LDP_CONFIG = LSL_CONFIG.view('ldp')
 
-from lsl.misc import telemetry
-telemetry.track_module()
+from lsl.logger import LSL_LOGGER
 
 
-__version__ = '0.6'
-__all__ = ['TBWFile', 'TBNFile', 'DRXFile', 'DRX8File', 'DRSpecFile', 'TBFFile',
-           'LWA1DataFile', 'LWASVDataFile', 'LWANADataFile', 'LWADataFile']
+__version__ = '0.7'
+__all__ = ['DRXFile', 'DRX8File', 'DRSpecFile', 'TBXFile', 'CORFile', 'LWADataFile']
 
 
 class _LDPFileRegistry(object):
@@ -183,7 +177,7 @@ class LDPFileBase(object):
     @abc.abstractmethod
     def _describe_file(self):
         """
-        Method for describing the contents of a file using.  This will 
+        Method for describing the contents of a file.  This will
         be over-ridden in the format-specific subclasses.
         """
         
@@ -301,602 +295,7 @@ class LDPFileBase(object):
         raise NotImplementedError
 
 
-class TBWFile(LDPFileBase):
-    """
-    Class to make it easy to interface with a TBW file.  TBW data consist of a
-    time series of real valued data sampled at f\ :sub:`S` (196 MHz) from all
-    antennas in the array.  The stand numbering is based on the input into the
-    digital system rather than the stand number in the array.
-    
-    Methods defined for this class are:
-     * get_info - Get information about the file's contents
-     * get_remaining_frame_count - Get the number of frames remaining in the file
-     * read_frame - Read and return a single `lsl.reader.tbw.Frame` instance
-     * read - Read in the capture and return it as a numpy array
-    """
-    
-    def _ready_file(self):
-        """
-        Find the start of valid TBW data.  This function:
-         1) Aligns on the first valid Mark 5C frame and
-         2) Skips over any TBN frames at the beginning of the file.
-        """
-        
-        # Align on the start of a Mark5C packet
-        while True:
-            try:
-                junkFrame = tbw.read_frame(self.fh)
-                break
-            except errors.SyncError:
-                self.fh.seek(-tbw.FRAME_SIZE+1, 1)
-                
-        # Jump over any TBN data in the file
-        while not junkFrame.header.is_tbw:
-            try:
-                junkFrame = tbw.read_frame(self.fh)
-            except errors.SyncError:
-                ## If we reached this then we are probably in an old TBW file that has
-                ## a bunch of TBN frames at the beginning.  We need to seek backwards,
-                ## realign on the sync word, and read forwards again.
-                
-                ## Jump back a TBW frame
-                self.fh.seek(-tbw.FRAME_SIZE, 1)
-                
-                ## Find the sync word again
-                while True:
-                    try:
-                        tbn.read_frame(self.fh)
-                        break
-                    except errors.SyncError:
-                        self.fh.seek(-tbn.FRAME_SIZE+1, 1)
-                        
-                ## Find the end of the TBN data
-                while True:
-                    try:
-                        tbn.read_frame(self.fh)
-                    except errors.SyncError:
-                        break
-                self.fh.seek(-2*tbn.FRAME_SIZE, 1)
-                junkFrame = tbw.read_frame(self.fh)
-        self.fh.seek(-tbw.FRAME_SIZE, 1)
-        
-        return True
-        
-    def _describe_file(self):
-        """
-        Describe the TBW file.
-        """
-        
-        with FilePositionSaver(self.fh):
-            junkFrame = self.read_frame()
-            self.fh.seek(-tbw.FRAME_SIZE, 1)
-            
-            # Basic file information
-            try:
-                filesize = os.fstat(self.fh.fileno()).st_size
-            except AttributeError:
-                filesize = self.fh.size
-            nFramesFile = (filesize - self.fh.tell()) // tbw.FRAME_SIZE
-            srate = 196e6
-            bits = junkFrame.data_bits
-            
-            # Trick to figure out how many antennas are in a file and the "real" 
-            # start time.  For details of why this needs to be done, see the read()
-            # function below.
-            idsFound = []
-            timesFound = []
-            filePosRef = self.fh.tell()
-            while True:
-                try:
-                    for i in range(26):
-                        frame = tbw.read_frame(self.fh)
-                        while not frame.header.is_tbw:
-                            frame = tbw.read_frame(self.fh)
-                        stand = frame.id
-                        if stand not in idsFound:
-                            idsFound.append(stand)
-                        if frame.header.frame_count < 1000:
-                            timesFound.append( (frame.header.frame_count-1, frame.payload.timetag) )
-                    self.fh.seek(tbw.FRAME_SIZE*(30000-26), 1)
-                except:
-                    break
-                    
-        # What is that start time again?
-        startTimeTag = None
-        for fc,tt in timesFound:
-            tt = tt - fc*(1200 if bits == 4 else 400)
-            if startTimeTag is None or tt < startTimeTag:
-                startTimeTag = tt
-        start = startTimeTag / fS
-        startRaw = startTimeTag
-        
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbw.FRAME_SIZE,
-                            'sample_rate': srate, 'data_bits': bits, 'nantenna': 2*len(idsFound), 
-                            'start_time': start, 'start_time_samples': startRaw}
-                        
-    def read_frame(self):
-        """
-        Read and return a single `lsl.reader.tbw.Frame` instance.
-        """
-        
-        frame = tbw.read_frame(self.fh)
-        while not frame.header.is_tbw:
-            frame = tbw.read_frame(self.fh)
-            
-        return frame
-        
-    def read(self, duration=None, time_in_samples=False):
-        """
-        Read and return the entire TBW capture.  This function returns 
-        a three-element tuple with elements of:
-         0) the actual duration of data read in, 
-         1) the time tag for the first sample, and
-         2) a 2-D Numpy array of data.
-        
-        The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
-        `time_in_samples' keyword is set.
-        
-        The sorting order of the output data array is by 
-        digitizer number - 1.
-        
-        .. note::
-            Setting the 'duration' keyword has no effect on the read 
-            process because the entire capture is always read in.
-        """
-        
-        # Make sure there is file left to read
-        try:
-            curr_size = os.fstat(self.fh.fileno()).st_size
-        except AttributeError:
-            curr_size = self.fh.size
-        if self.fh.tell() == curr_size:
-            try:
-                if self.buffer.is_empty():
-                    raise errors.EOFError()
-            except AttributeError:
-                raise errors.EOFError()
-                
-        # Get the data frame size
-        dataSize = 400
-        if self.description['data_bits'] == 4:
-            dataSize = 1200
-            
-        # Find out how many frames to work with at a time
-        nFrames = int(30000)
-        
-        # Initialize the time variables
-        # Explination:
-        #   This is needed to work out what the "real" start time is of the 
-        #   capture due to buffering in the data recorder.  What can happen 
-        #   is that the last ~4 MB of a previous capture could be stuck in 
-        #   the data recoder's buffer and that the buffer won't get dumped 
-        #   until the next capture is launch.  Thus, you can end up in a 
-        #   situation where the first few valid TBW frames in a file are from 
-        #   the previous capture.
-        #   
-        #   To get around this we use the frame count-correction time tag of 
-        #   the lowest frame number found.  This skips over the trailing edge of 
-        #   the previous capture (which should have a high frame count) while
-        #   allowing the code to deal with files that may be missing the first
-        #   frame from the first board to send a frame.
-        setTime = None
-        setTimeRef = 1000
-        
-        # Initialize the output data array
-        data = np.zeros((self.description['nantenna'], nFrames*dataSize), dtype=np.int16)
-        
-        # Read in the next frame and anticipate any problems that could occur
-        i = 0
-        while i < ((self.description['nantenna']//2)*nFrames):
-            try:
-                cFrame = tbw.read_frame(self.fh)
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                continue
-                
-            if not cFrame.header.is_tbw:
-                continue
-                
-            stand = cFrame.header.id
-            aStandX = 2*(stand-1) + 0
-            aStandY = 2*(stand-1) + 1
-            
-            if cFrame.header.frame_count < setTimeRef:
-                newSetTime = cFrame.payload.timetag - (cFrame.header.frame_count-1)*dataSize
-                if setTime is None or cFrame.payload.timetag < setTime:
-                    setTime = newSetTime
-                    setTimeRef = cFrame.header.frame_count
-                    
-            try:
-                cnt = cFrame.header.frame_count - 1
-                data[aStandX, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.data[0,:]
-                data[aStandY, cnt*dataSize:(cnt+1)*dataSize] = cFrame.payload.data[1,:]
-                
-                i += 1
-            except ValueError:
-                pass
-                
-        # Deal with the time if we don't want it in samples
-        if not time_in_samples:
-            setTime = setTime / fS
-            
-        # Calculate the duration
-        duration = data.shape[1]/self.description['sample_rate']
-        
-        return duration, setTime, data
-
-
-class TBNFile(LDPFileBase):
-    """
-    Class to make it easy to interface with a TBN file.  TBN data consit of a
-    time series of complex data with a variable sample rate of up to 100 kHz
-    from all antennas in the array.  The stand numbering is based on the input
-    into the digital system rather than the stand number in the array.
-    
-    Methods defined for this class are:
-     * get_info - Get information about the file's contents
-     * get_remaining_frame_count - Get the number of frames remaining in the file
-     * offset - Offset a specified number of seconds into the file
-     * read_frame - Read and return a single `lsl.reader.tbn.Frame` instance
-     * read - Read a chunk of data in and return it as a numpy array
-     * estimate_levels - Estimate the n-sigma level for the absolute value of the voltages 
-    """
-    
-    def _ready_file(self):
-        """
-        Given an open file handle, find the start of valid TBN data.  This
-        function:
-         1) Aligns on the first valid Mark 5C frame and
-         2) Skips over any TBW frames at the beginning of the file.
-        """
-        
-        # Align on the start of a Mark5C packet
-        while True:
-            try:
-                junkFrame = tbn.read_frame(self.fh)
-                break
-            except errors.SyncError:
-                self.fh.seek(-tbn.FRAME_SIZE+1, 1)
-                
-        # Jump over any TBN data in the file
-        while not junkFrame.header.is_tbn:
-            junkFrame = tbn.read_frame(self.fh)
-        self.fh.seek(-tbn.FRAME_SIZE, 1)
-        
-        return True
-        
-    def _describe_file(self):
-        """
-        Describe the TBN file and initialize the frame circular buffer.
-        """
-        
-        try:
-            filesize = self.fh.size
-        except AttributeError:
-            filesize = os.fstat(self.fh.fileno()).st_size
-        nFramesFile = (filesize - self.fh.tell()) // tbn.FRAME_SIZE
-        framesPerObsX, framesPerObsY = tbn.get_frames_per_obs(self.fh)
-        srate =  tbn.get_sample_rate(self.fh, nframe=((framesPerObsX+framesPerObsY)*3))
-        bits = 8
-        
-        with FilePositionSaver(self.fh):
-            junkFrame = self.read_frame()
-        tuning1 = junkFrame.central_freq
-        start = junkFrame.time
-        startRaw = junkFrame.payload.timetag
-        
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': tbn.FRAME_SIZE,
-                            'nantenna': framesPerObsX+framesPerObsY, 
-                            'sample_rate': srate, 'data_bits': bits, 
-                            'start_time': start, 'start_time_samples': startRaw, 'freq1': tuning1}
-                        
-        # Initialize the buffer as part of the description process
-        pols = []
-        if framesPerObsX != 0:
-            pols.append(0)
-        if framesPerObsY != 0:
-            pols.append(1)
-        nAntenna = framesPerObsX + framesPerObsY
-        
-        self.buffer = TBNFrameBuffer(stands=range(1,nAntenna//len(pols)+1), pols=pols, nsegments=LDP_CONFIG.get('tbn_buffer_size'))
-        
-    def offset(self, offset):
-        """
-        Offset a specified number of seconds in an open TBN file.  This function 
-        returns the exact offset time.
-        
-        .. note::
-            The offset provided by this function is relatively crude due to the
-            structure of TBN files.
-            
-        .. versionchanged:: 1.2.4
-            Offsets are now relative to the current location in the file rather
-            than to the start of the file
-        """
-        
-        # Figure out how far we need to offset inside the file
-        junkFrame = tbn.read_frame(self.fh)
-        self.fh.seek(-tbn.FRAME_SIZE, 1)
-        
-        # Get the initial time
-        t0 = junkFrame.time
-        if getattr(self, "_timetag", None) is not None:
-            curr = self.buffer.peek(require_filled=False)
-            if curr is not None:
-                t0 = FrameTimestamp.from_dp_timetag(curr)
-                
-        # Offset in frames
-        ioffset = int(offset * self.description['sample_rate'] / 512 * self.description['nantenna'])
-        ioffset = int(1.0 * ioffset / self.description['nantenna']) * self.description['nantenna']
-        self.fh.seek(ioffset*tbn.FRAME_SIZE, 1)
-        
-        # Iterate on the offsets until we reach the right point in the file.  This
-        # is needed to deal with files that start with only one tuning and/or a 
-        # different sample rate.  
-        diffs_used = deque([], 25)
-        while True:
-            junkFrame = tbn.read_frame(self.fh)
-            self.fh.seek(-tbn.FRAME_SIZE, 1)
-            
-            ## Figure out where in the file we are and what the current tuning/sample 
-            ## rate is
-            t1 = junkFrame.time
-            ## See how far off the current frame is from the target
-            tDiff = (t1 - t0) - offset
-            diffs_used.append(tDiff)
-            
-            ## Eighth that to come up with a new seek parameter
-            tCorr   = -tDiff / 8.0
-            cOffset = int(tCorr * self.description['sample_rate'] / 512 * self.description['nantenna'])
-            cOffset = int(1.0 * cOffset / self.description['nantenna']) * self.description['nantenna']
-            ioffset += cOffset
-            
-            ## If the offset is zero, we are done.  Otherwise, apply the offset
-            ## and check the location in the file again/
-            if cOffset == 0:
-                break
-            try:
-                self.fh.seek(cOffset*tbn.FRAME_SIZE, 1)
-                assert(len(set(diffs_used)) > len(diffs_used)//4)
-            except (IOError, AssertionError):
-                warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
-
-                break
-                
-        # Update the file metadata
-        self._describe_file()
-        
-        # Reset the buffer
-        if hasattr(self, "buffer"):
-            self.buffer.reset()
-            
-        # Reset the timetag checker
-        self._timetag = None
-        
-        return t1 - t0
-        
-    def read_frame(self, return_ci8=False):
-        """
-        Read and return a single `lsl.reader.tbn.Frame` instance.  If
-        `return_ci8` is True then the frame will contain `lsl.reader.base.CI8`
-        data instead of numpy.complex64 data.
-        """
-        
-        # Reset the buffer
-        if hasattr(self, "buffer"):
-            self.buffer.reset()
-            
-        # Reset the timetag checker
-        self._timetag = None
-        
-        tbn_rf = tbn.read_frame_ci8 if return_ci8 else tbn.read_frame
-        return tbn_rf(self.fh)
-        
-    def read(self, duration, time_in_samples=False, return_ci8=False):
-        """
-        Read in a chunk (in seconds) of TBN data.  This function returns 
-        a three-element tuple with elements of:
-         0) the actual duration of data read in, 
-         1) the time tag for the first sample, and
-         2) a 2-D array of data (see below).
-        
-        The time tag is returned as seconds since the UNIX epoch as a 
-        `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
-        `time_in_samples' keyword is set.
-        
-        If `return_ci8` is True then the data are returned will contain 
-        `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
-        dimensions are input by samples.
-        
-        The sorting order of the output data array is by 
-        digitizer number - 1.
-        """ 
-        
-        # Make sure there is file left to read
-        try:
-            curr_size = os.fstat(self.fh.fileno()).st_size
-        except AttributeError:
-            curr_size = self.fh.size
-        if self.fh.tell() == curr_size:
-            try:
-                if self.buffer.is_empty():
-                    raise errors.EOFError()
-            except AttributeError:
-                raise errors.EOFError()
-                
-        # Covert the sample rate to an expected timetag skip
-        timetagSkip = int(512 / self.description['sample_rate'] * fS)
-        
-        # Setup the read_frame version to use
-        tbn_rf = tbn.read_frame_ci8 if return_ci8 else tbn.read_frame
-        
-        # Setup the counter variables:  frame count and time tag count
-        if getattr(self, "_timetag", None) is None:
-            self._timetag = 0
-            junkFrame = tbn_rf(self.fh)
-            self._timetag = junkFrame.payload.timetag - timetagSkip
-            self.fh.seek(-tbn.FRAME_SIZE, 1)
-            
-        # Find out how many frames to read in
-        frame_count = int(round(1.0 * duration * self.description['sample_rate'] / 512))
-        frame_count = frame_count if frame_count else 1
-        
-        nFrameSets = 0
-        eofFound = False
-        setTime = None
-        count = [0 for i in range(self.description['nantenna'])]
-        if return_ci8:
-            data = np.zeros((self.description['nantenna'], frame_count*512), dtype=CI8)
-            data_view = data.view(np.int16)
-        else:
-            data = np.zeros((self.description['nantenna'], frame_count*512), dtype=np.complex64)
-            data_view = data.view(np.float64)
-            
-        while True:
-            if eofFound or nFrameSets == frame_count:
-                break
-            
-            cFrames = deque()
-            for i in range(self.description['nantenna']//2):
-                try:
-                    cFrames.append( tbn_rf(self.fh, verbose=False) )
-                except errors.EOFError:
-                    eofFound = True
-                    self.buffer.append(cFrames)
-                    cFrames = []
-                    break
-                except errors.SyncError:
-                    continue
-                
-            self.buffer.append(cFrames)
-            cFrames = self.buffer.get()
-            
-            # Continue adding frames if nothing comes out.
-            if cFrames is None:
-                continue
-                
-            # If something comes out, add it to the data array
-            cTimetag = cFrames[0].payload.timetag
-            if cTimetag != self._timetag+timetagSkip:
-                actStep = cTimetag - self._timetag
-                if self.ignore_timetag_errors:
-                    warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
-                else:
-                    raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
-            self._timetag = cFrames[0].payload.timetag
-            
-            for cFrame in cFrames:
-                stand,pol = cFrame.header.id
-                aStand = 2*(stand-1)+pol
-                
-                if setTime is None:
-                    if time_in_samples:
-                        setTime = cFrame.payload.timetag
-                    else:
-                        setTime = cFrame.time
-                        
-                data_view[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data.view(data_view.dtype)
-                count[aStand] += 1
-            nFrameSets += 1
-            
-        # If we've hit the end of the file and haven't read in enough frames, 
-        # flush the buffer
-        if eofFound and nFrameSets != frame_count:
-            for cFrames in self.buffer.flush():
-                cTimetag = cFrames[0].payload.timetag
-                if cTimetag != self._timetag+timetagSkip:
-                    actStep = cTimetag - self._timetag
-                    if self.ignore_timetag_errors:
-                        warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
-                    else:
-                        raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
-                self._timetag = cFrames[0].payload.timetag
-                
-                for cFrame in cFrames:
-                    stand,pol = cFrame.header.id
-                    aStand = 2*(stand-1)+pol
-                    
-                    if setTime is None:
-                        if time_in_samples:
-                            setTime = cFrame.payload.timetag
-                        else:
-                            setTime = cFrame.time
-                        
-                    data_view[aStand,  count[aStand]*512:(count[aStand]+1)*512] = cFrame.payload.data.view(data_view.dtype)
-                    count[aStand] += 1
-                nFrameSets += 1
-                
-                if nFrameSets == frame_count:
-                    break
-                    
-        # Adjust the duration to account for all of the things that could 
-        # have gone wrong while reading the data
-        duration = nFrameSets * 512 / self.description['sample_rate']
-        
-        return duration, setTime, data
-        
-    def estimate_levels(self, nframe=100, sigma=5.0):
-        """
-        Estimate the n-sigma level for the absolute value of the voltages.  
-        Returns a list with indicies that are the digitizer numbers minus one.
-        """
-        
-        # Make sure there is file left to read
-        try:
-            curr_size = os.fstat(self.fh.fileno()).st_size
-        except AttributeError:
-            curr_size = self.fh.size
-        if self.fh.tell() == curr_size:
-            try:
-                if self.buffer.is_empty():
-                    raise errors.EOFError()
-            except AttributeError:
-                raise errors.EOFError()
-                
-        # Go!
-        with FilePositionSaver(self.fh):
-            count = {}
-            for i in range(self.description['nantenna']):
-                count[i] = 0
-            data = np.zeros((self.description['nantenna'], nframe*512))
-            for i in range(nframe):
-                for j in range(self.description['nantenna']):
-                    # Read in the next frame and anticipate any problems that could occur
-                    try:
-                        cFrame = tbn.read_frame(self.fh, verbose=False)
-                    except errors.EOFError:
-                        break
-                    except errors.SyncError:
-                        continue
-                        
-                    s,p = cFrame.id
-                    aStand = 2*(s-1) + p
-                    
-                    try:
-                        data[aStand, count[aStand]*512:(count[aStand]+1)*512] = np.abs( cFrame.payload.data )
-                        count[aStand] +=  1
-                    except ValueError:
-                        pass
-                        
-        # Statistics
-        rv = norm()
-        frac = rv.cdf(sigma) - rv.cdf(-sigma)
-        index = int(round(data.shape[1]*frac))
-        if index == data.shape[1]:
-            index = data.shape[1] - 1
-        
-        levels = [0 for i in range(self.description['nantenna'])]
-        for i in range(self.description['nantenna']):
-            data2 = sorted(data[i,:])
-            levels[i] = data2[index]
-        
-        return levels
-
-
+@telemetry.track_class
 class DRXFile(LDPFileBase):
     """
     Class to make it easy to interface with a DRX file.  DRX data consist of a
@@ -1135,14 +534,14 @@ class DRXFile(LDPFileBase):
         
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        tags can be returns as samples at `lsl.common.ndp.fS` if the 
         `time_in_samples' keyword is set.
         
         If `return_ci8` is True then the data are returned will contain 
         `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
         dimensions are input by samples.
         
-        ..note::
+        .. note::
             This function always returns an array with the first dimension
             holding four elements.  These elements contain, in order:
              * Tuning 1, polarization X
@@ -1199,7 +598,7 @@ class DRXFile(LDPFileBase):
                 cFrames = deque()
                 for i in range(self.description['nbeampol']):
                     try:
-                        cFrames.append( drx_rf(self.fh, verbose=False) )
+                        cFrames.append( drx_rf(self.fh) )
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
@@ -1304,7 +703,7 @@ class DRXFile(LDPFileBase):
          2)  Tuning 2, X pol.
          3)  Tuning 2, Y pol.
         
-        ..note::
+        .. note::
             The returned list always has four items, regardless of whether 
             or not the input DRX file has one or two tunings.
         """
@@ -1329,7 +728,7 @@ class DRXFile(LDPFileBase):
                 for j in range(self.description['nbeampol']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
-                        cFrame = drx.read_frame(self.fh, verbose=False)
+                        cFrame = drx.read_frame(self.fh)
                     except errors.EOFError:
                         break
                     except errors.SyncError:
@@ -1356,6 +755,7 @@ class DRXFile(LDPFileBase):
         return levels
 
 
+@telemetry.track_class
 class DRX8File(LDPFileBase):
     """
     Class to make it easy to interface with a DRX8 file.  DRX8 data consist of a
@@ -1594,14 +994,14 @@ class DRX8File(LDPFileBase):
         
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        tags can be returns as samples at `lsl.common.ndp.fS` if the 
         `time_in_samples' keyword is set.
         
         If `return_ci8` is True then the data are returned will contain 
         `lsl.reader.base.CI8` data instead of numpy.complex64.  The two
         dimensions are input by samples.
         
-        ..note::
+        .. note::
             This function always returns an array with the first dimension
             holding four elements.  These elements contain, in order:
              * Tuning 1, polarization X
@@ -1658,7 +1058,7 @@ class DRX8File(LDPFileBase):
                 cFrames = deque()
                 for i in range(self.description['nbeampol']):
                     try:
-                        cFrames.append( drx8_rf(self.fh, verbose=False) )
+                        cFrames.append( drx8_rf(self.fh) )
                     except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
@@ -1763,7 +1163,7 @@ class DRX8File(LDPFileBase):
          2)  Tuning 2, X pol.
          3)  Tuning 2, Y pol.
         
-        ..note::
+        .. note::
             The returned list always has four items, regardless of whether 
             or not the input DRX8 file has one or two tunings.
         """
@@ -1788,7 +1188,7 @@ class DRX8File(LDPFileBase):
                 for j in range(self.description['nbeampol']):
                     # Read in the next frame and anticipate any problems that could occur
                     try:
-                        cFrame = drx8.read_frame(self.fh, verbose=False)
+                        cFrame = drx8.read_frame(self.fh)
                     except errors.EOFError:
                         break
                     except errors.SyncError:
@@ -1815,6 +1215,7 @@ class DRX8File(LDPFileBase):
         return levels
 
 
+@telemetry.track_class
 class DRSpecFile(LDPFileBase):
     """
     Class to make it easy to interface with a DR Spectrometer file.  DR
@@ -1960,10 +1361,10 @@ class DRSpecFile(LDPFileBase):
         
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        tags can be returns as samples at `lsl.common.ndp.fS` if the 
         `time_in_samples' keyword is set.
         
-        ..note::
+        .. note::
             This function always returns a 3-D array with the first dimension
             indexing over data product, the second over time and the third over
             frequency channel.
@@ -2005,7 +1406,7 @@ class DRSpecFile(LDPFileBase):
         for i in range(frame_count):
             # Read in the next frame and anticipate any problems that could occur
             try:
-                cFrame = drspec.read_frame(self.fh, verbose=False)
+                cFrame = drspec.read_frame(self.fh)
             except errors.EOFError:
                 break
             except errors.SyncError:
@@ -2039,173 +1440,13 @@ class DRSpecFile(LDPFileBase):
         return duration, setTime, data
 
 
-def LWA1DataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
+@telemetry.track_class
+class TBXFile(LDPFileBase):
     """
-    Wrapper around the various LWA1-related classes defined here that takes
-    a file, determines the data type, and initializes and returns the 
-    appropriate LDP class.
-    """
-    
-    # Open the file as appropriate
-    is_splitfile = False
-    if fh is None:
-        fh = open(filename, 'rb')
-    else:
-        filename = fh.name
-        if not isinstance(fh, SplitFileWrapper):
-            if fh.mode.find('b') == -1:
-                fh.close()
-                fh = open(filename, 'rb')
-        else:
-            is_splitfile = True
-            
-    # Read a bit of data to try to find the right type
-    for mode in (drx, tbn, tbw, drspec):
-        ## Set if we find a valid frame marker
-        foundMatch = False
-        ## Set if we can read more than one valid successfully
-        foundMode = False
-        
-        ## Sort out the frame size.  This is tricky because DR spectrometer files
-        ## have frames of different sizes depending on the mode
-        if mode == drspec:
-            try:
-                mfs = drspec.get_frame_size(fh)
-            except:
-                mfs = 0
-        else:
-            mfs = mode.FRAME_SIZE
-            
-        ## Loop over the frame size to try and find what looks like valid data.  If
-        ## is is found, set 'foundMatch' to True.
-        for i in range(mfs):
-            try:
-                junkFrame = mode.read_frame(fh)
-                foundMatch = True
-                break
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                fh.seek(-mfs+1, 1)
-                
-        ## Did we strike upon a valid frame?
-        if foundMatch:
-            ### Is so, we now need to try and read more frames to make sure we have 
-            ### the correct type of file
-            fh.seek(-mfs, 1)
-            
-            try:
-                for i in range(2):
-                    junkFrame = mode.read_frame(fh)
-                foundMode = True
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                ### Reset for the next mode...
-                fh.seek(0)
-        else:
-            ### Reset for the next mode...
-            fh.seek(0)
-            
-        ## Did we read more than one valid frame?
-        if foundMode:
-            break
-            
-    # There is an ambiguity that can arise for TBW data such that it *looks* 
-    # like TBN.  If the identified mode is TBN, skip halfway into the file and 
-    # verify that it is still TBN.  We also need to catch the LWA-SV DRX vs.
-    # TBF ambiguity since we could have been given an LWA-SV file by accident
-    if mode in (tbn, drx):
-        ## Sort out the frame size
-        omfs = mode.FRAME_SIZE
-        
-        ## Seek half-way in
-        if is_splitfile:
-            nFrames = fh.size//omfs
-        else:
-            nFrames = os.path.getsize(filename)//omfs
-        fh.seek(nFrames//2*omfs)
-        
-        ## Read a bit of data to try to find the right type
-        for mode in (tbn, tbw, drx):
-            ### Set if we find a valid frame marker
-            foundMatch = False
-            ### Set if we can read more than one valid successfully
-            foundMode = False
-            
-            ### Sort out the frame size.
-            mfs = mode.FRAME_SIZE
-            
-            ### Loop over the frame size to try and find what looks like valid data.  If
-            ### is is found, set 'foundMatch' to True.
-            for i in range(mfs):
-                try:
-                    junkFrame = mode.read_frame(fh)
-                    foundMatch = True
-                    break
-                except errors.EOFError:
-                    break
-                except errors.SyncError:
-                    fh.seek(-mfs+1, 1)
-                    
-            ### Did we strike upon a valid frame?
-            if foundMatch:
-                #### Is so, we now need to try and read more frames to make sure we have 
-                #### the correct type of file
-                fh.seek(-mfs, 1)
-                
-                try:
-                    for i in range(4):
-                        junkFrame = mode.read_frame(fh)
-                    foundMode = True
-                except errors.SyncError:
-                    #### Reset for the next mode...
-                    fh.seek(nFrames//2*omfs)
-            else:
-                #### Reset for the next mode...
-                fh.seek(nFrames//2*omfs)
-                
-            ### Did we read more than one valid frame?
-            if foundMode:
-                break
-                
-    fh.seek(0)
-    if not is_splitfile:
-        fh.close()
-        fh = None
-        
-    # Raise an error if nothing is found
-    if not foundMode:
-        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1 data file")
-        
-    # Otherwise, build and return the correct LDPFileBase sub-class
-    if mode == drx:
-        ldpInstance = DRXFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == tbn:
-        ldpInstance = TBNFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == tbw:
-        ldpInstance = TBWFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    else:
-        ldpInstance = DRSpecFile(filename=filename, fh=fh,
-                                 ignore_timetag_errors=ignore_timetag_errors,
-                                 buffering=buffering)
-        
-    # Done
-    return ldpInstance
-
-
-class TBFFile(LDPFileBase):
-    """
-    Class to make it easy to interface with a TBF file.  TBF data are a complex
+    Class to make it easy to interface with a TBT/TBS file.  TBX data are a complex
     frequency-domain product that contains blocks of channels from all antennas
     in the array.  Each channel has a bandwidth of f\ :sub:`C` (25 kHz) and
-    there may be up to 1584 channels within a single recording.  The stand
+    there may be up to 3584 channels within a single recording.  The stand
     ordering is based on the input into the digital system rather than the stand
     number in the array.  
     
@@ -2213,35 +1454,35 @@ class TBFFile(LDPFileBase):
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * offset - Offset a specified number of seconds into the file
-     * read_frame - Read and return a single `lsl.reader.tbw.Frame` instance
+     * read_frame - Read and return a single `lsl.reader.tbx.Frame` instance
      * read - Read in the capture and return it as a numpy array
     """
     
     def _ready_file(self):
         """
-        Find the start of valid TBF data.  This function:
+        Find the start of valid TBX data.  This function:
         1) Aligns on the first valid Mark 5C frame.
         """
         
         # Align on the start of a Mark5C packet
         while True:
             try:
-                tbf.read_frame(self.fh)
+                tbx.read_frame(self.fh)
                 break
             except errors.SyncError:
                 self.fh.seek(1, 1)
                 
-        # Skip over any DRX frames the start of the file
+        # Skip over any DRX frames at the start of the file
         i = 0
         while True:
             try:
                 mark = self.fh.tell()
-                tbf.read_frame(self.fh)
+                tbx.read_frame(self.fh)
                 frame_size = self.fh.tell() - mark
                 break
             except errors.SyncError:
                 i += 1
-                self.fh.seek(drx.FRAME_SIZE, 1)
+                self.fh.seek(1, 1)
         if i == 0:
             self.fh.seek(-frame_size, 1)
         self.fh.seek(-frame_size, 1)
@@ -2250,13 +1491,13 @@ class TBFFile(LDPFileBase):
         
     def _describe_file(self):
         """
-        Describe the TBF file.
+        Describe the TBX file.
         """
         
         with FilePositionSaver(self.fh):
             # Read in frame
             mark = self.fh.tell()
-            junkFrame = tbf.read_frame(self.fh)
+            junkFrame = tbx.read_frame(self.fh)
             frame_size = self.fh.tell() - mark
             self.fh.seek(-frame_size, 1)
             
@@ -2266,57 +1507,74 @@ class TBFFile(LDPFileBase):
             except AttributeError:
                 filesize = self.fh.size
             nFramesFile = (filesize - self.fh.tell()) // frame_size
-            adp_id = junkFrame.adp_id
-            nstand = junkFrame.nstand
-            srate = fC
-            if adp_id & 0x04:
-                srate = ndp_fC
             bits = 4
-            nFramesPerObs = tbf.get_frames_per_obs(self.fh)
-            nchan = tbf.get_channel_count(self.fh)
-            firstFrameCount = tbf.get_first_frame_count(self.fh)
+            nFramesPerObs = tbx.get_frames_per_obs(self.fh)
+            nstand = junkFrame.header.nstand
+            nchan = tbx.get_channel_count(self.fh)
+            firstFrameCount = tbx.get_first_frame_count(self.fh)
             
+            # Catch for "real" TBX data vs converted TBF data from LWA-SV
+            # This uses the reported time tag step to figure out the channel
+            # width since ADP at LWA-SV ran at a clock of 204.8 MHz vs. the
+            # 196 MHz of the post-upgrade NDP.  ADP data will have a step size
+            # of 7840 ticks @ fS vs NDP with 8192 ticks @ fS
+            time_tags = []
+            mark = self.fh.tell()
+            for i in range(300):
+                try:
+                    cFrame = tbx.read_frame(self.fh)
+                except errors.EOFError:
+                    break
+                if cFrame.payload.timetag not in time_tags:
+                    time_tags.append(cFrame.payload.timetag)
+            self.fh.seek(mark, 0)
+            try:
+                time_tags.sort()
+                tt_steps = np.diff(time_tags)
+                tt_step = int(np.round(np.median(tt_steps)))
+                srate = fS / tt_step
+            except Exception as e:
+                warnings.warn(colorfy("{{%yellow Failed to determine sample rate, assuming NDP default}}"))
+                srate = fC
+                
             # Pre-load the channel mapper
-            self.mapper = tbf.get_first_channel(self.fh, all_frames=True)
+            self.mapper = tbx.get_first_channel(self.fh, all_frames=True)
             
             # Check for contiguous frequency coverage
-            chan_steps = np.diff(self.mapper)
-            if not all(chan_steps == tbf.FRAME_CHANNEL_COUNT):
-                bad_steps = np.where(chan_steps != tbf.FRAME_CHANNEL_COUNT)[0]
-                warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
+            if len(self.mapper) > 1:
+                chan_steps = np.diff(self.mapper)
+                channel_count = int(np.round(np.median(chan_steps)))
+                if not all(chan_steps == channel_count):
+                    bad_steps = np.where(chan_steps != channel_count)[0]
+                    warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
+            else:
+                ## Must be TBS
+                channel_count = junkFrame.payload.data.shape[0]
                 
             # Find the "real" starttime
             while junkFrame.header.frame_count != firstFrameCount:
-                junkFrame = tbf.read_frame(self.fh)
+                junkFrame = tbx.read_frame(self.fh)
             start = junkFrame.time
             startRaw = junkFrame.payload.timetag
             
         # Calculate the frequencies
         freq = np.zeros(nchan)
         for i,c in enumerate(self.mapper):
-            freq[i*tbf.FRAME_CHANNEL_COUNT:(i+1)*tbf.FRAME_CHANNEL_COUNT] = c + np.arange(tbf.FRAME_CHANNEL_COUNT)
+            freq[i*channel_count:(i+1)*channel_count] = c + np.arange(channel_count)
         freq *= srate
         
         self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
                             'sample_rate': srate, 'data_bits': bits,
                             'nantenna': nstand*2, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
-                            'start_time_samples': startRaw}
+                            'start_time_samples': startRaw, 'frame_channel_count': channel_count}
                         
         # Initialize the buffer as part of the description process
-        self.buffer = TBFFrameBuffer(chans=self.mapper, nsegments=LDP_CONFIG.get('tbf_buffer_size'))
+        self.buffer = TBXFrameBuffer(chans=self.mapper, nsegments=LDP_CONFIG.get('tbx_buffer_size'))
         
     def offset(self, offset):
         """
-        Offset a specified number of seconds in an open TBF file.  This function 
+        Offset a specified number of seconds in an open TBX file.  This function
         returns the exact offset time.
-        
-        .. note::
-            The offset provided by this function is relatively crude due to the
-            structure of TBF files.
-            
-        .. versionchanged:: 1.2.4
-            Offsets are now relative to the current location in the file rather
-            than to the start of the file
         """
         
         frame_size = self.description['frame_size']
@@ -2326,14 +1584,14 @@ class TBFFile(LDPFileBase):
         if getattr(self, "_timetag", None) is not None:
             curr = self.buffer.peek(require_filled=False)
             if curr is None:
-                frame = tbf.read_frame(self.fh)
+                frame = tbx.read_frame(self.fh)
                 self.fh.seek(-frame_size, 1)
                 curr = frame.payload.time_tag
             buffer_offset = curr - self._timetag
             buffer_offset = buffer_offset / fS
             
         offset = offset - buffer_offset
-        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
+        framesPerObs = self.description['nchan'] // self.description['frame_channel_count']
         frameOffset = int(offset * self.description['sample_rate'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
         self.fh.seek(frameOffset*frame_size, 1)
@@ -2352,7 +1610,7 @@ class TBFFile(LDPFileBase):
         
     def read_frame(self, return_ci8=False):
         """
-        Read and return a single `lsl.reader.tbf.Frame` instance.  If
+        Read and return a single `lsl.reader.tbx.Frame` instance.  If
         `return_ci8` is True then the frame will contain `lsl.reader.base.CI8`
         data instead of numpy.complex64 data.
         """
@@ -2364,24 +1622,34 @@ class TBFFile(LDPFileBase):
         # Reset the timetag checker
         self._timetag = None
         
-        tbf_rf = tbf.read_frame_ci8 if return_ci8 else tbf.read_frame
-        return tbf_rf(self.fh)
+        tbx_rf = tbx.read_frame_ci8 if return_ci8 else tbx.read_frame
+        return tbx_rf(self.fh)
         
     def read(self, duration=None, time_in_samples=False, return_ci8=False):
         """
-        Read and return the entire TBF capture.  This function returns 
-        a three-element tuple with elements of:
+        Given an amount of data to read in in seconds, read in the data from a
+        TBT/TBS capture.  This function returns a three-element tuple with
+        elements of:
          0) the actual duration of data read in, 
          1) the time tag for the first sample, and
          2) a 3-D Numpy array of data.
         
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        tags can be returns as samples at `lsl.common..ndp.fS` if the 
         `time_in_samples' keyword is set.
         
         The sorting order of the output data array is by 
         digitizer number - 1.
+        
+        .. note::
+            This function always returns a 3-D array with the first dimension
+            indexing over input, the second over frequency channel and the third
+            over time.
+        
+        .. note::
+            To load in an entire file pass None for the duration.  This is
+            useful for small TBT dumps.
         """ 
         
         # Make sure there is file left to read
@@ -2400,18 +1668,22 @@ class TBFFile(LDPFileBase):
         timetagSkip = int(1.0 / self.description['sample_rate'] * fS)
         
         # Setup the read_frame version to use
-        tbf_rf = tbf.read_frame_ci8 if return_ci8 else tbf.read_frame
+        tbx_rf = tbx.read_frame_ci8 if return_ci8 else tbx.read_frame
         
         # Setup the counter variables:  frame count and time tag count
         if getattr(self, "_timetag", None) is None:
             self._timetag = 0
             
-        # Find out how many frames to read in
-        framesPerObs = self.description['nchan'] // tbf.FRAME_CHANNEL_COUNT
+        # Find out how many frames to read in... but make sure we don't read too much
+        framesPerObs = self.description['nchan'] // self.description['frame_channel_count']
+        remaining_count = self.description['nframe'] - self.fh.tell() // self.description['frame_size']
+        max_frame_count = remaining_count // framesPerObs + len(self.buffer.buffer.keys())
         if duration is None:
-            duration = self.description['nframe'] / framesPerObs / self.description['sample_rate']
+            duration = max_frame_count / self.description['sample_rate']
+            LSL_LOGGER.debug(f"Requested duration is None, loading {duration:.3f} s of data")
         frame_count = int(round(1.0 * duration * self.description['sample_rate']))
-        frame_count = frame_count if frame_count else 1
+        frame_count = max(frame_count, 1)
+        frame_count = min(frame_count, max_frame_count)
         duration = frame_count / self.description['sample_rate']
         
         nFrameSets = 0
@@ -2433,8 +1705,8 @@ class TBFFile(LDPFileBase):
             cFrames = deque()
             for i in range(framesPerObs):
                 try:
-                    cFrame = tbf_rf(self.fh, verbose=False)
-                    if not cFrame.is_tbf:
+                    cFrame = tbx_rf(self.fh)
+                    if not cFrame.is_tbx:
                         nSkip += 1
                         continue
                     cFrames.append( cFrame )
@@ -2483,11 +1755,11 @@ class TBFFile(LDPFileBase):
                         setTime = cFrame.time
                         
                 subData = cFrame.payload.data
-                subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
+                subData = subData.reshape(self.description['frame_channel_count'],-1)
                 subData = subData.T
                 
                 aStand = self.mapper.index(first_chan)
-                data_view[:,aStand*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
+                data_view[:,aStand*self.description['frame_channel_count']:(aStand+1)*self.description['frame_channel_count'],count[aStand]] = subData.view(data_view.dtype)
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -2516,11 +1788,11 @@ class TBFFile(LDPFileBase):
                             setTime = cFrame.time
                         
                     subData = cFrame.payload.data
-                    subData = subData.reshape(tbf.FRAME_CHANNEL_COUNT,-1)
+                    subData = subData.reshape(self.description['frame_channel_count'],-1)
                     subData = subData.T
                     
                     aStand = self.mapper.index(first_chan)
-                    data_view[:,aStand*tbf.FRAME_CHANNEL_COUNT:(aStand+1)*tbf.FRAME_CHANNEL_COUNT,count[aStand]] = subData.view(data_view.dtype)
+                    data_view[:,aStand*self.description['frame_channel_count']:(aStand+1)*self.description['frame_channel_count'],count[aStand]] = subData.view(data_view.dtype)
                     count[aStand] += 1
                 nFrameSets += 1
                 
@@ -2528,8 +1800,6 @@ class TBFFile(LDPFileBase):
                     break
                     
         # Sanity check at the end to see if we actually read anything.  
-        # This is needed because of how TBF and DRX interact where TBF
-        # files can be padded at the end with DRX data
         if nFrameSets == 0 and duration > 0:
             raise errors.EOFError()
             
@@ -2540,6 +1810,7 @@ class TBFFile(LDPFileBase):
         return duration, setTime, data
 
 
+@telemetry.track_class
 class CORFile(LDPFileBase):
     """
     Class to make it easy to interface with a COR file.  COR data contain full
@@ -2553,7 +1824,7 @@ class CORFile(LDPFileBase):
      * get_info - Get information about the file's contents
      * get_remaining_frame_count - Get the number of frames remaining in the file
      * offset - Offset a specified number of seconds into the file
-     * read_frame - Read and return a single `lsl.reader.tbw.Frame` instance
+     * read_frame - Read and return a single `lsl.reader.cor.Frame` instance
      * read - Read in the capture and return it as a numpy array
     """
     
@@ -2569,20 +1840,22 @@ class CORFile(LDPFileBase):
                 cor.read_frame(self.fh)
                 break
             except errors.SyncError:
-                self.fh.seek(-cor.FRAME_SIZE+1, 1)
+                self.fh.seek(1, 1)
                 
-        # Skip over any DRX frames the start of the file
+        # Skip over any DRX frames at the start of the file
         i = 0
         while True:
             try:
+                mark = self.fh.tell()
                 cor.read_frame(self.fh)
+                frame_size = self.fh.tell() - mark
                 break
             except errors.SyncError:
                 i += 1
-                self.fh.seek(-cor.FRAME_SIZE+drx.FRAME_SIZE, 1)
+                self.fh.seek(1, 1)
         if i == 0:
-            self.fh.seek(-cor.FRAME_SIZE, 1)
-        self.fh.seek(-cor.FRAME_SIZE, 1)
+            self.fh.seek(-frame_size, 1)
+        self.fh.seek(-frame_size, 1)
         
         return True
         
@@ -2593,23 +1866,27 @@ class CORFile(LDPFileBase):
         
         # Read in frame
         with FilePositionSaver(self.fh):
+            mark = self.fh.tell()
             junkFrame = cor.read_frame(self.fh)
-            self.fh.seek(-cor.FRAME_SIZE, 1)
+            frame_size = self.fh.tell() - mark
+            self.fh.seek(-frame_size, 1)
             
             # Basic file information
             try:
                 filesize = os.fstat(self.fh.fileno()).st_size
             except AttributeError:
                 filesize = self.fh.size
-            nFramesFile = (filesize - self.fh.tell()) // cor.FRAME_SIZE
+            nFramesFile = (filesize - self.fh.tell()) // frame_size
             adp_id = junkFrame.adp_id
             srate = fC
             if adp_id & 0x04:
-                srate = ndp_fC
+                srate = fC
             bits = 32
             nFramesPerObs = cor.get_frames_per_obs(self.fh)
             nchan = cor.get_channel_count(self.fh)
             nBaseline = cor.get_baseline_count(self.fh)
+            start = junkFrame.time
+            startRaw = junkFrame.payload.timetag
             
             # Pre-load the baseline mapper
             # NOTE: This is done with a dictionary rather than a list since 
@@ -2622,17 +1899,7 @@ class CORFile(LDPFileBase):
                     k += 1
                     
             # Pre-load the channel mapper
-            self.cmapper = []
-            marker = self.fh.tell()
-            firstFrameCount = 2**64-1
-            while len(self.cmapper) < nchan/cor.FRAME_CHANNEL_COUNT:
-                cFrame = cor.read_frame(self.fh)
-                if cFrame.header.first_chan not in self.cmapper:
-                    self.cmapper.append( cFrame.header.first_chan )
-                if cFrame.header.frame_count < firstFrameCount:
-                    firstFrameCount = cFrame.header.frame_count
-                    start = junkFrame.time
-                    startRaw = junkFrame.payload.timetag
+            self.cmapper = cor.get_first_channel(self.fh, all_frames=True)
             self.cmapper.sort()
             
         # Create a channel mapper dictionary
@@ -2641,15 +1908,16 @@ class CORFile(LDPFileBase):
             self.cmapperd[c] = i
             
         # Calculate the frequencies
+        channel_count = junkFrame.payload.data.shape[0]
         freq = np.zeros(nchan)
         for i,c in enumerate(self.cmapper):
-            freq[i*cor.FRAME_CHANNEL_COUNT:(i+1)*cor.FRAME_CHANNEL_COUNT] = c + np.arange(cor.FRAME_CHANNEL_COUNT)
-        freq *= srate
+            freq[i*channel_count:(i+1)*channel_count] = c + np.arange(channel_count)
+        freq *= srate*4
         
-        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': cor.FRAME_SIZE,
+        self.description = {'size': filesize, 'nframe': nFramesFile, 'frame_size': frame_size,
                             'sample_rate': srate, 'data_bits': bits, 
                             'nantenna': 512, 'nchan': nchan, 'freq1': freq, 'start_time': start, 
-                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'tint':cFrame.integration_time}
+                            'start_time_samples': startRaw, 'nbaseline': nBaseline, 'frame_channel_count': channel_count, 'tint':junkFrame.integration_time}
                         
         # Initialize the buffer as part of the description process
         self.buffer = CORFrameBuffer(chans=self.cmapper, reorder=False, nsegments=LDP_CONFIG.get('cor_buffer_size'))
@@ -2680,7 +1948,7 @@ class CORFile(LDPFileBase):
             buffer_offset = buffer_offset / fS
             
         offset = offset - buffer_offset
-        framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
+        framesPerObs = self.description['nchan'] // self.description['frame_channel_count'] * self.description['nbaseline']
         frameOffset = int(offset / self.description['tint'] * framesPerObs)
         frameOffset = int(1.0 * frameOffset / framesPerObs) * framesPerObs
         self.fh.seek(frameOffset*cor.FRAME_SIZE, 1)
@@ -2721,7 +1989,7 @@ class CORFile(LDPFileBase):
         
         The time tag is returned as seconds since the UNIX epoch as a 
         `lsl.reader.base.FrameTimestamp` instance by default.  However, the time 
-        tags can be returns as samples at `lsl.common.dp.fS` if the 
+        tags can be returns as samples at `lsl.common.ndp.fS` if the 
         `time_in_samples' keyword is set.
         
         The sorting order of the output data array is by 
@@ -2750,7 +2018,8 @@ class CORFile(LDPFileBase):
         # Find out how many frames to read in
         if duration is None:
             duration = self.description['nframe'] / framesPerObs * self.description['tint']
-        framesPerObs = self.description['nchan'] // cor.FRAME_CHANNEL_COUNT * self.description['nbaseline']
+            LSL_LOGGER.debug(f"Requested duration is None, loading {duration:.1f} s of data")
+        framesPerObs = self.description['nchan'] // self.description['frame_channel_count'] * self.description['nbaseline']
         frame_count = int(round(1.0 * duration / self.description['tint']))
         frame_count = frame_count if frame_count else 1
         duration = frame_count * self.description['tint']
@@ -2767,7 +2036,7 @@ class CORFile(LDPFileBase):
             cFrames = deque()
             for i in range(framesPerObs):
                 try:
-                    cFrame = cor.read_frame(self.fh, verbose=False)
+                    cFrame = cor.read_frame(self.fh)
                     if not cFrame.is_cor:
                         continue
                     cFrames.append( cFrame )
@@ -2810,7 +2079,7 @@ class CORFile(LDPFileBase):
                 aBase = self.bmapperd[cFrame.id]
                 aChan = self.cmapperd[first_chan]
                 aStand = aBase*len(self.cmapper) + aChan
-                data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.data
+                data[aBase,aChan*self.description['frame_channel_count']:(aChan+1)*self.description['frame_channel_count'],:,:,count[aStand]] = cFrame.payload.data
                 count[aStand] += 1
             nFrameSets += 1
             
@@ -2841,7 +2110,7 @@ class CORFile(LDPFileBase):
                     aBase = self.bmapperd[cFrame.id]
                     aChan = self.cmapperd[first_chan]
                     aStand = aBase*len(self.cmapper) + aChan
-                    data[aBase,aChan*cor.FRAME_CHANNEL_COUNT:(aChan+1)*cor.FRAME_CHANNEL_COUNT,:,:,count[aStand]] = cFrame.payload.data
+                    data[aBase,aChan*self.description['frame_channel_count']:(aChan+1)*self.description['frame_channel_count'],:,:,count[aStand]] = cFrame.payload.data
                     count[aStand] += 1
                 nFrameSets += 1
                 
@@ -2861,9 +2130,9 @@ class CORFile(LDPFileBase):
         return duration, setTime, data
 
 
-def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
+def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
     """
-    Wrapper around the various LWA-SV-related classes defined here that takes
+    Wrapper around the various LWA data reader classes defined here that takes
     a file, determines the data type, and initializes and returns the 
     appropriate LDP class.
     """
@@ -2882,7 +2151,7 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
             is_splitfile = True
             
     # Read a bit of data to try to find the right type
-    for mode in (drx, tbn, tbf, cor, drspec):
+    for mode in (drx, drx8, drspec, tbx, cor):
         ## Set if we find a valid frame marker
         foundMatch = False
         ## Set if we can read more than one valid successfully
@@ -2890,195 +2159,9 @@ def LWASVDataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         
         ## Sort out the frame size.  This is tricky because DR spectrometer files
         ## have frames of different sizes depending on the mode
-        if mode == tbf:
+        if mode in (drspec, tbx, cor):
             try:
-                mfs = tbf.get_frame_size(fh)
-            except:
-                mfs = 0
-        elif mode == drspec:
-            try:
-                mfs = drspec.get_frame_size(fh)
-            except:
-                mfs = 0
-        else:
-            mfs = mode.FRAME_SIZE
-            
-        ## Loop over the frame size to try and find what looks like valid data.  If
-        ## is is found, set 'foundMatch' to True.
-        for i in range(mfs):
-            try:
-                junkFrame = mode.read_frame(fh)
-                foundMatch = True
-                break
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                fh.seek(-mfs+1, 1)
-                
-        ## Did we strike upon a valid frame?
-        if foundMatch:
-            ### Is so, we now need to try and read more frames to make sure we have 
-            ### the correct type of file
-            fh.seek(-mfs, 1)
-            
-            try:
-                for i in range(2):
-                    junkFrame = mode.read_frame(fh)
-                if mode == tbf and junkFrame.nstand != 256:
-                    raise errors.SyncError
-                foundMode = True
-            except errors.EOFError:
-                break
-            except errors.SyncError:
-                ### Reset for the next mode...
-                fh.seek(0)
-        else:
-            ### Reset for the next mode...
-            fh.seek(0)
-            
-        ## Did we read more than one valid frame?
-        if foundMode:
-            break
-            
-    # There is an ambiguity that can arise for TBF data such that it *looks* 
-    # like DRX.  If the identified mode is DRX, skip halfway into the file and 
-    # verify that it is still DRX.   We also need to catch the LWA1 TBN vs.
-    # TBW ambiguity since we could have been given an LWA1 file by accident.
-    if mode in (drx, tbn):
-        ## Sort out the frame size
-        omfs = mode.FRAME_SIZE
-        
-        ## Seek half-way in
-        if is_splitfile:
-            nFrames = fh.size//omfs
-        else:
-            nFrames = os.path.getsize(filename)//omfs
-        fh.seek(nFrames//2*omfs)
-        
-        ## Read a bit of data to try to find the right type
-        for mode in (tbn, drx, tbf):
-            ### Set if we find a valid frame marker
-            foundMatch = False
-            ### Set if we can read more than one valid successfully
-            foundMode = False
-            
-            ### Sort out the frame size.
-            try:
-                mfs = mode.FRAME_SIZE
-            except AttributeError:
-                mfs = 0
-                
-            ### Loop over the frame size to try and find what looks like valid data.  If
-            ### is is found, set 'foundMatch' to True.
-            for i in range(mfs):
-                try:
-                    junkFrame = mode.read_frame(fh)
-                    foundMatch = True
-                    break
-                except errors.EOFError:
-                    break
-                except errors.SyncError:
-                    fh.seek(-mfs+1, 1)
-                    
-            ### Did we strike upon a valid frame?
-            if foundMatch:
-                #### Is so, we now need to try and read more frames to make sure we have 
-                #### the correct type of file
-                fh.seek(-mfs, 1)
-                
-                try:
-                    for i in range(4):
-                        junkFrame = mode.read_frame(fh)
-                    if mode == tbf and junkFrame.nstand != 256:
-                        raise errors.SyncError
-                    foundMode = True
-                except errors.SyncError:
-                    #### Reset for the next mode...
-                    fh.seek(nFrames//2*omfs)
-            else:
-                #### Reset for the next mode...
-                fh.seek(nFrames//2*omfs)
-                
-            ### Did we read more than one valid frame?
-            if foundMode:
-                break
-                
-    fh.seek(0)
-    if not is_splitfile:
-        fh.close()
-        fh = None
-    
-    # Raise an error if nothing is found
-    if not foundMode:
-        raise RuntimeError("File '%s' does not appear to be a valid LWA-SV data file" % filename)
-        
-    # Otherwise, build and return the correct LDPFileBase sub-class
-    if mode == drx:
-        ldpInstance = DRXFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == tbn:
-        ldpInstance = TBNFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == tbf:
-        ldpInstance = TBFFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    elif mode == cor:
-        ldpInstance = CORFile(filename=filename, fh=fh,
-                              ignore_timetag_errors=ignore_timetag_errors,
-                              buffering=buffering)
-    else:
-        ldpInstance = DRSpecFile(filename=filename, fh=fh,
-                                 ignore_timetag_errors=ignore_timetag_errors,
-                                 buffering=buffering)
-        
-    # Done
-    return ldpInstance
-
-
-def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
-    """
-    Wrapper around the various LWA-NA-related classes defined here that takes
-    a file, determines the data type, and initializes and returns the 
-    appropriate LDP class.
-    """
-    
-    # Open the file as appropriate
-    is_splitfile = False
-    if fh is None:
-        fh = open(filename, 'rb')
-    else:
-        filename = fh.name
-        if not isinstance(fh, SplitFileWrapper):
-            if fh.mode.find('b') == -1:
-                fh.close()
-                fh = open(filename, 'rb')
-        else:
-            is_splitfile = True
-            
-    # Read a bit of data to try to find the right type
-    ## Set if we find a valid frame marker
-    foundMatch = False
-    ## Set if we can read more than one valid successfully
-    foundMode = False
-    for mode in (drx, drx8, tbf, cor, drspec):
-        ## Set if we find a valid frame marker
-        foundMatch = False
-        ## Set if we can read more than one valid successfully
-        foundMode = False
-        
-        ## Sort out the frame size.  This is tricky because DR spectrometer files
-        ## have frames of different sizes depending on the mode
-        if mode == tbf:
-            try:
-                mfs = tbf.get_frame_size(fh)
-            except:
-                mfs = 0
-        elif mode == drspec:
-            try:
-                mfs = drspec.get_frame_size(fh)
+                mfs = mode.get_frame_size(fh)
             except:
                 mfs = 0
         else:
@@ -3106,7 +2189,9 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                 for i in range(2):
                     junkFrame = mode.read_frame(fh)
                 foundMode = True
-            except (errors.EOFError, errors.SyncError):
+            except errors.EOFError:
+                break
+            except errors.SyncError:
                 ### Reset for the next mode...
                 fh.seek(0)
         else:
@@ -3117,74 +2202,14 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
         if foundMode:
             break
             
-    # There is an ambiguity that can arise for TBF data such that it *looks* 
-    # like DRX/DRX8.  If the identified mode is DRX/DRX8, skip halfway into
-    # the file and verify that it is still DRX/DRX8.
-    if mode in (drx, drx8, tbn):
-        ## Sort out the frame size
-        omfs = mode.FRAME_SIZE
-        
-        ## Seek half-way in
-        if is_splitfile:
-            nFrames = fh.size//omfs
-        else:
-            nFrames = os.path.getsize(filename)//omfs
-        fh.seek(nFrames//2*omfs)
-        
-        ## Read a bit of data to try to find the right type
-        for mode in (drx, drx8, tbf):
-            ### Set if we find a valid frame marker
-            foundMatch = False
-            ### Set if we can read more than one valid successfully
-            foundMode = False
-            
-            ### Sort out the frame size.
-            try:
-                mfs = mode.FRAME_SIZE
-            except AttributeError:
-                mfs = 0
-                
-            ### Loop over the frame size to try and find what looks like valid data.  If
-            ### is is found, set 'foundMatch' to True.
-            for i in range(mfs):
-                try:
-                    junkFrame = mode.read_frame(fh)
-                    foundMatch = True
-                    break
-                except errors.EOFError:
-                    break
-                except errors.SyncError:
-                    fh.seek(-mfs+1, 1)
-                    
-            ### Did we strike upon a valid frame?
-            if foundMatch:
-                #### Is so, we now need to try and read more frames to make sure we have 
-                #### the correct type of file
-                fh.seek(-mfs, 1)
-                
-                try:
-                    for i in range(4):
-                        junkFrame = mode.read_frame(fh)
-                    foundMode = True
-                except (errors.SyncError, errors.EOFError):
-                    #### Reset for the next mode...
-                    fh.seek(nFrames//2*omfs)
-            else:
-                #### Reset for the next mode...
-                fh.seek(nFrames//2*omfs)
-                
-            ### Did we read more than one valid frame?
-            if foundMode:
-                break
-                
     fh.seek(0)
     if not is_splitfile:
         fh.close()
         fh = None
-    
+        
     # Raise an error if nothing is found
     if not foundMode:
-        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA-NA data file")
+        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA data file")
         
     # Otherwise, build and return the correct LDPFileBase sub-class
     if mode == drx:
@@ -3193,10 +2218,10 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                               buffering=buffering)
     elif mode == drx8:
         ldpInstance = DRX8File(filename=filename, fh=fh,
-                               ignore_timetag_errors=ignore_timetag_errors,
-                               buffering=buffering)
-    elif mode == tbf:
-        ldpInstance = TBFFile(filename=filename, fh=fh,
+                              ignore_timetag_errors=ignore_timetag_errors,
+                              buffering=buffering)
+    elif mode == tbx:
+        ldpInstance = TBXFile(filename=filename, fh=fh,
                               ignore_timetag_errors=ignore_timetag_errors,
                               buffering=buffering)
     elif mode == cor:
@@ -3209,52 +2234,6 @@ def LWANADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering
                                  buffering=buffering)
         
     # Done
-    return ldpInstance
-
-
-def LWADataFile(filename=None, fh=None, ignore_timetag_errors=False, buffering=-1):
-    """
-    Wrapper around the various classes defined here that takes a file, 
-    determines the data type, and initializes and returns the appropriate
-    LDP class.
-    """
-    
-    found = False
-    
-    # LWA-1?
-    if not found:
-        try:
-            ldpInstance = LWA1DataFile(filename=filename, fh=fh,
-                                       ignore_timetag_errors=ignore_timetag_errors,
-                                       buffering=buffering)
-            found = True
-        except RuntimeError:
-            pass
-            
-    # LWA-SV?
-    if not found:
-        try:
-            ldpInstance = LWASVDataFile(filename=filename, fh=fh,
-                                       ignore_timetag_errors=ignore_timetag_errors,
-                                       buffering=buffering)
-            found = True
-        except RuntimeError:
-            pass
-            
-    # LWA-NA?
-    if not found:
-        try:
-            ldpInstance = LWANADataFile(filename=filename, fh=fh,
-                                       ignore_timetag_errors=ignore_timetag_errors,
-                                       buffering=buffering)
-            found = True
-        except RuntimeError:
-            pass
-            
-    # Failed?
-    if not found:
-        raise RuntimeError(f"File '{filename}' does not appear to be a valid LWA1, LWA-SV, or LWA-NA data file")
-        
     return ldpInstance
 
 

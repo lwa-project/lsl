@@ -20,8 +20,6 @@ from astropy import units as astrounits
 from astropy.time import Time as AstroTime
 from astropy.coordinates import EarthLocation, SkyCoord, ICRS, FK4, FK5, Galactic, GeocentricTrueEcliptic, PrecessedGeocentric, CartesianRepresentation, AltAz, solar_system_ephemeris, get_body
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__   = '0.6'

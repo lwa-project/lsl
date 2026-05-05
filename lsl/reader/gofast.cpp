@@ -20,11 +20,9 @@ PyObject *EOFError;
 /* 
   Look-up Tables
 */
-int16_t tbw4LUT[256][2];
-int8_t  tbnLUT[256];
 int8_t  drx8LUT[256];
 int8_t  drxLUT[256][2];
-int8_t  tbfLUT[256][2];
+int8_t  tbxLUT[256][2];
 
 static int luts_loaded = 0;
 
@@ -34,33 +32,21 @@ static void initLWALUTs(void) {
     int i,j;
     short int t;
     
-    //TBW - 4 bit
+    // DRX8
     for(i=0; i<256; i++) {
-        for(j=0; j<2; j++) {
-            t = (i >> 4*(1-j)) & 15;
-            tbw4LUT[i][j] = t;
-            tbw4LUT[i][j] -= ((t&8)<<1);
-        }
-    }
-    
-    // TBN & DRX8
-    for(i=0; i<256; i++) {
-        tbnLUT[i] = i;
-        tbnLUT[i] -= ((i&128)<<1);
-        
         drx8LUT[i] = i;
         drx8LUT[i] -= ((i&128)<<1);
     }
     
-    // DRX & TBF
+    // DRX & TBX
     for(i=0; i<256; i++) {
         for(j=0; j<2; j++) {
             t = (i >> 4*(1-j)) & 15;
             drxLUT[i][j] = t;
             drxLUT[i][j] -= ((t&8)<<1);
             
-            tbfLUT[i][j] = t;
-            tbfLUT[i][j] -= ((t&8)<<1);
+            tbxLUT[i][j] = t;
+            tbxLUT[i][j] -= ((t&8)<<1);
         }
     }
 }
@@ -71,9 +57,6 @@ static void initLWALUTs(void) {
 */
 
 static PyMethodDef gofast_methods[] = {
-    {"read_tbw",      (PyCFunction) read_tbw,       METH_VARARGS,               read_tbw_doc      }, 
-    {"read_tbn",      (PyCFunction) read_tbn_cf32,  METH_VARARGS,               read_tbn_cf32_doc }, 
-    {"read_tbn_ci8",  (PyCFunction) read_tbn_ci8,   METH_VARARGS,               read_tbn_ci8_doc  }, 
     {"read_drx",      (PyCFunction) read_drx_cf32,  METH_VARARGS,               read_drx_cf32_doc }, 
     {"read_drx_ci8",  (PyCFunction) read_drx_ci8,   METH_VARARGS,               read_drx_ci8_doc  }, 
     {"read_drx8",     (PyCFunction) read_drx8_cf32, METH_VARARGS,               read_drx8_cf32_doc}, 
@@ -81,14 +64,15 @@ static PyMethodDef gofast_methods[] = {
     {"read_drspec",   (PyCFunction) read_drspec,    METH_VARARGS,               read_drspec_doc   },
     {"read_vdif",     (PyCFunction) read_vdif_f32,  METH_VARARGS|METH_KEYWORDS, read_vdif_f32_doc }, 
     {"read_vdif_i8",  (PyCFunction) read_vdif_i8,   METH_VARARGS|METH_KEYWORDS, read_vdif_i8_doc  }, 
-    {"read_tbf",      (PyCFunction) read_tbf_cf32,  METH_VARARGS,               read_tbf_cf32_doc }, 
-    {"read_tbf_ci8",  (PyCFunction) read_tbf_ci8,   METH_VARARGS,               read_tbf_ci8_doc  }, 
-    {"read_cor",      (PyCFunction) read_cor,       METH_VARARGS,               read_cor_doc      }, 
+    {"read_cor",      (PyCFunction) read_cor,       METH_VARARGS,               read_cor_doc      },
+    {"read_tbx",      (PyCFunction) read_tbx_cf32,  METH_VARARGS,               read_tbx_cf32_doc }, 
+    {"read_tbx_ci8",  (PyCFunction) read_tbx_ci8,   METH_VARARGS,               read_tbx_ci8_doc  }, 
+    {"read_cor",      (PyCFunction) read_cor,       METH_VARARGS,               read_cor_doc      },
     {NULL,            NULL,                         0,                          NULL              }
 };
 
 PyDoc_STRVAR(gofast_doc, \
-"Go Fast! (TM) - TBW, TBN, DRX, DR Spectrometer, VDIF, TBF, and COR readers\n\
+"Go Fast! (TM) - DRX, DR Spectrometer, VDIF, COR, and TBX readers\n\
 written in C++");
 
 
@@ -97,7 +81,7 @@ written in C++");
 */
 
 static int gofast_exec(PyObject *module) {
-    import_array();
+    import_array1(-1);
     
     if( !luts_loaded ) {
         // Initialize the look-up tables
@@ -139,28 +123,21 @@ static int gofast_exec(PyObject *module) {
     PyModule_AddObject(module, "EOFError", EOFError);
     
     // Version and revision information
-    PyModule_AddObject(module, "__version__", PyUnicode_FromString("0.9"));
-    
-    // Correlator channel count
-    PyModule_AddObject(module, "NCHAN_COR", PyLong_FromLong(COR_NCHAN));
+    PyModule_AddObject(module, "__version__", PyUnicode_FromString("1.1"));
     
     // Function listings
     PyObject* all = PyList_New(0);
-    PyList_Append(all, PyUnicode_FromString("read_tbw"));
-    PyList_Append(all, PyUnicode_FromString("read_tbn"));
-    PyList_Append(all, PyUnicode_FromString("read_tbn_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_drx"));
     PyList_Append(all, PyUnicode_FromString("read_drx_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_drx8"));
     PyList_Append(all, PyUnicode_FromString("read_drx8_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_drspec"));
     PyList_Append(all, PyUnicode_FromString("read_vdif"));
-    PyList_Append(all, PyUnicode_FromString("read_tbf"));
-    PyList_Append(all, PyUnicode_FromString("read_tbf_ci8"));
     PyList_Append(all, PyUnicode_FromString("read_cor"));
+    PyList_Append(all, PyUnicode_FromString("read_tbx"));
+    PyList_Append(all, PyUnicode_FromString("read_tbx_ci8"));
     PyList_Append(all, PyUnicode_FromString("SyncError"));
     PyList_Append(all, PyUnicode_FromString("EOFError"));
-    PyList_Append(all, PyUnicode_FromString("NCHAN_COR"));
     PyModule_AddObject(module, "__all__", all);
     return 0;
 }

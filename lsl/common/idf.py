@@ -18,7 +18,7 @@ of a interferometer definition file.  The hierarchy of classes is:
     
 Most class contain 'validate' attribute functions that can be used to determine if the 
 project/run/scan are valid or not given the constraints of
-the ADP system.
+the NDP system.
 
 In addition to providing the means for creating interferometer definition files from 
 scratch, this module also includes a simple parser for ID files.
@@ -33,10 +33,10 @@ import os
 import re
 import copy
 import math
-import pytz
 import ephem
+import logging
 from functools import total_ordering
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from astropy import units as astrounits
 from astropy.coordinates import Angle as AstroAngle
@@ -46,26 +46,25 @@ from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.common._sdf_utils import *
 from lsl.common.color import colorfy
 
-from lsl.common.mcsADP import datetime_to_mjdmpm, mjdmpm_to_datetime
-from lsl.common.adp import freq_to_word, word_to_freq
+from lsl.common.mcs import datetime_to_mjdmpm, mjdmpm_to_datetime
+from lsl.common.ndp import freq_to_word, word_to_freq
 from lsl.common.stations import LWAStation, get_all_stations, lwa1, ovrolwa
 from lsl.reader.drx import FILTER_CODES as DRXFilters
 from lsl.reader.drx import FRAME_SIZE as DRXSize
 from lsl.common.sdf import UCF_USERNAME_RE, Observer
-from lsl.common import sdf, sdfADP, sdfNDP
+from lsl.common import sdf
 
 from lsl.config import LSL_CONFIG
 OBSV_CONFIG = LSL_CONFIG.view('observing')
 
-from lsl.misc import telemetry
-telemetry.track_module()
+from lsl.logger import LSL_LOGGER
+
 
 
 __version__ = '0.2'
 __all__ = ['UCF_USERNAME_RE', 'Observer', 'ProjectOffice', 'Project', 'Run', 'Scan', 'DRX', 'Solar', 'Jovian', 'parse_idf',  'get_scan_start_stop', 'is_valid', '__version__']
 
 
-_UTC = pytz.utc
 _DRSUCapacityTB = 10
 
 _MAX_ALT_PHASE_CENTERS = 10
@@ -131,43 +130,41 @@ class Project(object):
         for ses in self.runs:
             ses.update()
             
-    def validate(self, verbose=False):
+    def validate(self):
         """Examine all of the runs and all of their scans to check
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
-        
+
         self.update()
-        
+
         failures = 0
         runCount = 1
         if len(self.id) > 8:
-            if verbose:
-                pid_print("Project ID is too long")
+            LSL_LOGGER.error("Project ID is too long")
             failures += 1
-            
+
         for run in self.runs:
-            if verbose:
-                pid_print(f"Validating run {runCount}")
-            if not run.validate(verbose=verbose):
+            LSL_LOGGER.info(f"Validating run {runCount}")
+            if not run.validate():
                 failures += 1
-                
+
             runCount += 1
-            
+
         if failures == 0:
             return True
         else:
             return False
-            
+
     def append(self, newRun):
         """Add a new run to the list of runs."""
-        
+
         self.runs.append(newRun)
-        
-    def render(self, run=0, verbose=False):
-        """Create a run definition file that corresponds to the specified 
+
+    def render(self, run=0):
+        """Create a run definition file that corresponds to the specified
         run.  Returns the ID file's contents as a string."""
-        
-        if not self.validate(verbose=verbose) :
+
+        if not self.validate() :
             raise RuntimeError("Invalid run/scan parameters.  Aborting.")
         if run >= len(self.runs):
             raise IndexError("Invalid run index")
@@ -277,22 +274,22 @@ class Project(object):
             
         return output
         
-    def writeto(self, filename, run=0, verbose=False, overwrite=False):
-        """Create a run definition file that corresponds to the specified 
+    def writeto(self, filename, run=0, overwrite=False):
+        """Create a run definition file that corresponds to the specified
         run and write it to the provided filename."""
-        
+
         if os.path.exists(filename) and not overwrite:
             raise RuntimeError(f"'{filename}' already exists")
-            
-        output = self.render(run=run, verbose=verbose)
+
+        output = self.render(run=run)
         with open(filename, 'w') as fh:
             fh.write(output)
             
-    def generate_sdfs(self, starting_session_id=1, run=0, verbose=False):
-        """Convert the ID file into a collection of `lsl.common.sdfADP.Project` instances
+    def generate_sdfs(self, starting_session_id=1, run=0):
+        """Convert the ID file into a collection of `lsl.common.sdf.Project` instances
         that can be used to write SD files."""
-        
-        if not self.validate(verbose=verbose) :
+
+        if not self.validate() :
             raise RuntimeError("Invalid run/scan parameters.  Aborting.")
         if run >= len(self.runs):
             raise IndexError("Invalid run index")
@@ -308,15 +305,7 @@ class Project(object):
         ## Go!
         sdfs = []
         for i,station in enumerate(ses.stations):
-            ### Session
-            if station.interface.sdf == 'lsl.common.sdfADP':
-                sdfmod = sdfADP
-            elif station.interface.sdf == 'lsl.common.sdfNDP':
-                sdfmod = sdfNDP
-            else:
-                sdfmod = sdf
-                
-            session = sdfmod.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
+            session = sdf.Session("%s - %s (%i of %i)" % (ses.name, station.id, i+1, len(ses.stations)), 
                                      starting_session_id, observations=[], station=station)
             session.drx_beam = 1
             session.ucf_username = 'eLWA/%s_%s_%s_%04i' % (self.id, start.strftime('%y%m%d'), start.strftime('%H%M'), ses.id)
@@ -324,7 +313,7 @@ class Project(object):
             session.include_station_smib = True
             
             ## Project Office
-            new_projoff = sdfmod.ProjectOffice(project=copy.deepcopy(self.project_office.project), 
+            new_projoff = sdf.ProjectOffice(project=copy.deepcopy(self.project_office.project), 
                                                sessions=copy.deepcopy([self.project_office.runs[run],]), 
                                                observations=copy.deepcopy([self.project_office.scans[run],]))
             
@@ -342,18 +331,18 @@ class Project(object):
                     if obs.pm[0] != 0.0 or obs.pm[1] != 0.0:
                         comments = comments+";;Applied proper motion of %+.1f mas/yr in RA and %+.1f mas/yr in dec" % (obs.pm[0], obs.pm[1])
                         
-                    new_obs = sdfmod.DRX(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdf.DRX(obs.intent, obs.target, obs_start, obs.duration, 
                                          ra, dec, 
                                          obs.frequency1, obs.frequency2, obs.filter, 
-                                         gain=obs.gain, max_snr=False, comments=comments)
+                                         gain=obs.gain, high_dr=False, comments=comments)
                 elif isinstance(obs, Solar):
-                    new_obs = sdfmod.Solar(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdf.Solar(obs.intent, obs.target, obs_start, obs.duration, 
                                            obs.frequency1, obs.frequency2, obs.filter, 
-                                           gain=obs.gain, max_snr=False, comments=obs.comments)
+                                           gain=obs.gain, high_dr=False, comments=obs.comments)
                 elif isinstance(obs, Jovian):
-                    new_obs = sdfmod.Jovian(obs.intent, obs.target, _UTC.localize(obs_start), obs.duration, 
+                    new_obs = sdf.Jovian(obs.intent, obs.target, obs_start, obs.duration, 
                                             obs.frequency1, obs.frequency2, obs.filter, 
-                                            gain=obs.gain, max_snr=False, comments=obs.comments)
+                                            gain=obs.gain, high_dr=False, comments=obs.comments)
                 else:
                     raise RuntimeError("This should never happen")
                 session.append(new_obs)
@@ -378,7 +367,7 @@ class Project(object):
                     new_projoff.observations[0][o] = "alttarget%i:%s;;altintent%i:%s;;altra%i:%.9f;;altdec%i:%+.9f;;%s" % (cid, alt_t, cid, alt_i, cid, alt_r, cid, alt_d, new_projoff.observations[0][o])
                     
             ## Project
-            project = sdfmod.Project(new_observer, "%s - %s (%i of %i)" % (self.name, station.id, i+1, len(ses.stations)), 
+            project = sdf.Project(new_observer, "%s - %s (%i of %i)" % (self.name, station.id, i+1, len(ses.stations)), 
                                      copy.deepcopy(self.id), sessions=[session,], comments=copy.deepcopy(self.comments), 
                                      project_office=new_projoff)
             if project.project_office.sessions[0] is None:
@@ -504,20 +493,19 @@ class Run(object):
         for obs in self.scans:
             obs.update()
             
-    def validate(self, verbose=False):
+    def validate(self):
         """Examine all of the scans associated with the run to check
         for validity.  If everything is valid, return True.  Otherwise, return
         False."""
-        
+
         self.update()
-        
+
         failures = 0
         totalData = 0.0
         if self.id < 1 or self.id > 9999:
-            if verbose:
-                pid_print(f"Error: Invalid run ID number '{self.id}'")
+            LSL_LOGGER.error(f"Error: Invalid run ID number '{self.id}'")
             failures += 1
-            
+
         station_count = {}
         for station in self.stations:
             try:
@@ -526,38 +514,35 @@ class Run(object):
                 station_count[station.id] = 1
         for station in station_count:
             if station_count[station] != 1:
-                if verbose:
-                    pid_print(f"Error: Station '{station}' is included {station_count[station]} times")
+                LSL_LOGGER.error(f"Error: Station '{station}' is included {station_count[station]} times")
                 failures += 1
-                
+
         scanCount = 1
         for obs in self.scans:
-            if verbose:
-                pid_print(f"Validating scan {scanCount}")
-                
-            if not obs.validate(verbose=verbose):
+            LSL_LOGGER.info(f"Validating scan {scanCount}")
+
+            if not obs.validate():
                 failures += 1
             totalData += obs.dataVolume
-                
+
             if scanCount > 1:
                 if obs.filter != self.scans[scanCount-2].filter:
-                    if verbose:
-                        pid_print(f"Error: Filter code changes at scan {scanCount}")
+                    LSL_LOGGER.error(f"Error: Filter code changes at scan {scanCount}")
                     failures += 1
-                    
+
             scanCount += 1
-            
+
         # Make sure that the scans don't overlap
         sObs = self.scans
-        
+
         for i in range(len(sObs)):
             maxOverlaps = 1
             overlaps = []
             nOverlaps = 0
 
             for j in range(len(sObs)):
-                if verbose and i != j:
-                    pid_print(f"Checking for overlap between scans {i+1} and {j+1}")
+                if i != j:
+                    LSL_LOGGER.info(f"Checking for overlap between scans {i+1} and {j+1}")
 
                 cStart = int(sObs[j].mjd)*24*3600*1000 + int(sObs[j].mpm)
                 cStop = cStart + int(sObs[j].dur)
@@ -566,18 +551,16 @@ class Run(object):
 
                 if pStart >= cStart and pStart < cStop:
                     nOverlaps += 1
-                    
+
                     if i != j:
                         overlaps.append(j)
-            
+
             if nOverlaps > maxOverlaps:
-                if verbose:
-                    pid_print(f"Error: Scan {i+1} overlaps with "+(','.join(["%i" % (j+1) for j in overlaps])))
+                LSL_LOGGER.error(f"Error: Scan {i+1} overlaps with "+(','.join(["%i" % (j+1) for j in overlaps])))
                 failures += 1
-            
+
         if totalData >= (len(self.stations)*_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Total data volume for run exceeds per-station {_DRSUCapacityTB} TB DRSU limit")
+            LSL_LOGGER.error(f"Error: Total data volume for run exceeds per-station {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
         
         if failures == 0:
@@ -885,74 +868,65 @@ class Scan(object):
             
         return min(vis_list)
         
-    def validate(self, verbose=False):
+    def validate(self):
         """Evaluate the scan and return True if it is valid, False otherwise."""
-        
+
         self.update()
-        
+
         stations = [lwa1,]
         if self._parent is not None:
             stations = self._parent.stations
         tuning_min = max([station.interface.get_module('backend').DRX_TUNING_WORD_MIN for station in stations])
         tuning_max = min([station.interface.get_module('backend').DRX_TUNING_WORD_MAX for station in stations])
-        
+
         failures = 0
         # Basic - Intent, duration, frequency, and filter code values
         if self.dur < 1:
-            if verbose:
-                pid_print("Error: Specified a duration of length zero")
+            LSL_LOGGER.error("Error: Specified a duration of length zero")
             failures += 1
         if self.freq1 < tuning_min or self.freq1 > tuning_max:
-            if verbose:
-                pid_print("Error: Specified frequency for tuning 1 is outside of LWA tuning range")
+            LSL_LOGGER.error("Error: Specified frequency for tuning 1 is outside of LWA tuning range")
             failures += 1
         if (self.freq2 < tuning_min or self.freq2 > tuning_max) and self.freq2 != 0:
-            if verbose:
-                pid_print("Error: Specified frequency for tuning 2 is outside of LWA tuning range")
+            LSL_LOGGER.error("Error: Specified frequency for tuning 2 is outside of LWA tuning range")
             failures += 1
         if self.filter not in [1, 2, 3, 4, 5, 6, 7]:
-            if verbose:
-                pid_print(f"Error: Invalid filter code '{self.filter}'")
+            LSL_LOGGER.error(f"Error: Invalid filter code '{self.filter}'")
             failures += 1
-            
+
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
-            if verbose:
-                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
+            LSL_LOGGER.error(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
             failures += 1
-            
+
         # Advanced - alternate phase centers
         if len(self.alt_phase_centers) > _MAX_ALT_PHASE_CENTERS:
-            if verbose:
-                pid_print("Error: too many alternate phase centers defined")
+            LSL_LOGGER.error("Error: too many alternate phase centers defined")
             failures += 1
         for j,phase_center in enumerate(self.alt_phase_centers):
-            if not phase_center.validate(verbose=verbose):
-                if verbose:
-                    pid_print(f"Error: invalid alternate phase center {j+1}")
+            if not phase_center.validate():
+                LSL_LOGGER.error(f"Error: invalid alternate phase center {j+1}")
                 failures += 1
-                
+
             ## Closeness to pointing center
             pnt = self.fixed_body
             alt_pnt = phase_center.fixed_body
-            
+
             lwa = stations[0].get_observer()
             lwa.date = self.mjd + (self.mpm/1000.0 + self.dur/1000.0/2.0)/3600/24.0 + MJD_OFFSET - DJD_OFFSET
             pnt.compute(lwa)
             alt_pnt.compute(lwa)
-            
+
             alt_sep = ephem.separation(pnt, alt_pnt) * 180/math.pi
-            
+
             beam = 2.0*74e6/max([self.frequency1, self.frequency2])
             if alt_sep > beam/2.0:
-                if verbose:
-                    pid_print(f"Error: alternate phase center {j+1} is {alt_sep:.1f} degrees from pointing center")
+                LSL_LOGGER.error(f"Error: alternate phase center {j+1} is {alt_sep:.1f} degrees from pointing center")
                 failures += 1
-                
+
         # Advanced - Data Volume
         if self.dataVolumeStation >= (_DRSUCapacityTB*1024**4):
-            if verbose:
-                pid_print(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
+            LSL_LOGGER.error(f"Error: Data volume exceeds {_DRSUCapacityTB} TB DRSU limit")
             failures += 1
             
         # Any failures indicates a bad scan
@@ -1198,15 +1172,14 @@ class AlternatePhaseCenter(object):
             
         return min(vis_list)
         
-    def validate(self, verbose=False):
+    def validate(self):
         """Basic validation of the pointing, that's it."""
-        
+
         failures = 0
-        
+
         ## Advanced - Target Visibility
         if self.target_visibility < 1.0:
-            if verbose:
-                pid_print(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
+            LSL_LOGGER.error(f"Error: Target is only above the horizon for {self.target_visibility*100.0:.1f}% of the scan")
             failures += 1
             
         # Any failures indicates a bad alternate phase center
@@ -1216,7 +1189,7 @@ class AlternatePhaseCenter(object):
             return False
 
 
-def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
+def _parse_create_scan_object(obs_temp, alt_temps=[]):
     """Given a obs_temp dictionary of scan parameters, return a complete Scan object 
     corresponding to those values."""
     
@@ -1246,9 +1219,9 @@ def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
     
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
-    if verbose:
-        pid_print(f"Scan {obs_temp['id']} is mode {mode}")
-        
+    LSL_LOGGER.info(f"Scan {obs_temp['id']} is mode {mode}")
+
+
     if mode == 'TRK_RADEC':
         obsOut = DRX(obs_temp['target'], obs_temp['intent'], utcString, durString, obs_temp['ra'], obs_temp['dec'], f1, f2, obs_temp['filter'], gain=obs_temp['gain'], pm=obs_temp['pm'], comments=obs_temp['comments'])
     elif mode == 'TRK_SOL':
@@ -1274,7 +1247,7 @@ def _parse_create_scan_object(obs_temp, alt_temps=[], verbose=False):
     return obsOut
 
 
-def parse_idf(filename, verbose=False):
+def parse_idf(filename):
     """
     Given a filename, read the file's contents into the IDF instance and return
     that instance.
@@ -1414,15 +1387,14 @@ def parse_idf(filename, verbose=False):
             # Scan Info
             if keyword == 'SCAN_ID':
                 if obs_temp['id'] != 0:
-                    project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
+                    project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps) )
                     alt_temp = {'id': 0, 'target': '', 'intent': '', 'ra': 0.0, 'dec': 0.0, 'pm':[0.0, 0.0]}
                     alt_temps = []
                 obs_temp['id'] = int(value)
                 project.project_office.scans[0].append( None )
             
-                if verbose:
-                    pid_print(f"Started scan {value}")
-                
+                LSL_LOGGER.info(f"Started scan {value}")
+
                 continue
             if keyword == 'SCAN_TARGET':
                 obs_temp['target'] = value
@@ -1554,7 +1526,7 @@ def parse_idf(filename, verbose=False):
             
         # Create the final scan
         if obs_temp['id'] != 0:
-            project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps, verbose=verbose) )
+            project.runs[0].scans.append( _parse_create_scan_object(obs_temp, alt_temps=alt_temps) )
             
     # Return the project
     return project
@@ -1574,8 +1546,8 @@ def get_scan_start_stop(obs):
     tStop = tStart +  obs.dur / 1000.0
     
     # Conversion to a timezone-aware datetime instance
-    tStart = _UTC.localize( datetime.utcfromtimestamp(tStart) )
-    tStop  = _UTC.localize( datetime.utcfromtimestamp(tStop ) )
+    tStart = datetime.fromtimestamp(tStart, tz=timezone.utc)
+    tStop  = datetime.fromtimestamp(tStop, tz=timezone.utc)
     
     # Make sure we have an integer number of milliseconds
     ## Start
@@ -1591,38 +1563,32 @@ def get_scan_start_stop(obs):
     return tStart, tStop
 
 
-def is_valid(filename, verbose=False):
+def is_valid(filename):
     """
     Given a filename, see if it is valid IDF file or not.
     """
-    
+
     passes = 0
     failures = 0
     try:
         proj = parse_idf(filename)
         passes += 1
-        if verbose:
-            print(colorfy("Parser - {{%green OK}}"))
-            
+        LSL_LOGGER.info("Parser - OK")
+
         valid = proj.validate()
         if valid:
             passes += 1
-            if verbose:
-                print(colorfy("Validator - {{%green OK}}"))
+            LSL_LOGGER.info("Validator - OK")
         else:
             failures += 1
-            if verbose:
-                print(colorfy("Validator - {{%red {{%bold FAILED}}}}"))
-                
+            LSL_LOGGER.error("Validator - FAILED")
+
     except IOError as e:
         raise e
     except:
         failures += 1
-        if verbose:
-            print(colorfy("Parser - {{%red {{%bold FAILED}}}}"))
-            
-    if verbose:
-        print("---")
-        print("%i passed / %i failed" % (passes, failures))
-        
+        LSL_LOGGER.error("Parser - FAILED")
+
+    LSL_LOGGER.info(f"{passes} passed / {failures} failed")
+
     return False if failures else True

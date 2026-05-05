@@ -7,6 +7,7 @@ as a function of azimuth and altitude.
 
 import os
 import sys
+import logging
 import numpy as np
 import argparse
 
@@ -17,11 +18,15 @@ from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
 
+from lsl.logger import set_log_level
 from lsl.misc import telemetry
 telemetry.track_script()
 
 
 def main(args):
+    if args.verbose:
+        set_log_level(logging.DEBUG)
+
     # Build the grid of azimuth and altitude to plot
     az = np.zeros((90,360))
     alt = np.zeros((90,360))

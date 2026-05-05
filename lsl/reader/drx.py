@@ -49,7 +49,7 @@ get_frames_per_obs
     Switched over from pure Python readers to the new C-base Go Fast! readers.
 """
 
-from lsl.common import dp as dp_common
+from lsl.common import ndp as ndp_common
 from lsl.reader.base import *
 from lsl.reader._gofast import read_drx, read_drx_ci8
 from lsl.reader._gofast import SyncError as gSyncError
@@ -57,8 +57,6 @@ from lsl.reader._gofast import EOFError as gEOFError
 from lsl.reader.errors import SyncError, EOFError
 from lsl.reader.utils import FilePositionSaver
 
-from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.9'
@@ -118,7 +116,7 @@ class FrameHeader(FrameHeaderBase):
         Return the sample rate of the data in samples/second.
         """
         
-        sample_rate = dp_common.fS / self.decimation
+        sample_rate = ndp_common.fS / self.decimation
         return sample_rate
         
     @property
@@ -155,7 +153,7 @@ class FramePayload(FramePayloadBase):
         Function to set the central frequency of the DRX data in Hz.
         """
 
-        return dp_common.word_to_freq(self.tuning_word)
+        return ndp_common.word_to_freq(self.tuning_word)
 
 
 class Frame(FrameBase):
@@ -221,7 +219,7 @@ class Frame(FrameBase):
         return self.payload.central_freq
 
 
-def read_frame(filehandle, gain=None, verbose=False):
+def read_frame(filehandle, gain=None):
     """
     Function to read in a single DRX frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 
@@ -243,7 +241,7 @@ def read_frame(filehandle, gain=None, verbose=False):
     return newFrame
 
 
-def read_frame_ci8(filehandle, gain=None, verbose=False):
+def read_frame_ci8(filehandle, gain=None):
     """
     Function to read in a single DRX frame (header+data) and store the 
     contents as a Frame object.  This function wraps readerHeader and 

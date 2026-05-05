@@ -5,6 +5,7 @@ Deconvolution support for images made with :func:`lsl.imaging.utils.build_gridde
     Switched from AntennaArray to imaging.utils.ImgWPlus for all image coordinate info
 """
 
+import logging
 import numpy as np
 from aipy.fit import RadioFixedBody
 from scipy.signal import fftconvolve as convolve
@@ -15,8 +16,9 @@ from lsl.astro import MJD_OFFSET, deg_to_dms, deg_to_hms
 from lsl.statistics.robust import std as rStd
 from lsl.misc.mathutils import gaussian2d
 
+from lsl.logger import LSL_LOGGER
+
 from lsl.misc import telemetry
-telemetry.track_module()
 
 
 __version__ = '0.6'
@@ -117,7 +119,8 @@ def _fit_gaussian(data):
     return params
 
 
-def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.2, max_iter=150, sigma=3.0, verbose=True, plot=False):
+@telemetry.track_function
+def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.2, max_iter=150, sigma=3.0, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
     instance filled with data, return a deconvolved image.  This function 
@@ -175,7 +178,7 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
     psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol)
     psf = psf.image(center=(imgSize//2,imgSize//2))
     psf /= psf.max()
     
@@ -238,16 +241,13 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
         except IndexError:
             peakAlt = alt[peak_x, peak_y]
             
-        if verbose:
-            currRA  = deg_to_hms(peakRA * 180/np.pi)
-            currDec = deg_to_dms(peakDec * 180/np.pi)
-            currAz  = deg_to_dms(peakAz * 180/np.pi)
-            currAlt = deg_to_dms(peakAlt * 180/np.pi)
-            
-            print("Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (i+1, np.log10(peakV), peak_x, peak_y))
-            print("               -> RA: %s, Dec: %s" % (currRA, currDec))
-            print("               -> az: %s, el: %s" % (currAz, currAlt))
-            
+        LSL_LOGGER.debug(f"Iteration {i+1}:  Log peak of {np.log10(peakV):.3f} at row: {peak_x}, column: {peak_y}")
+        currRA  = deg_to_hms(peakRA * 180/np.pi)
+        currDec = deg_to_dms(peakDec * 180/np.pi)
+        currAz  = deg_to_dms(peakAz * 180/np.pi)
+        currAlt = deg_to_dms(peakAlt * 180/np.pi)
+        LSL_LOGGER.debug(f"               -> RA: {currRA}, Dec: {currDec}")
+        LSL_LOGGER.debug(f"               -> az: {currAz}, el: {currAlt}")
         # Check for the exit criteria
         if peakV < 0:
             exitStatus = 'peak value is negative'
@@ -260,21 +260,17 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
             beam = prevBeam[beamIndex]
             
         except KeyError:
-            if verbose:
-                print("               -> Computing beam(s)")
-                
+            LSL_LOGGER.debug("               -> Computing beam(s)")
+
             beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
             beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-            beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+            beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol)
             beam = beam.image(center=(imgSize//2,imgSize//2))
             beam /= beam.max()
-            if verbose:
-                print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-                
+            LSL_LOGGER.debug(f"                   {beam.mean()} {beam.min()} {beam.max()} {beam.sum()}")
+
             prevBeam[beamIndex] = beam
-            if verbose:
-                print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
-                
+            LSL_LOGGER.debug(f"               -> Beam cache contains {len(prevBeam.keys())} entries")
         # Calculate how much signal needs to be removed...
         toRemove = gain*peakV*beam
         working -= toRemove
@@ -293,9 +289,8 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
                     
                 area = side1*side2
                 asum += area
-                #print('II', l, m, area, asum)
                 cleaned[l,m] += gain*area*peakV
-                
+
         if plot:
             pylab.subplot(2, 2, 1)
             pylab.imshow(working+toRemove, origin='lower')
@@ -315,53 +310,54 @@ def clean(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='X
             pylab.draw()
             
         if working.max()/working.std() < sigma:
-            exitStatus = 'peak is less than %.3f-sigma' % sigma
-            
+            exitStatus = f'peak is less than {sigma:.3f}-sigma'
+
             break
-            
+
     # Summary
-    print("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
-    
+    LSL_LOGGER.info(f"Exited after {i+1} iterations with status '{exitStatus}'")
+
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
     conv = np.ma.masked_array(conv, mask=convMask, dtype=conv.dtype)
     conv *= ((img-working).max() / conv.max())
-    
+
     if plot:
-        # Make an image for comparison purposes if we are verbose
+        # Make an image for comparison purposes
         fig = plt.figure()
         ax1 = fig.add_subplot(2, 2, 1)
         ax2 = fig.add_subplot(2, 2, 2)
         ax3 = fig.add_subplot(2, 2, 3)
         ax4 = fig.add_subplot(2, 2, 4)
-        
+
         c = ax1.imshow(img, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
         fig.colorbar(c, ax=ax1)
         ax1.set_title('Input')
-        
+
         d = ax2.imshow(conv, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
         fig.colorbar(d, ax=ax2)
         ax2.set_title('CLEAN Comps.')
-        
+
         e = ax3.imshow(working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
         fig.colorbar(e, ax=ax3)
         ax3.set_title('Residuals')
-        
+
         f = ax4.imshow(conv + working, extent=(1,-1,-1,1), origin='lower', interpolation='nearest')
         fig.colorbar(f, ax=ax4)
         ax4.set_title('Final')
-        
+
         plt.show()
-        
+
     if plot:
         pylab.ioff()
-        
+
     # Return
     conv = conv + working
     return conv
 
 
-def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.1, max_iter=150, sigma=2.0, verbose=True, plot=False):
+@telemetry.track_function
+def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.1, max_iter=150, sigma=2.0, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, an AIPY ImgW 
     instance filled with data, and a dictionary of sources, return the CLEAN
@@ -425,7 +421,7 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
     psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol)
     psf = psf.image(center=(imgSize//2,imgSize//2))
     psf /= psf.max()
     
@@ -452,8 +448,7 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
     for name,src in srcs.items():
         # Make sure the source is up
         src.compute(aa)
-        if verbose:
-            print('Source: %s @ %s degrees altitude' % (name, src.alt))
+        LSL_LOGGER.info(f'Source: {name} @ {src.alt} degrees altitude')
         if src.alt <= 10*np.pi/180.0:
             continue
             
@@ -526,16 +521,17 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
             except IndexError:
                 peakAlt = alt[peak_x, peak_y]
                 
-            if verbose:
-                currRA  = deg_to_hms(peakRA * 180/np.pi)
-                currDec = deg_to_dms(peakDec * 180/np.pi)
-                currAz  = deg_to_dms(peakAz * 180/np.pi)
-                currAlt = deg_to_dms(peakAlt * 180/np.pi)
+            # Safety check for sources on the edge of reasonable
+            if not np.isfinite(peakAlt):
+                peakAlt = 1e-3
                 
-                print("%s - Iteration %i:  Log peak of %.3f at row: %i, column: %i" % (name, i+1, np.log10(peakV), peak_x, peak_y))
-                print("               -> RA: %s, Dec: %s" % (currRA, currDec))
-                print("               -> az: %s, el: %s" % (currAz, currAlt))
-                
+            LSL_LOGGER.debug(f"{name} - Iteration {i+1}:  Log peak of {np.log10(peakV):.3f} at row: {peak_x}, column: {peak_y}")
+            currRA  = deg_to_hms(peakRA * 180/np.pi)
+            currDec = deg_to_dms(peakDec * 180/np.pi)
+            currAz  = deg_to_dms(peakAz * 180/np.pi)
+            currAlt = deg_to_dms(peakAlt * 180/np.pi)
+            LSL_LOGGER.debug(f"               -> RA: {currRA}, Dec: {currDec}")
+            LSL_LOGGER.debug(f"               -> az: {currAz}, el: {currAlt}")
             # Check for the exit criteria
             if peakV < 0:
                 exitStatus = 'peak value is negative'
@@ -548,21 +544,16 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                 beam = prevBeam[beamIndex]
                 
             except KeyError:
-                if verbose:
-                    print("               -> Computing beam(s)")
-                    
+                LSL_LOGGER.debug("               -> Computing beam(s)")
                 beamSrc = {'Beam': RadioFixedBody(peakRA, peakDec, jys=1.0, index=0, epoch=aa.date)}
                 beamDict = build_sim_data(aa, beamSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-                beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+                beam = utils.build_gridded_image(beamDict, size=size, res=res, wres=wres, chan=chan, pol=pol)
                 beam = beam.image(center=(imgSize//2,imgSize//2))
                 beam /= beam.max()
-                if verbose:
-                    print("                  ", beam.mean(), beam.min(), beam.max(), beam.sum())
-                    
+                LSL_LOGGER.debug(f"                   {beam.mean()} {beam.min()} {beam.max()} {beam.sum()}")
+
                 prevBeam[beamIndex] = beam
-                if verbose:
-                    print("               -> Beam cache contains %i entries" % len(prevBeam.keys()))
-                    
+                LSL_LOGGER.debug(f"               -> Beam cache contains {len(prevBeam.keys())} entries")
             # Calculate how much signal needs to be removed...
             toRemove = gain*peakV*beam
             working -= toRemove
@@ -581,9 +572,8 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                         
                     area = side1*side2
                     asum += area
-                    #print('II', l, m, area, asum)
                     cleaned[l,m] += gain*area*peakV
-                    
+
             if plot:
                 try:
                     pylab.subplot(2, 2, 1)
@@ -605,18 +595,18 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
                     pass
                     
                 try:
-                    st.set_text('%s @ %i' % (name, i+1))
+                    st.set_text(f'{name} @ {i+1}')
                 except NameError:
-                    st = pylab.suptitle('%s @ %i' % (name, i+1))
+                    st = pylab.suptitle(f'{name} @ {i+1}')
                 pylab.draw()
                 
             if np.abs(np.max(working[rx0:rx1,ry0:ry1])-np.median(working[background]))/rStd(working[background]) <= sigma:
-                exitStatus = 'peak is less than %.3f-sigma' % sigma
-                
+                exitStatus = f'peak is less than {sigma:.3f}-sigma'
+
                 break
-                
+
         # Summary
-        print("Exited after %i iterations with status '%s'" % (i+1, exitStatus))
+        LSL_LOGGER.info(f"Exited after {i+1} iterations with status '{exitStatus}'")
         
     # Restore
     conv = convolve(cleaned, beamClean, mode='same')
@@ -624,7 +614,7 @@ def clean_sources(dataDict, gimg, srcs, input_image=None, size=80, res=0.50, wre
     conv *= ((img-working).max() / conv.max())
     
     if plot:
-        # Make an image for comparison purposes if we are verbose
+        # Make an image for comparison purposes
         fig = plt.figure()
         ax1 = fig.add_subplot(2, 2, 1)
         ax2 = fig.add_subplot(2, 2, 2)
@@ -687,7 +677,8 @@ def _minor_cycle(img, beam, gain=0.2, max_iter=150):
     return  cleaned + working
 
 
-def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.05, max_iter=150, rtol=1e-9, verbose=True, plot=False):
+@telemetry.track_function
+def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX', chan=None, gain=0.05, max_iter=150, rtol=1e-9, plot=False):
     """
     Given a AIPY antenna array instance, a data dictionary, and an AIPY ImgW 
     instance filled with data, return a deconvolved image.  This function 
@@ -732,7 +723,7 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
     # Estimate the zenith beam response
     psfSrc = {'z': RadioFixedBody(aa.sidereal_time(), aa.lat, jys=1.0, index=0, epoch=aa.date)}
     psfDict = build_sim_data(aa, psfSrc, jd=aa.get_jultime(), pols=[pol,], chan=chan, baselines=baselines, flat_response=True)
-    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol, verbose=verbose)
+    psf = utils.build_gridded_image(psfDict, size=size, res=res, wres=wres, chan=chan, pol=pol)
     psf = psf.image(center=(imgSize//2,imgSize//2))
     psf /= psf.max()
     
@@ -759,7 +750,7 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
     rChan = [chan[0], chan[-1]]
     bSrcs['zenith'] = RadioFixedBody(aa.sidereal_time(), aa.lat, name='zenith', jys=1, index=0)
     simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
-    simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
+    simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol)
     simImg = simImg.image(center=(imgSize//2,imgSize//2))
     
     simToModel = 1.0 / simImg.max()
@@ -800,10 +791,15 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
                 bSrcs[nm] = RadioFixedBody(ra[i,j], dec[i,j], name=nm, jys=mdl[i,j], index=0, epoch=aa.date)
                 
         ## Model the visibilities
-        simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
-        
+        try:
+            simDict = build_sim_data(aa, bSrcs, jd=aa.get_jultime(), pols=[pol,], chan=rChan, baselines=baselines, flat_response=True)
+        except Exception as e:
+            ### An interesting case that I hadn't considered before
+            exitStatus = 'nothing_to_model'
+            break
+            
         ## Form the simulated image
-        simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol, verbose=verbose)
+        simImg = utils.build_gridded_image(simDict, size=size, res=res, wres=wres, chan=rChan, pol=pol)
         simImg = simImg.image(center=(imgSize//2,imgSize//2))
         
         ## Difference the image and the simulated image and scale it to the 
@@ -816,12 +812,10 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
         mdl2 = mdl*modelToSim
         
         ## Status report
-        if verbose:
-            print("Iteration %i:  %i sources used, RMS is %.4e" % (k+1, len(bSrcs.keys()), RMS))
-            print("               -> maximum residual: %.4e (%.3f%% of peak)" % (diff.max(), 100.0*diff.max()/img.max()))
-            print("               -> minimum residual: %.4e (%.3f%% of peak)" % (diff.min(), 100.0*diff.min()/img.max()))
-            print("               -> delta RMS: %.4e (%.3f%%)" % (RMS-oldRMS, 100.0*(RMS-oldRMS)/RMS))
-            
+        LSL_LOGGER.debug(f"Iteration {k+1}:  {len(bSrcs.keys())} sources used, RMS is {RMS:.4e}")
+        LSL_LOGGER.debug(f"               -> maximum residual: {diff.max():.4e} ({100.0*diff.max()/img.max():.3f}% of peak)")
+        LSL_LOGGER.debug(f"               -> minimum residual: {diff.min():.4e} ({100.0*diff.min()/img.max():.3f}% of peak)")
+        LSL_LOGGER.debug(f"               -> delta RMS: {RMS-oldRMS:.4e} ({100.0*(RMS-oldRMS)/RMS:.3f}%)")
         ## Make the cleaned residuals map ready for updating the model
         diff = diff2
         diffScaled = diff * simToModel
@@ -865,16 +859,15 @@ def lsq(dataDict, gimg, input_image=None, size=80, res=0.50, wres=0.10, pol='XX'
             pylab.cla()
             pylab.plot(rHist)
             pylab.draw()
-            
+
     # Summary
-    print("Exited after %i iterations with status '%s'" % (k+1, exitStatus))
-    
+    LSL_LOGGER.info(f"Exited after {k+1} iterations with status '{exitStatus}'")
     # Restore
     conv = convolve(mdl2, beamClean, mode='same')
     conv = np.ma.masked_array(conv, mask=convMask, dtype=conv.dtype)
     
     if plot:
-        # Make an image for comparison purposes if we are verbose
+        # Make an image for comparison purposes
         fig = plt.figure()
         ax1 = fig.add_subplot(2, 2, 1)
         ax2 = fig.add_subplot(2, 2, 2)
