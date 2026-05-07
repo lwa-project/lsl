@@ -752,6 +752,7 @@ class Cable(object):
         self.a1 = float(a1)
         self.ref_freq = float(ref_freq)
         self.clock_offset = 0.0
+        self.asp_atten_db = 0.0
         
     def __str__(self):
         return f"Cable '{self.id}' with length {self.length:.2f} m (stretched to {self.length*self.stretch:.2f} m)"
@@ -798,11 +799,15 @@ class Cable(object):
         else:
             return totlDelay
             
-    def attenuation(self, frequency=49e6, dB=False):
+    def attenuation(self, frequency=49e6, dB=False, include_asp_atten=True):
         """Get the multiplicative cable loss for a specific frequency (in Hz).
         Cable loss (attenuation) affects the measured power as follows: P_out = P_in / att.
         If attenuations for more than one frequency are needed, the frequencies
         can be passed in as a numpy array.
+        
+        .. versionchanged:: 4.0.1
+            Added the `include_asp_atten` to take into account differences in
+            per cable ASP attenuator setings.
         
         .. versionchanged:: 1.0.0
             Added the `dB' keyword to allow dB to be returned.
@@ -812,22 +817,29 @@ class Cable(object):
         atten += self.a1 * self.length*self.stretch * (frequency / np.array(self.ref_freq))
         atten = np.exp(atten)
         
+        if include_asp_atten:
+            atten *= 10**(self.asp_atten_db/10)
+            
         if dB:
             atten = to_dB(atten)
             
         return atten
         
-    def gain(self, frequency=49e6, dB=False):
+    def gain(self, frequency=49e6, dB=False, include_asp_atten=True):
         """Get the cable gain ("inverse loss") for a specific frequency (in 
         Hz).  Cable gain affects the measured power as follows: P_out = P_in * g.
         If gains for more than one frequency are needed, the frequencies can be
         passed in as a numpy array.
         
+        .. versionchanged:: 4.0.1
+            Added the `include_asp_atten` to take into account differences in
+            per cable ASP attenuator setings.
+        
         .. versionchanged:: 1.0.0
             Added the `dB' keyword to allow dB to be returned.
         """
         
-        gai = 1.0 / self.attenuation(frequency=frequency, dB=False)
+        gai = 1.0 / self.attenuation(frequency=frequency, dB=False, include_asp_atten=include_asp_atten)
         
         if dB:
             gai = to_dB(gai)
@@ -1125,7 +1137,7 @@ def _parse_ssmif_text(filename_or_fh):
                 continue
                 
             #
-            # Stand & Antenna Data
+            # Stand & Antenna Data (plus setup the ASP settings holders)
             #
             
             if keyword == 'N_STD':
@@ -1139,6 +1151,10 @@ def _parse_ssmif_text(filename_or_fh):
                 stdPhi = [0.0 for n in range(2*nStand)]
                 
                 stdDesi = [1 for x in range(2*nStand)]
+                
+                aspAT1 = [0 for x in range(nStand)]
+                aspAT2 = [0 for x in range(nStand)]
+                aspAT3 = [0 for x in range(nStand)]
                 
                 continue
                 
@@ -1507,6 +1523,34 @@ def _parse_ssmif_text(filename_or_fh):
                 drNDP[ids[0]-1] = int(value)
                 continue
                 
+        #
+        # ASP Settings
+        #
+        
+        if keyword == 'ASP_AT1':
+            at1 = int(value)
+            
+            if ids[0] == -1:
+                aspAT1 = [at1 for n in range(nStand)]
+            else:
+                aspAT1[ids[0]-1] = at1
+                
+        if keyword == 'ASP_AT2':
+            at2 = int(value)
+            
+            if ids[0] == -1:
+                aspAT2 = [at2 for n in range(nStand)]
+            else:
+                aspAT2[ids[0]-1] = at2
+                
+        if keyword == 'ASP_AT3':
+            at3 = int(value)
+            
+            if ids[0] == -1:
+                aspAT3 = [at3 for n in range(nStand)]
+            else:
+                aspAT3[ids[0]-1] = at1
+                
     except Exception as e:
         if close_at_end:
             fh.close()
@@ -1651,6 +1695,13 @@ def _parse_ssmif_binary(filename_or_fh):
         
         fh.readinto(bsettings)
         
+        #
+        # ASP Settings
+        #
+        aspAT1 = list(bsettings.asp_at1)
+        aspAT2 = list(bsettings.asp_at2)
+        aspAT3 = list(bsettings.asp_at3)
+        
     except Exception as e:
         if close_at_end:
             fh.close()
@@ -1723,6 +1774,11 @@ def parse_ssmif(filename_or_fh):
     ### NDP
     snapAnt = ssmifDataDict['snapAnt']
     snapInR = ssmifDataDict['snapInR']
+    ### ASP settings
+    aspAT1 = ssmifDataDict['aspAT1']
+    aspAT2 = ssmifDataDict['aspAT2']
+    aspAT3 = ssmifDataDict['aspAT3']
+    
     # Build up a list of Stand instances and load them with data
     i = 1
     stands = []
@@ -1743,6 +1799,14 @@ def parse_ssmif(filename_or_fh):
     for id,length,vf,dd,a0,a1,stretch,ref_freq in zip(rpdID, rpdLeng, rpdVF, rpdDD, rpdA0, rpdA1, rpdStr, rpdFre):
         cables.append(Cable(id, length, vf=vf/100.0, dd=float(dd)*1e-9, a0=a0, a1=a1, ref_freq=ref_freq, stretch=stretch))
         i += 1
+        
+    # Apply corrections for the default ASP attenuator settings to the cables
+    minAT1 = min(aspAT1)
+    minAT2 = min(aspAT2)
+    minAT3 = min(aspAT3)
+    for cbl,at1,at2,at3 in zip(cables, aspAT1, aspAT2, aspAT3):
+        asp_atten_db = (at1 - minAT1)*2 + (at2 - minAT2)*2 + (at3 - minAT3)*0.5
+        cbl.asp_atten_db = asp_atten_db
         
     # Build up a list of Antenna instances and load them with antenna-level
     # data
