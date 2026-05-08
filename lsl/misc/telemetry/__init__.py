@@ -149,7 +149,7 @@ class _TelemetryClient(object):
         with self._lock:
             if self.active and self._cache_count > 0:
                 
-                LSL_LOGGER.info('Writing LSL telemetry data')
+                LSL_LOGGER.debug('Writing LSL telemetry data')
                 try:
                     tNow = time.time()
                     
