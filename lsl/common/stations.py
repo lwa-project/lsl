@@ -1524,49 +1524,54 @@ def _parse_ssmif_text(filename_or_fh):
                 drNDP[ids[0]-1] = int(value)
                 continue
                 
-        #
-        # ASP Settings
-        #
-        
-        if keyword == 'ASP_FLT':
-            flt = int(value)
+            #
+            # ASP Settings
+            #
             
-            if ids[0] == -1:
-                aspFlt = [flt for n in range(nStand)]
-            else:
-                aspFlt[ids[0]-1] = flt
+            if keyword == 'ASP_FLT':
+                flt = int(value)
                 
-        if keyword == 'ASP_AT1':
-            at1 = int(value)
-            
-            if ids[0] == -1:
-                aspAT1 = [at1 for n in range(nStand)]
-            else:
-                aspAT1[ids[0]-1] = at1
+                if ids[0] == -1:
+                    aspFlt = [flt for n in range(nStand)]
+                else:
+                    aspFlt[ids[0]-1] = flt
+                continue
+                    
+            if keyword == 'ASP_AT1':
+                at1 = int(value)
                 
-        if keyword == 'ASP_AT2':
-            at2 = int(value)
-            
-            if ids[0] == -1:
-                aspAT2 = [at2 for n in range(nStand)]
-            else:
-                aspAT2[ids[0]-1] = at2
+                if ids[0] == -1:
+                    aspAT1 = [at1 for n in range(nStand)]
+                else:
+                    aspAT1[ids[0]-1] = at1
+                continue
                 
-        if keyword == 'ASP_AT3':
-            at3 = int(value)
-            
-            if ids[0] == -1:
-                aspAT3 = [at3 for n in range(nStand)]
-            else:
-                aspAT3[ids[0]-1] = at1
+            if keyword == 'ASP_AT2':
+                at2 = int(value)
                 
-        #
-        # DRX Settings
-        #
-        
-        if keyword == 'DRX_GAIN':
-            drxGai = int(value)
+                if ids[0] == -1:
+                    aspAT2 = [at2 for n in range(nStand)]
+                else:
+                    aspAT2[ids[0]-1] = at2
+                continue
+                
+            if keyword == 'ASP_AT3':
+                at3 = int(value)
+                
+                if ids[0] == -1:
+                    aspAT3 = [at3 for n in range(nStand)]
+                else:
+                    aspAT3[ids[0]-1] = at1
+                continue
+                
+            #
+            # DRX Settings
+            #
             
+            if keyword == 'DRX_GAIN':
+                drxGai = int(value)
+                continue
+                
     except Exception as e:
         if close_at_end:
             fh.close()
