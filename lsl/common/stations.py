@@ -1152,7 +1152,7 @@ def _parse_ssmif_text(filename_or_fh):
                 
                 stdDesi = [1 for x in range(2*nStand)]
                 
-                aspFlt = [0 for n in range(nStand)]
+                aspFlt = [-1 for n in range(nStand)]
                 aspAT1 = [0 for x in range(nStand)]
                 aspAT2 = [0 for x in range(nStand)]
                 aspAT3 = [0 for x in range(nStand)]
@@ -1802,7 +1802,7 @@ def parse_ssmif(filename_or_fh):
     aspAT2 = ssmifDataDict['aspAT2']
     aspAT3 = ssmifDataDict['aspAT3']
     ### DRX settings
-    drxGai = ssmifDataDict.get('drxGai', -1)
+    drxGai = ssmifDataDict.get('drxGai', 0)
     
     # Build up a list of Stand instances and load them with data
     i = 1
