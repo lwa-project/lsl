@@ -115,7 +115,7 @@ if __name__ == '__main__':
             strdict['utc'] = "%-25s" % currentTime.utc_str
             strdict['mjdutc'] = "%.5f" % currentTime.utc_mjd
             strdict['loc'] = site.name
-            (lng, lat) = site.geo.format()
+            (lng, lat, _) = site.geo.format()
             strdict['lat'] = "%-15s" % lat
             strdict['long'] = "%-15s" % lng
             strdict['lst'] = "%-15s" % astro.deg_to_dms(site.sidereal(currentTime))
