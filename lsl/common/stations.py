@@ -759,7 +759,7 @@ class Cable(object):
         
     def __repr__(self):
         n = self.__class__.__name__
-        a = [(attr, getattr(self, attr, None)) for attr in ('id', 'length', 'stretch', 'vf', 'dd', 'a0', 'a1', 'ref_freq', 'clock_offset')]
+        a = [(attr, getattr(self, attr, None)) for attr in ('id', 'length', 'stretch', 'vf', 'dd', 'a0', 'a1', 'ref_freq', 'clock_offset', 'asp_atten_db')]
         a[0] = (a[0][0], repr(a[0][1]))
         return tw_fill(_build_repr(n, a), subsequent_indent='    ')
         
@@ -1152,6 +1152,7 @@ def _parse_ssmif_text(filename_or_fh):
                 
                 stdDesi = [1 for x in range(2*nStand)]
                 
+                aspFlt = [0 for n in range(nStand)]
                 aspAT1 = [0 for x in range(nStand)]
                 aspAT2 = [0 for x in range(nStand)]
                 aspAT3 = [0 for x in range(nStand)]
@@ -1527,6 +1528,14 @@ def _parse_ssmif_text(filename_or_fh):
         # ASP Settings
         #
         
+        if keyword == 'ASP_FLT':
+            flt = int(value)
+            
+            if ids[0] == -1:
+                aspFlt = [flt for n in range(nStand)]
+            else:
+                aspFlt[ids[0]-1] = flt
+                
         if keyword == 'ASP_AT1':
             at1 = int(value)
             
@@ -1551,6 +1560,13 @@ def _parse_ssmif_text(filename_or_fh):
             else:
                 aspAT3[ids[0]-1] = at1
                 
+        #
+        # DRX Settings
+        #
+        
+        if keyword == 'DRX_GAIN':
+            drxGai = int(value)
+            
     except Exception as e:
         if close_at_end:
             fh.close()
@@ -1698,9 +1714,15 @@ def _parse_ssmif_binary(filename_or_fh):
         #
         # ASP Settings
         #
+        aspFlt = list(bsettings.asp_flt)
         aspAT1 = list(bsettings.asp_at1)
         aspAT2 = list(bsettings.asp_at2)
         aspAT3 = list(bsettings.asp_at3)
+        
+        #
+        # DRX Settings
+        #
+        drxGai = bsettings.drx_gain
         
     except Exception as e:
         if close_at_end:
@@ -1775,9 +1797,12 @@ def parse_ssmif(filename_or_fh):
     snapAnt = ssmifDataDict['snapAnt']
     snapInR = ssmifDataDict['snapInR']
     ### ASP settings
+    aspFlt = ssmifDataDict['aspFlt']
     aspAT1 = ssmifDataDict['aspAT1']
     aspAT2 = ssmifDataDict['aspAT2']
     aspAT3 = ssmifDataDict['aspAT3']
+    ### DRX settings
+    drxGai = ssmifDataDict.get('drxGai', -1)
     
     # Build up a list of Stand instances and load them with data
     i = 1
@@ -1805,7 +1830,9 @@ def parse_ssmif(filename_or_fh):
     minAT2 = min(aspAT2)
     minAT3 = min(aspAT3)
     for cbl,at1,at2,at3 in zip(cables, aspAT1, aspAT2, aspAT3):
-        asp_atten_db = (at1 - minAT1)*2 + (at2 - minAT2)*2 + (at3 - minAT3)*0.5
+        asp_atten_db = (at1 - minAT1)*2     # AT1 is 2 dB per step
+        asp_atten_db += (at2 - minAT2)*2    # AT2 is 2 dB per step
+        asp_atten_db += (at3 - minAT3)*0.5  # AT3 is 0.5 dB per step
         cbl.asp_atten_db = asp_atten_db
         
     # Build up a list of Antenna instances and load them with antenna-level
@@ -1838,7 +1865,7 @@ def parse_ssmif(filename_or_fh):
     for i in range(len(arxAnt)):
         for j in range(len(arxAnt[i])):
             ant = arxAnt[i][j]
-            if ant == 0 or ant > 520:
+            if ant == 0 or ant > 512:
                 continue
                 
             boardID = arxID[i]
@@ -1872,6 +1899,9 @@ def parse_ssmif(filename_or_fh):
     except KeyError:
         station = LWAStation('New LWA Station', lat, lon, elv, id=idn, antennas=antennas)
         
+    # Update the default DRX gain
+    station.default_drx_gain = drxGai
+    
     # And return it
     return station
 
