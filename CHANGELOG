@@ -1,3 +1,7 @@
+4.0.1:
+ * Fixed a bug that caused the astrostatus.py script to crash
+ * Exposed the ASP_FLT, ASP_AT[123], and DRX_GAIN SSMIF values through lsl.common.stations.LWAStation objects
+
 4.0.0:
  * Unified all stations under the NDP framework; dropped DP and ADP backend support                                                                       
   * Removed lsl.common.dp, lsl.common.adp
