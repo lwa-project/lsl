@@ -11,6 +11,7 @@ import time
 import logging
 import numpy as np
 import argparse
+from textwrap import fill as tw_fill
 
 from astropy.constants import c as speedOfLight
 speedOfLight = speedOfLight.to('m/s').value
@@ -195,9 +196,13 @@ def main(args):
         # Report on the valid stands found.  This is a little verbose,
         # but nice to see.
         print(f"Found {len(good)//2} good stands to use")
+        ant_list = '  '
         for i in good:
-            print(f"{antennas[i].stand.id:3d}, {antennas[i].pol}")
-            
+            ant_list += f"{antennas[i].stand.id}{'Y' if antennas[i].pol else 'X'}"
+            ant_list += '; '
+        ant_list = ant_list[:-2]
+        print(tw_fill(ant_list, subsequent_indent='  '))
+        
         # Number of frames to read in at once and average
         if args.avg_time == 0.0:
             args.avg_time = nInts/sample_rate
