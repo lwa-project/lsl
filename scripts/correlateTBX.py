@@ -198,8 +198,7 @@ def main(args):
         print(f"Found {len(good)//2} good stands to use")
         ant_list = '  '
         for i in good:
-            ant_list += f"{antennas[i].stand.id}{'Y' if antennas[i].pol else 'X'}"
-            ant_list += '; '
+            ant_list += f"{antennas[i].stand.id}{'Y' if antennas[i].pol else 'X'}; "
         ant_list = ant_list[:-2]
         print(tw_fill(ant_list, subsequent_indent='  '))
         
