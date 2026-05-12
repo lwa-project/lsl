@@ -198,10 +198,16 @@ def main(args):
         print(f"Found {len(good)//2} good stands to use")
         ant_list = '  '
         for i in good:
-            ant_list += f"{antennas[i].stand.id}{'Y' if antennas[i].pol else 'X'}; "
+            ant_list += f"{antennas[i].stand.id:3d}{'Y' if antennas[i].pol else 'X'}; "
         ant_list = ant_list[:-2]
-        print(tw_fill(ant_list, subsequent_indent='  '))
-        
+        ant_list= tw_fill(ant_list, subsequent_indent='  ').split('\n')
+        longest = max([len(l) for l in ant_list])
+        for l,line in enumerate(ant_list):
+            if len(line) < longest and l != len(ant_list) - 1:
+                padding = ' '*(longest-len(line))
+                line = padding+line
+            print(line)
+            
         # Number of frames to read in at once and average
         if args.avg_time == 0.0:
             args.avg_time = nInts/sample_rate
