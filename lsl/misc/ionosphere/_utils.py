@@ -1,5 +1,6 @@
 import os
 import sys
+import ssl
 import gzip
 import numpy as np
 import socket
@@ -73,7 +74,8 @@ def _download_worker_cddis(url, filename):
     # Attempt to download the data
     LSL_LOGGER.info(f"Downloading {url}")
     ## Login
-    ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'))
+    ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'),
+                   context=ssl.create_default_context())
     status = ftps.login("anonymous", "lwa@unm.edu")
     if not status.startswith("230"):
         ftps.close()
