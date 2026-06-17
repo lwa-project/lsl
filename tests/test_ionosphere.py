@@ -299,10 +299,10 @@ class ionosphere_tests(unittest.TestCase):
             """
             ...
             """
-            
-            tec, rms = ionosphere.get_tec_value(60025, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
-            # self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
-            # self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
+        
+            tec, rms = ionosphere.get_tec_value(60259, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
+            # self.assertAlmostEqual(tec[0][0], 36.2000008, 6)
+            # self.assertAlmostEqual(rms[0][0],  2.7000000, 6)
 
 
 class ionosphere_test_suite(unittest.TestSuite):
