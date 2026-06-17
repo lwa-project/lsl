@@ -108,7 +108,7 @@ DEFAULTS_IONO['code_url'] = {'value': 'ftps://gdc.cddis.eosdis.nasa.gov/gps/prod
 DEFAULTS_IONO['code_mirror'] = {'value': 'ftp://gssc.esa.int/gnss/products/ionex/',
                                 'help':  'mirror URL for accessing the CODE data products',
                                 'is_optional': True}
-DEFAULTS_IONO['ustec_url'] = {'value': 'http://www.ngdc.noaa.gov/stp/iono/ustec/products/',
+DEFAULTS_IONO['ustec_url'] = {'value': 'https://archive.data.noaa.gov/satellite-spaceweather/SWPC/Models/USTEC/ustec/',
                               'help':  'primary URL for accessing the USTEC data products',
                               'is_optional': False}
 DEFAULTS_IONO['ustec_mirror'] = {'value': None,
