@@ -402,7 +402,14 @@ static PyObject *WProjection(PyObject *self, PyObject *args, PyObject *kwds) {
     // Figure out how much data we have to work with
     long nVis;
     nVis = (long) PyArray_DIM(uu, 0);
-    
+
+    // Make sure the v, w, data, and wgt arrays are as long as the u array
+    if( PyArray_DIM(vv, 0) != nVis || PyArray_DIM(ww, 0) != nVis
+            || PyArray_DIM(vd, 0) != nVis || PyArray_DIM(wd, 0) != nVis ) {
+        PyErr_Format(PyExc_RuntimeError, "u, v, w, data, and wgt arrays must have the same length");
+        goto fail;
+    }
+
     // Compute the size of the uv plane
     long nPixSide;
     nPixSide = round(uvSize / uvRes);

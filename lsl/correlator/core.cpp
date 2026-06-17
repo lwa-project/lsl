@@ -920,7 +920,21 @@ static PyObject *XEngine2(PyObject *self, PyObject *args) {
     nChan = (long) PyArray_DIM(data1, 1);
     nFFT = (long) PyArray_DIM(data1, 2);
     nBL = (nStand+1)*nStand/2;
-    
+
+    // Validate the other input arrays against signals1
+    if( PyArray_DIM(data2, 0) != nStand || PyArray_DIM(data2, 1) != nChan || PyArray_DIM(data2, 2) != nFFT ) {
+        PyErr_Format(PyExc_RuntimeError, "signals1 and signals2 have different dimensions");
+        goto fail;
+    }
+    if( PyArray_DIM(valid1, 0) != nStand || PyArray_DIM(valid1, 1) != nFFT ) {
+        PyErr_Format(PyExc_RuntimeError, "sigValid1 dimensions do not match signals1");
+        goto fail;
+    }
+    if( PyArray_DIM(valid2, 0) != nStand || PyArray_DIM(valid2, 1) != nFFT ) {
+        PyErr_Format(PyExc_RuntimeError, "sigValid2 dimensions do not match signals1");
+        goto fail;
+    }
+
     // Create the output visibility array and fill with zeros
     npy_intp dims[2];
     dims[0] = (npy_intp) nBL;
@@ -1032,7 +1046,21 @@ static PyObject *XEngine3(PyObject *self, PyObject *args) {
     nChan = (long) PyArray_DIM(dataX, 1);
     nFFT = (long) PyArray_DIM(dataX, 2);
     nBL = (nStand+1)*nStand/2;
-    
+
+    // Validate the other input arrays against signalsX
+    if( PyArray_DIM(dataY, 0) != nStand || PyArray_DIM(dataY, 1) != nChan || PyArray_DIM(dataY, 2) != nFFT ) {
+        PyErr_Format(PyExc_RuntimeError, "signalsX and signalsY have different dimensions");
+        goto fail;
+    }
+    if( PyArray_DIM(validX, 0) != nStand || PyArray_DIM(validX, 1) != nFFT ) {
+        PyErr_Format(PyExc_RuntimeError, "sigValidX dimensions do not match signalsX");
+        goto fail;
+    }
+    if( PyArray_DIM(validY, 0) != nStand || PyArray_DIM(validY, 1) != nFFT ) {
+        PyErr_Format(PyExc_RuntimeError, "sigValidY dimensions do not match signalsX");
+        goto fail;
+    }
+
     // Create the output visibility array and fill with zeros
     npy_intp dims[3];
     dims[0] = (npy_intp) 4;
