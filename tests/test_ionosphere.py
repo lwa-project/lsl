@@ -5,6 +5,7 @@ Unit test for the lsl.misc.ionosphere module.
 import os
 import unittest
 import numpy as np
+import warnings
 
 from lsl.common.stations import lwa1
 from lsl.misc import ionosphere
@@ -299,10 +300,13 @@ class ionosphere_tests(unittest.TestCase):
             """
             ...
             """
-        
-            tec, rms = ionosphere.get_tec_value(60259, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
-            # self.assertAlmostEqual(tec[0][0], 36.2000008, 6)
-            # self.assertAlmostEqual(rms[0][0],  2.7000000, 6)
+            
+            try:
+                tec, rms = ionosphere.get_tec_value(60259, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
+                # self.assertAlmostEqual(tec[0][0], 36.2000008, 6)
+                # self.assertAlmostEqual(rms[0][0],  2.7000000, 6)
+            except OSError as e:
+                warnings.warn(f"USTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
 
 
 class ionosphere_test_suite(unittest.TestSuite):
