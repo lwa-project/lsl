@@ -1737,12 +1737,12 @@ class TBXFile(LDPFileBase):
                 aStand = 0
                 if self._timetag == 0:
                     pass
-                elif cTimetag != self._timetag+self._timetagSkip:
-                    missing = (cTimetag - self._timetag - self._timetagSkip) / float(self._timetagSkip)
+                elif cTimetag != self._timetag + 8192:
+                    missing = (cTimetag - self._timetag - 8192) / float(8192)
                     if int(missing) == missing and missing < LDP_CONFIG.get('tbx_autofill_size'):
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
-                            m = self._timetag + self._timetagSkip*(m+1)
+                            m = self._timetag + 8192*(m+1)
                             try:
                                 baseframe = copy.deepcopy(cFrames[0])
                             except NameError:
