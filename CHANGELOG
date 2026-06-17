@@ -1,7 +1,13 @@
 4.0.1:
  * Fixed a bug that caused the astrostatus.py script to crash
  * Exposed the ASP_FLT, ASP_AT[123], and DRX_GAIN SSMIF values through lsl.common.stations.LWAStation objects
-
+ * Fix another path traversal vulnerability in lsl.common.metabundle
+ * Enabled TLS certificate and hostname verification for FTP-SSL-based ionosphere downloads
+ * Added a bounds check to the parsing of .cs files in lsl.common.metabundle
+ * Added step count checking to STEPPED mode observations in lsl.common.sdf
+ * Improve array bounds checking the lsl.correlator X-engines and the lsl.imaging gridder
+ * Make lsl.reader.drspec and lsl.reader.vdif more robust against corrupted frames
+ 
 4.0.0:
  * Unified all stations under the NDP framework; dropped DP and ADP backend support                                                                       
   * Removed lsl.common.dp, lsl.common.adp
