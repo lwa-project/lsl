@@ -44,6 +44,10 @@ def _download(mjd, type='final'):
     # New style filename (this should probably be the default)
     alt_filename = f"ustec_{altDateStr}.tar.gz"
     
+    # Cutoff check
+    if altDateStr > "2023_11_15":
+        raise ValueError("Requested MJD is after the USTEC cutoff date of November 15, 2023")
+        
     # Attempt to download the data
     for fname in (alt_filename, filename):
         status = download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('ustec_url'), year, month, fname), filename)
