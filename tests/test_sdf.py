@@ -1003,6 +1003,11 @@ class sdf_tests(unittest.TestCase):
         with self.assertRaises(ValueError):
             project.sessions[0].observations[0].steps[2].c1 = -72.0
             
+        # Too many steps
+        for i in range(2000):
+            project.sessions[0].observations[0].steps.append(project.sessions[0].observations[0].steps[-1])
+        self.assertFalse(project.validate())
+        
     ### DRX - STEPPED with delays and gains ###
     
     def test_spc_parse(self):
