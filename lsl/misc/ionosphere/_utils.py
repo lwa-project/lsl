@@ -73,57 +73,59 @@ def _download_worker_cddis(url, filename):
     
     # Attempt to download the data
     LSL_LOGGER.info(f"Downloading {url}")
-    ## Login
-    ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'),
-                   context=ssl.create_default_context())
-    status = ftps.login("anonymous", "lwa@unm.edu")
-    if not status.startswith("230"):
-        ftps.close()
-        return False
-        
-    ## Secure
-    status = ftps.prot_p()
-    if not status.startswith("200"):
-        ftps.close()
-        return False
-        
-    ## Download
-    remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
+    ftps = None
     try:
+        ## Login
+        ftps = FTP_TLS("gdc.cddis.eosdis.nasa.gov", timeout=DOWN_CONFIG.get('timeout'),
+                       context=ssl.create_default_context())
+        status = ftps.login("anonymous", "lwa@unm.edu")
+        if not status.startswith("230"):
+            return False
+
+        ## Secure
+        status = ftps.prot_p()
+        if not status.startswith("200"):
+            return False
+
+        ## Download
+        remote_path = url.split("gdc.cddis.eosdis.nasa.gov", 1)[1]
         remote_size = ftps.size(remote_path)
-    except (FTP_ERROR_TEMP, FTP_ERROR_PERM):
-        ftps.close()
-        return False
-        
-    with _CACHE_DIR.open(filename, 'wb') as fh:
-        pbar = DownloadBar(max=remote_size)
-        def write(data):
-            fh.write(data)
-            pbar.inc(len(data))
-            if is_interactive:
-                sys.stdout.write(pbar.show()+'\r')
-                sys.stdout.flush()
-                
-        try:
+
+        with _CACHE_DIR.open(filename, 'wb') as fh:
+            pbar = DownloadBar(max=remote_size)
+            def write(data):
+                fh.write(data)
+                pbar.inc(len(data))
+                if is_interactive:
+                    sys.stdout.write(pbar.show()+'\r')
+                    sys.stdout.flush()
+
             status = ftps.retrbinary(f"RETR {remote_path}", write, blocksize=DOWN_CONFIG.get('block_size'))
             if is_interactive:
                 sys.stdout.write(pbar.show()+'\n')
                 sys.stdout.flush()
-        except (FTP_ERROR_TEMP, FTP_ERROR_PERM):
-            status = 'FAILED'
-            
-    if not status.startswith("226"):
+
+        if not status.startswith("226"):
+            _CACHE_DIR.remove(filename)
+            return False
+
+    except (IOError, ssl.SSLError, socket.timeout, TimeoutError, EOFError,
+            FTP_ERROR_TEMP, FTP_ERROR_PERM) as e:
+        ## Network/transfer problem - clean up any partial file and give up
+        LSL_LOGGER.warning(f"Failed to download {url}: {str(e)}")
         _CACHE_DIR.remove(filename)
-        ftps.close()
         return False
-        
+
+    finally:
+        if ftps is not None:
+            ftps.close()
+
     ## Further processing, if needed
     if os.path.splitext(url)[1] == '.Z':
         ## Save it to a regular gzip'd file after uncompressing it.
         _convert_to_gzip(filename)
-        
+
     # Done
-    ftps.close()
     return True
 
 
