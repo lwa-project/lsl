@@ -628,7 +628,7 @@ class DRXFile(LDPFileBase):
                             except NameError:
                                 baseframe = copy.deepcopy(self.buffer.buffer[cTimetag][0])
                             baseframe.payload.timetag = m
-                            baseframe.payload._data *= 0
+                            baseframe.payload._data[...] = 0
                             self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
@@ -1088,7 +1088,7 @@ class DRX8File(LDPFileBase):
                             except NameError:
                                 baseframe = copy.deepcopy(self.buffer.buffer[cTimetag][0])
                             baseframe.payload.timetag = m
-                            baseframe.payload._data *= 0
+                            baseframe.payload._data[...] = 0
                             self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
