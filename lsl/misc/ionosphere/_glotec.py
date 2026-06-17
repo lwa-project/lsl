@@ -1,7 +1,9 @@
+import os
+import h5py
 import json
-import gzip
+import tarfile
 import numpy as np
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from lsl.common.mcs import mjdmpm_to_datetime, datetime_to_mjdmpm
 from lsl.misc.ionosphere._utils import get_cache_dir, download_worker, load_mjd as base_load_mjd
@@ -10,12 +12,12 @@ from lsl.config import LSL_CONFIG
 IONO_CONFIG = LSL_CONFIG.view('ionosphere')
 
 
-__version__ = '0.1'
+__version__ = '0.2'
 __all__ = ['FILENAME_TEMPLATE', 'FILENAME_TEMPLATE_ALT', 'load_mjd']
 
 
-FILENAME_TEMPLATE = 'glotec_icao_%sZ.geojson'
-FILENAME_TEMPLATE_ALT = 'glotec_icao_%sZ.geojson'
+FILENAME_TEMPLATE = 'GloTEC_TEC_%s.nc'
+FILENAME_TEMPLATE_ALT = 'GloTEC_TEC_%s.nc'
 
 
 _CACHE_DIR = get_cache_dir()
@@ -37,14 +39,35 @@ def _download(mjd, type='final'):
         
     year = dt.year
     month = dt.month
-    dateStr = dt.strftime("%Y%m%dT%H%M%S")
+    dateStr = dt.strftime("%Y_%m_%d")
     # Build up the filename
-    filename = f"glotec_icao_{dateStr}Z.geojson"
+    filename = f"glotec_{dateStr}.tar.gz"
     
+    # Start check
+    if dateStr < "2025_02_24":
+        raise ValueError("Requested MJD is before the GloTEC start date of February 24, 2025")
+        
     # Attempt to download the data
-    status = download_worker('%s/%s' % (IONO_CONFIG.get('glotec_url'), filename), filename)
+    status = download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('glotec_url'), year, month, filename), filename)
     if not status and IONO_CONFIG.get('glotec_mirror') is not None:
-        status = download_worker('%s/%s' % (IONO_CONFIG.get('glotec_mirror'), filename), filename)
+        status = download_worker('%s/%04i/%02i/%s' % (IONO_CONFIG.get('glotec_mirror'), year, month, filename), filename)
+        
+    if status:
+        # Pull out the .nc file that we need
+        with _CACHE_DIR.open(filename, 'rb') as fh:
+            with tarfile.open(fileobj=fh, mode='r:*') as tf:
+                h5name = FILENAME_TEMPLATE % dateStr
+                h5name = os.path.join("glotec_%s" % dateStr, h5name)
+                ti = tf.extractfile(h5name)
+                if ti:
+                    with _CACHE_DIR.open(os.path.basename(h5name), 'wb') as hh:
+                        hh.write(ti.read())
+                else:
+                    status = False
+                    
+        # Cleanup the full tarball we've downloaded
+        _CACHE_DIR.remove(filename)
+        
     return status
 
 
@@ -62,51 +85,49 @@ def _parse_glotec_map(filename_or_fh):
     
     # Open the TEC file for reading
     try:
-        fh = gzip.GzipFile(filename_or_fh, 'rb')
+        fh = open(filename_or_fh, 'r')
         do_close = True
     except TypeError:
-        fh = gzip.GzipFile(fileobj=filename_or_fh, mode='rb')
+        fh = filename_or_fh
         do_close = False
         
     try:
-        jdata = json.load(fh)
-        
-        lngs = [[]]
-        lats = [[]]
-        data = [[]]
-        rdata = [[]]
-        for feature in jdata['features']:
-            lng, lat = feature['geometry']['coordinates']
-            tec, rms = feature['properties']['tec'], feature['properties']['anomaly']
-            
-            if len(lngs[-1]) and lng < lngs[-1][-1]:
-                lats.append([])
-                lngs.append([])
-                data.append([])
-                rdata.append([])
-            lats[-1].append(lat)
-            lngs[-1].append(lng)
-            data[-1].append(tec)
-            rdata[-1].append(abs(rms))
+        with h5py.File(fh, 'r') as f:
+            dates = f['time'][...]
+            lats = f['latitude'][...]
+            lngs = f['longitude'][...]
+            data = f['TEC'][...]
+            rdata = f['anomaly'][...]
             
     finally:
         if do_close:
             fh.close()
             
+    # Date conversion
+    mjds = []
+    for ts in dates:
+        dt = datetime.fromtimestamp(ts)
+        dt = dt.replace(tzinfo=timezone.utc)
+        mjd, mpm = datetime_to_mjdmpm(dt)
+        mjds.append(mjd + mpm/1000.0/86400.)
+        
     # Bring it into NumPy
     lats = np.array(lats)
     lngs = np.array(lngs)
     data = np.array(data)
     rdata = np.array(rdata)
     
+    # Build the lat/lng grip
+    lngs, lats = np.meshgrid(lngs, lats)
+    
     # Reverse
     lats = lats[::-1,:]
     lngs = lngs[::-1,:]
-    data = data[::-1,:]
-    rdata = rdata[::-1,:]
+    data = data[:,::-1,:]
+    rdata = rdata[:,::-1,:]
     
     # Done
-    return lats, lngs, data, rdata
+    return mjds, lats, lngs, data, rdata
 
 
 def load_mjd(mjd):
@@ -119,49 +140,23 @@ def load_mjd(mjd):
     # and the day-of-year
     mpm = int((mjd - int(mjd))*24.0*3600.0*1000)
     dt = mjdmpm_to_datetime(int(mjd), mpm)
+    dateStr = dt.strftime("%Y_%m_%d")
     
-    # Loop over 10 min intervals in the day
-    daily_mjds = []
-    daily_tec = []
-    daily_rms = []
+    ## Figure out the filename
+    filename = FILENAME_TEMPLATE % (dateStr)
     
-    idt = dt.replace(minute=0, second=0, microsecond=0)
-    idt -= timedelta(seconds=5*60)
-    for i in range(-5, 1*60+10, 10):
-        ## Get the YMDHMS string
-        imjd, impm = datetime_to_mjdmpm(idt)
-        imjd = imjd + impm/1000./86400
-        dateStr = idt.strftime("%Y%m%dT%H%M%S")
+    ## Is the primary file in the disk cache?
+    if filename not in _CACHE_DIR:
+        ### Can we download it?
+        status = _download(mjd)
         
-        ## Figure out the filename
-        filename = FILENAME_TEMPLATE % (dateStr)
-        filenameComp = filename+'.gz'
+    else:
+        ## Good we have the primary file
+        pass
         
-        ## Is the primary file in the disk cache?
-        if filename not in _CACHE_DIR:
-            ### Can we download it?
-            status = _download(imjd)
-            
-            ### Compress it
-            with _CACHE_DIR.open(filename, 'rb') as fh:
-                with _CACHE_DIR.open(filenameComp, 'wb') as gh:
-                    with gzip.GzipFile(fileobj=gh, mode='wb') as gh:
-                        gh.write(fh.read())
-            _CACHE_DIR.remove(filename)
-            
-        else:
-            ## Good we have the primary file
-            pass
-            
-        ## Parse it and add it to the list
-        daily_mjds.append(imjd)
-        with _CACHE_DIR.open(filenameComp, 'rb') as fh:
-            daily_lats, daily_lngs, tec, rms = _parse_glotec_map(fh)
-        daily_tec.append(tec)
-        daily_rms.append(rms)
-        
-        ## Update the time
-        idt += timedelta(seconds=10*60)
+    ## Parse it and populate the MJD, TEC, and RMS lists lists (timestamp per item)
+    with _CACHE_DIR.open(filename, 'rb') as fh:
+        daily_mjds, daily_lats, daily_lngs, daily_tec, daily_rms = _parse_glotec_map(fh)
         
     # list -> np.array
     daily_mjds = np.array(daily_mjds)

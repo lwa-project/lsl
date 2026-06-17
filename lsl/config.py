@@ -114,7 +114,7 @@ DEFAULTS_IONO['ustec_url'] = {'value': 'https://archive.data.noaa.gov/satellite-
 DEFAULTS_IONO['ustec_mirror'] = {'value': None,
                                  'help':  'mirror URL for accessing the USTEC data products',
                                  'is_optional': True}
-DEFAULTS_IONO['glotec_url'] = {'value': 'https://services.swpc.noaa.gov/experimental/products/glotec/geojson_2d_urt/',
+DEFAULTS_IONO['glotec_url'] = {'value': 'https://archive.data.noaa.gov/satellite-spaceweather/SWPC/Models/GLOTEC/glotec/',
                               'help':  'primary URL for accessing the GloTEC data products',
                               'is_optional': False}
 DEFAULTS_IONO['glotec_mirror'] = {'value': None,

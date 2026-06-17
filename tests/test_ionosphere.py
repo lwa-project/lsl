@@ -224,33 +224,25 @@ class ionosphere_tests(unittest.TestCase):
                 self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
             except OSError as e:
                 warnings.warn(f"USTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
+                
+        with self.subTest(service='GloTEC'):
+            """
+            LSL 4.0.1
             
-        # with self.subTest(service='GloTEC'):
-        #     """
-        #     $ less glotec_icao_20240927T092500Z.geojson
-        #     ...
-        #     {
-        #         "type": "Feature",
-        #         "geometry": {
-        #             "type": "Point",
-        #             "coordinates": [
-        #                 -107.5,
-        #                 33.75
-        #             ]
-        #         },
-        #         "properties": {
-        #             "tec": 15.556710199197358,
-        #             "anomaly": -2.8757901895049898,
-        #             "quality_flag": 5
-        #         }
-        #     },
-        #     ...
-        #     """
-        # 
-        #     tec, rms = ionosphere.get_tec_value(60580.39236111111, lat=33.75, lng=-107.5, include_rms=True, type='GloTEC')
-        #     self.assertAlmostEqual(tec[0][0], 15.5567102, 6)
-        #     self.assertAlmostEqual(rms[0][0],  2.8757901, 6)
-            
+            Python 3.14.5 (main, May 10 2026, 10:21:34) [Clang 17.0.0 (clang-1700.6.4.2)] on darwin
+            Type "help", "copyright", "credits" or "license" for more information.
+            >>> from lsl.misc import ionosphere
+            >>> ionosphere.get_tec_value(61101.39236111111, lat=33.75, lng=-107.5, include_rms=True, type='GloTEC')
+            (array([[32.70771027]]), array([[5.42459154]]))
+            """
+        
+            try:
+                tec, rms = ionosphere.get_tec_value(61101.39236111111, lat=33.75, lng=-107.5, include_rms=True, type='GloTEC')
+                self.assertAlmostEqual(tec[0][0], 32.7077103, 6)
+                self.assertAlmostEqual(rms[0][0],  5.4245915, 6)
+            except OSError as e:
+                warnings.warn(f"GloTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
+                
     def test_tec_value_lpn(self):
         """Test retrieving the TEC value at a particular location in the era of long product names"""
         
@@ -310,6 +302,18 @@ class ionosphere_tests(unittest.TestCase):
                 # self.assertAlmostEqual(rms[0][0],  2.7000000, 6)
             except OSError as e:
                 warnings.warn(f"USTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
+                
+        with self.subTest(service='GloTEC'):
+            """
+            ...
+            """
+            
+            try:
+                tec, rms = ionosphere.get_tec_value(61101, lat=34.0, lng=-107.0, include_rms=True, type='GloTEC')
+                self.assertAlmostEqual(tec[0][0], 12.5267025, 6)
+                self.assertAlmostEqual(rms[0][0],  0.8490338, 6)
+            except OSError as e:
+                warnings.warn(f"GloTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
 
 
 class ionosphere_test_suite(unittest.TestSuite):
