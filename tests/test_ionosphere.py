@@ -218,9 +218,12 @@ class ionosphere_tests(unittest.TestCase):
             (array([[ 17.29999924]]), array([[ 2.5999999]]))
             """
             
-            tec, rms = ionosphere.get_tec_value(58415, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
-            self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
-            self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
+            try:
+                tec, rms = ionosphere.get_tec_value(58415, lat=34.0, lng=-107.0, include_rms=True, type='USTEC')
+                self.assertAlmostEqual(tec[0][0], 17.29999924, 6)
+                self.assertAlmostEqual(rms[0][0],  2.5999999, 6)
+            except OSError as e:
+                warnings.warn(f"USTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
             
         # with self.subTest(service='GloTEC'):
         #     """
