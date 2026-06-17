@@ -130,7 +130,7 @@ static PyArrayObject * parse_vdif(uint8_t *rawData, uint32_t dataLength, uint32_
     npy_intp dims[1];
     dims[0] = (npy_intp) nSamples;
     data = (PyArrayObject*) PyArray_ZEROS(1, dims, N, 0);
-    if(data == NULL) {
+    if( data == NULL ) {
         return data;
     }
     
@@ -215,13 +215,18 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     // Fix up various bits in the basic header
     uint32_t nChan;
     uint8_t bitsPerSample;
+    uint32_t headerSize;
     nChan = 1 << bHeader.log2_nchan;
     bitsPerSample = bHeader.bits_per_sample_minus_one + 1;
-    
+    headerSize = sizeof(VDIFBasicHeader);
+    if( bHeader.is_legacy == 0 ) {
+      headerSize += sizeof(VDIFExtendedHeader);
+    }
+
     // Does this frame look like it is valid?
-    if( bHeader.frame_length < sizeof(bHeader)/8 ) {
+    if( bHeader.frame_length*8 < headerSize ) {
         buffer = PyObject_CallMethod(ph, "seek", "ii", -sizeof(bHeader), 1);
-        PyErr_Format(SyncError, "Frame size is zero, zero-filled frame?");
+        PyErr_Format(SyncError, "Frame size is too small to hold a valid header");
         goto fail;
     }
     
@@ -257,7 +262,7 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Figure out how much to read in to get the entire data frame
     uint32_t dataLength, samplesPerWord, nSamples;
-    dataLength = bHeader.frame_length*8 - 32 + 16*bHeader.is_legacy;	// 8-byte chunks -> bytes - full header + legacy offset
+    dataLength = bHeader.frame_length*8 - headerSize;	// 8-byte words -> bytes - full header
     samplesPerWord = 32 / bitsPerSample;					// dimensionless
     nSamples = dataLength / 4 * samplesPerWord;					// bytes -> words -> samples
     
@@ -304,7 +309,7 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
     
     // Clean and deal with the unexpected
     free(rawData);
-    if(data == NULL) {
+    if( data == NULL ) {
         PyErr_Format(PyExc_MemoryError, "Cannot create output array");
         goto fail;
     }
@@ -317,7 +322,7 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
         npy_intp dims[1];
         dims[0] = (npy_intp) nSamples/2;
         tempArrayComplex = (PyArrayObject*) PyArray_ZEROS(1, dims, NPY_COMPLEX64, 0);
-        if(tempArrayComplex == NULL) {
+        if( tempArrayComplex == NULL ) {
             PyErr_Format(PyExc_MemoryError, "Cannot create output array");
             Py_XDECREF(tempArrayComplex);
             goto fail;
@@ -352,11 +357,18 @@ PyObject *read_vdif(PyObject *self, PyObject *args, PyObject *kwds) {
         
         tempArrayMulti = (PyArrayObject*) PyArray_Newshape(data, &padims, NPY_CORDER);
         Py_XDECREF(data);
-        
+        if( tempArrayMulti == NULL ) {
+            PyErr_Format(PyExc_MemoryError, "Cannot create output array");
+            goto fail;
+        }
+
         // Transpose
         data = (PyArrayObject*) PyArray_Transpose(tempArrayMulti, NULL);
         Py_XDECREF(tempArrayMulti);
-        
+        if( data == NULL ) {
+            goto fail;
+        }
+
     }
     
     // Save the data to the frame object
