@@ -1702,31 +1702,54 @@ class TBXFile(LDPFileBase):
             if eofFound or nFrameSets == frame_count:
                 break
                 
-            cFrames = deque()
-            for i in range(framesPerObs):
-                try:
-                    cFrame = tbx_rf(self.fh)
-                    if not cFrame.is_tbx:
-                        nSkip += 1
-                        continue
-                    cFrames.append( cFrame )
-                    nSkip = 0
-                except errors.EOFError:
-                    eofFound = True
-                    self.buffer.append(cFrames)
-                    cFrames = []
-                    break
-                except errors.SyncError:
-                    nSkip += 1
-                    if nSkip > 40000:
+            if not self.buffer.overfilled:
+                cFrames = deque()
+                for i in range(framesPerObs):
+                    try:
+                        cFrame = tbx_rf(self.fh)
+                        if not cFrame.is_tbx:
+                            nSkip += 1
+                            continue
+                        cFrames.append( cFrame )
+                        nSkip = 0
+                    except errors.EOFError:
                         eofFound = True
                         self.buffer.append(cFrames)
                         cFrames = []
                         break
-                    self.fh.seek(drx.FRAME_SIZE, 1)
-                    continue
-                    
-            self.buffer.append(cFrames)
+                    except errors.SyncError:
+                        nSkip += 1
+                        if nSkip > 40000:
+                            eofFound = True
+                            self.buffer.append(cFrames)
+                            cFrames = []
+                            break
+                        self.fh.seek(drx.FRAME_SIZE, 1)
+                        continue
+                self.buffer.append(cFrames)
+                
+            cTimetag = self.buffer.peek()
+            if cTimetag is None:
+                # Continue adding frames if nothing comes out.
+                continue
+            else:
+                # Otherwise, make sure we are on track
+                aStand = 0
+                if self._timetag[aStand] == 0:
+                    pass
+                elif cTimetag != self._timetag[aStand]+self._timetagSkip:
+                    missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
+                    if int(missing) == missing and missing < LDP_CONFIG.get('tbx_autofill_size'):
+                        ## This is kind of black magic down here
+                        for m in range(int(missing)):
+                            m = self._timetag[aStand] + self._timetagSkip*(m+1)
+                            try:
+                                baseframe = copy.deepcopy(cFrames[0])
+                            except NameError:
+                                baseframe = copy.deepcopy(self.buffer.buffer[cTimetag][0])
+                            baseframe.payload.timetag = m
+                            baseframe.payload._data *= 0
+                            self.buffer.append(baseframe)
             cFrames = self.buffer.get()
             
             # Continue adding frames if nothing comes out.
