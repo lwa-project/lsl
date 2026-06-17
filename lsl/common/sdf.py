@@ -62,7 +62,7 @@ from lsl.astro import utcjd_to_unix, MJD_OFFSET, DJD_OFFSET
 from lsl.common._sdf_utils import *
 from lsl.common.color import colorfy
 
-from lsl.common.mcs import LWA_MAX_NSTD, datetime_to_mjdmpm, mjdmpm_to_datetime
+from lsl.common.mcs import LWA_MAX_NSTD, MAX_STP_N, datetime_to_mjdmpm, mjdmpm_to_datetime
 from lsl.common.ndp import freq_to_word, word_to_freq, fS
 from lsl.common.stations import lwa1
 from lsl.reader.drx import FILTER_CODES as DRXFilters
@@ -1455,6 +1455,10 @@ class Stepped(Observation):
                 failures += 1
                 
             stepCount += 1
+            
+        if stepCount > MAX_STP_N:
+            LSL_LOGGER.error(f"Too many steps ({stepCount}) set for this observation")
+            failures += 1
             
         # Advanced - Target Visibility
         if self.target_visibility < 1.0:
