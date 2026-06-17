@@ -248,6 +248,7 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     PyArrayObject *dataA0=NULL, *dataB0=NULL, *dataC0=NULL, *dataD0=NULL;
     PyArrayObject *dataA1=NULL, *dataB1=NULL, *dataC1=NULL, *dataD1=NULL;
     int i, nSets;
+    ssize_t nBytes = 0;
     DRSpecHeader header;
     
     if(!PyArg_ParseTuple(args, "OO", &ph, &frame)) {
@@ -339,14 +340,19 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
     
     // Get ready to read in the data
     float *data;
-    data = (float *) malloc(sizeof(float)*nSets*header.nFreqs);
-    
+    nBytes = (ssize_t) sizeof(float)*nSets*header.nFreqs;
+    data = (float *) malloc(nBytes);
+    if( data == NULL ) {
+        PyErr_Format(PyExc_MemoryError, "Cannot allocate data buffer");
+        goto fail;
+    }
+
     // Read in the data section
     if( drspec_size_dat == NULL ) {
-        drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
-    } else if( PyLong_AsUnsignedLong(drspec_size_dat) != sizeof(float)*nSets*header.nFreqs ) {
+        drspec_size_dat = Py_BuildValue("n", nBytes);
+    } else if( PyLong_AsSsize_t(drspec_size_dat) != nBytes ) {
         Py_XDECREF(drspec_size_dat);
-        drspec_size_dat = Py_BuildValue("i", sizeof(float)*nSets*header.nFreqs);
+        drspec_size_dat = Py_BuildValue("n", nBytes);
     }
     buffer = PyObject_CallMethodObjArgs(ph, drspec_method, drspec_size_dat, NULL);
     if( buffer == NULL ) {
@@ -355,12 +361,14 @@ PyObject *read_drspec(PyObject *self, PyObject *args) {
         } else {
             PyErr_Format(PyExc_AttributeError, "Object does not have a read() drspec_method");
         }
+        free(data);
         goto fail;
-    } else if( PyBytes_GET_SIZE(buffer) != (ssize_t) sizeof(float)*nSets*header.nFreqs ) {
+    } else if( PyBytes_GET_SIZE(buffer) != nBytes ) {
         PyErr_Format(EOFError, "End of file encountered during filehandle read");
+        free(data);
         goto fail;
     }
-    memcpy(data, PyBytes_AS_STRING(buffer), sizeof(float)*nSets*header.nFreqs);
+    memcpy(data, PyBytes_AS_STRING(buffer), nBytes);
     Py_XDECREF(buffer);
     
     Py_BEGIN_ALLOW_THREADS
