@@ -69,7 +69,14 @@ def get_beamformer_min_delay(tarname):
             ti = tf.getmember('mindelay.txt')
         except KeyError:
             return None
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Parse the SDM file and build the SDM instance
         with open(os.path.join(tempDir, 'mindelay.txt'), 'r') as fh:
@@ -104,7 +111,14 @@ def get_session_metadata(tarname):
             for ti in _get_members(tarname):
                 if ti.name[-13:] == '_metadata.txt':
                     break
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Read in the SMF
         filename = os.path.join(tempDir, ti.name)
@@ -197,7 +211,14 @@ def get_asp_configuration(tarname, which='beginning'):
                     mibs.append(ti)
                     
         if len(mibs) > 0:
-            tf.extractall(path=tempDir, members=mibs)
+            for member in mibs:
+                mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+                try:
+                    if os.path.commonpath([tempDir, mname]) != tempDir:
+                        continue
+                except ValueError:
+                    continue
+                tf.extract(member, tempDir)
             
             # Read in the right MIB
             aspMIB = {}

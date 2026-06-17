@@ -33,6 +33,8 @@ The header file values are:
  * MIB_INDEX_FIELD_LENGTH - Number of characters in a MIB index field
  * MIB_LABEL_FIELD_LENGTH - Number of characters in a MIB label field
  * MIB_VAL_FIELD_LENGTH - Number of characters in a MIB value field
+ * MAX_STP_N - Maximum number of steps in a STEPPED mode observation
+ * LWA_CMD_STRUCT_DATA_FIELD_LENGTH - Size of a MCS command structure
  * SSMIF_STRUCT - String representing the C structure of the binary SSMIF
 
 The other functions:
@@ -62,8 +64,8 @@ __all__ = ['ME_SSMIF_FORMAT_VERSION', 'ME_MAX_NSTD', 'ME_MAX_NFEE', 'ME_MAX_FEEI
            'ME_MAX_NARB', 'ME_MAX_NARBCH', 'ME_MAX_ARBID_LENGTH', 'ME_MAX_NSNAP', 'ME_MAX_NSNAPCH', 'ME_MAX_SNAPID_LENGTH', 
            'ME_MAX_NSERVER', 'ME_MAX_SERVERID_LENGTH', 'ME_MAX_NDR', 'ME_MAX_DRID_LENGTH', 'ME_MAX_NDPOUT', 'ME_MAX_NPWRPORT', 
            'ME_MAX_SSNAME_LENGTH', 'LWA_MAX_NSTD', 'MIB_REC_TYPE_BRANCH', 'MIB_REC_TYPE_VALUE', 'MIB_INDEX_FIELD_LENGTH', 
-           'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 
-           'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT', 
+           'MIB_LABEL_FIELD_LENGTH', 'MIB_VAL_FIELD_LENGTH', 'MAX_STP_N', 'LWA_CMD_STRUCT_DATA_FIELD_LENGTH',
+           'SSMIF_STRUCT', 'STATION_SETTINGS_STRUCT', 'SUBSYSTEM_STATUS_STRUCT', 'SUBSUBSYSTEM_STATUS_STRUCT',
            'SSF_STRUCT', 'OSF_STRUCT', 'OSFS_STRUCT', 'BEAM_STRUCT', 'OSF2_STRUCT', 
            'delay_to_mcsd', 'mcsd_to_delay', 'gain_to_mcsg', 'mcsg_to_gain',
            'mjdmpm_to_datetime', 'datetime_to_mjdmpm', 'StatusCode', 'SummaryCode', 'SubsystemID', 'CommandID', 
@@ -101,6 +103,8 @@ MIB_REC_TYPE_VALUE = 1        # etype for MIB value entries
 MIB_INDEX_FIELD_LENGTH = 12   # Number of characters in a MIB index field
 MIB_LABEL_FIELD_LENGTH = 32   # Number of characters in a MIB label field
 MIB_VAL_FIELD_LENGTH = 8192   # Number of characters in a MIB value field
+MAX_STP_N = 1024              # Maximum number of steps in a STEPPED observation
+LWA_CMD_STRUCT_DATA_FIELD_LENGTH = 256  # Maximum number of bytes in a command data field
 
 
 SSMIF_STRUCT = """

@@ -74,12 +74,16 @@ def read_obs_file(filename):
         bbeam   = parse_c_struct(BEAM_STRUCT, endianness='little')
         bfooter = parse_c_struct(OSF2_STRUCT, endianness='little')
         fh.readinto(bheader)
-        
+
         ## LWA-1 check
         #if bheader.FORMAT_VERSION not in (6,):
         #	fh.close()
         #	raise RuntimeError("Version mis-match: File appears to be from LWA-1")
-        
+
+        # Reject an out-of-spec step count up front (MCS limits this to MAX_STP_N)
+        if bheader.OBS_STP_N > MAX_STP_N:
+            raise IOError(f"Invalid number of observation steps ({bheader.OBS_STP_N} > {MAX_STP_N})")
+
         steps = []
         for n in range(bheader.OBS_STP_N):
             fh.readinto(bstep)
@@ -151,10 +155,12 @@ def read_cs_file(filename):
                     break
                     
                 if action.len > 0:
+                    if action.len > LWA_CMD_STRUCT_DATA_FIELD_LENGTH:
+                        raise IOError(f"Invalid command data length ({action.len} > {LWA_CMD_STRUCT_DATA_FIELD_LENGTH})")
                     data = parse_c_struct("""
                     char data[%i];
                     """ % action.len, endianness='little')
-                    
+
                     fh.readinto(data)
                     data = data.data
                 else:
@@ -194,7 +200,14 @@ def get_sdm(tarname):
             ti = tf.getmember('dynamic/sdm.dat')
         except KeyError:
             return None
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Parse the SDM file and build the SDM instance
         dynamic = sdm.parse_sdm(os.path.join(tempDir, 'dynamic', 'sdm.dat'))
@@ -218,7 +231,14 @@ def get_mcs_hostname(tarname):
             ti = tf.getmember('mcs.host')
         except KeyError:
             return 'unknown'
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Read in the name
         with open(os.path.join(tempDir, 'mcs.host'), 'r') as fh:
@@ -249,7 +269,14 @@ def get_station(tarname, apply_sdm=True):
             hostname = get_mcs_hostname(tarname)
             hostname = hostname.split('-')[0]
             return getattr(stations, hostname, None)
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Read in the SSMIF
         station = stations.parse_ssmif(os.path.join(tempDir, 'ssmif.dat'))
@@ -293,7 +320,14 @@ def get_session_spec(tarname):
             for ti in _get_members(tarname):
                 if ti.name[-4:] == '.ses':
                     break
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Read in the SES
         ses = read_ses_file(os.path.join(tempDir, ti.name))
@@ -317,7 +351,14 @@ def get_observation_spec(tarname, obs_id=None):
         for ti in _get_members(tarname):
             if ti.name[-4:] == '.obs':
                 tis.append(ti)
-        tf.extractall(path=tempDir, members=tis)
+        for member in tis:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Read in the OBS files
         obsList = []
@@ -368,7 +409,14 @@ def get_sdf(tarname):
         for ti in _get_members(tarname):
             if ti.name[-4:] == '.txt' and ti.name.find('metadata') == -1:
                 break
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Parse it
         project = sdf.parse_sdf(os.path.join(tempDir, ti.name))
@@ -389,7 +437,14 @@ def get_command_script(tarname):
         for ti in _get_members(tarname):
             if ti.name[-3:] == '.cs':
                 break
-        tf.extractall(path=tempDir, members=[ti,])
+        for member in [ti,]:
+            mname = os.path.abspath(os.path.normpath(os.path.join(tempDir, member.name)))
+            try:
+                if os.path.commonpath([tempDir, mname]) != tempDir:
+                    continue
+            except ValueError:
+                continue
+            tf.extract(member, tempDir)
         
         # Read in the CS
         cs = read_cs_file(os.path.join(tempDir, ti.name))
