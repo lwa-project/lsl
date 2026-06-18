@@ -8,7 +8,11 @@
  * Improve array bounds checking the lsl.correlator X-engines and the lsl.imaging gridder
  * Make lsl.reader.drspec and lsl.reader.vdif more robust against corrupted frames
  * Fix USTEC and GloTEC support in lsl.misc.ionosphere
- * Added lsl.common.header to make simple headers for files 
+ * Added lsl.common.header to make simple headers for files
+ * Added a way to fill small data holes in lsl.reader.ldp.TBXFile similar to what is in DRXFile
+ * Added logging messages for when small data holes are filled in lsl.reader.ldp
+ * More work on moving data related warnings.warn() calls to LSL_LOGGER.warning()
+ * Cleaned up the lsl.common.sdf and idf parser logging to reduce the number of INFOs emitted
  
 4.0.0:
  * Unified all stations under the NDP framework; dropped DP and ADP backend support                                                                       
