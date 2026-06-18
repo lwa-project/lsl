@@ -457,10 +457,10 @@ class Idi(WriterBase):
                 
         # If the mapper has been enabled, tell the user about it
         if enableMapper:
-            LSL_LOGGER.info("FITS IDI: stand ID mapping enabled")
+            LSL_LOGGER.debug("FITS IDI: stand ID mapping enabled")
             for key in mapper.keys():
                 value = mapper[key]
-                LSL_LOGGER.info(f"FITS IDI:  stand #{key} -> mapped #{value}")
+                LSL_LOGGER.debug(f"FITS IDI:  stand #{key} -> mapped #{value}")
                 
         self.nAnt = len(ants)
         self.array.append( {'center': [arrayX, arrayY, arrayZ], 'ants': ants, 'mapper': mapper, 'enableMapper': enableMapper, 'inputAnts': antennas} )

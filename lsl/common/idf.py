@@ -1219,7 +1219,7 @@ def _parse_create_scan_object(obs_temp, alt_temps=[]):
     
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
-    LSL_LOGGER.info(f"Scan {obs_temp['id']} is mode {mode}")
+    LSL_LOGGER.debug(f"Scan {obs_temp['id']} is mode {mode}")
 
 
     if mode == 'TRK_RADEC':
@@ -1393,7 +1393,7 @@ def parse_idf(filename):
                 obs_temp['id'] = int(value)
                 project.project_office.scans[0].append( None )
             
-                LSL_LOGGER.info(f"Started scan {value}")
+                LSL_LOGGER.debug(f"Started scan {value}")
 
                 continue
             if keyword == 'SCAN_TARGET':

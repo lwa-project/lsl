@@ -2060,7 +2060,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None):
     
     # Get the mode and run through the various cases
     mode = obs_temp['mode']
-    LSL_LOGGER.info(f"Obs {obs_temp['id']} is mode {mode}")
+    LSL_LOGGER.debug(f"Obs {obs_temp['id']} is mode {mode}")
         
     if mode == 'TBT':
         obsOut = TBT(obs_temp['name'], obs_temp['target'], utcString, obs_temp['tbtSamples'], comments=obs_temp['comments'])
@@ -2075,7 +2075,7 @@ def _parse_create_obs_object(obs_temp, beam_temps=None):
     elif mode == 'TRK_LUN':
         obsOut = Lunar(obs_temp['name'], obs_temp['target'], utcString, durString, f1, f2, obs_temp['filter'], gain=obs_temp['gain'], high_dr=obs_temp['HighDR'], comments=obs_temp['comments'])
     elif mode == 'STEPPED':
-        LSL_LOGGER.info(f"-> found {len(beam_temps)} steps")
+        LSL_LOGGER.debug(f"-> found {len(beam_temps)} steps")
             
         obsOut = Stepped(obs_temp['name'], obs_temp['target'], utcString, obs_temp['filter'], is_radec=obs_temp['stpRADec'], steps=[], gain=obs_temp['gain'], comments=obs_temp['comments'])
         for beam_temp in beam_temps:
@@ -2290,7 +2290,7 @@ def parse_sdf(filename):
                 obs_temp['id'] = int(value)
                 project.project_office.observations[0].append( None )
             
-                LSL_LOGGER.info(f"Started obs {int(value)}")
+                LSL_LOGGER.debug(f"Started obs {int(value)}")
                 
                 continue
             if keyword == 'OBS_TITLE':
