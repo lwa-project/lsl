@@ -14,19 +14,21 @@ from astropy.coordinates import SkyCoord
 from lsl.sim import vis
 from lsl.imaging.data import VisibilityData
 from lsl.common import stations as lwa_common
+import lsl.testing
 
 
 __version__  = "0.1"
 __author__    = "Jayce Dowell"
 
 
+@lsl.testing.quiet_lsl_logging
 class simvis_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.sim.vis
     module."""
     
     def setUp(self):
         """Turn off all numpy warnings."""
-        
+
         np.seterr(all='ignore')
         
     def test_earth_satellite(self):

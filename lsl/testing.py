@@ -1,12 +1,14 @@
 import sys
+import logging
 import numpy as np
 import unittest
 import contextlib
 from io import StringIO
 
 
-__version__ = '0.2'
-__all__ = ['assert_allclose', 'assert_spatially_close', 'SilentVerbose']
+__version__ = '0.3'
+__all__ = ['assert_allclose', 'assert_spatially_close', 'SilentVerbose',
+           'quiet_lsl_logging']
 
 
 def assert_allclose(actual, desired, rtol=1e-01, atol=1e-6, err_msg='', verbose=True):
@@ -80,3 +82,29 @@ class SilentVerbose(object):
             sys.stderr = self._orig_stderr
             buffer.flush()
             buffer.close()
+
+
+def quiet_lsl_logging(kls=None, *, level=logging.WARNING):
+    """
+    Class decorator for unittest.TestCase subclasses that raises the LSL logger
+    threshold to `level` (default WARNING) for the duration of each test so
+    routine INFO/DEBUG output (e.g. the per-build beam model provenance from
+    lsl.sim.vis) does not flood the test output.  The previous level is restored
+    after each test via TestCase.addCleanup.  Any existing setUp is preserved.
+    """
+    
+    def decorate(kls):
+        orig_setUp = kls.setUp
+        
+        def setUp(self):
+            from lsl.logger import get_log_level, set_log_level
+            
+            original = get_log_level()
+            set_log_level(level)
+            self.addCleanup(set_log_level, original)
+            orig_setUp(self)
+            
+        kls.setUp = setUp
+        return kls
+        
+    return decorate if kls is None else decorate(kls)

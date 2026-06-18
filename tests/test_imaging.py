@@ -55,6 +55,7 @@ idiFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test.fits')
 idiAltFile = os.path.join(os.path.dirname(__file__), 'data', 'idi-test-alt.fits')
 
 
+@lsl.testing.quiet_lsl_logging
 class imaging_tests(unittest.TestCase):
     """A unittest.TestCase collection of unit tests for the lsl.imaging
     modules."""
