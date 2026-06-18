@@ -7,6 +7,8 @@
  * Added step count checking to STEPPED mode observations in lsl.common.sdf
  * Improve array bounds checking the lsl.correlator X-engines and the lsl.imaging gridder
  * Make lsl.reader.drspec and lsl.reader.vdif more robust against corrupted frames
+ * Fix USTEC and GloTEC support in lsl.misc.ionosphere
+ * Added lsl.common.header to make simple headers for files 
  
 4.0.0:
  * Unified all stations under the NDP framework; dropped DP and ADP backend support                                                                       
