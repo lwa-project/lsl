@@ -14,7 +14,6 @@ CASA with the ATNF Spectral Analysis Package (ASAP).
 import os
 import gc
 import numpy as np
-import warnings
 from astropy.time import Time as AstroTime
 from astropy.io import fits as astrofits
 from datetime import datetime
@@ -25,7 +24,7 @@ from lsl.misc import telemetry
 from lsl.reader.base import FrameTimestamp
 from lsl.common.stations import lwa1
 from lsl.writer.fitsidi import WriterBase
-from lsl.common.color import colorfy
+from lsl.logger import LSL_LOGGER
 
 
 
@@ -238,6 +237,7 @@ class Sd(WriterBase):
         mList = []
         rawList = []
         scanCount = 1
+        warned_keymismatch = False
         for i,dataSet in enumerate(self.data):
             if dataSet.pol == self.stokes[0]:
                 tempMList = {}
@@ -275,7 +275,9 @@ class Sd(WriterBase):
                         try:
                             matrix[p,:] = tempMList[self.stokes[p]][b]
                         except KeyError:
-                            warnings.warn(colorfy("{{%%yellow Key mis-match %s %s}}" % (str(b), str(tempMList[self.stokes[p]].keys()))), RuntimeWarning)
+                            if not warned_keymismatch:
+                                LSL_LOGGER.warning(f"Key mis-match {b} {list(tempMList[self.stokes[p]].keys())}")
+                                warned_keymismatch = True
                             
                     mList.append(matrix.ravel())
                 scanCount += 1

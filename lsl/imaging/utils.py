@@ -905,7 +905,7 @@ try:
                 src = table(os.path.join(self.filename, 'SOURCE'), ack=False)
             except:
                 src = None
-                warnings.warn(colorfy("{{%%yellow Cannot find table 'SOURCE' in '%s', assuming zenith is the only source}}" % self.filename), RuntimeWarning)
+                LSL_LOGGER.warning(f"Cannot find table 'SOURCE' in '{self.filename}', assuming zenith is the only source")
             try:
                 fld = table(os.path.join(self.filename, 'FIELD'), ack=False)
             except:

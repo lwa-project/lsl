@@ -24,7 +24,6 @@ import os
 import abc
 import copy
 import numpy as np
-import warnings
 from textwrap import fill as tw_fill
 from scipy.stats import norm
 from collections import deque, defaultdict
@@ -34,7 +33,6 @@ from lsl.reader import drx, drx8, drspec, cor, tbx, errors
 from lsl.reader.buffer import DRXFrameBuffer, DRX8FrameBuffer, CORFrameBuffer, TBXFrameBuffer
 from lsl.reader.utils import *
 from lsl.reader.base import FrameTimestamp, CI8
-from lsl.common.color import colorfy
 
 from lsl.misc import telemetry
 from lsl.config import LSL_CONFIG
@@ -358,7 +356,7 @@ class DRXFile(LDPFileBase):
                         foffset = self.fh.tell() - drx.FRAME_SIZE
                         
                 if foffset > 0:
-                    warnings.warn(colorfy("{{%%yellow Large (%.1f hr) gap at the beginning, skipping in %i B}}" % (toffset/3600, foffset)), RuntimeWarning)
+                    LSL_LOGGER.warning(f"Large ({toffset/3600:.1f} hr) gap at the beginning, skipping in {foffset} B")
                     self.fh.seek(foffset, 0)
                     break
                     
@@ -491,7 +489,7 @@ class DRXFile(LDPFileBase):
                 assert(len(set(diffs_used)) > len(diffs_used)//4)
                 assert(nattempt < 1000)
             except (IOError, AssertionError):
-                warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
+                LSL_LOGGER.warning("Could not find the correct offset, giving up")
 
                 break
                 
@@ -588,6 +586,7 @@ class DRXFile(LDPFileBase):
             
         # Go!
         nFrameSets = 0
+        warned_timetag = False
         eofFound = False
         count = {0:0, 1:0, 2:0, 3:0}
         while True:
@@ -620,6 +619,7 @@ class DRXFile(LDPFileBase):
                 elif cTimetag != self._timetag[aStand]+self._timetagSkip:
                     missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
                     if int(missing) == missing and missing < LDP_CONFIG.get('drx_autofill_size'):
+                        LSL_LOGGER.debug(f"Zero-filling {int(missing)} missing frame(s)")
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
@@ -642,7 +642,9 @@ class DRXFile(LDPFileBase):
                 if cTimetag != self._timetag[aStand]+self._timetagSkip:
                     actStep = cTimetag - self._timetag[aStand]
                     if self.ignore_timetag_errors:
-                        warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
+                        if not warned_timetag:
+                            LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
+                            warned_timetag = True
                     else:
                         raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                         
@@ -670,7 +672,9 @@ class DRXFile(LDPFileBase):
                     if cTimetag != self._timetag[aStand]+self._timetagSkip:
                         actStep = cTimetag - self._timetag[aStand]
                         if self.ignore_timetag_errors:
-                            warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
+                            if not warned_timetag:
+                                LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
+                                warned_timetag = True
                         else:
                             raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                             
@@ -818,7 +822,7 @@ class DRX8File(LDPFileBase):
                         foffset = self.fh.tell() - drx8.FRAME_SIZE
                         
                 if foffset > 0:
-                    warnings.warn(colorfy("{{%%yellow Large (%.1f hr) gap at the beginning, skipping in %i B}}" % (toffset/3600, foffset)), RuntimeWarning)
+                    LSL_LOGGER.warning(f"Large ({toffset/3600:.1f} hr) gap at the beginning, skipping in {foffset} B")
                     self.fh.seek(foffset, 0)
                     break
                     
@@ -951,7 +955,7 @@ class DRX8File(LDPFileBase):
                 assert(len(set(diffs_used)) > len(diffs_used)//4)
                 assert(nattempt < 1000)
             except (IOError, AssertionError):
-                warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
+                LSL_LOGGER.warning("Could not find the correct offset, giving up")
 
                 break
                 
@@ -1048,6 +1052,7 @@ class DRX8File(LDPFileBase):
             
         # Go!
         nFrameSets = 0
+        warned_timetag = False
         eofFound = False
         count = {0:0, 1:0, 2:0, 3:0}
         while True:
@@ -1080,6 +1085,7 @@ class DRX8File(LDPFileBase):
                 elif cTimetag != self._timetag[aStand]+self._timetagSkip:
                     missing = (cTimetag - self._timetag[aStand] - self._timetagSkip) / float(self._timetagSkip)
                     if int(missing) == missing and missing < LDP_CONFIG.get('drx_autofill_size'):
+                        LSL_LOGGER.debug(f"Zero-filling {int(missing)} missing frame(s)")
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
                             m = self._timetag[aStand] + self._timetagSkip*(m+1)
@@ -1102,7 +1108,9 @@ class DRX8File(LDPFileBase):
                 if cTimetag != self._timetag[aStand]+self._timetagSkip:
                     actStep = cTimetag - self._timetag[aStand]
                     if self.ignore_timetag_errors:
-                        warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
+                        if not warned_timetag:
+                            LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
+                            warned_timetag = True
                     else:
                         raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                         
@@ -1130,7 +1138,9 @@ class DRX8File(LDPFileBase):
                     if cTimetag != self._timetag[aStand]+self._timetagSkip:
                         actStep = cTimetag - self._timetag[aStand]
                         if self.ignore_timetag_errors:
-                            warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i on tuning %i, pol %i, but found %i}}" % (self._timetagSkip, t, p, actStep)), RuntimeWarning)
+                            if not warned_timetag:
+                                LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
+                                warned_timetag = True
                         else:
                             raise RuntimeError(f"Invalid timetag skip encountered, expected {self._timetagSkip} on tuning {t}, pol {p}, but found {actStep}")
                             
@@ -1330,7 +1340,7 @@ class DRSpecFile(LDPFileBase):
                 self.fh.seek(cOffset*self.description['frame_size'], 1)
                 assert(len(set(diffs_used)) > len(diffs_used)//4)
             except (IOError, AssertionError):
-                warnings.warn(colorfy("{{%yellow Could not find the correct offset, giving up}}"), RuntimeWarning)
+                LSL_LOGGER.warning("Could not find the correct offset, giving up")
 
                 break
                 
@@ -1402,6 +1412,7 @@ class DRSpecFile(LDPFileBase):
         
         # Go!
         nFrameSets = 0
+        warned_timetag = False
         setTime = None
         for i in range(frame_count):
             # Read in the next frame and anticipate any problems that could occur
@@ -1416,7 +1427,9 @@ class DRSpecFile(LDPFileBase):
             if cTimetag > self._timetag + 1.001*timetagSkip:
                 actStep = cTimetag - self._timetag
                 if self.ignore_timetag_errors:
-                    warnings.warn("Invalid timetag skip encountered, expected %i but found %i" % (timetagSkip, actStep), RuntimeWarning)
+                    if not warned_timetag:
+                        LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {timetagSkip} but found {actStep}")
+                        warned_timetag = True
                 else:
                     raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip} but found {actStep}")
                     
@@ -1534,7 +1547,7 @@ class TBXFile(LDPFileBase):
                 tt_step = int(np.round(np.median(tt_steps)))
                 srate = fS / tt_step
             except Exception as e:
-                warnings.warn(colorfy("{{%yellow Failed to determine sample rate, assuming NDP default}}"))
+                LSL_LOGGER.warning("Failed to determine sample rate, assuming NDP default")
                 srate = fC
                 
             # Pre-load the channel mapper
@@ -1546,7 +1559,7 @@ class TBXFile(LDPFileBase):
                 channel_count = int(np.round(np.median(chan_steps)))
                 if not all(chan_steps == channel_count):
                     bad_steps = np.where(chan_steps != channel_count)[0]
-                    warnings.warn(colorfy("{{%%yellow File appears to contain %i frequency gap(s) of size %s channels}}" % (len(bad_steps), ','.join([str(chan_steps[g]) for g in bad_steps]))), RuntimeWarning)
+                    LSL_LOGGER.warning(f"File appears to contain {len(bad_steps)} frequency gap(s) of size {','.join([str(chan_steps[g]) for g in bad_steps])} channels")
             else:
                 ## Must be TBS
                 channel_count = junkFrame.payload.data.shape[0]
@@ -1687,6 +1700,7 @@ class TBXFile(LDPFileBase):
         duration = frame_count / self.description['sample_rate']
         
         nFrameSets = 0
+        warned_timetag = False
         eofFound = False
         setTime = None
         count = [0 for i in range(framesPerObs)]
@@ -1740,6 +1754,7 @@ class TBXFile(LDPFileBase):
                 elif cTimetag != self._timetag + 8192:
                     missing = (cTimetag - self._timetag - 8192) / float(8192)
                     if int(missing) == missing and missing < LDP_CONFIG.get('tbx_autofill_size'):
+                        LSL_LOGGER.debug(f"Zero-filling {int(missing)} missing frame(s)")
                         ## This is kind of black magic down here
                         for m in range(int(missing)):
                             m = self._timetag + 8192*(m+1)
@@ -1763,7 +1778,9 @@ class TBXFile(LDPFileBase):
             if cTimetag != self._timetag+timetagSkip:
                 actStep = cTimetag - self._timetag
                 if self.ignore_timetag_errors:
-                    warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
+                    if not warned_timetag:
+                        LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
+                        warned_timetag = True
                 else:
                     raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
@@ -1796,7 +1813,9 @@ class TBXFile(LDPFileBase):
                 if cTimetag != self._timetag+timetagSkip:
                     actStep = cTimetag - self._timetag
                     if self.ignore_timetag_errors:
-                        warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
+                        if not warned_timetag:
+                            LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
+                            warned_timetag = True
                     else:
                         raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
@@ -2048,6 +2067,7 @@ class CORFile(LDPFileBase):
         duration = frame_count * self.description['tint']
         
         nFrameSets = 0
+        warned_timetag = False
         eofFound = False
         setTime = None
         count = [0 for i in range(framesPerObs)]
@@ -2085,7 +2105,9 @@ class CORFile(LDPFileBase):
             if cTimetag != self._timetag+timetagSkip:
                 actStep = cTimetag - self._timetag
                 if self.ignore_timetag_errors:
-                    warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
+                    if not warned_timetag:
+                        LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
+                        warned_timetag = True
                 else:
                     raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
             self._timetag = cFrames[0].payload.timetag
@@ -2116,7 +2138,9 @@ class CORFile(LDPFileBase):
                 if cTimetag != self._timetag+timetagSkip:
                     actStep = cTimetag - self._timetag
                     if self.ignore_timetag_errors:
-                        warnings.warn(colorfy("{{%%yellow Invalid timetag skip encountered, expected %i, but found %i}}" % (timetagSkip, actStep)), RuntimeWarning)
+                        if not warned_timetag:
+                            LSL_LOGGER.warning(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
+                            warned_timetag = True
                     else:
                         raise RuntimeError(f"Invalid timetag skip encountered, expected {timetagSkip}, but found {actStep}")
                 self._timetag = cFrames[0].payload.timetag
