@@ -233,13 +233,13 @@ class ionosphere_tests(unittest.TestCase):
             Type "help", "copyright", "credits" or "license" for more information.
             >>> from lsl.misc import ionosphere
             >>> ionosphere.get_tec_value(61101.39236111111, lat=33.75, lng=-107.5, include_rms=True, type='GloTEC')
-            (array([[32.70771027]]), array([[5.42459154]]))
+            (array([[9.30269146]]), array([[0.09302691]]))
             """
-        
+
             try:
                 tec, rms = ionosphere.get_tec_value(61101.39236111111, lat=33.75, lng=-107.5, include_rms=True, type='GloTEC')
-                self.assertAlmostEqual(tec[0][0], 32.7077103, 6)
-                self.assertAlmostEqual(rms[0][0],  5.4245915, 6)
+                self.assertAlmostEqual(tec[0][0], 9.30269146, 6)
+                self.assertAlmostEqual(rms[0][0], 0.09302691, 6)
             except OSError as e:
                 warnings.warn(f"GloTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
                 
@@ -310,8 +310,8 @@ class ionosphere_tests(unittest.TestCase):
             
             try:
                 tec, rms = ionosphere.get_tec_value(61101, lat=34.0, lng=-107.0, include_rms=True, type='GloTEC')
-                #self.assertAlmostEqual(tec[0][0], 12.5267025, 6)
-                #self.assertAlmostEqual(rms[0][0],  0.8490338, 6)
+                #self.assertAlmostEqual(tec[0][0], 37.0852028, 6)
+                #self.assertAlmostEqual(rms[0][0],  0.3708520, 6)
             except OSError as e:
                 warnings.warn(f"GloTEC failed with '{str(e)}'.  This is not unusual.", RuntimeWarning)
 

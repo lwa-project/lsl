@@ -97,7 +97,7 @@ def _parse_glotec_map(filename_or_fh):
             lats = f['latitude'][...]
             lngs = f['longitude'][...]
             data = f['TEC'][...]
-            rdata = f['anomaly'][...]
+            quality = f['quality_flag'][...]
             
     finally:
         if do_close:
@@ -106,8 +106,7 @@ def _parse_glotec_map(filename_or_fh):
     # Date conversion
     mjds = []
     for ts in dates:
-        dt = datetime.fromtimestamp(ts)
-        dt = dt.replace(tzinfo=timezone.utc)
+        dt = datetime.fromtimestamp(ts, tz=timezone.utc)
         mjd, mpm = datetime_to_mjdmpm(dt)
         mjds.append(mjd + mpm/1000.0/86400.)
         
@@ -115,7 +114,11 @@ def _parse_glotec_map(filename_or_fh):
     lats = np.array(lats)
     lngs = np.array(lngs)
     data = np.array(data)
-    rdata = np.array(rdata)
+
+    # GloTEC does not provide an uncertainty/RMS map, so derive one from the
+    # per-pixel quality flag (0=no observations ... 5=5 or more observations)
+    # scaled by the TEC value
+    rdata = (6 - np.array(quality)) / 100.0 * data
     
     # Build the lat/lng grip
     lngs, lats = np.meshgrid(lngs, lats)
