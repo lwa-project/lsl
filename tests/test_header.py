@@ -297,6 +297,63 @@ class header_tests(unittest.TestCase):
         hn.namespace(argparse.Namespace(**mapping), title='Settings')
         self.assertEqual(str(hd), str(hn))
 
+    def test_columns_numbering_and_roundtrip(self):
+        """Test that columns() numbers labels from one and round-trips."""
+
+        labels = ['LST [hr]', 'Temperature [K]']
+        h = header.CommentHeader(width=0)
+        h.columns(labels)
+
+        d = header.parse_header(str(h))
+        self.assertEqual(d, {'Columns': {'1': 'LST [hr]',
+                                         '2': 'Temperature [K]'}})
+
+    def test_columns_unquoted(self):
+        """Test that columns() renders labels without JSON quotation marks,
+        unlike the key_value-based namespace()."""
+
+        labels = ['LST [hr]', 'Temperature [K]']
+
+        h = header.CommentHeader(width=0)
+        h.columns(labels)
+        text = str(h)
+        self.assertIn('1: LST [hr]', text)
+        self.assertNotIn('"LST [hr]"', text)
+
+        # namespace() with the same content does quote the labels
+        hn = header.CommentHeader(width=0)
+        hn.namespace({'1': 'LST [hr]', '2': 'Temperature [K]'}, title='Columns')
+        self.assertIn('"LST [hr]"', str(hn))
+
+    def test_columns_custom_title(self):
+        """Test that columns() honors a custom section title."""
+
+        h = header.CommentHeader(width=0)
+        h.columns(['A', 'B'], title='Fields')
+        d = header.parse_header(str(h))
+        self.assertIn('Fields', d)
+        self.assertNotIn('Columns', d)
+
+    def test_columns_units(self):
+        """Test that column_units are appended in brackets, and an empty unit
+        leaves a name bare."""
+
+        h = header.CommentHeader(width=0)
+        h.columns(['LST', 'Index', 'Temperature'],
+                  column_units=['hr', '', 'K'])
+
+        d = header.parse_header(str(h))
+        self.assertEqual(d, {'Columns': {'1': 'LST [hr]',
+                                         '2': 'Index',
+                                         '3': 'Temperature [K]'}})
+
+    def test_columns_units_length_mismatch(self):
+        """Test that a units list of the wrong length is rejected."""
+
+        h = header.CommentHeader(width=0)
+        self.assertRaises(RuntimeError, h.columns, ['A', 'B'],
+                          column_units=['only one'])
+
     def test_text_no_comment_prefix(self):
         """Test that TextHeader emits plain lines with no comment prefix."""
 

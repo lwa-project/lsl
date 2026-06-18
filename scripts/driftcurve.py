@@ -18,6 +18,7 @@ from lsl import skymap, astro
 from lsl.common import stations
 from lsl.sim.beam import get_available_models, beam_response
 from lsl.misc import parser as aph
+from lsl.common.header import BoxHeader
 
 from lsl.logger import LSL_LOGGER, set_log_level
 from lsl.misc import telemetry
@@ -120,6 +121,13 @@ def main(args):
     outputFile = f"driftcurve_{nam}_{args.pol}_{args.frequency/1e6:.2f}.txt"
     print(f"Writing driftcurve to file '{outputFile}'")
     with open(outputFile, "w") as mf:
+        h = BoxHeader()
+        h.namespace(args, title='Configuration')
+        h.blank()
+        h.rule()
+        h.blank()
+        h.columns(['LST', 'Temperature'], column_units=['hr', 'K'])
+        h.write(mf)
         for lst,pow in zip(lstList, powListAnt):
             mf.write(f"{lst}  {pow}\n")
 

@@ -165,6 +165,25 @@ class _BaseHeader:
             for k,v in ns.items():
                 self.key_value(k, v)
                 
+    def columns(self, column_names: List[str], title: str='Columns',
+                      column_units: Optional[List[str]]=None):
+        """
+        Helper to make it easy to document columns in a text file.  The column
+        names in `column_names` will be placed uder a new section called `title`.
+        """
+        
+        if column_units is None:
+            column_units = ['' for name in column_names]
+        if len(column_units) != len(column_names):
+            raise RuntimeError(f"{len(column_names)} column names vs {len(column_units)} column units")
+            
+        with self.section(title):
+            for i,(name,units) in enumerate(zip(column_names, column_units)):
+                contents = f"{i+1}: {name}"
+                if units != '':
+                    contents += f" [{units}]"
+                self.line(contents)
+                
     def timestamp(self, prefix: str='Timestamp', timespec: str='seconds',
                   tz: Optional[timezone]=None):
         """
