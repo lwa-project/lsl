@@ -13,6 +13,7 @@
  * Added logging messages for when small data holes are filled in lsl.reader.ldp
  * More work on moving data related warnings.warn() calls to LSL_LOGGER.warning()
  * Cleaned up the lsl.common.sdf and idf parser logging to reduce the number of INFOs emitted
+ * Updated the offset() method of lsl.reader.ldp classes to accept both relative and absolute times
  
 4.0.0:
  * Unified all stations under the NDP framework; dropped DP and ADP backend support                                                                       

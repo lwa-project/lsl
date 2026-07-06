@@ -26,7 +26,10 @@ import copy
 import numpy as np
 from textwrap import fill as tw_fill
 from scipy.stats import norm
+from datetime import datetime, timezone
 from collections import deque, defaultdict
+
+from astropy.time import Time as AstroTime
 
 from lsl.common.ndp import fS, fC
 from lsl.reader import drx, drx8, drspec, cor, tbx, errors
@@ -448,6 +451,17 @@ class DRXFile(LDPFileBase):
         beampols = drx.get_frames_per_obs(self.fh)
         beampols = sum(beampols)
         
+        # Allow the offset to be a particular time
+        if isinstance(offset, FrameTimestamp):
+            offset = offset - t0
+        elif isinstance(offset, AstroTime):
+            offset = (offset - t0.astropy.utc).to_value('sec')
+        elif isinstance(offset, datetime):
+            if offset.tzinfo is None:
+                LSL_LOGGER.warning("Naive datetime object provided, assuming UTC")
+                offset = offset.replace(tzinfo=timezone.utc)
+            offset = (offset - t0.utc_datetime).total_seconds()
+            
         # Offset in frames for beampols beam/tuning/pol. sets
         ioffset = int(offset * sample_rate / 4096 * beampols)
         ioffset = int(1.0 * ioffset / beampols) * beampols
@@ -914,6 +928,17 @@ class DRX8File(LDPFileBase):
         beampols = drx8.get_frames_per_obs(self.fh)
         beampols = sum(beampols)
         
+        # Allow the offset to be a particular time
+        if isinstance(offset, FrameTimestamp):
+            offset = offset - t0
+        elif isinstance(offset, AstroTime):
+            offset = (offset - t0.astropy.utc).to_value('sec')
+        elif isinstance(offset, datetime):
+            if offset.tzinfo is None:
+                LSL_LOGGER.warning("Naive datetime object provided, assuming UTC")
+                offset = offset.replace(tzinfo=timezone.utc)
+            offset = (offset - t0.utc_datetime).total_seconds()
+            
         # Offset in frames for beampols beam/tuning/pol. sets
         ioffset = int(offset * sample_rate / 4096 * beampols)
         ioffset = int(1.0 * ioffset / beampols) * beampols
@@ -1304,6 +1329,17 @@ class DRSpecFile(LDPFileBase):
         # Get the initial time, sample rate, and integration time
         t0 = junkFrame.time
         
+        # Allow the offset to be a particular time
+        if isinstance(offset, FrameTimestamp):
+            offset = offset - t0
+        elif isinstance(offset, AstroTime):
+            offset = (offset - t0.astropy.utc).to_value('sec')
+        elif isinstance(offset, datetime):
+            if offset.tzinfo is None:
+                LSL_LOGGER.warning("Naive datetime object provided, assuming UTC")
+                offset = offset.replace(tzinfo=timezone.utc)
+            offset = (offset - t0.utc_datetime).total_seconds()
+            
         # Offset in frames for beampols beam/tuning/pol. sets
         ioffset = int(round(offset / self.description['tint']))
         self.fh.seek(ioffset*self.description['frame_size'], 1)
@@ -1595,13 +1631,24 @@ class TBXFile(LDPFileBase):
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if getattr(self, "_timetag", None) is not None:
-            curr = self.buffer.peek(require_filled=False)
-            if curr is None:
+            t0 = self.buffer.peek(require_filled=False)
+            if t0 is None:
                 frame = tbx.read_frame(self.fh)
                 self.fh.seek(-frame_size, 1)
-                curr = frame.payload.time_tag
-            buffer_offset = curr - self._timetag
+                t0 = frame.payload.time_tag
+            buffer_offset = t0 - self._timetag
             buffer_offset = buffer_offset / fS
+            
+        # Allow the offset to be a particular time
+        if isinstance(offset, FrameTimestamp):
+            offset = offset - t0
+        elif isinstance(offset, AstroTime):
+            offset = (offset - t0.astropy.utc).to_value('sec')
+        elif isinstance(offset, datetime):
+            if offset.tzinfo is None:
+                LSL_LOGGER.warning("Naive datetime object provided, assuming UTC")
+                offset = offset.replace(tzinfo=timezone.utc)
+            offset = (offset - t0.utc_datetime).total_seconds()
             
         offset = offset - buffer_offset
         framesPerObs = self.description['nchan'] // self.description['frame_channel_count']
@@ -1981,13 +2028,24 @@ class CORFile(LDPFileBase):
         # Find out where we really are taking into account the buffering
         buffer_offset = 0
         if getattr(self, "_timetag", None) is not None:
-            curr = self.buffer.peek(require_filled=False)
-            if curr is None:
+            t0 = self.buffer.peek(require_filled=False)
+            if t0 is None:
                 frame = cor.read_frame(self.fh)
                 self.fh.seek(-cor.FRAME_SIZE, 1)
-                curr = frame.payload.time_tag
-            buffer_offset = curr - self._timetag
+                t0 = frame.payload.time_tag
+            buffer_offset = t0 - self._timetag
             buffer_offset = buffer_offset / fS
+            
+        # Allow the offset to be a particular time
+        if isinstance(offset, FrameTimestamp):
+            offset = offset - t0
+        elif isinstance(offset, AstroTime):
+            offset = (offset - t0.astropy.utc).to_value('sec')
+        elif isinstance(offset, datetime):
+            if offset.tzinfo is None:
+                LSL_LOGGER.warning("Naive datetime object provided, assuming UTC")
+                offset = offset.replace(tzinfo=timezone.utc)
+            offset = (offset - t0.utc_datetime).total_seconds()
             
         offset = offset - buffer_offset
         framesPerObs = self.description['nchan'] // self.description['frame_channel_count'] * self.description['nbaseline']

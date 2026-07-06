@@ -7,6 +7,9 @@ import unittest
 import tempfile
 import shutil
 import subprocess
+from datetime import timedelta
+
+from astropy.time import TimeDelta as AstroTimeDelta
 
 from lsl.reader import ldp
 from lsl.reader import errors
@@ -78,9 +81,9 @@ class extended_ldp_tests(unittest.TestCase):
         tInt, tStart, data = idf.read(0.09)
         self.assertAlmostEqual(tStart, fileStart+offset, 9)
         
-        # Jump forwards
+        # Jump forwards with FrameTimestamp
         fileStart = tStart + tInt
-        offset = idf.offset(0.1)
+        offset = idf.offset(fileStart + 0.1)
         
         # Read
         tInt, tStart, data = idf.read(0.11)
@@ -120,17 +123,17 @@ class extended_ldp_tests(unittest.TestCase):
         tInt, tStart, data = idf.read(0.1)
         self.assertAlmostEqual(tStart, fileStart+offset, 9)
         
-        # Jump forwards
+        # Jump forwards with datetime
         fileStart = tStart + tInt
-        offset = idf.offset(0.1)
+        offset = idf.offset(fileStart.utc_datetime + timedelta(seconds=0.1))
         
         # Read
         tInt, tStart, data = idf.read(0.1)
         self.assertAlmostEqual(tStart, fileStart+offset, 9)
         
-        # Jump backwards
+        # Jump backwards with astropy.time.Time
         fileStart = tStart + tInt
-        offset = idf.offset(-0.15)
+        offset = idf.offset(fileStart.astropy + AstroTimeDelta(-0.15, format='sec'))
         
         # Read
         tInt, tStart, data = idf.read(0.1)
