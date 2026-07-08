@@ -46,11 +46,11 @@ def main(args):
     print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
     pidx = None
     for p,s in enumerate(pol_str):
-        if s == args.polarization.upper():
+        if s == args.polarization:
             pidx = p
             break
     if pidx is None:
-        raise RuntimeError(f"Polarizaton {args.polarization} not found")
+        raise RuntimeError(f"Polarization {args.polarization} not found in the data")
     print(f"JD: {jd:.3f}")
 
     print("Reading in FITS IDI data")
@@ -93,7 +93,7 @@ def main(args):
         while nplot % nrow != 0:
             nrow -= 1
         ncol = nplot // nrow
-        print(f"    Plotting the first {args.nbaseline} baselines of {args.polarization.upper()}")
+        print(f"    Plotting the first {args.nbaseline} baselines of {args.polarization}")
         pb = ProgressBar(max=args.nbaseline)
         i = 0
         for k in range((args.nbaseline-1)//25+1):
@@ -183,4 +183,5 @@ if __name__ == "__main__":
     parser.add_argument('-n', '--nbaseline', type=int, default=50,
                         help='maximum number of baselines to plot')
     args = parser.parse_args()
+    args.polarization = args.polarization.upper()
     main(args)
