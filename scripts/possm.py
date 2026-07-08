@@ -11,6 +11,8 @@ import argparse
 
 from lsl import astro
 from lsl.imaging import utils
+from lsl.writer.fitsidi import NUMERIC_STOKES
+from lsl.writer.measurementset import NUMERIC_STOKES as MS_NUMERIC_STOKES
 from lsl.common.progress import ProgressBar
 from lsl.misc import parser as aph
 
@@ -36,7 +38,19 @@ def main(args):
     print(f"Raw Stand Count: {nStand}")
     print(f"Final Baseline Count: {nStand*(nStand-1)//2}")
     print(f"Spectra Coverage: {freq[0]/1e6:.3f} to {freq[-1]/1e6} MHz in {nchan} channels ({(freq[1] - freq[0])/1e3:.2f} kHz/channel)")
-    print(f"Polarization Products: {len(idi.pols)} starting with {idi.pols[0]}")
+    try:
+        pol_str = [NUMERIC_STOKES[p] for p in idi.pols]
+    except KeyError:
+        # Catch for CASA MS that use a different numbering scheme
+        pol_str = [MS_NUMERIC_STOKES[p] for p in idi.pols]
+    print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
+    pidx = None
+    for p,s in enumerate(pol_str):
+        if s == args.polarization.upper():
+            pidx = p
+            break
+    if pidx is None:
+        raise RuntimeError(f"Polarizaton {args.polarization} not found")
     print(f"JD: {jd:.3f}")
 
     print("Reading in FITS IDI data")
@@ -79,7 +93,7 @@ def main(args):
         while nplot % nrow != 0:
             nrow -= 1
         ncol = nplot // nrow
-        print(f"    Plotting the first {args.nbaseline} baselines")
+        print(f"    Plotting the first {args.nbaseline} baselines of {args.polarization.upper()}")
         pb = ProgressBar(max=args.nbaseline)
         i = 0
         for k in range((args.nbaseline-1)//25+1):
@@ -91,7 +105,7 @@ def main(args):
                     stnd1, stnd2 = dataDict.baselines[i]
                     stnd1 = idi.stands[stnd1]
                     stnd2 = idi.stands[stnd2]
-                    vis = getattr(dataDict, pols[0]).data[i]
+                    vis = getattr(dataDict, pols[pidx]).data[i]
                     i += 1
                     
                     if i == args.nbaseline + 1:
@@ -150,6 +164,8 @@ if __name__ == "__main__":
                         help='last frequency to analyze in MHz')
     parser.add_argument('-s', '--dataset', type=int, default=-1, 
                         help='data set to image')
+    parser.add_argument('-p', '--polarization', type=str, default='XX',
+                        help='polarization product to display')
     parser.add_argument('-m', '--uv-min', type=float, default=0.0, 
                         help='minimum baseline uvw length to include in lambda at the midpoint frequency')
     parser.add_argument('-x', '--uv-max', type=float, default=1e6, 
