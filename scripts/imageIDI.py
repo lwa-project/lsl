@@ -24,6 +24,7 @@ from lsl import astro
 from lsl.sim import vis as simVis
 from lsl.imaging import utils, overlay
 from lsl.writer.fitsidi import NUMERIC_STOKES
+from lsl.writer.measurementset import NUMERIC_STOKES as MS_NUMERIC_STOKES
 from lsl.misc import parser as aph
 
 import matplotlib.pyplot as plt
@@ -60,9 +61,7 @@ def main(args):
         print("Polarization Products: %s" % ' '.join([NUMERIC_STOKES[p] for p in idi.pols]))
     except KeyError:
         # Catch for CASA MS that use a different numbering scheme
-        NUMERIC_STOKESMS = {1:'I', 2:'Q', 3:'U', 4:'V', 
-                            9:'XX', 10:'XY', 11:'YX', 12:'YY'}
-        print("Polarization Products: %s" % ' '.join([NUMERIC_STOKESMS[p] for p in idi.pols]))
+        print("Polarization Products: %s" % ' '.join([MS_NUMERIC_STOKES[p] for p in idi.pols]))
         
     print("Reading in FITS IDI data")
     nSets = idi.integration_count
