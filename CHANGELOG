@@ -1,3 +1,6 @@
+4.0.2:
+ * Updated possm.py to be able to display other polariztions
+
 4.0.1:
  * Fixed a bug that caused the astrostatus.py script to crash
  * Exposed the ASP_FLT, ASP_AT[123], and DRX_GAIN SSMIF values through lsl.common.stations.LWAStation objects
