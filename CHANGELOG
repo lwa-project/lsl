@@ -1,5 +1,6 @@
 4.0.2:
  * Updated possm.py to be able to display other polariztions
+ * Require a TBT observations to specify at least 8192 samples
 
 4.0.1:
  * Fixed a bug that caused the astrostatus.py script to crash
