@@ -875,7 +875,10 @@ class TBT(Observation):
         
         failures = 0
         # Basic - Sample size
-        if self.samples > _TBT_MAX_SAMPLES:
+        if self.samples < 8192:
+            LSL_LOGGER.error(f"Invalid number of samples ({self.samples} < 8192)")
+            failures += 1
+        elif self.samples > _TBT_MAX_SAMPLES:
             LSL_LOGGER.error(f"Invalid number of samples ({self.samples} > {_TBT_MAX_SAMPLES})")
             failures += 1
             
