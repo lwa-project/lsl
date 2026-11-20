@@ -1,11 +1,18 @@
 # ----------------------------------------------
 # --- Station Static MIB Initialization File ---
 # ----------------------------------------------
-# 2026 Jan 7 by J. Dowell
-#  -- Further refinement of the calibration and update of bad stands
-# 2026 Jan 6 by J. Dowell
-#  -- New calibration to update for the removal of the LEDA splitter and NDP
-#     upgrade
+# 2026 Nov 18 by J. Dowell / Claude
+#  -- New delays from TBT self-cal with the large-slip check, 7 captures
+#     2026 Nov 18, per pol, referenced to the 250808 board alignment; splitter
+#     stands solved individually
+#  -- Flags rebuilt from the dead-path list (11/18) and a TBT power/spectrum/
+#     coherence audit:  387 good inputs; X/Y-crossed stands 63 67 82 145 148
+                        164 169 244 248 flagged until remapped
+#  -- Updated the ARX board list (ARB_ID) for the current board complement
+# 2026 Oct 17 by J. Dowell / Claude
+#  -- Fixed cycle slips found by the post-convergence delay check:
+#      108X +12.7 ns, 108Y -13.3 ns, 138X +27.2 ns, 138Y +26.8 ns
+#  -- Flagged stands 4, 134, and 194 that cannot be verified against Cyg A
 # 2025 Aug 8 by J. Dowell
 #  -- Notional SSMIF for the post-upgrade LWA1
 # 2022 Nov 15 by J. Dowell
@@ -905,54 +912,131 @@ STD_LZ[256]    +1.081
 # This refers to the *antenna*, not the FEE or some combination of the two.
 # This will be set to 3 ("OK") for any antenna n <= 2*N_STD not identified.
 # *** ANT_STAT[antenna_id] goes here:
-# This is the list of baddies after visual inspection by JDD
-ANT_STAT[9]    1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[16]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[40]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[42]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[53]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[65]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[75]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[83]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[98]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[99]   1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[135]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[136]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[157]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[165]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[166]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[178]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[179]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[193]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[220]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[234]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[237]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[246]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[257]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[273]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[309]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[311]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[316]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[326]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[332]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[335]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[355]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[362]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[366]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[390]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[395]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[396]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[400]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[405]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[406]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[461]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[464]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[488]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[489]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[490]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[492]  1  # JDD ID based on Orville spectra 2026/1/7
-ANT_STAT[503]  1  # JDD ID based on Orville spectra 2026/1/7
-
+ANT_STAT[8]     1 # 4Y; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[9]     1 # 5X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[15]    1 # 8X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[25]    1 # 13X; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[27]    1 # 14X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[35]    1 # 18X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[40]    1 # 20Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[44]    1 # 22Y; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[50]    1 # 25Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[53]    1 # 27X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[54]    1 # 27Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[74]    1 # 37Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[77]    1 # 39X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[84]    1 # 42Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[95]    1 # 48X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[96]    1 # 48Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[98]    1 # 49Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[109]   1 # 55X; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[111]   1 # 56X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[113]   1 # 57X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[125]   1 # 63X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[126]   1 # 63Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[130]   1 # 65Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[132]   1 # 66Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[133]   1 # 67X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[134]   1 # 67Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[135]   1 # 68X; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[136]   1 # 68Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[140]   1 # 70Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[143]   1 # 72X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[145]   1 # 73X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[147]   1 # 74X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[148]   1 # 74Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[150]   1 # 75Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[163]   1 # 82X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[164]   1 # 82Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[165]   1 # 83X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[166]   1 # 83Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[171]   1 # 86X; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[174]   1 # 87Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[177]   1 # 89X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[178]   1 # 89Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[179]   1 # 90X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[181]   1 # 91X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[182]   1 # 91Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[184]   1 # 92Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[185]   1 # 93X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[186]   1 # 93Y; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[189]   1 # 95X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[193]   1 # 97X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[199]   1 # 100X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[226]   1 # 113Y; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[234]   1 # 117Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[236]   1 # 118Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[244]   1 # 122Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[246]   1 # 123Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[254]   1 # 127Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[257]   1 # 129X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[258]   1 # 129Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[267]   1 # 134X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[268]   1 # 134Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[271]   1 # 136X; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[273]   1 # 137X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[278]   1 # 139Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[280]   1 # 140Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[289]   1 # 145X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[290]   1 # 145Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[292]   1 # 146Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[295]   1 # 148X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[296]   1 # 148Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[297]   1 # 149X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[298]   1 # 149Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[325]   1 # 163X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[326]   1 # 163Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[327]   1 # 164X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[328]   1 # 164Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[335]   1 # 168X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[337]   1 # 169X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[338]   1 # 169Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[339]   1 # 170X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[340]   1 # 170Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[346]   1 # 173Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[349]   1 # 175X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[351]   1 # 176X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[352]   1 # 176Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[355]   1 # 178X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[356]   1 # 178Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[361]   1 # 181X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[362]   1 # 181Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[366]   1 # 183Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[371]   1 # 186X; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[387]   1 # 194X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[388]   1 # 194Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[395]   1 # 198X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[396]   1 # 198Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[397]   1 # 199X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[403]   1 # 202X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[405]   1 # 203X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[406]   1 # 203Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[411]   1 # 206X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[422]   1 # 211Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[423]   1 # 212X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[428]   1 # 214Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[429]   1 # 215X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[430]   1 # 215Y; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[431]   1 # 216X; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[433]   1 # 217X; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[434]   1 # 217Y; live but unverifiable against Cyg A by the delay check; claude_work 2026/11/18
+ANT_STAT[455]   1 # 228X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[461]   1 # 231X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[464]   1 # 232Y; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[473]   1 # 237X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[483]   1 # 242X; no signal at the ADC (dead-path list SUB + TBT audit); claude_work 2026/11/18
+ANT_STAT[485]   1 # 243X; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[486]   1 # 243Y; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[487]   1 # 244X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[488]   1 # 244Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[489]   1 # 245X; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[490]   1 # 245Y; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
+ANT_STAT[492]   1 # 246Y; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[493]   1 # 247X; ARX noise only, no sky (dead-path list FLOOR + TBT audit); claude_work 2026/11/18
+ANT_STAT[495]   1 # 248X; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[496]   1 # 248Y; X/Y crossed between FEE and ARX (needs the mapping fixed); claude_work 2026/11/18
+ANT_STAT[506]   1 # 253Y; near-zero power in TBT; claude_work 2026/11/18
+ANT_STAT[512]   1 # 256Y; abnormal power/spectrum or low coherence in TBT; claude_work 2026/11/18
 
 # -------------------------------
 # --- Antenna mis-orientation ---
@@ -2686,74 +2770,74 @@ RPD_LENG[512] 131.00
 # ... most likely too large because they include the DP digitizer delays (~1-2 ns) which 
 # ... have not been independantly determined.
 
-RPD_STR[1]  1.0085
-RPD_STR[2]  0.9955
-RPD_STR[3]  1.0070
-RPD_STR[4]  0.9900
-RPD_STR[5]  1.0040
-RPD_STR[6]  0.9925
-RPD_STR[7]  1.0200
-RPD_STR[8]  1.0040
-RPD_STR[9]  1.0470
-RPD_STR[10]  1.0100
-RPD_STR[11]  1.0240
-RPD_STR[12]  1.0145
-RPD_STR[13]  1.0180
-RPD_STR[14]  1.0150
-RPD_STR[15]  1.0510
-RPD_STR[16]  1.0170
-RPD_STR[17]  1.0030
-RPD_STR[18]  1.0095
-RPD_STR[19]  1.0210
-RPD_STR[20]  1.0195
-RPD_STR[21]  1.0060
-RPD_STR[22]  0.9810
-RPD_STR[23]  1.0635
-RPD_STR[24]  1.0595
-RPD_STR[25]  1.0085
-RPD_STR[26]  1.0475
-RPD_STR[27]  1.0360
-RPD_STR[28]  1.0160
-RPD_STR[29]  1.0255
-RPD_STR[30]  1.0120
-RPD_STR[31]  1.0240
-RPD_STR[32]  1.0175
-RPD_STR[33]  0.9920
-RPD_STR[34]  0.9835
-RPD_STR[35]  1.0655
-RPD_STR[36]  1.0490
-RPD_STR[37]  1.0265
-RPD_STR[38]  1.0080
-RPD_STR[39]  1.0265
-RPD_STR[40]  1.0235
-RPD_STR[41]  1.0035
-RPD_STR[42]  0.9985
-RPD_STR[43]  1.0060
-RPD_STR[44]  0.9990
-RPD_STR[45]  1.0030
-RPD_STR[46]  0.9965
-RPD_STR[47]  1.0065
-RPD_STR[48]  0.9850
-RPD_STR[49]  1.0000
-RPD_STR[50]  1.0350
-RPD_STR[51]  1.0135
-RPD_STR[52]  1.0145
-RPD_STR[53]  1.0125
-RPD_STR[54]  1.0080
-RPD_STR[55]  1.0170
-RPD_STR[56]  1.0115
-RPD_STR[57]  0.9960
-RPD_STR[58]  0.9875
-RPD_STR[59]  1.0150
-RPD_STR[60]  1.0000
-RPD_STR[61]  0.9990
-RPD_STR[62]  1.0420
-RPD_STR[63]  1.0430
-RPD_STR[64]  1.0365
-RPD_STR[65]  0.9930
-RPD_STR[66]  1.0400
-RPD_STR[67]  1.0085
-RPD_STR[68]  0.9905
+RPD_STR[1]  0.9948  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[2]  0.9854  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[3]  1.0118  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[4]  1.0001  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[5]  0.9900  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[6]  0.9842  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[7]  1.0172
+RPD_STR[8]  1.0048
+RPD_STR[9]  1.0111
+RPD_STR[10]  1.0094  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[11]  1.0184  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[12]  1.0130  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[13]  1.0101  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[14]  1.0125  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[15]  1.0159
+RPD_STR[16]  1.0102
+RPD_STR[17]  1.0177  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[18]  1.0091  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[19]  1.0131  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[20]  1.0152  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[21]  1.0116  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[22]  0.9954  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[23]  1.0113  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[24]  1.0121  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[25]  1.0159
+RPD_STR[26]  1.0119  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[27]  1.0061
+RPD_STR[28]  1.0094
+RPD_STR[29]  1.0181  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[30]  1.0107  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[31]  1.0163  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[32]  1.0166  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[33]  1.0182  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[34]  1.0157  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[35]  1.0401
+RPD_STR[36]  1.0320
+RPD_STR[37]  1.0157  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[38]  1.0062  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[39]  1.0116  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[40]  1.0294
+RPD_STR[41]  1.0084  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[42]  1.0007  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[43]  1.0088
+RPD_STR[44]  1.0064
+RPD_STR[45]  1.0072  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[46]  1.0049  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[47]  0.9939  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[48]  0.9821  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[49]  1.0141
+RPD_STR[50]  1.0120
+RPD_STR[51]  1.0080  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[52]  1.0132  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[53]  1.0079
+RPD_STR[54]  1.0039
+RPD_STR[55]  1.0099  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[56]  1.0094  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[57]  1.0125  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[58]  1.0078  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[59]  1.0175  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[60]  1.0077  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[61]  1.0121  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[62]  1.0177  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[63]  1.0106  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[64]  1.0077  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[65]  1.0093  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[66]  1.0119  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[67]  0.9890  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[68]  0.9763  # self-cal 2026/11/18, zcu slips removed
 
 # FIXME
 # This is the *real* Stand #35
@@ -2764,457 +2848,457 @@ RPD_VF[69] 85.0 # this is the known value for LMR-400
 RPD_DD[69]  2.0 # this is SE's guess; see comment below
 RPD_A0[69] 0.00185
 RPD_A1[69] 0.00000
-RPD_STR[69]  0.9970 #      Updated based on TBW self-cal. results
+RPD_STR[69]  0.9830  # self-cal 2026/11/18, zcu slips removed
 RPD_VF[70] 85.0 # this is the known value for LMR-400
 RPD_DD[70]  2.0 # this is SE's guess; see comment below
 RPD_A0[70] 0.00185
 RPD_A1[70] 0.00000
-RPD_STR[70]  1.0050 #      Updated based on TBW self-cal. results
+RPD_STR[70]  0.9925  # self-cal 2026/11/18, zcu slips removed
 # FIXME SE Above: I guessed RPD_DD = 2 ns, because I expect it to be better than
 # ... a LMR-200-like cable, but I'm not sure by how much.
 
-RPD_STR[71]  1.0345
-RPD_STR[72]  1.0365
-RPD_STR[73]  0.9940
-RPD_STR[74]  1.0230
-RPD_STR[75]  1.0130
-RPD_STR[76]  0.9835
-RPD_STR[77]  1.0440
-RPD_STR[78]  1.0435
-RPD_STR[79]  1.0000
-RPD_STR[80]  0.9855
-RPD_STR[81]  0.9970
-RPD_STR[82]  1.0380
-RPD_STR[83]  1.0620
-RPD_STR[84]  1.0625
-RPD_STR[85]  1.0015
-RPD_STR[86]  1.0360
-RPD_STR[87]  1.0205
-RPD_STR[88]  0.9970
-RPD_STR[89]  1.0205
-RPD_STR[90]  1.0020
-RPD_STR[91]  1.0235
-RPD_STR[92]  1.0170
-RPD_STR[93]  1.0520
-RPD_STR[94]  1.0425
-RPD_STR[95]  1.0260
-RPD_STR[96]  1.0045
-RPD_STR[97]  0.9965
-RPD_STR[98]  0.9945
-RPD_STR[99]  1.0015
-RPD_STR[100]  1.0120
-RPD_STR[101]  0.9945
-RPD_STR[102]  0.9735
-RPD_STR[103]  0.9935
-RPD_STR[104]  0.9810
-RPD_STR[105]  0.9905
-RPD_STR[106]  0.9830
-RPD_STR[107]  0.9875
-RPD_STR[108]  0.9835
-RPD_STR[109]  1.0200
-RPD_STR[110]  1.0155
-RPD_STR[111]  1.0055
-RPD_STR[112]  0.9980
-RPD_STR[113]  1.0150
-RPD_STR[114]  0.9980
-RPD_STR[115]  1.0035
-RPD_STR[116]  0.9975
-RPD_STR[117]  1.0140
-RPD_STR[118]  0.9980
-RPD_STR[119]  1.0080
-RPD_STR[120]  1.0015
-RPD_STR[121]  0.9900
-RPD_STR[122]  0.9895
-RPD_STR[123]  1.0010
-RPD_STR[124]  1.0260
-RPD_STR[125]  0.9985
-RPD_STR[126]  1.0090
-RPD_STR[127]  1.0290
-RPD_STR[128]  1.0100
-RPD_STR[129]  1.0405
-RPD_STR[130]  1.0370
-RPD_STR[131]  1.0250
-RPD_STR[132]  1.0110
-RPD_STR[133]  1.0290
-RPD_STR[134]  1.0140
-RPD_STR[135]  1.0215
-RPD_STR[136]  1.0215
-RPD_STR[137]  1.0375
-RPD_STR[138]  1.0350
-RPD_STR[139]  1.0065
-RPD_STR[140]  0.9890
-RPD_STR[141]  1.0395
-RPD_STR[142]  1.0380
-RPD_STR[143]  1.0085
-RPD_STR[144]  0.9955
-RPD_STR[145]  1.0065
-RPD_STR[146]  0.9995
-RPD_STR[147]  1.0475
-RPD_STR[148]  1.0435
-RPD_STR[149]  1.0315
-RPD_STR[150]  1.0110
-RPD_STR[151]  0.9985
-RPD_STR[152]  0.9870
-RPD_STR[153]  1.0075
-RPD_STR[154]  1.0005
-RPD_STR[155]  0.9975
-RPD_STR[156]  1.0640
-RPD_STR[157]  1.0165
-RPD_STR[158]  1.0410
-RPD_STR[159]  1.0300
-RPD_STR[160]  1.0065
-RPD_STR[161]  0.9975
-RPD_STR[162]  0.9855
-RPD_STR[163]  0.9880
-RPD_STR[164]  0.9795
-RPD_STR[165]  1.0045
-RPD_STR[166]  0.9935
-RPD_STR[167]  1.0150
-RPD_STR[168]  0.9840
-RPD_STR[169]  1.0225
-RPD_STR[170]  1.0150
-RPD_STR[171]  0.9890
-RPD_STR[172]  0.9765
-RPD_STR[173]  1.0145
+RPD_STR[71]  1.0125  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[72]  1.0129  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[73]  1.0058
+RPD_STR[74]  0.9915
+RPD_STR[75]  1.0046  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[76]  1.0034  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[77]  1.0114
+RPD_STR[78]  1.0123
+RPD_STR[79]  1.0066  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[80]  1.0011  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[81]  1.0130  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[82]  1.0063  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[83]  1.0330
+RPD_STR[84]  1.0296
+RPD_STR[85]  1.0198  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[86]  1.0029  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[87]  1.0345  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[88]  1.0111  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[89]  1.0112  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[90]  1.0077  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[91]  1.0128  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[92]  1.0121  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[93]  1.0140  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[94]  1.0103  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[95]  1.0186
+RPD_STR[96]  1.0193
+RPD_STR[97]  1.0188  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[98]  1.0058
+RPD_STR[99]  1.0138  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[100]  1.0113  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[101]  1.0133  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[102]  0.9984  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[103]  1.0187  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[104]  1.0159  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[105]  1.0132  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[106]  1.0133  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[107]  1.0154  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[108]  1.0177  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[109]  1.0091
+RPD_STR[110]  1.0146  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[111]  1.0092
+RPD_STR[112]  1.0064
+RPD_STR[113]  1.0177
+RPD_STR[114]  1.0026
+RPD_STR[115]  1.0058  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[116]  1.0078  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[117]  1.0097  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[118]  0.9967  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[119]  0.9932  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[120]  0.9908  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[121]  1.0044  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[122]  1.0077  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[123]  1.0179  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[124]  1.0011  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[125]  1.0142
+RPD_STR[126]  1.0020
+RPD_STR[127]  1.0234  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[128]  1.0083  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[129]  1.0080
+RPD_STR[130]  1.0171
+RPD_STR[131]  1.0284  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[132]  1.0019
+RPD_STR[133]  1.0237
+RPD_STR[134]  1.0117
+RPD_STR[135]  1.0161
+RPD_STR[136]  1.0252
+RPD_STR[137]  1.0033  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[138]  1.0059  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[139]  1.0116
+RPD_STR[140]  1.0050
+RPD_STR[141]  1.0060  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[142]  1.0101  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[143]  1.0366
+RPD_STR[144]  1.0060
+RPD_STR[145]  1.0104
+RPD_STR[146]  1.0094
+RPD_STR[147]  1.0544
+RPD_STR[148]  1.0046
+RPD_STR[149]  0.9995
+RPD_STR[150]  1.0071
+RPD_STR[151]  1.0205  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[152]  1.0135  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[153]  0.9877  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[154]  0.9863  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[155]  1.0164  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[156]  1.0272  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[157]  1.0135  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[158]  1.0132  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[159]  1.0165  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[160]  1.0084  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[161]  1.0172  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[162]  1.0109  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[163]  1.0132
+RPD_STR[164]  1.0133
+RPD_STR[165]  1.0101
+RPD_STR[166]  1.0018
+RPD_STR[167]  1.0244  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[168]  0.9953  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[169]  1.0157  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[170]  1.0142  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[171]  1.0127
+RPD_STR[172]  1.0084
+RPD_STR[173]  0.9950
 RPD_STR[174]  1.0060
-RPD_STR[175]  1.0045
-RPD_STR[176]  1.0150
-RPD_STR[177]  0.9925
-RPD_STR[178]  1.0150
-RPD_STR[179]  1.0365
-RPD_STR[180]  1.0050
-RPD_STR[181]  1.0155
-RPD_STR[182]  0.9950
-RPD_STR[183]  1.0095
-RPD_STR[184]  0.9895
-RPD_STR[185]  1.0045
-RPD_STR[186]  0.9945
-RPD_STR[187]  0.9980
-RPD_STR[188]  1.0380
-RPD_STR[189]  1.0150
-RPD_STR[190]  1.0085
-RPD_STR[191]  1.0175
-RPD_STR[192]  1.0155
-RPD_STR[193]  0.9945
-RPD_STR[194]  1.0120
-RPD_STR[195]  1.0075
-RPD_STR[196]  1.0020
-RPD_STR[197]  1.0010
-RPD_STR[198]  1.0030
-RPD_STR[199]  1.0525
-RPD_STR[200]  1.0380
-RPD_STR[201]  1.0195
-RPD_STR[202]  1.0045
-RPD_STR[203]  1.0525
-RPD_STR[204]  1.0380
-RPD_STR[205]  1.0235
-RPD_STR[206]  1.0110
-RPD_STR[207]  1.0650
-RPD_STR[208]  1.0420
-RPD_STR[209]  0.9990
-RPD_STR[210]  0.9900
-RPD_STR[211]  1.0645
-RPD_STR[212]  1.0465
-RPD_STR[213]  1.0330
-RPD_STR[214]  1.0345
-RPD_STR[215]  0.9745
-RPD_STR[216]  1.0605
-RPD_STR[217]  1.0370
-RPD_STR[218]  1.0390
-RPD_STR[219]  1.0690
-RPD_STR[220]  1.0555
-RPD_STR[221]  1.0090
-RPD_STR[222]  1.0065
-RPD_STR[223]  1.0115
-RPD_STR[224]  1.0515
-RPD_STR[225]  0.9945
-RPD_STR[226]  1.0340
-RPD_STR[227]  1.0675
-RPD_STR[228]  1.0625
-RPD_STR[229]  0.9905
-RPD_STR[230]  0.9850
-RPD_STR[231]  1.0080
-RPD_STR[232]  1.0010
-RPD_STR[233]  1.0085
-RPD_STR[234]  0.9825
-RPD_STR[235]  0.9970
-RPD_STR[236]  0.9800
-RPD_STR[237]  1.0075
-RPD_STR[238]  0.9805
-RPD_STR[239]  1.0200
-RPD_STR[240]  1.0260
-RPD_STR[241]  1.0655
-RPD_STR[242]  1.0415
-RPD_STR[243]  1.0045
-RPD_STR[244]  0.9990
-RPD_STR[245]  0.9795
-RPD_STR[246]  0.9935
-RPD_STR[247]  0.9920
-RPD_STR[248]  1.0305
-RPD_STR[249]  1.0110
-RPD_STR[250]  1.0065
-RPD_STR[251]  0.9980
-RPD_STR[252]  1.0365
-RPD_STR[253]  1.0190
-RPD_STR[254]  1.0105
-RPD_STR[255]  1.0030
-RPD_STR[256]  0.9965
-RPD_STR[257]  1.0520
-RPD_STR[258]  1.0270
-RPD_STR[259]  1.0080
-RPD_STR[260]  0.9995
-RPD_STR[261]  1.0425
-RPD_STR[262]  1.0345
-RPD_STR[263]  1.0530
-RPD_STR[264]  1.0380
-RPD_STR[265]  1.0045
-RPD_STR[266]  1.0320
-RPD_STR[267]  1.0275
-RPD_STR[268]  1.0220
-RPD_STR[269]  1.0060
-RPD_STR[270]  1.0125
-RPD_STR[271]  1.0330
-RPD_STR[272]  1.0205
-RPD_STR[273]  1.0205
-RPD_STR[274]  0.9975
-RPD_STR[275]  1.0280
-RPD_STR[276]  1.0180
-RPD_STR[277]  1.0375
-RPD_STR[278]  1.0370
-RPD_STR[279]  1.0005
-RPD_STR[280]  1.0515
-RPD_STR[281]  1.0455
-RPD_STR[282]  1.0390
-RPD_STR[283]  1.0175
-RPD_STR[284]  0.9905
-RPD_STR[285]  0.9925
-RPD_STR[286]  0.9850
-RPD_STR[287]  1.0230
-RPD_STR[288]  1.0175
-RPD_STR[289]  1.0110
-RPD_STR[290]  1.0090
-RPD_STR[291]  0.9885
-RPD_STR[292]  0.9750
-RPD_STR[293]  1.0175
-RPD_STR[294]  1.0145
-RPD_STR[295]  1.0220
-RPD_STR[296]  1.0580
-RPD_STR[297]  1.0095
-RPD_STR[298]  1.0010
-RPD_STR[299]  1.0315
-RPD_STR[300]  1.0240
-RPD_STR[301]  1.0185
-RPD_STR[302]  1.0010
-RPD_STR[303]  1.0230
-RPD_STR[304]  1.0135
-RPD_STR[305]  1.0135
-RPD_STR[306]  1.0095
-RPD_STR[307]  1.0395
-RPD_STR[308]  1.0395
-RPD_STR[309]  1.0300
-RPD_STR[310]  0.9905
-RPD_STR[311]  1.0140
-RPD_STR[312]  1.0325
-RPD_STR[313]  1.0150
-RPD_STR[314]  1.0120
-RPD_STR[315]  1.0235
-RPD_STR[316]  1.0265
-RPD_STR[317]  0.9960
-RPD_STR[318]  0.9885
-RPD_STR[319]  1.0105
-RPD_STR[320]  0.9975
-RPD_STR[321]  0.9900
-RPD_STR[322]  0.9905
-RPD_STR[323]  1.0185
-RPD_STR[324]  1.0185
-RPD_STR[325]  1.0460
-RPD_STR[326]  1.0170
-RPD_STR[327]  1.0285
-RPD_STR[328]  1.0265
-RPD_STR[329]  1.0030
-RPD_STR[330]  0.9925
-RPD_STR[331]  1.0030
-RPD_STR[332]  1.0465
-RPD_STR[333]  0.9990
-RPD_STR[334]  1.0340
-RPD_STR[335]  1.0120
-RPD_STR[336]  1.0580
-RPD_STR[337]  1.0315
-RPD_STR[338]  1.0195
-RPD_STR[339]  1.0625
-RPD_STR[340]  1.0550
-RPD_STR[341]  0.9955
-RPD_STR[342]  1.0145
-RPD_STR[343]  1.0300
-RPD_STR[344]  1.0170
-RPD_STR[345]  1.0095
-RPD_STR[346]  1.0230
-RPD_STR[347]  1.0480
-RPD_STR[348]  1.0220
-RPD_STR[349]  1.0015
-RPD_STR[350]  0.9860
-RPD_STR[351]  1.0950
-RPD_STR[352]  0.9635
-RPD_STR[353]  1.0150
-RPD_STR[354]  1.0075
-RPD_STR[355]  1.0360
-RPD_STR[356]  1.0215
-RPD_STR[357]  1.0190
-RPD_STR[358]  1.0105
-RPD_STR[359]  0.9955
-RPD_STR[360]  0.9930
-RPD_STR[361]  0.9975
-RPD_STR[362]  0.9990
-RPD_STR[363]  1.0185
-RPD_STR[364]  1.0015
-RPD_STR[365]  0.9945
-RPD_STR[366]  0.9995
-RPD_STR[367]  1.0085
-RPD_STR[368]  1.0410
-RPD_STR[369]  1.0070
-RPD_STR[370]  1.0045
-RPD_STR[371]  1.0175
-RPD_STR[372]  0.9970
-RPD_STR[373]  0.9965
-RPD_STR[374]  0.9885
-RPD_STR[375]  0.9945
-RPD_STR[376]  0.9810
-RPD_STR[377]  0.9995
-RPD_STR[378]  0.9900
-RPD_STR[379]  1.0160
-RPD_STR[380]  1.0090
-RPD_STR[381]  1.0115
-RPD_STR[382]  1.0060
-RPD_STR[383]  1.0715
-RPD_STR[384]  1.0570
-RPD_STR[385]  1.0510
-RPD_STR[386]  1.0390
-RPD_STR[387]  1.0170
-RPD_STR[388]  1.0755
-RPD_STR[389]  0.9910
-RPD_STR[390]  0.9955
-RPD_STR[391]  1.0015
-RPD_STR[392]  0.9950
-RPD_STR[393]  0.9985
-RPD_STR[394]  0.9910
-RPD_STR[395]  0.9480
-RPD_STR[396]  1.0430
-RPD_STR[397]  1.0185
-RPD_STR[398]  1.0075
-RPD_STR[399]  0.9855
-RPD_STR[400]  0.9725
-RPD_STR[401]  1.0135
-RPD_STR[402]  1.0140
-RPD_STR[403]  1.0375
-RPD_STR[404]  0.9595
-RPD_STR[405]  1.0380
-RPD_STR[406]  1.0265
-RPD_STR[407]  0.9865
-RPD_STR[408]  0.9725
-RPD_STR[409]  1.0190
-RPD_STR[410]  1.0110
-RPD_STR[411]  1.0120
-RPD_STR[412]  1.0010
-RPD_STR[413]  1.0345
-RPD_STR[414]  1.0375
-RPD_STR[415]  0.9950
-RPD_STR[416]  0.9895
-RPD_STR[417]  1.0405
-RPD_STR[418]  1.0490
-RPD_STR[419]  1.0250
-RPD_STR[420]  0.9980
-RPD_STR[421]  1.0520
-RPD_STR[422]  1.0495
-RPD_STR[423]  1.0110
-RPD_STR[424]  1.0025
-RPD_STR[425]  1.0220
-RPD_STR[426]  1.0165
-RPD_STR[427]  1.0115
-RPD_STR[428]  1.0070
-RPD_STR[429]  1.0730
-RPD_STR[430]  1.0535
-RPD_STR[431]  0.9950
-RPD_STR[432]  0.9895
-RPD_STR[433]  0.9905
-RPD_STR[434]  0.9980
-RPD_STR[435]  0.9955
-RPD_STR[436]  0.9915
-RPD_STR[437]  1.0135
-RPD_STR[438]  0.9980
-RPD_STR[439]  1.0000
-RPD_STR[440]  0.9895
-RPD_STR[441]  1.0055
-RPD_STR[442]  0.9830
-RPD_STR[443]  1.0155
-RPD_STR[444]  1.0090
-RPD_STR[445]  0.9955
-RPD_STR[446]  0.9835
-RPD_STR[447]  1.0135
-RPD_STR[448]  1.0115
-RPD_STR[449]  1.0465
-RPD_STR[450]  1.0265
-RPD_STR[451]  1.0410
-RPD_STR[452]  1.0280
-RPD_STR[453]  0.9915
-RPD_STR[454]  0.9840
-RPD_STR[455]  1.0150
-RPD_STR[456]  1.0065
-RPD_STR[457]  1.0410
-RPD_STR[458]  1.0315
-RPD_STR[459]  1.0175
-RPD_STR[460]  1.0070
-RPD_STR[461]  1.0145
-RPD_STR[462]  1.0125
-RPD_STR[463]  0.9960
-RPD_STR[464]  1.0035
-RPD_STR[465]  1.0250
-RPD_STR[466]  1.0185
-RPD_STR[467]  0.9985
-RPD_STR[468]  0.9855
-RPD_STR[469]  1.0260
-RPD_STR[470]  1.0045
-RPD_STR[471]  1.0190
-RPD_STR[472]  1.0085
-RPD_STR[473]  1.0365
-RPD_STR[474]  1.0090
-RPD_STR[475]  0.9965
-RPD_STR[476]  0.9915
-RPD_STR[477]  1.0090
-RPD_STR[478]  0.9970
-RPD_STR[479]  1.0365
-RPD_STR[480]  1.0290
-RPD_STR[481]  1.0110
-RPD_STR[482]  1.0000
-RPD_STR[483]  1.0270
-RPD_STR[484]  1.0180
-RPD_STR[485]  1.0180
-RPD_STR[486]  0.9805
-RPD_STR[487]  0.9995
-RPD_STR[488]  0.9970
-RPD_STR[489]  1.0105
-RPD_STR[490]  1.0055
-RPD_STR[491]  1.0030
-RPD_STR[492]  0.9955
-RPD_STR[493]  0.9955
-RPD_STR[494]  0.9855
-RPD_STR[495]  1.0185
-RPD_STR[496]  1.0060
-RPD_STR[497]  0.9895
-RPD_STR[498]  0.9800
-RPD_STR[499]  1.0320
-RPD_STR[500]  1.0325
-RPD_STR[501]  1.0000
-RPD_STR[502]  1.0125
-RPD_STR[503]  1.0500
-RPD_STR[504]  1.0280
-RPD_STR[505]  1.0245
-RPD_STR[506]  1.0195
-RPD_STR[507]  0.9990
-RPD_STR[508]  0.9880
-RPD_STR[509]  1.0370
-RPD_STR[510]  1.0125
-RPD_STR[511]  1.0195
-RPD_STR[512]  1.0000
+RPD_STR[175]  1.0198  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[176]  1.0132  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[177]  1.0148
+RPD_STR[178]  1.0161
+RPD_STR[179]  1.0353
+RPD_STR[180]  1.0141  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[181]  1.0266
+RPD_STR[182]  1.0011
+RPD_STR[183]  1.0164
+RPD_STR[184]  1.0030
+RPD_STR[185]  1.0089
+RPD_STR[186]  1.0030
+RPD_STR[187]  1.0141  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[188]  1.0112  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[189]  1.0086
+RPD_STR[190]  1.0052  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[191]  1.0121  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[192]  1.0157  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[193]  1.0010
+RPD_STR[194]  1.0112  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[195]  1.0125  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[196]  1.0125  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[197]  1.0021  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[198]  1.0067  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[199]  1.0318
+RPD_STR[200]  1.0058
+RPD_STR[201]  1.0131  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[202]  1.0051  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[203]  1.0129  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[204]  1.0051  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[205]  1.0150  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[206]  1.0090  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[207]  1.0238  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[208]  1.0063  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[209]  1.0131  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[210]  1.0102  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[211]  1.0247  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[212]  1.0126  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[213]  1.0030  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[214]  1.0078  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[215]  1.0114  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[216]  1.0204  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[217]  1.0009  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[218]  1.0056  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[219]  1.0189  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[220]  1.0227  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[221]  1.0063  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[222]  1.0066  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[223]  1.0311  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[224]  1.0151  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[225]  1.0084
+RPD_STR[226]  1.0025
+RPD_STR[227]  1.0115  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[228]  1.0177  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[229]  1.0107  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[230]  1.0107  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[231]  0.9764  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[232]  0.9780  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[233]  1.0239
+RPD_STR[234]  1.0054
+RPD_STR[235]  1.0225
+RPD_STR[236]  1.0121
+RPD_STR[237]  1.0112  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[238]  1.0067  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[239]  1.0300  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[240]  1.0253  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[241]  1.0300  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[242]  1.0113  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[243]  1.0083
+RPD_STR[244]  1.0079
+RPD_STR[245]  0.9854
+RPD_STR[246]  0.9976
+RPD_STR[247]  1.0084  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[248]  1.0071  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[249]  1.0066  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[250]  1.0036  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[251]  1.0153  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[252]  1.0105  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[253]  1.0281
+RPD_STR[254]  1.0217
+RPD_STR[255]  1.0092  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[256]  1.0073  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[257]  1.0183
+RPD_STR[258]  1.0062
+RPD_STR[259]  0.9879  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[260]  0.9858  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[261]  1.0131  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[262]  1.0098  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[263]  1.0150  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[264]  1.0042  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[265]  1.0182  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[266]  1.0072  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[267]  1.0231
+RPD_STR[268]  1.0304
+RPD_STR[269]  1.0119  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[270]  1.0251  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[271]  1.0171
+RPD_STR[272]  1.0066
+RPD_STR[273]  1.0269
+RPD_STR[274]  1.0078  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[275]  1.1027  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[276]  1.0951  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[277]  1.0121
+RPD_STR[278]  1.0174
+RPD_STR[279]  1.0211
+RPD_STR[280]  1.0263
+RPD_STR[281]  1.0146  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[282]  1.0120  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[283]  1.0166  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[284]  1.0085  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[285]  1.0087  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[286]  1.0072  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[287]  1.0145  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[288]  1.0164  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[289]  1.0028
+RPD_STR[290]  1.0140
+RPD_STR[291]  1.0118
+RPD_STR[292]  1.0111
+RPD_STR[293]  1.0116  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[294]  1.0141  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[295]  1.0234
+RPD_STR[296]  1.0435
+RPD_STR[297]  1.0122
+RPD_STR[298]  1.0103
+RPD_STR[299]  1.0198  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[300]  1.0226  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[301]  1.0124  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[302]  1.0005  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[303]  1.0171  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[304]  1.0127  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[305]  1.0091  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[306]  1.0093  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[307]  1.0085  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[308]  1.0117  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[309]  1.0098  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[310]  1.0091  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[311]  1.0089  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[312]  1.0077  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[313]  1.0094  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[314]  1.0114  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[315]  1.0293  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[316]  1.0078  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[317]  1.0120  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[318]  1.0103  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[319]  1.0201  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[320]  1.0088  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[321]  1.0058  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[322]  1.0117  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[323]  1.0127  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[324]  1.0134  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[325]  1.0168
+RPD_STR[326]  1.0080
+RPD_STR[327]  1.0282
+RPD_STR[328]  1.0268
+RPD_STR[329]  0.9918  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[330]  0.9844  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[331]  1.0025  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[332]  1.0165  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[333]  1.0115  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[334]  1.0100  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[335]  1.0282
+RPD_STR[336]  1.0138
+RPD_STR[337]  1.0221
+RPD_STR[338]  1.0260
+RPD_STR[339]  1.1000
+RPD_STR[340]  1.0220
+RPD_STR[341]  1.0102  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[342]  1.0140  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[343]  1.0187  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[344]  1.0154  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[345]  1.0091
+RPD_STR[346]  1.0243
+RPD_STR[347]  1.0357  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[348]  1.0194  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[349]  1.0163
+RPD_STR[350]  1.0041
+RPD_STR[351]  1.0999
+RPD_STR[352]  1.0109
+RPD_STR[353]  1.0095  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[354]  1.0074  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[355]  1.0113
+RPD_STR[356]  1.0099
+RPD_STR[357]  1.0138  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[358]  1.0095  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[359]  1.0131  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[360]  1.0149  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[361]  1.0068
+RPD_STR[362]  1.0029
+RPD_STR[363]  1.0125  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[364]  1.0001  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[365]  1.0081  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[366]  1.0020
+RPD_STR[367]  1.0276  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[368]  1.0103  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[369]  1.0025  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[370]  1.0037  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[371]  1.0255
+RPD_STR[372]  1.0117
+RPD_STR[373]  1.0109  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[374]  1.0070  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[375]  1.0171  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[376]  1.0093  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[377]  1.0135  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[378]  1.0084  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[379]  1.0080  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[380]  1.0028  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[381]  1.0076  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[382]  1.0051  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[383]  1.0235  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[384]  1.0153  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[385]  1.0230  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[386]  1.0151  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[387]  1.0266
+RPD_STR[388]  1.0229
+RPD_STR[389]  1.0111  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[390]  1.0163  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[391]  1.0116  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[392]  1.0113  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[393]  1.0132  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[394]  1.0096  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[395]  0.9486
+RPD_STR[396]  1.0424
+RPD_STR[397]  1.0002
+RPD_STR[398]  0.9950
+RPD_STR[399]  1.0267  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[400]  1.0231  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[401]  1.0140  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[402]  1.0119  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[403]  1.0203
+RPD_STR[404]  1.0268
+RPD_STR[405]  1.0350
+RPD_STR[406]  1.0240
+RPD_STR[407]  1.0261  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[408]  1.0227  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[409]  1.0135  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[410]  1.0102  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[411]  1.0071
+RPD_STR[412]  1.0041
+RPD_STR[413]  1.0039  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[414]  1.0092  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[415]  1.0080  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[416]  1.0063  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[417]  1.0063  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[418]  1.0159  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[419]  1.0202  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[420]  0.9980  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[421]  1.0081
+RPD_STR[422]  1.0111
+RPD_STR[423]  1.0025
+RPD_STR[424]  0.9904
+RPD_STR[425]  1.0137  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[426]  1.0142  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[427]  1.0110
+RPD_STR[428]  1.0087
+RPD_STR[429]  1.0365
+RPD_STR[430]  1.0293
+RPD_STR[431]  1.0077
+RPD_STR[432]  1.0093  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[433]  0.9974
+RPD_STR[434]  1.0079
+RPD_STR[435]  1.0098  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[436]  1.0108  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[437]  0.9800  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[438]  0.9743  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[439]  1.0151  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[440]  1.0086  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[441]  0.9687  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[442]  0.9569  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[443]  1.0107  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[444]  1.0088  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[445]  1.0053  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[446]  1.0027  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[447]  1.0085  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[448]  1.0111  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[449]  1.0307  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[450]  1.0246  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[451]  1.0146  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[452]  1.0056  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[453]  1.0116  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[454]  1.0101  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[455]  1.0101
+RPD_STR[456]  1.0046
+RPD_STR[457]  1.0566  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[458]  0.9997  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[459]  1.0125  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[460]  1.0062  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[461]  1.0110
+RPD_STR[462]  0.9958
+RPD_STR[463]  1.0070
+RPD_STR[464]  1.0043
+RPD_STR[465]  1.0167  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[466]  1.0170  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[467]  1.0127  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[468]  1.0034  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[469]  1.0169  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[470]  1.0022  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[471]  1.0147  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[472]  1.0084  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[473]  1.0220
+RPD_STR[474]  0.9966
+RPD_STR[475]  1.0092  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[476]  1.0081  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[477]  1.0191  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[478]  1.0180  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[479]  1.0127  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[480]  1.0073  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[481]  1.0233  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[482]  1.0225  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[483]  1.0183
+RPD_STR[484]  1.0052
+RPD_STR[485]  1.0097
+RPD_STR[486]  0.9934
+RPD_STR[487]  0.9977
+RPD_STR[488]  0.9982
+RPD_STR[489]  1.0104
+RPD_STR[490]  1.0118
+RPD_STR[491]  1.0155  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[492]  1.0058
+RPD_STR[493]  1.0009
+RPD_STR[494]  0.9988
+RPD_STR[495]  1.0180
+RPD_STR[496]  1.0016
+RPD_STR[497]  1.0136  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[498]  1.0115  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[499]  1.0079  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[500]  1.0114  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[501]  1.0193  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[502]  1.0088  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[503]  1.0258  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[504]  1.0068  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[505]  1.0205  # 74 MHz cycle-slip fix; claude_work 2026/10/16
+RPD_STR[506]  0.9904  # 74 MHz cycle-slip fix; claude_work 2026/10/16
+RPD_STR[507]  1.0137  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[508]  1.0066  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[509]  1.0229  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[510]  1.0092  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[511]  1.0131  # self-cal 2026/11/18, zcu slips removed
+RPD_STR[512]  1.0085
 
 # FIXME
 # Removed since NDP only has 512 inputs
@@ -3860,34 +3944,34 @@ ARB_ID[1] 0343
 ARB_ID[2] 0335
 ARB_ID[3] 0342
 ARB_ID[4] 0345
-ARB_ID[5] 0341
-ARB_ID[6] 0340
+ARB_ID[5] 0340
+ARB_ID[6] 0386
 ARB_ID[7] 0339
 ARB_ID[8] 0320
 ARB_ID[9] 0354
-ARB_ID[10] 0353
+ARB_ID[10] 0399
 ARB_ID[11] 0352
 ARB_ID[12] 0351
-ARB_ID[13] 0332
-ARB_ID[14] 0360
+ARB_ID[13] 0417
+ARB_ID[14] 0395
 ARB_ID[15] 0361
-ARB_ID[16] 0362
+ARB_ID[16] 0374
 ARB_ID[17] 0372
-ARB_ID[18] 0373
-ARB_ID[19] 0374
+ARB_ID[18] 0323
+ARB_ID[19] 0375
 ARB_ID[20] 0358
-ARB_ID[21] 0359
-ARB_ID[22] 0357
-ARB_ID[23] 0356
+ARB_ID[21] 0363
+ARB_ID[22] 0373
+ARB_ID[23] 0398
 ARB_ID[24] 0355
-ARB_ID[25] 0363
-ARB_ID[26] 0364
+ARB_ID[25] 0369
+ARB_ID[26] 0353
 ARB_ID[27] 0365
-ARB_ID[28] 0366
-ARB_ID[29] 0367
-ARB_ID[30] 0368
-ARB_ID[31] 0370
-ARB_ID[32] 0371
+ARB_ID[28] 0394
+ARB_ID[29] 0360
+ARB_ID[30] 0366
+ARB_ID[31] 0396
+ARB_ID[32] 0397
 
 # ARB_SLOT[] will be set to 0 (not known/not applicable) for any ARX board #'s <= N_ARB not identified
 # *** ARB_SLOT[arb#] goes here:
@@ -3928,38 +4012,44 @@ ARB_SLOT[32] 48
 
 # ARB_DESI[] be set to 0 for any ARX board #'s <= N_ARB not identified
 # *** ARB_DESI[arb#] goes here:
-ARB_DESI[1] 5
-ARB_DESI[2] 5
-ARB_DESI[3] 5
-ARB_DESI[4] 5
-ARB_DESI[5] 5
-ARB_DESI[6] 5
-ARB_DESI[7] 5
-ARB_DESI[8] 5
-ARB_DESI[9] 5
-ARB_DESI[10] 5
-ARB_DESI[11] 5
-ARB_DESI[12] 5
-ARB_DESI[13] 5
-ARB_DESI[14] 5
-ARB_DESI[15] 5
-ARB_DESI[16] 5
-ARB_DESI[17] 5
-ARB_DESI[18] 5
-ARB_DESI[19] 5
-ARB_DESI[20] 5
-ARB_DESI[21] 5
-ARB_DESI[22] 5
-ARB_DESI[23] 5
-ARB_DESI[24] 5
-ARB_DESI[25] 5
-ARB_DESI[26] 5
-ARB_DESI[27] 5
-ARB_DESI[28] 5
-ARB_DESI[29] 5
-ARB_DESI[30] 5
-ARB_DESI[31] 5
-ARB_DESI[32] 5
+# Codes are 1: rev C
+#           2: rev D
+#           3: rev F
+#           4: rev G
+#           5: rev H
+#           6: rev I
+ARB_DESI[1] 6
+ARB_DESI[2] 6
+ARB_DESI[3] 6
+ARB_DESI[4] 6
+ARB_DESI[5] 6
+ARB_DESI[6] 6
+ARB_DESI[7] 6
+ARB_DESI[8] 6
+ARB_DESI[9] 6
+ARB_DESI[10] 6
+ARB_DESI[11] 6
+ARB_DESI[12] 6
+ARB_DESI[13] 6
+ARB_DESI[14] 6
+ARB_DESI[15] 6
+ARB_DESI[16] 6
+ARB_DESI[17] 6
+ARB_DESI[18] 6
+ARB_DESI[19] 6
+ARB_DESI[20] 6
+ARB_DESI[21] 6
+ARB_DESI[22] 6
+ARB_DESI[23] 6
+ARB_DESI[24] 6
+ARB_DESI[25] 6
+ARB_DESI[26] 6
+ARB_DESI[27] 6
+ARB_DESI[28] 6
+ARB_DESI[29] 6
+ARB_DESI[30] 6
+ARB_DESI[31] 6
+ARB_DESI[32] 6
 
 # Format (example) "ARB_RACK[2] 3" means ARX board 2 is powered via a supply in Rack 2.
 # ARB_RACK[] will be set to 0 (no power source) for any ARX board #'s <= N_ARB not identified
@@ -5652,7 +5742,8 @@ SNAP_SLOT[16] 4-4
 
 # SNAP_DESI[] be set to 1 for any SNAP2/ZCU102 boards not identified
 # *** SNAP_DESI[snap#] goes here:
-# 2 = SNAP2; 3 = ZCU102
+# Codes are 2: SNAP2
+#           3: ZCU102
 SNAP_DESI[1] 3
 SNAP_DESI[2] 3
 SNAP_DESI[3] 3
