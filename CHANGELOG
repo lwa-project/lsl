@@ -1,6 +1,5 @@
 4.0.2:
  * Updated possm.py to be able to display other polariztions
- * Require a TBT observations to specify at least 8192 samples
  * Fixed the amplitude solutions in lsl.imaging.selfcal when combined with phase or delay
 
 4.0.1:
