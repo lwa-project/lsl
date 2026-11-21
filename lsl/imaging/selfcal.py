@@ -8,6 +8,9 @@ supported self-calibration methods are:
  * delay/phase offset
  * amplitude and delay/phase offset
 
+.. versionchanged:: 4.0.2
+   Fixed the amplitude solutions when combined with phase or delay
+
 .. versionchanged:: 3.0.8
    Added support for Tikhonov regularization and exposed the loop gain
 
@@ -345,9 +348,9 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             LSL_LOGGER.debug(f'    {metric}')
             if metric < amplitude_cutoff:
                 amplitude = False
-                converged = True
+                converged = not (phase_only or delay_only or delay_and_phase)
                 
-            dataSet = _scale_data(origSet, tempGains, np.zeros_like(tempGains), np.zeros_like(tempGains))
+            dataSet = _scale_data(origSet, tempGains, tempDelays, tempPhaseOffsets)
             
         #
         # Delay and/or phase
@@ -382,9 +385,9 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             LSL_LOGGER.debug(f'    {metric}')
             if metric < phase_cutoff:
                 phase_only = False
-                converged = True
+                converged = not amplitude
                 
-            dataSet = _scale_data(origSet, np.ones_like(tempPhaseOffsets), np.zeros_like(tempPhaseOffsets), tempPhaseOffsets)
+            dataSet = _scale_data(origSet, tempGains, tempDelays, tempPhaseOffsets)
             
         elif delay_only:
             LSL_LOGGER.debug(f'  {i+1}D')
@@ -416,9 +419,9 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             LSL_LOGGER.debug(f'    {metric}')
             if metric < delay_cutoff:
                 delay_only = False
-                converged = True
+                converged = not amplitude
                 
-            dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, np.zeros_like(tempDelays))
+            dataSet = _scale_data(origSet, tempGains, tempDelays, tempPhaseOffsets)
             
         elif delay_and_phase:
             LSL_LOGGER.debug(f'  {i+1}D+P')
@@ -446,7 +449,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             bestDelays = np.array(bestDelays)
             tempDelays += loop_gain*bestDelays
             
-            dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, tempPhaseOffsets)
+            dataSet = _scale_data(origSet, tempGains, tempDelays, tempPhaseOffsets)
             
             ## Then phase
             A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
@@ -477,9 +480,9 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             LSL_LOGGER.debug(f'    {metric1} {metric2}')
             if metric1 < delay_cutoff and metric2 < phase_cutoff:
                 delay_and_phase = False
-                converged = True
+                converged = not amplitude
                 
-            dataSet = _scale_data(origSet, np.ones_like(tempDelays), tempDelays, tempPhaseOffsets)
+            dataSet = _scale_data(origSet, tempGains, tempDelays, tempPhaseOffsets)
             
         else:
             pass

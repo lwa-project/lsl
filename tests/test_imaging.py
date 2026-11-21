@@ -719,6 +719,33 @@ class imaging_tests(unittest.TestCase):
                 
                 idi.close()
                 
+    def _build_selfcal_sim(self):
+        """Build a simulated data set for testing the self calibration."""
+        
+        antennas = [ant for ant in lwa1.antennas if ant.pol == 0][0:256:16]
+        freqs = np.arange(35e6, 85e6, 1e6)
+        aa = vis.build_sim_array(lwa1, antennas, freqs)
+        sim = vis.build_sim_data(aa, vis.SOURCES, pols=['xx',], jd=2461110.2)
+        return aa, sim, np.arange(freqs.size)
+        
+    def test_selfcal_amplitude(self):
+        """Test the amplitude and delay self calibration on simulated data."""
+        
+        aa, sim, chan = self._build_selfcal_sim()
+        N = len(aa.ants)
+        rng = np.random.default_rng(1)
+        gains = rng.uniform(0.5, 2.0, N)
+        delays = rng.uniform(-3.0, 3.0, N)
+        delays[0] = 0.0
+        data = vis.scale_data(sim, gains, delays)
+        
+        caldDict, bestGains, bestDelays, converged = selfcal.delay_only(aa, data, sim, chan, 'XX',
+                                                                         amplitude=True,
+                                                                         return_convergence=True)
+        self.assertTrue(converged)
+        np.testing.assert_allclose(bestGains*gains, 1.0, atol=1e-3)
+        np.testing.assert_allclose(bestDelays, -delays, atol=0.1)
+        
     def test_background(self):
         """Test the background estimation"""
         
