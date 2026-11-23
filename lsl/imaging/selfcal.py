@@ -474,6 +474,9 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
         If the "amplitude" keyword is set to True, a three-element tuple of 
         self-cal'd data, gain coefficients, and delays in ns is returned rather 
         than the standard two-element tuple.
+        
+    The delays returned are positive for an antenna whose signal arrives 
+    late, and can be passed to lsl.sim.vis.scale_data to correct the data.
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
@@ -503,6 +506,9 @@ def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, m
         If the "amplitude" keyword is set to True, a four-element tuple of 
         self-cal'd data, gain coefficients, delays in ns, and phase offsets 
         is returned rather than the standard three-element tuple.
+        
+    The delays returned are positive for an antenna whose signal arrives 
+    late, and can be passed to lsl.sim.vis.scale_data to correct the data.
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \

@@ -1178,6 +1178,10 @@ def scale_data(dataSet, amps, delays, phase_offsets=None):
     :class:`lsl.imaging.data.VisibilityDataSet` object.  Returned the new
     scaled and delayed VisibilityDataSet.
     
+    Baseline (i,j) is multiplied by a_i*a_j*exp(2j*pi*f*(d_i-d_j) + 1j*(p_i-p_j)).
+    For an antenna whose signal arrives tau ns late, delays=+tau corrects it
+    and delays=-tau simulates it.
+    
     ..versionchanged:: 0.6.3
         Added a keyword so that phase offsets (in radians) can also be specified
     

@@ -751,6 +751,13 @@ class imaging_tests(unittest.TestCase):
         
         np.testing.assert_allclose(np.angle(np.exp(1j*(actual - desired))), 0.0, atol=atol)
         
+    def test_selfcal_scale_data(self):
+        """Test that the self calibration applies solutions the same way as lsl.sim.vis.scale_data."""
+        
+        aa, sim, chan, gains, delays, phases = self._build_selfcal_sim()
+        np.testing.assert_allclose(selfcal._scale_data(sim, gains, delays, phases).XX.data,
+                                   vis.scale_data(sim, gains, delays, phases).XX.data)
+        
     def test_selfcal_phase_only(self):
         """Test the phase-only self calibration on simulated data."""
         
