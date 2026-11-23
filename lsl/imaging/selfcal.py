@@ -11,6 +11,7 @@ supported self-calibration methods are:
 .. versionchanged:: 4.0.2
    Fixed the amplitude solutions when combined with phase or delay
    Solve for the delays and phase offsets jointly in delay_and_phase
+   Switched to sparse matrices and scipy.sparse.linalg.lsqr for the solutions
 
 .. versionchanged:: 3.0.8
    Added support for Tikhonov regularization and exposed the loop gain
@@ -24,7 +25,8 @@ supported self-calibration methods are:
 import logging
 import numpy as np
 
-from scipy.linalg import lstsq, decomp, decomp_svd, pinv
+from scipy import sparse
+from scipy.sparse.linalg import lsqr
 
 from lsl.statistics import robust
 from lsl.logger import LSL_LOGGER
@@ -64,22 +66,20 @@ def _scale_data(dataSet, amps, delays, phase_offsets):
 
 def _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
-    Build the matrix A for amplitude correction.
+    Build the sparse matrix A for amplitude correction.
     """
     
     # Get the baseline and stand counts
     nBLs = dataSet.nbaseline
     nStands = len(aa.ants)
     
-    # Frequency in GHz so that the delays can be in ns
-    fq = dataSet.freq[chan] / 1e9
-    
-    A = np.zeros((nBLs, nStands))
+    rows, cols, vals = [], [], []
     for i,(l,m) in enumerate(dataSet.baselines):
-        A[i,l] = 1.0
-        A[i,m] = 1.0
+        rows.extend([i, i])
+        cols.extend([l, m])
+        vals.extend([1.0, 1.0])
         
-    return A
+    return sparse.csr_matrix((vals, (rows, cols)), shape=(nBLs, nStands))
 
 
 def _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
@@ -118,8 +118,8 @@ def _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
 
 def _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
-    Build the matrix A for phase correction with a frequency independent
-    phase.
+    Build the sparse matrix A for phase correction with a frequency 
+    independent phase.
     """
     
     # Get the baseline and stand counts
@@ -129,24 +129,37 @@ def _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     # Frequency in GHz so that the delays can be in ns
     fq = dataSet.freq[chan] / 1e9
     
-    A = np.zeros((nBLs*fq.size, nStands-1))
-    for i in range(fq.size):
-        for j,(l,m) in enumerate(dataSet.baselines):
-            if l < ref_ant:
-                A[j+i*nBLs,l]   =  1.0
-            elif l > ref_ant:
-                A[j+i*nBLs,l-1] =  1.0
-            else:
-                pass
-                
-            if m < ref_ant:
-                A[j+i*nBLs,m]   = -1.0
-            elif m > ref_ant:
-                A[j+i*nBLs,m-1] = -1.0
-            else:
-                pass
-        
-    return A
+    # Build the entries for a single channel...
+    rows, cols, vals = [], [], []
+    for j,(l,m) in enumerate(dataSet.baselines):
+        if l < ref_ant:
+            rows.append(j)
+            cols.append(l)
+            vals.append( 1.0)
+        elif l > ref_ant:
+            rows.append(j)
+            cols.append(l-1)
+            vals.append( 1.0)
+        else:
+            pass
+            
+        if m < ref_ant:
+            rows.append(j)
+            cols.append(m)
+            vals.append(-1.0)
+        elif m > ref_ant:
+            rows.append(j)
+            cols.append(m-1)
+            vals.append(-1.0)
+        else:
+            pass
+            
+    # ... and then repeat them for each channel
+    rows = np.concatenate([np.array(rows) + i*nBLs for i in range(fq.size)])
+    cols = np.tile(cols, fq.size)
+    vals = np.tile(vals, fq.size)
+    
+    return sparse.csr_matrix((vals, (rows, cols)), shape=(nBLs*fq.size, nStands-1))
 
 
 def _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
@@ -155,13 +168,6 @@ def _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     phase.
     """
     
-    # Get the baseline and stand counts
-    nBLs = dataSet.nbaseline
-    nStands = len(aa.ants)
-    
-    # Frequency in GHz so that the delays can be in ns
-    fq = dataSet.freq[chan] / 1e9
-    
     obsVis = []
     for vis in getattr(dataSet, pol).data:
         obsVis.append( np.array(vis[chan]) )
@@ -174,44 +180,18 @@ def _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     
     C = np.angle(simVis / obsVis)
     
-    Cp = np.zeros(nBLs*fq.size)
-    for i in range(fq.size):
-        for j in range(C.shape[0]):
-            Cp[j+i*nBLs] = C[j,i]
-    
-    return Cp
+    # Order by channel, then baseline, to match A
+    return C.T.ravel()
 
 
 def _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=0):
     """
-    Build the matrix A for phase correction with a delay.
+    Build the sparse matrix A for phase correction with a delay.  This is 
+    the same as the matrix for the phase correction since the frequency 
+    dependence is included in C.
     """
     
-    # Get the baseline and stand counts
-    nBLs = dataSet.nbaseline
-    nStands = len(aa.ants)
-    
-    # Frequency in GHz so that the delays can be in ns
-    fq = dataSet.freq[chan] / 1e9
-    
-    A = np.zeros((nBLs*fq.size, nStands-1))
-    for i in range(fq.size):
-        for j,(l,m) in enumerate(dataSet.baselines):
-            if l < ref_ant:
-                A[j+i*nBLs,l]   =  1
-            elif l > ref_ant:
-                A[j+i*nBLs,l-1] =  1
-            else:
-                pass
-                
-            if m < ref_ant:
-                A[j+i*nBLs,m]   = -1
-            elif m > ref_ant:
-                A[j+i*nBLs,m-1] = -1
-            else:
-                pass
-        
-    return A
+    return _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
 
 
 def _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
@@ -219,10 +199,6 @@ def _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
     Build the matrix C for phase correction with a delay.
     """
     
-    # Get the baseline and stand counts
-    nBLs = dataSet.nbaseline
-    nStands = len(aa.ants)
-    
     # Frequency in GHz so that the delays can be in ns
     fq = dataSet.freq[chan] / 1e9
     
@@ -236,14 +212,23 @@ def _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=0):
         simVis.append( np.array(vis[chan]) )
     simVis = np.array(simVis)
     
-    C = np.angle(simVis / obsVis)
+    C = np.angle(simVis / obsVis) / (2*np.pi*fq)
     
-    Cp = np.zeros(nBLs*fq.size)
-    for i in range(fq.size):
-        for j in range(C.shape[0]):
-            Cp[j+i*nBLs] = C[j,i] / (2*np.pi*fq[i])
+    # Order by channel, then baseline, to match A
+    return C.T.ravel()
+
+
+def _solve(A, C, inv_epsilon=0.0):
+    """
+    Solve A x = C in a least squares sense for the finite values of C.  If
+    inv_epsilon is greater than zero, Tikhonov regularization is applied
+    with a damping factor of 1/inv_epsilon.
+    """
     
-    return Cp
+    good = np.where( np.isfinite(C) )[0]
+    damp = 1/inv_epsilon if inv_epsilon > 0 else 0.0
+    
+    return lsqr(A[good,:], C[good], damp=damp, atol=1e-10, btol=1e-10)[0]
 
 
 def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, phase_only=False, delay_only=False, delay_and_phase=False, amplitude_cutoff=1.001, phase_cutoff=0.01, delay_cutoff=0.2, inv_epsilon=0.0):
@@ -328,19 +313,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             A = _build_amplitude_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_amplitude_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
-            good = np.where( np.isfinite(C) == 1 )[0]
-            A = A[good,:]
-            C = C[good]
-            
-            if inv_epsilon > 0:
-                R = 1/inv_epsilon * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
-                bestGains = np.dot(trc, np.dot(A.T,C))
-                
-            else:
-                bestGains, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
-            resid = np.array(C - np.dot(A, bestGains)).ravel()
-            resid = (C**2).sum(), (resid**2).sum()
+            bestGains = _solve(A, C, inv_epsilon=inv_epsilon)
             bestGains = np.exp(bestGains)
             tempGains *= bestGains
             
@@ -362,19 +335,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
-            good = np.where( np.isfinite(C) == 1 )[0]
-            A = A[good,:]
-            C = C[good]
-            
-            if inv_epsilon > 0:
-                R = 1/inv_epsilon * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
-                bestPhaseOffsets = np.dot(trc, np.dot(A.T,C))
-                
-            else:
-                bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
-            resid = np.array(C - np.dot(A, bestPhaseOffsets)).ravel()
-            resid = (C**2).sum(), (resid**2).sum()
+            bestPhaseOffsets = _solve(A, C, inv_epsilon=inv_epsilon)
             
             bestPhaseOffsets = list(bestPhaseOffsets)
             bestPhaseOffsets.insert(ref_ant, 0.0)
@@ -396,19 +357,7 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
-            good = np.where( np.isfinite(C) == 1 )[0]
-            A = A[good,:]
-            C = C[good]
-            
-            if inv_epsilon > 0:
-                R = 1/inv_epsilon * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
-                bestDelays = np.dot(trc, np.dot(A.T,C))
-                
-            else:
-                bestDelays, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
-            resid = np.array(C - np.dot(A, bestDelays)).ravel()
-            resid = (C**2).sum(), (resid**2).sum()
+            bestDelays = _solve(A, C, inv_epsilon=inv_epsilon)
             
             bestDelays = list(bestDelays)
             bestDelays.insert(ref_ant, 0.0)
@@ -431,22 +380,10 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             ## is scaled by 2*pi*f since the fit is done in phase, not delay.
             Ad = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             Ap = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
-            A = np.hstack([Ad*np.repeat(2*np.pi*fq, dataSet.nbaseline)[:,None], Ap])
+            A = sparse.hstack([sparse.diags(np.repeat(2*np.pi*fq, dataSet.nbaseline)) @ Ad, Ap], format='csr')
             C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
-            good = np.where( np.isfinite(C) == 1 )[0]
-            A = A[good,:]
-            C = C[good]
-            
-            if inv_epsilon > 0:
-                R = 1/inv_epsilon * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
-                bestDelaysAndPhaseOffsets = np.dot(trc, np.dot(A.T,C))
-                
-            else:
-                bestDelaysAndPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
-            resid = np.array(C - np.dot(A, bestDelaysAndPhaseOffsets)).ravel()
-            resid = (C**2).sum(), (resid**2).sum()
+            bestDelaysAndPhaseOffsets = _solve(A, C, inv_epsilon=inv_epsilon)
             
             bestDelays = list(bestDelaysAndPhaseOffsets[:N-1])
             bestDelays.insert(ref_ant, 0.0)

@@ -2,6 +2,7 @@
  * Updated possm.py to be able to display other polariztions
  * Fixed the amplitude solutions in lsl.imaging.selfcal when combined with phase or delay
  * Fixed lsl.imaging.selfcal.delay_and_phase not converging by solving for the delays and phase offsets jointly
+ * Switched lsl.imaging.selfcal to sparse matrices for faster, lower memory solutions
 
 4.0.1:
  * Fixed a bug that caused the astrostatus.py script to crash
