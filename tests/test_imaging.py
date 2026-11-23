@@ -720,57 +720,150 @@ class imaging_tests(unittest.TestCase):
                 idi.close()
                 
     def _build_selfcal_sim(self):
-        """Build a simulated data set for testing the self calibration."""
+        """Build a simulated data set and a set of antenna errors for testing the self calibration."""
         
         antennas = [ant for ant in lwa1.antennas if ant.pol == 0][0:256:16]
         freqs = np.arange(35e6, 85e6, 1e6)
         aa = vis.build_sim_array(lwa1, antennas, freqs)
         sim = vis.build_sim_data(aa, vis.SOURCES, pols=['xx',], jd=2461110.2)
-        return aa, sim, np.arange(freqs.size)
         
-    def test_selfcal_amplitude(self):
-        """Test the amplitude and delay self calibration on simulated data."""
-        
-        aa, sim, chan = self._build_selfcal_sim()
         N = len(aa.ants)
         rng = np.random.default_rng(1)
         gains = rng.uniform(0.5, 2.0, N)
         delays = rng.uniform(-3.0, 3.0, N)
+        phases = rng.uniform(-1.0, 1.0, N)
         delays[0] = 0.0
-        data = vis.scale_data(sim, gains, delays)
+        phases[0] = 0.0
+        return aa, sim, np.arange(freqs.size), gains, delays, phases
         
-        caldDict, bestGains, bestDelays, converged = selfcal.delay_only(aa, data, sim, chan, 'XX',
-                                                                         amplitude=True,
-                                                                         return_convergence=True)
+    def _add_selfcal_noise(self, data, level):
+        """Add complex Gaussian noise at a fraction of the median visibility amplitude."""
+        
+        noisy = data.copy(include_pols=True)
+        sigma = level*np.median(np.abs(noisy.XX.data))/np.sqrt(2)
+        rng = np.random.default_rng(3)
+        noisy.XX.data = noisy.XX.data + sigma*(rng.normal(size=noisy.XX.data.shape) \
+                                               + 1j*rng.normal(size=noisy.XX.data.shape))
+        return noisy
+        
+    def _assert_phases_close(self, actual, desired, atol):
+        """Compare two sets of phases in radians, accounting for wrapping."""
+        
+        np.testing.assert_allclose(np.angle(np.exp(1j*(actual - desired))), 0.0, atol=atol)
+        
+    def test_selfcal_phase_only(self):
+        """Test the phase-only self calibration on simulated data."""
+        
+        aa, sim, chan, gains, delays, phases = self._build_selfcal_sim()
+        zeros = np.zeros_like(delays)
+        for amplitude in (False, True):
+            with self.subTest(amplitude=amplitude):
+                data = vis.scale_data(sim, gains if amplitude else np.ones_like(gains), zeros, phases)
+                output = selfcal.phase_only(aa, data, sim, chan, 'XX',
+                                            amplitude=amplitude, return_convergence=True)
+                self.assertTrue(output[-1])
+                if amplitude:
+                    np.testing.assert_allclose(output[1]*gains, 1.0, atol=1e-3)
+                self._assert_phases_close(output[-2], -phases, 0.01)
+                
+    def test_selfcal_delay_only(self):
+        """Test the delay-only self calibration on simulated data."""
+        
+        aa, sim, chan, gains, delays, phases = self._build_selfcal_sim()
+        zeros = np.zeros_like(delays)
+        for amplitude in (False, True):
+            with self.subTest(amplitude=amplitude):
+                data = vis.scale_data(sim, gains if amplitude else np.ones_like(gains), delays, zeros)
+                output = selfcal.delay_only(aa, data, sim, chan, 'XX',
+                                            amplitude=amplitude, return_convergence=True)
+                self.assertTrue(output[-1])
+                if amplitude:
+                    np.testing.assert_allclose(output[1]*gains, 1.0, atol=1e-3)
+                np.testing.assert_allclose(output[-2], -delays, atol=0.1)
+                
+    def test_selfcal_delay_and_phase(self):
+        """Test the delay and phase self calibration on simulated data."""
+        
+        aa, sim, chan, gains, delays, phases = self._build_selfcal_sim()
+        for amplitude in (False, True):
+            with self.subTest(amplitude=amplitude):
+                data = vis.scale_data(sim, gains if amplitude else np.ones_like(gains), delays, phases)
+                output = selfcal.delay_and_phase(aa, data, sim, chan, 'XX',
+                                                 amplitude=amplitude, return_convergence=True)
+                self.assertTrue(output[-1])
+                if amplitude:
+                    np.testing.assert_allclose(output[1]*gains, 1.0, atol=1e-3)
+                np.testing.assert_allclose(output[-3], -delays, atol=0.1)
+                self._assert_phases_close(output[-2], -phases, 0.01)
+                
+    def test_selfcal_ref_ant(self):
+        """Test the self calibration with a reference antenna other than the first."""
+        
+        aa, sim, chan, gains, delays, phases = self._build_selfcal_sim()
+        k = 5
+        ref_ant = aa.ants[k].stand
+        zeros = np.zeros_like(delays)
+        
+        with self.subTest(mode='phase only'):
+            data = vis.scale_data(sim, np.ones_like(gains), zeros, phases)
+            caldDict, bestPhases, converged = selfcal.phase_only(aa, data, sim, chan, 'XX', ref_ant=ref_ant,
+                                                                 return_convergence=True)
+            self.assertTrue(converged)
+            self.assertEqual(bestPhases[k], 0.0)
+            self._assert_phases_close(bestPhases, -(phases - phases[k]), 0.01)
+            
+        with self.subTest(mode='delay only'):
+            data = vis.scale_data(sim, np.ones_like(gains), delays, zeros)
+            caldDict, bestDelays, converged = selfcal.delay_only(aa, data, sim, chan, 'XX', ref_ant=ref_ant,
+                                                                 return_convergence=True)
+            self.assertTrue(converged)
+            self.assertEqual(bestDelays[k], 0.0)
+            np.testing.assert_allclose(bestDelays, -(delays - delays[k]), atol=0.1)
+            
+        with self.subTest(mode='delay and phase'):
+            data = vis.scale_data(sim, np.ones_like(gains), delays, phases)
+            caldDict, bestDelays, bestPhases, converged = selfcal.delay_and_phase(aa, data, sim, chan, 'XX', ref_ant=ref_ant,
+                                                                                  return_convergence=True)
+            self.assertTrue(converged)
+            self.assertEqual(bestDelays[k], 0.0)
+            self.assertEqual(bestPhases[k], 0.0)
+            np.testing.assert_allclose(bestDelays, -(delays - delays[k]), atol=0.1)
+            self._assert_phases_close(bestPhases, -(phases - phases[k]), 0.01)
+            
+    def test_selfcal_inv_epsilon(self):
+        """Test the regularized self calibration solutions on simulated data."""
+        
+        aa, sim, chan, gains, delays, phases = self._build_selfcal_sim()
+        data = vis.scale_data(sim, gains, delays, phases)
+        caldDict, bestGains, bestDelays, bestPhases, converged = selfcal.delay_and_phase(aa, data, sim, chan, 'XX',
+                                                                                         amplitude=True, inv_epsilon=1.0,
+                                                                                         return_convergence=True)
         self.assertTrue(converged)
         np.testing.assert_allclose(bestGains*gains, 1.0, atol=1e-3)
         np.testing.assert_allclose(bestDelays, -delays, atol=0.1)
+        self._assert_phases_close(bestPhases, -phases, 0.01)
         
-    def test_selfcal_phase(self):
-        """Test the phase-only self calibration, with and without amplitude, on simulated data."""
+    def test_selfcal_noise(self):
+        """Test the self calibration on simulated data with noise."""
         
-        aa, sim, chan = self._build_selfcal_sim()
-        N = len(aa.ants)
-        rng = np.random.default_rng(2)
-        gains = rng.uniform(0.5, 2.0, N)
-        phases = rng.uniform(-1.0, 1.0, N)
-        phases[0] = 0.0
+        aa, sim, chan, gains, delays, phases = self._build_selfcal_sim()
+        zeros = np.zeros_like(delays)
         
-        with self.subTest(amplitude=False):
-            data = vis.scale_data(sim, np.ones(N), np.zeros(N), phases)
-            caldDict, bestPhases, converged = selfcal.phase_only(aa, data, sim, chan, 'XX',
-                                                                 return_convergence=True)
-            self.assertTrue(converged)
-            np.testing.assert_allclose(np.angle(np.exp(1j*(bestPhases+phases))), 0.0, atol=0.01)
+        with self.subTest(mode='phase only'):
+            data = self._add_selfcal_noise(vis.scale_data(sim, np.ones_like(gains), zeros, phases), 0.1)
+            caldDict, bestPhases = selfcal.phase_only(aa, data, sim, chan, 'XX')
+            self._assert_phases_close(bestPhases, -phases, 0.05)
             
-        with self.subTest(amplitude=True):
-            data = vis.scale_data(sim, gains, np.zeros(N), phases)
-            caldDict, bestGains, bestPhases, converged = selfcal.phase_only(aa, data, sim, chan, 'XX',
-                                                                            amplitude=True,
-                                                                            return_convergence=True)
-            self.assertTrue(converged)
-            np.testing.assert_allclose(bestGains*gains, 1.0, atol=1e-3)
-            np.testing.assert_allclose(np.angle(np.exp(1j*(bestPhases+phases))), 0.0, atol=0.01)
+        with self.subTest(mode='delay only'):
+            data = self._add_selfcal_noise(vis.scale_data(sim, np.ones_like(gains), delays, zeros), 0.1)
+            caldDict, bestDelays = selfcal.delay_only(aa, data, sim, chan, 'XX')
+            np.testing.assert_allclose(bestDelays, -delays, atol=0.2)
+            
+        with self.subTest(mode='delay and phase'):
+            data = self._add_selfcal_noise(vis.scale_data(sim, np.ones_like(gains), delays, phases), 0.1)
+            caldDict, bestDelays, bestPhases = selfcal.delay_and_phase(aa, data, sim, chan, 'XX')
+            np.testing.assert_allclose(bestDelays, -delays, atol=0.5)
+            self._assert_phases_close(bestPhases, -phases, 0.15)
             
     def test_background(self):
         """Test the background estimation"""

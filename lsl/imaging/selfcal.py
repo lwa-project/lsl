@@ -10,6 +10,7 @@ supported self-calibration methods are:
 
 .. versionchanged:: 4.0.2
    Fixed the amplitude solutions when combined with phase or delay
+   Solve for the delays and phase offsets jointly in delay_and_phase
 
 .. versionchanged:: 3.0.8
    Added support for Tikhonov regularization and exposed the loop gain
@@ -426,33 +427,11 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
         elif delay_and_phase:
             LSL_LOGGER.debug(f'  {i+1}D+P')
             
-            ## Delay first
-            A = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
-            C = _build_delay_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
-            
-            good = np.where( np.isfinite(C) == 1 )[0]
-            A = A[good,:]
-            C = C[good]
-            
-            if inv_epsilon > 0:
-                R = 1/inv_epsilon * np.eye(*A.shape)
-                trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
-                bestDelays = np.dot(trc, np.dot(A.T,C))
-                
-            else:
-                bestDelays, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
-            resid = np.array(C - np.dot(A, bestDelays)).ravel()
-            resid = (C**2).sum(), (resid**2).sum()
-            
-            bestDelays = list(bestDelays)
-            bestDelays.insert(ref_ant, 0.0)
-            bestDelays = np.array(bestDelays)
-            tempDelays += loop_gain*bestDelays
-            
-            dataSet = _scale_data(origSet, tempGains, tempDelays, tempPhaseOffsets)
-            
-            ## Then phase
-            A = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            ## Solve for the delays and phase offsets jointly.  The delay block
+            ## is scaled by 2*pi*f since the fit is done in phase, not delay.
+            Ad = _build_delay_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            Ap = _build_phase_a(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
+            A = np.hstack([Ad*np.repeat(2*np.pi*fq, dataSet.nbaseline)[:,None], Ap])
             C = _build_phase_c(aa, dataSet, simSet, chan, pol, ref_ant=ref_ant)
             
             good = np.where( np.isfinite(C) == 1 )[0]
@@ -462,17 +441,22 @@ def _self_cal(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_ite
             if inv_epsilon > 0:
                 R = 1/inv_epsilon * np.eye(*A.shape)
                 trc, rank = pinv(np.dot(A.T,A) + np.dot(R.T,R), return_rank=True)
-                bestPhaseOffsets = np.dot(trc, np.dot(A.T,C))
+                bestDelaysAndPhaseOffsets = np.dot(trc, np.dot(A.T,C))
                 
             else:
-                bestPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
-            resid = np.array(C - np.dot(A, bestPhaseOffsets)).ravel()
+                bestDelaysAndPhaseOffsets, resid, rank, s = np.linalg.lstsq(A, C, rcond=None)
+            resid = np.array(C - np.dot(A, bestDelaysAndPhaseOffsets)).ravel()
             resid = (C**2).sum(), (resid**2).sum()
             
-            bestPhaseOffsets = list(bestPhaseOffsets)
+            bestDelays = list(bestDelaysAndPhaseOffsets[:N-1])
+            bestDelays.insert(ref_ant, 0.0)
+            bestDelays = np.array(bestDelays)
+            tempDelays += loop_gain*bestDelays
+            
+            bestPhaseOffsets = list(bestDelaysAndPhaseOffsets[N-1:])
             bestPhaseOffsets.insert(ref_ant, 0.0)
             bestPhaseOffsets = np.array(bestPhaseOffsets)
-            tempPhaseOffsets += 0.5*bestPhaseOffsets
+            tempPhaseOffsets += loop_gain*bestPhaseOffsets
             
             valid = np.where( (np.abs(bestDelays) < 1e6) & (np.abs(bestPhaseOffsets) < 1e6) )[0]
             metric1 = (np.abs(bestDelays[valid])).max()
