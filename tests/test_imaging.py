@@ -746,6 +746,32 @@ class imaging_tests(unittest.TestCase):
         np.testing.assert_allclose(bestGains*gains, 1.0, atol=1e-3)
         np.testing.assert_allclose(bestDelays, -delays, atol=0.1)
         
+    def test_selfcal_phase(self):
+        """Test the phase-only self calibration, with and without amplitude, on simulated data."""
+        
+        aa, sim, chan = self._build_selfcal_sim()
+        N = len(aa.ants)
+        rng = np.random.default_rng(2)
+        gains = rng.uniform(0.5, 2.0, N)
+        phases = rng.uniform(-1.0, 1.0, N)
+        phases[0] = 0.0
+        
+        with self.subTest(amplitude=False):
+            data = vis.scale_data(sim, np.ones(N), np.zeros(N), phases)
+            caldDict, bestPhases, converged = selfcal.phase_only(aa, data, sim, chan, 'XX',
+                                                                 return_convergence=True)
+            self.assertTrue(converged)
+            np.testing.assert_allclose(np.angle(np.exp(1j*(bestPhases+phases))), 0.0, atol=0.01)
+            
+        with self.subTest(amplitude=True):
+            data = vis.scale_data(sim, gains, np.zeros(N), phases)
+            caldDict, bestGains, bestPhases, converged = selfcal.phase_only(aa, data, sim, chan, 'XX',
+                                                                            amplitude=True,
+                                                                            return_convergence=True)
+            self.assertTrue(converged)
+            np.testing.assert_allclose(bestGains*gains, 1.0, atol=1e-3)
+            np.testing.assert_allclose(np.angle(np.exp(1j*(bestPhases+phases))), 0.0, atol=0.01)
+            
     def test_background(self):
         """Test the background estimation"""
         
