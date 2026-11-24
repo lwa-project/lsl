@@ -296,7 +296,7 @@ def _build_cross_spectra(aa, dataSet, simSet, chan, pol, delays):
     return S, M
 
 
-def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, search_step=0.25, min_gain=0.3, min_coherence=0.5, return_details=False):
+def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, search_step=0.25, min_improvement=0.3, min_coherence=0.5, return_details=False):
     """
     Check a set of converged delays in ns from `delay_only` for antennas that
     are off by one or more cycles.  Each antenna is tested on its own over
@@ -307,7 +307,7 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
      * antennas whose peak is below `min_coherence` of this are flagged as
        DelayStatus.UNVERIFIABLE and left unchanged;
      * antennas whose best shift improves the coherence by more than
-       `min_gain` of this are shifted and flagged as DelayStatus.MOVED.
+       `min_improvement` of this are shifted and flagged as DelayStatus.MOVED.
     
     Returns the updated delays and a list of DelayStatus flags.  If
     `return_details` is True a dictionary of the trial shifts, coherence
@@ -350,7 +350,7 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
     # Thresholds relative to the typical coherence of the array
     valid = nTerms > 0
     typical = np.median(cohBest[valid]) if valid.any() else 0.0
-    gainCut = min_gain*typical
+    improvementCut = min_improvement*typical
     cohCut = min_coherence*typical
     
     newDelays = delays.copy()
@@ -359,7 +359,7 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
         if not valid[k] or cohBest[k] < cohCut:
             status[k] = DelayStatus.UNVERIFIABLE
             LSL_LOGGER.info(f"Delay check cannot verify stand {ant.stand} (peak coherence {cohBest[k]:.3f} < {cohCut:.3f})")
-        elif cohBest[k] - cohZero[k] > gainCut:
+        elif cohBest[k] - cohZero[k] > improvementCut:
             newDelays[k] += trials[best[k]]
             status[k] = DelayStatus.MOVED
             LSL_LOGGER.info(f"Delay check moved stand {ant.stand} by {trials[best[k]]:+.2f} ns (coherence {cohZero[k]:.3f} -> {cohBest[k]:.3f})")
@@ -368,7 +368,7 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
         details = {'trials': trials, 'coherence': coh, 'n_terms': nTerms,
                    'best_shift': trials[best], 'coherence_zero': cohZero,
                    'coherence_best': cohBest, 'typical': typical,
-                   'gain_cut': gainCut, 'coherence_cut': cohCut}
+                   'improvement_cut': improvementCut, 'coherence_cut': cohCut}
         return newDelays, status, details
     return newDelays, status
 
@@ -596,7 +596,7 @@ def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
     return output
 
 
-def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, inv_epsilon=0.0, return_convergence=False, check_ambiguity=False, search_range=None, search_step=0.25, min_gain=0.3, min_coherence=0.5, max_checks=5, return_status=False):
+def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, inv_epsilon=0.0, return_convergence=False, check_ambiguity=False, search_range=None, search_step=0.25, min_improvement=0.3, min_coherence=0.5, max_checks=5, return_status=False):
     """
     Function to apply a delay-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -607,7 +607,7 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
     antennas that are off by one or more cycles with `check_delays` and the
     solver is re-run from the corrected delays, up to `max_checks` times.
     The delays are then re-referenced to the reference antenna.  See
-    `check_delays` for the `search_range`, `search_step`, `min_gain`, and
+    `check_delays` for the `search_range`, `search_step`, `min_improvement`, and
     `min_coherence` keywords.
     
     .. note::
@@ -640,7 +640,7 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
         for c in range(max_checks+1):
             newDelays, status = check_delays(aa, dataSet, simSet, chan, pol, delays,
                                              search_range=search_range, search_step=search_step,
-                                             min_gain=min_gain, min_coherence=min_coherence)
+                                             min_improvement=min_improvement, min_coherence=min_coherence)
             pending = np.array([bool(s & DelayStatus.MOVED) for s in status])
             if not pending.any() or c == max_checks:
                 break
