@@ -692,8 +692,7 @@ def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, m
     late, and can be passed to lsl.sim.vis.scale_data to correct the data.
     
     .. note::
-        The delay ambiguity check in `delay_only` is not available here since
-        the free per-antenna phase has not been validated with it.
+        The delay ambiguity check in `delay_only` is not available here.
     """
     
     caldDict, gains, delays, phaseOffsets, converged = \
