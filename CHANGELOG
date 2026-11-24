@@ -3,6 +3,7 @@
  * Fixed the amplitude solutions in lsl.imaging.selfcal when combined with phase or delay
  * Fixed lsl.imaging.selfcal.delay_and_phase not converging by solving for the delays and phase offsets jointly
  * Switched lsl.imaging.selfcal to sparse matrices for faster, lower memory solutions
+ * Added lsl.imaging.selfcal.check_delays to check delay_only solutions for cycle ambiguities
 
 4.0.1:
  * Fixed a bug that caused the astrostatus.py script to crash

@@ -872,6 +872,68 @@ class imaging_tests(unittest.TestCase):
             np.testing.assert_allclose(bestDelays, -delays, atol=0.5)
             self._assert_phases_close(bestPhases, -phases, 0.15)
             
+    def test_selfcal_delay_check(self):
+        """Test the delay ambiguity check on simulated data."""
+        
+        aa, sim, chan = self._build_selfcal_sim()[:3]
+        N = len(aa.ants)
+        cycle = 1 / 0.060   # ns at the band center
+        
+        with self.subTest(case='no offsets'):
+            caldDict, delays0 = selfcal.delay_only(aa, sim, sim, chan, 'XX')
+            delays, status = selfcal.check_delays(aa, sim, sim, chan, 'XX', delays0)
+            np.testing.assert_allclose(delays, delays0)
+            self.assertTrue(all(s == selfcal.DelayStatus.OK for s in status))
+            
+        for case,k in (('one cycle', 3), ('reference antenna', 0)):
+            with self.subTest(case=case):
+                offsets = np.zeros(N)
+                offsets[k] = cycle
+                data = vis.scale_data(sim, np.ones(N), offsets)
+                
+                ## Without the check the solver lands on the wrong cycle
+                caldDict, delays = selfcal.delay_only(aa, data, sim, chan, 'XX')
+                resid = delays + offsets
+                self.assertTrue(np.abs(resid - resid[0]).max() > cycle/2)
+                
+                ## Check, apply, and re-solve
+                delays, status = selfcal.check_delays(aa, data, sim, chan, 'XX', delays)
+                self.assertEqual(status[k], selfcal.DelayStatus.MOVED)
+                self.assertTrue(all(s == selfcal.DelayStatus.OK for i,s in enumerate(status) if i != k))
+                data = vis.scale_data(data, np.ones(N), delays)
+                caldDict, delays2 = selfcal.delay_only(aa, data, sim, chan, 'XX')
+                resid = delays + delays2 + offsets
+                np.testing.assert_allclose(resid - resid[0], 0.0, atol=0.25)
+                
+        with self.subTest(case='noise'):
+            k = 7
+            rng = np.random.default_rng(2)
+            data = sim.copy(include_pols=True)
+            for b,(i,j) in enumerate(data.baselines):
+                if k in (i,j):
+                    data.XX.data[b,:] = np.abs(data.XX.data[b,:])*np.exp(2j*np.pi*rng.random(chan.size))
+            caldDict, delays0 = selfcal.delay_only(aa, data, sim, chan, 'XX')
+            delays, status = selfcal.check_delays(aa, data, sim, chan, 'XX', delays0)
+            self.assertEqual(delays[k], delays0[k])
+            self.assertEqual(status[k], selfcal.DelayStatus.UNCERTAIN)
+            
+        with self.subTest(case='ambiguous'):
+            ## Over a 10 MHz band neighboring cycles fit nearly as well
+            narrow = chan[(sim.freq[chan] >= 69e6) & (sim.freq[chan] <= 79e6)]
+            delays, status = selfcal.check_delays(aa, sim, sim, narrow, 'XX', np.zeros(N))
+            np.testing.assert_allclose(delays, 0.0)
+            self.assertTrue(all(s == selfcal.DelayStatus.UNCERTAIN for s in status))
+            
+        with self.subTest(case='details'):
+            offsets = np.zeros(N)
+            offsets[3] = cycle
+            delays, status, details = selfcal.check_delays(aa, sim, sim, chan, 'XX', -offsets,
+                                                           return_details=True)
+            self.assertAlmostEqual(delays[3], 0.0, delta=0.25)
+            self.assertEqual(status[3], selfcal.DelayStatus.MOVED)
+            self.assertEqual(details['coherence'].shape, (N, details['trials'].size))
+            self.assertIn(0.0, details['trials'])
+            
     def test_background(self):
         """Test the background estimation"""
         

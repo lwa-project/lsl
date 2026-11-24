@@ -12,6 +12,7 @@ supported self-calibration methods are:
    Fixed the amplitude solutions when combined with phase or delay
    Solve for the delays and phase offsets jointly in delay_and_phase
    Switched to sparse matrices and scipy.sparse.linalg.lsqr for the solutions
+   Added `check_delays` to check `delay_only` solutions for cycle ambiguities
 
 .. versionchanged:: 3.0.8
    Added support for Tikhonov regularization and exposed the loop gain
@@ -22,6 +23,7 @@ supported self-calibration methods are:
 ..versionadded:: 0.5.5
 """
 
+import enum
 import logging
 import numpy as np
 
@@ -36,7 +38,7 @@ telemetry.track_module()
 
 
 __version__ = '0.3'
-__all__ = ['phase_only', 'delay_only', 'delay_and_phase']
+__all__ = ['phase_only', 'delay_only', 'delay_and_phase', 'DelayStatus', 'check_delays']
 
 
 def _scale_data(dataSet, amps, delays, phase_offsets):
@@ -525,3 +527,147 @@ def delay_and_phase(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, m
     if return_convergence:
         output = output+(converged,)
     return output
+
+
+class DelayStatus(enum.IntEnum):
+    """
+    Per-antenna results from `check_delays`.
+    """
+    
+    OK        = 0    # delay is on the best cycle
+    MOVED     = 1    # delay was shifted to a better cycle
+    UNCERTAIN = 2    # delay could not be checked or the best cycle is not clear
+
+
+def _build_cross_spectra(aa, dataSet, simSet, chan, pol, delays):
+    """
+    Build the per-antenna cross spectra between the data, corrected by
+    `delays` in ns, and the model.  Each baseline/channel is reduced to a unit
+    phasor.  Returns the cross spectra and the number of valid terms in each.
+    """
+    
+    # Get the stand count
+    nStands = len(aa.ants)
+    
+    # Frequency in GHz so that the delays can be in ns
+    fq = dataSet.freq[chan] / 1e9
+    
+    # Unit phasors of the delay corrected data relative to the model, using
+    # the same sign convention as _scale_data
+    bl = np.array(dataSet.baselines)
+    blDelays = delays[bl[:,0]] - delays[bl[:,1]]
+    obsVis = getattr(dataSet, pol).data[:,chan] * np.exp(2j*np.pi*fq*blDelays[:,None])
+    simVis = getattr(simSet, pol).data[:,chan]
+    
+    with np.errstate(invalid='ignore', divide='ignore'):
+        r = obsVis*simVis.conj()
+        r /= np.abs(r)
+    valid = np.isfinite(r)
+    r[~valid] = 0.0
+    
+    # A delay shift on antenna k multiplies baseline (k,j) by exp(2 pi i f d)
+    # and baseline (i,k) by exp(-2 pi i f d) so conjugate the second set
+    S = np.zeros((nStands, fq.size), dtype=np.complex128)
+    M = np.zeros((nStands, fq.size))
+    for k in range(nStands):
+        first, second = (bl[:,0] == k), (bl[:,1] == k)
+        S[k,:] = r[first,:].sum(axis=0) + r[second,:].conj().sum(axis=0)
+        M[k,:] = valid[first,:].sum(axis=0) + valid[second,:].sum(axis=0)
+        
+    return S, M
+
+
+def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, min_coherence=0.5, min_improvement=0.3, ambiguity_ratio=0.9, return_details=False):
+    """
+    Check a set of delays in ns from `delay_only` for antennas that are off
+    by one or more cycles.  Each antenna is tested on its own over trial
+    shifts of +/- `search_range` ns (default is two cycles at the lowest
+    frequency) using the full-band real coherence with the model.
+    
+    An antenna is flagged as DelayStatus.UNCERTAIN and left unchanged if its
+    peak coherence is below `min_coherence` of the array median or if a
+    second peak, at least half a cycle at the highest frequency away, is
+    above `ambiguity_ratio` of its best peak.  Otherwise, it is shifted and
+    flagged as DelayStatus.MOVED if the best shift improves the coherence by
+    more than `min_improvement` of the array median.
+    
+    Returns the updated delays and a list of DelayStatus values.  If
+    `return_details` is True a dictionary of the trial shifts, coherence
+    curves, and thresholds is also returned.
+    
+    Since each antenna is checked independently, any moves should be
+    followed by another solver pass, e.g.:
+    
+        >>> cal, delays = selfcal.delay_only(aa, data, sim, chan, pol)
+        >>> delays, status = selfcal.check_delays(aa, data, sim, chan, pol, delays)
+        >>> if selfcal.DelayStatus.MOVED in status:
+        ...     data = vis.scale_data(data, np.ones(len(delays)), delays)
+        ...     cal, resid = selfcal.delay_only(aa, data, sim, chan, pol)
+        ...     delays += resid
+        
+    .. note::
+        The check needs the same (u,v) cut as the solver since short baselines
+        that are dominated by unmodeled diffuse emission produce false moves.
+        
+    .. versionadded:: 4.0.2
+    """
+    
+    # Make sure that `chan' is an array by trying to find its length
+    try:
+        junk = len(chan)
+    except TypeError:
+        chan = [chan]
+        
+    # Frequency in GHz so that the delays can be in ns
+    fq = dataSet.freq[chan] / 1e9
+    
+    delays = np.array(delays, dtype=np.float64)
+    S, M = _build_cross_spectra(aa, dataSet, simSet, chan, pol, delays)
+    nTerms = M.sum(axis=1)
+    
+    # Coherence for all trial shifts.  A pure delay model has no free phase so
+    # the real part only peaks on the correct cycle.
+    if search_range is None:
+        search_range = 2 / fq.min()
+    search_step = 1 / (32*fq.max())
+    trials = np.arange(-search_range, search_range+search_step/2, search_step)
+    trials -= trials[np.argmin(np.abs(trials))]
+    phasors = np.exp(2j*np.pi*fq[None,:]*trials[:,None])
+    coh = np.real(np.dot(S, phasors.T)) / np.maximum(nTerms, 1)[:,None]
+    
+    best = np.argmax(coh, axis=1)
+    cohBest = coh[np.arange(coh.shape[0]),best]
+    cohZero = coh[:,np.argmin(np.abs(trials))]
+    
+    # Runner-up peak, excluding the main lobe of the best peak
+    far = np.abs(trials[None,:] - trials[best][:,None]) >= 1 / (2*fq.max())
+    cohNext = np.where(far, coh, -np.inf).max(axis=1)
+    
+    # Thresholds relative to the typical coherence of the array
+    valid = nTerms > 0
+    typical = np.median(cohBest[valid]) if valid.any() else 0.0
+    cohCut = min_coherence*typical
+    improvementCut = min_improvement*typical
+    
+    newDelays = delays.copy()
+    status = [DelayStatus.OK for ant in aa.ants]
+    for k,ant in enumerate(aa.ants):
+        if not valid[k] or cohBest[k] < cohCut:
+            status[k] = DelayStatus.UNCERTAIN
+            LSL_LOGGER.info(f"Delay check cannot verify stand {ant.stand} (peak coherence {cohBest[k]:.3f} < {cohCut:.3f})")
+        elif cohNext[k] > ambiguity_ratio*cohBest[k]:
+            status[k] = DelayStatus.UNCERTAIN
+            LSL_LOGGER.info(f"Delay check found an ambiguous delay for stand {ant.stand} (peaks {cohBest[k]:.3f} and {cohNext[k]:.3f})")
+        elif cohBest[k] - cohZero[k] > improvementCut:
+            newDelays[k] += trials[best[k]]
+            status[k] = DelayStatus.MOVED
+            LSL_LOGGER.info(f"Delay check moved stand {ant.stand} by {trials[best[k]]:+.2f} ns (coherence {cohZero[k]:.3f} -> {cohBest[k]:.3f})")
+            
+    if return_details:
+        details = {'trials': trials, 'coherence': coh, 'n_terms': nTerms,
+                   'best_shift': trials[best], 'coherence_zero': cohZero,
+                   'coherence_best': cohBest, 'coherence_next': cohNext,
+                   'typical': typical, 'coherence_cut': cohCut,
+                   'improvement_cut': improvementCut}
+        return newDelays, status, details
+    return newDelays, status
