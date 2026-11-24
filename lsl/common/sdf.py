@@ -84,7 +84,7 @@ _DRSUCapacityTB = 10
 # _TBT_TIME_GAIN is the ~150:1 read-out inverse duty cycle, and
 # _TBT_FILL_LAG accounts for the buffer fill lag in ms.
 _TBT_TIME_SCALE = 196000
-_TBT_TIME_GAIN = 150
+_TBT_TIME_GAIN = 425
 _TBT_FILL_LAG = 5000
 
 # Maximum OBS_TBT_SAMPLES accepted by MCS (cf. tpss5.c), in sampler-clock ticks
