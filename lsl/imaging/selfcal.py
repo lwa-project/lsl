@@ -50,6 +50,7 @@ class DelayStatus(enum.IntFlag):
     MOVED        = 1    # delay was shifted by the check
     UNVERIFIABLE = 2    # too little coherence with the model to check
     UNRESOLVED   = 4    # still wanted to move after the last check
+    AMBIGUOUS    = 8    # another cycle fits nearly as well as the best
 
 
 def _scale_data(dataSet, amps, delays, phase_offsets):
@@ -296,7 +297,7 @@ def _build_cross_spectra(aa, dataSet, simSet, chan, pol, delays):
     return S, M
 
 
-def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, search_step=0.25, min_improvement=0.3, min_coherence=0.5, return_details=False):
+def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, search_step=0.25, min_improvement=0.3, min_coherence=0.5, ambiguity_ratio=0.9, return_details=False):
     """
     Check a set of converged delays in ns from `delay_only` for antennas that
     are off by one or more cycles.  Each antenna is tested on its own over
@@ -306,6 +307,9 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
     The thresholds are relative to the median peak coherence of the array:
      * antennas whose peak is below `min_coherence` of this are flagged as
        DelayStatus.UNVERIFIABLE and left unchanged;
+     * antennas with a second peak, at least half a cycle at the highest
+       frequency away, above `ambiguity_ratio` of the best peak are flagged as
+       DelayStatus.AMBIGUOUS and left unchanged;
      * antennas whose best shift improves the coherence by more than
        `min_improvement` of this are shifted and flagged as DelayStatus.MOVED.
     
@@ -347,6 +351,10 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
     cohBest = coh[np.arange(coh.shape[0]),best]
     cohZero = coh[:,np.argmin(np.abs(trials))]
     
+    # Runner-up peak, excluding the main lobe of the best peak
+    far = np.abs(trials[None,:] - trials[best][:,None]) >= 1 / (2*fq.max())
+    cohNext = np.where(far, coh, -np.inf).max(axis=1)
+    
     # Thresholds relative to the typical coherence of the array
     valid = nTerms > 0
     typical = np.median(cohBest[valid]) if valid.any() else 0.0
@@ -359,6 +367,9 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
         if not valid[k] or cohBest[k] < cohCut:
             status[k] = DelayStatus.UNVERIFIABLE
             LSL_LOGGER.info(f"Delay check cannot verify stand {ant.stand} (peak coherence {cohBest[k]:.3f} < {cohCut:.3f})")
+        elif cohNext[k] > ambiguity_ratio*cohBest[k]:
+            status[k] = DelayStatus.AMBIGUOUS
+            LSL_LOGGER.info(f"Delay check found an ambiguous delay for stand {ant.stand} (peaks {cohBest[k]:.3f} and {cohNext[k]:.3f})")
         elif cohBest[k] - cohZero[k] > improvementCut:
             newDelays[k] += trials[best[k]]
             status[k] = DelayStatus.MOVED
@@ -367,7 +378,8 @@ def check_delays(aa, dataSet, simSet, chan, pol, delays, search_range=None, sear
     if return_details:
         details = {'trials': trials, 'coherence': coh, 'n_terms': nTerms,
                    'best_shift': trials[best], 'coherence_zero': cohZero,
-                   'coherence_best': cohBest, 'typical': typical,
+                   'coherence_best': cohBest, 'coherence_next': cohNext,
+                   'typical': typical,
                    'improvement_cut': improvementCut, 'coherence_cut': cohCut}
         return newDelays, status, details
     return newDelays, status
@@ -596,7 +608,7 @@ def phase_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
     return output
 
 
-def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, inv_epsilon=0.0, return_convergence=False, check_ambiguity=False, search_range=None, search_step=0.25, min_improvement=0.3, min_coherence=0.5, max_checks=5, return_status=False):
+def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_iter=30, amplitude=False, amplitude_cutoff=1.001, delay_cutoff=0.2, inv_epsilon=0.0, return_convergence=False, check_ambiguity=False, search_range=None, search_step=0.25, min_improvement=0.3, min_coherence=0.5, ambiguity_ratio=0.9, max_checks=5, return_status=False):
     """
     Function to apply a delay-only (and, optionally, a amplitude) self-
     calibration to data stored in a readUVData dictionary and a model sky 
@@ -607,8 +619,8 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
     antennas that are off by one or more cycles with `check_delays` and the
     solver is re-run from the corrected delays, up to `max_checks` times.
     The delays are then re-referenced to the reference antenna.  See
-    `check_delays` for the `search_range`, `search_step`, `min_improvement`, and
-    `min_coherence` keywords.
+    `check_delays` for the `search_range`, `search_step`, `min_improvement`,
+    `min_coherence`, and `ambiguity_ratio` keywords.
     
     .. note::
         If the "amplitude" keyword is set to True, a three-element tuple of 
@@ -640,7 +652,8 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
         for c in range(max_checks+1):
             newDelays, status = check_delays(aa, dataSet, simSet, chan, pol, delays,
                                              search_range=search_range, search_step=search_step,
-                                             min_improvement=min_improvement, min_coherence=min_coherence)
+                                             min_improvement=min_improvement, min_coherence=min_coherence,
+                                             ambiguity_ratio=ambiguity_ratio)
             pending = np.array([bool(s & DelayStatus.MOVED) for s in status])
             if not pending.any() or c == max_checks:
                 break
@@ -659,7 +672,7 @@ def delay_only(aa, dataSet, simSet, chan, pol, ref_ant=0, loop_gain=0.75, max_it
         if pending.any():
             LSL_LOGGER.warning(f"Delay check still moving {pending.sum()} antennas after {max_checks} passes")
         for k in range(len(aa.ants)):
-            status[k] &= DelayStatus.UNVERIFIABLE
+            status[k] &= DelayStatus.UNVERIFIABLE | DelayStatus.AMBIGUOUS
             if moved[k]:
                 status[k] |= DelayStatus.MOVED
             if pending[k]:

@@ -924,6 +924,16 @@ class imaging_tests(unittest.TestCase):
             np.testing.assert_allclose(delays, delays0)
             self.assertEqual(status[3], selfcal.DelayStatus.UNRESOLVED)
             
+        with self.subTest(case='ambiguous'):
+            ## Over a 10 MHz band neighboring cycles fit nearly as well
+            narrow = chan[(sim.freq[chan] >= 69e6) & (sim.freq[chan] <= 79e6)]
+            delays, status = selfcal.check_delays(aa, sim, sim, narrow, 'XX', np.zeros(N))
+            np.testing.assert_allclose(delays, 0.0)
+            self.assertTrue(all(s == selfcal.DelayStatus.AMBIGUOUS for s in status))
+            caldDict, delays, status = selfcal.delay_only(aa, sim, sim, narrow, 'XX', check_ambiguity=True,
+                                                          return_status=True)
+            self.assertTrue(all(s == selfcal.DelayStatus.AMBIGUOUS for s in status))
+            
         with self.subTest(case='noise'):
             k = 7
             rng = np.random.default_rng(2)
